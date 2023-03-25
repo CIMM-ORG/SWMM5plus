@@ -132,7 +132,7 @@ module adjust
             call pack_small_and_zero_depth_elements (whichTM, CC)
             call pack_small_and_zero_depth_elements (whichTM, JM)
 
-            call pack_zero_depth_interior_faces ()
+            call pack_zero_depth_interior_faces (fp_all)
             
         end if
                ! ! call util_utest_CLprint('-------------1111')
@@ -180,7 +180,7 @@ module adjust
         !%------------------------------------------------------------------
             ! call util_utest_CLprint ('FFF01  before zero/small face step 0-----------------')
 
-        call adjust_smalldepth_face_fluxes_CC     (whichTM,ifixQCons)
+        call adjust_smalldepth_face_fluxes_CC      (whichTM,ifixQCons)
         call adjust_smalldepth_face_fluxes_JMJB    (whichTM,ifixQCons)
 
             ! call util_utest_CLprint ('FFF01  after zero/small face step A-----------------')
@@ -1200,13 +1200,13 @@ module adjust
         if (npack > 0) then
             thisP  => elemP(1:npack,thisCol)
 
-            ! print *, ' thisP '
-            ! print *, thisP
-            ! print *, ' '
+                ! print *, ' thisP adjusting face flux'
+                ! print *, thisP
+                ! print *, ' '
 
-            ! print *, ' '
-            ! print *, ' in small depth face flux adjust'
-            ! print *, faceQ(fup(178)),elemQ(178), faceQ(fdn(178))
+                ! print *, ' '
+                ! print *, ' in small depth face flux adjust'
+                ! print *, faceQ(fup(42)),elemQ(42), faceQ(fdn(42))
             
         
             where (elemQ(thisP) .ge. zeroR)
@@ -1229,16 +1229,16 @@ module adjust
             endwhere
 
 
-            ! print *, 'after 1st step'
-            ! print *, faceQ(fup(178))
+                ! print *, 'after 1st step'
+                ! print *, faceQ(fup(42)), faceQ(fdn(42))
 
-            !% 20220531brh
+            !% 20220531brh -- 20230322 brh THIS CAUSES PROBLEMS WITH DRAINING JUNCTION
             !% --- provide inflow rate from large head differences with small volume cells
             !%     Derived from the SVE momentum neglecting all terms except dQ/dt and gA dH/dx
-            call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
+            ! call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
 
-            ! print *, 'face Qup after second step'
-            ! print *, faceQ(fup(178))
+                ! print *, 'after second step'
+                ! print *, faceQ(fup(42)), faceQ(fdn(42))
 
             if (ifixQCons) then
                 !% update the conservative face Q
@@ -1253,11 +1253,18 @@ module adjust
                 fVel_d(fup(thisP)) = zeroR
             endwhere
 
+                ! print *, 'after 3rd step, area, Vel'
+                ! print *, faceAd(fup(42)), fVel_d(fup(42))
+
+
             where (faceAu(fup(thisP)) > setting%ZeroValue%Area)
                 fVel_u(fup(thisP)) = faceQ(fup(thisP)) /  faceAu(fup(thisP))
             elsewhere
                 fVel_u(fup(thisP)) = zeroR
             endwhere
+
+                ! print *, 'after 4h step, area, Vel'
+                ! print *, faceAu(fup(42)), fVel_u(fup(42))
 
             where (faceAd(fdn(thisP)) > setting%ZeroValue%Area)
                 fVel_d(fdn(thisP)) = faceQ(fdn(thisP)) /  faceAd(fdn(thisP))
@@ -1265,11 +1272,17 @@ module adjust
                 fVel_d(fdn(thisP)) = zeroR
             end where
 
+                ! print *, 'after 5th step, area, Vel'
+                ! print *, faceAd(fdn(42)), fVel_d(fdn(42))
+
             where (faceAu(fdn(thisP)) > setting%ZeroValue%Area)
                 fVel_u(fdn(thisP)) = faceQ(fdn(thisP)) /  faceAu(fdn(thisP))
             elsewhere 
                 fVel_u(fdn(thisP)) = zeroR
             endwhere
+
+                ! print *, 'after 6th step, area, Vel'
+                ! print *, faceAu(fdn(42)), fVel_u(fdn(42))
         else
             !% no CC elements
         end if

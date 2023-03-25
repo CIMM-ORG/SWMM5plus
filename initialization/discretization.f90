@@ -97,7 +97,15 @@ contains
         if (setting%Debug%File%discretization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        isAdjustLinkLength => setting%Discretization%AdustLinkLengthForJunctionBranchYN
+        isAdjustLinkLength => setting%Discretization%AdjustLinkLengthForJunctionBranchYN
+
+        if (isAdjustLinkLength) then 
+            print *, 'CONFIGURATION ERROR'
+            print *, 'setting.Discretization.AdjustLinkLengthForJunctionBranchYN = .true.'
+            print *, 'SWMM5+ presently requires this to be .false.'
+            print *, 'Please change the setting in your *.json file'
+            stop 77098723
+        end if
         
         do ii =1, N_link
             !% --- default shorting coefficient (reset for each link)

@@ -6,8 +6,11 @@
         "Short" : "default"
     },
     "Discretization" : {
-        "NominalElemLength" : 200.00
+        "NominalElemLength" : 10.00
     },
+    "Junction" :{
+        "ForceNodesJM" : true
+    },    
     "Limiter" : {
         "Dt" : {
             "Minimum"     : 1e-4

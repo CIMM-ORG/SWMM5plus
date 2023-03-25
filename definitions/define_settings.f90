@@ -135,11 +135,11 @@ module define_settings
 
     !% setting%Output%DataOut
     type DataOutType
-        logical :: isAreaOut                = .false.
+        logical :: isAreaOut                = .true.
         logical :: isDepthOut               = .true.
         logical :: isFlowrateOut            = .true.
-        logical :: isFluxConsOut            = .true.
-        logical :: isFroudeNumberOut        = .false.
+        logical :: isFluxConsOut            = .false.
+        logical :: isFroudeNumberOut        = .true.
         logical :: isHeadOut                = .true.
         logical :: isHydRadiusOut           = .false.
         logical :: isPerimeterOut           = .false.
@@ -484,8 +484,8 @@ module define_settings
     !% setting%Discretization
     type DiscretizationType
         logical :: AllowChannelOverflowTF = .false. !% if true, then open channels (CC) can overflow (lose water)
-        logical :: AdustLinkLengthForJunctionBranchYN = .false.          !% if true then JB (junction branch) length is subtracted from link length
-        real(8) :: JunctionBranchLengthFactor  = 0.5d0  !% fraction of NominalElemLength used for JB
+        logical :: AdjustLinkLengthForJunctionBranchYN = .false.          !% DO NOT USE TRUE if true then JB (junction branch) length is subtracted from link length
+        real(8) :: JunctionBranchLengthFactor  = 1.d0    !% MUST USE 1.0   !% fraction of NominalElemLength used for JB
         real(8) :: MinElemLengthFactor = 0.5d0
         integer :: MinElemLengthMethod = ElemLengthAdjust
         real(8) :: NominalElemLength   = 10.0d0
@@ -649,7 +649,7 @@ module define_settings
     type SolverType
         !logical :: PreissmannSlot = .true.
         logical :: SubtractReferenceHead = .false.
-        integer :: MomentumSourceMethod = T10
+        integer :: MomentumSourceMethod = T00  !% only T00 working with junctions as of 20230316
         integer :: SolverSelect = ETM
         real(8) :: SwitchFractionDn = 0.8d0
         real(8) :: SwitchFractionUp = 0.9d0
@@ -1257,10 +1257,10 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AllowChannelOverflowTF not found'
       
         !% -- Nominal element length adjustment
-        !%                      Discretization.AdustLinkLengthForJunctionBranchYN
-        call json%get('Discretization.AdustLinkLengthForJunctionBranchYN', logical_value, found)
-        if (found) setting%Discretization%AdustLinkLengthForJunctionBranchYN = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AdustLinkLengthForJunctionBranchYN not found'
+        !%                      Discretization.AdjustLinkLengthForJunctionBranchYN
+        call json%get('Discretization.AdjustLinkLengthForJunctionBranchYN', logical_value, found)
+        if (found) setting%Discretization%AdjustLinkLengthForJunctionBranchYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AdjustLinkLengthForJunctionBranchYN not found'
 
 
         !%                      Discretization.JunctionBranchLengthFactor

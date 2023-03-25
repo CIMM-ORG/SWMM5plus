@@ -1,134 +1,204 @@
 enable_testing()
 
+# add_test(NAME T001_0050 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001.inp -s ./ctest/internal_testing/brh/settings_50.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+add_test(NAME T001_0100 
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+
+# add_test(NAME T001_0250 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001.inp -s ./ctest/internal_testing/brh/settings_250.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+# add_test(NAME T001_0500 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001.inp -s ./ctest/internal_testing/brh/settings_500.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+# add_test(NAME T001_1000 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001.inp -s ./ctest/internal_testing/brh/settings_1000.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
 ###################################### GEOMETRY #############################
 
-# # Passed 20230224
+# # Passed 20230324
 # add_test(NAME Circular_FixedBC 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/geometry_test/Co_sub_G=circ_IN=con_OUT=fix.inp -s ./ctest/internal_testing/geometry_test/settings_Co.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230224
+# # # Passed 20230324
 # add_test(NAME Circular_FreeBC_01 
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/geometry_test/Co_circ_01.inp -s ./ctest/internal_testing/geometry_test/settings_Co_circ_01.json -o ./ctest/output/
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/geometry_test/Co_circ_01.inp -s ./ctest/internal_testing/geometry_test/settings_Co_circ.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230224
+# # Passed 20230324
 # add_test(NAME Circular_FreeBC_02 
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/geometry_test/Co_circ_02.inp -s ./ctest/internal_testing/geometry_test/settings_Co_circ_02.json -o ./ctest/output/
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/geometry_test/Co_circ_02.inp -s ./ctest/internal_testing/geometry_test/settings_Co_circ.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-###################################### LEVEL 1 PASSED #############################
-#  # passed 20230224
+# # P
+# add_test(NAME Circular_FreeBC_03 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/geometry_test/Co_circ_03.inp -s ./ctest/internal_testing/geometry_test/settings_Co.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# #
+# add_test(NAME RectClosed_FreeBC_03 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/geometry_test/Co_rect_closed_03.inp -s ./ctest/internal_testing/geometry_test/settings_Co.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# #
+# add_test(NAME RectOpen_FreeBC_03 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/geometry_test/Co_rect_open_03.inp -s ./ctest/internal_testing/geometry_test/settings_Co.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+
+# # Passed 2023034
+# add_test(NAME YJ_Geom
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/geometry_test/YJ_Geom_Test.inp -s ./ctest/internal_testing/geometry_test/settings_YJ.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Passed 20230324
+# add_test(NAME YJ_Geom_mod01
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/geometry_test/YJ_Geom_Test_mod01.inp -s ./ctest/internal_testing/geometry_test/settings_YJ.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # ###################################### LEVEL 1 PASSED #############################
+#  # passed 20230324
 # add_test(NAME extran1_final
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_final_mod2.inp -s ./ctest/internal_testing/level01_test/settings_extran1.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # passed 20230222
+# #  # passed 20230324
+# add_test(NAME extran1_final
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_final_mod2a.inp -s ./ctest/internal_testing/level01_test/settings_extran1.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+#  # passed 20230324
+# add_test(NAME extran1_final
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_final_mod2b.inp -s ./ctest/internal_testing/level01_test/settings_extran1.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+#  # passed 20230324
+# add_test(NAME extran1_final
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_final_mod2c.inp -s ./ctest/internal_testing/level01_test/settings_extran1.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+# # passed 20230316
 # add_test(NAME extran1_arch_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_arch_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230224
+# # Passed 20230316
 # add_test(NAME extran1_baskethandle_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_baskethandle_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230224
+# # Passed 20230316
 # add_test(NAME extran1_catenary_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_catenary_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230224
+# # Passed 20230316
 # add_test(NAME extran1_circular_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_circular_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230224
+# # Passed 20230316
 # add_test(NAME extran1_egg_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_egg_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230224
+# # Passed 20230316
 # add_test(NAME extran1_filled_circular_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_filled_circular_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # passed 20230224
+# # passed 20230316
 # add_test(NAME extran1_forcemain_hw_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_forcemain_hw_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 2023024
+# # Passed 20230316
 # add_test(NAME extran1_gothic_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_gothic_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # passed 20230224
-# add_test(NAME extran1_horizontal_ellipse_final
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_horizontal_ellipse_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
-# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-# )
 
-# # passed 20230224
+# # passed 20230316
 # add_test(NAME extran1_horseshoe_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_horseshoe_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
-# # passed 20230224
+# # passed 20230316
 # add_test(NAME extran1_irregular_mod
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_irregular_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # passed 20230224
+# # passed 20230316
 # add_test(NAME extran1_parabolic_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_parabolic_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230224
+# # # Passed 20230316
+# add_test(NAME extran1_rect_closed_mod
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_rect_closed_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Passed 20230316
 # add_test(NAME extran1_rect_open_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_rect_open_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # passed 20230224
-# add_test(NAME extran1_rect_round_mod
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_rect_round_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
-# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-# )
 
-# # passed 20230224
-# add_test(NAME extran1_rect_triangular_mod
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_rect_triangular_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
-# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-# )
-
-# # Passed 20230224
+# # Passed 20230316
 # add_test(NAME extran1_semi_circular_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_semi_circular_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # passed 20230224
+# # passed 20230316
 # add_test(NAME extran1_semi_elliptical_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_semi_elliptical_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # passed 20230224
+# # passed 20230316
 # add_test(NAME extran1_vertical_ellipse_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_vertical_ellipse_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -250,35 +320,49 @@ enable_testing()
 # # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # # )
 
-# # FAILED (JUNCTION 31 conservation error) 20230224
+# # FAILED No flows 20230316
 # add_test(NAME extran1_forcemain_dw_mod
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_forcemain_dw_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILED 20230224
-# # 3.617 ft RMSE head dif on 81309
-# # 3.605 ft RMSE head dif on 15009
+# # failed 20230316 -- twonodes with RSME head > 3.3 ft
+# add_test(NAME extran1_horizontal_ellipse_final
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_horizontal_ellipse_final.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Passed 20230316 but strange results for link 8060 needs investigating
 # add_test(NAME extran1_mod_baskethandle_mod
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_mod_baskethandle_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILED 20230224
-# # 4.17 ft RMSE head diff at 81309
-# # 51.552% for RMSE Y (Depth) on 1600
-# add_test(NAME extran1_rect_closed_mod
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_rect_closed_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
+# # passed 20230316
+# add_test(NAME extran1_rect_open_test_A05
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/extran1_rect_open_test_A05.inp -s ./ctest/internal_testing/brh/settings_extran1_test_A.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILED (configuration problem)  20230224
+# # failed 20230316 -- flowrate links 1600 1602
+# add_test(NAME extran1_rect_round_mod
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_rect_round_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # failed 20230316 --- BLOWUP
+# add_test(NAME extran1_rect_triangular_mod
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_rect_triangular_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # FAILED 20230316 (configuration problem)  
 # add_test(NAME force_main_example_mod
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/force_main_example_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILED (configuration problem)  20230104
+# # # FAILED (configuration problem)  20230316
 # add_test(NAME force_main_gravity_example_mod
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/force_main_gravity_example_mod.inp -s ./ctest/internal_testing/level01_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -372,20 +456,19 @@ enable_testing()
 
 ###################### FAILURES  -- LEVEL 3
 
-# # FAILED 20230224
-# # normalized Q dif of 40% at CO-3
+# # Passed 20230316
 # add_test(NAME catchment_as_outfall
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/catchment_as_outfall.inp -s ./ctest/internal_testing/level03_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILED 20230224 -- fail compare.py, 
+# # FAILED 20230316 -- fails, but looks OK 
 # add_test(NAME Example1
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/Example1.inp -s ./ctest/internal_testing/level03_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILED 20230224 -- segmentation fault, problem in BC
+# # FAILED 20230224 -- requires PUMPS
 # add_test(NAME Example3
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/Example3.inp -s ./ctest/internal_testing/level03_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -404,7 +487,7 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAIL 20230224 -- crash in compare.py at line 313 dealing with surcharge link
+# # FAIL 20230316 -- no plots
 # add_test(NAME user1
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user1.inp -s ./ctest/internal_testing/level03_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -416,32 +499,129 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAIL 20230224 -- configuration error
+# # FAIL 20230224 -- requires PUMPS
 # add_test(NAME user3
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user3.inp -s ./ctest/internal_testing/level03_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAIL 20230224 -- crash on BC type
+# # FAIL 20230224 -- crash on BC type? no plots
 # add_test(NAME user4
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user4.inp -s ./ctest/internal_testing/level03_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAIL 20230224 -- conservation issue at junction
-# add_test(NAME user5
+# # FAIL 20230316 -- very different flowrates
+# add_test(NAME user5_F08
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_F08.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # passed 20230224
-# add_test(NAME extran1_rect_open_test_A05
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/extran1_rect_open_test_A05.inp -s ./ctest/internal_testing/brh/settings_extran1_test_A.json -o ./ctest/output/
+
+# # FAIL 20230316 - no plot
+# add_test(NAME user5_C
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_C.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILED 20230224 conservation issue at JM
+# FAIL 20230316 -- node head at 8SB3_OF, but flows look good.
+# add_test(NAME user5_C02
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_C02.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+# # FAILS 20230316 -- very different flows
+# add_test(NAME user5_E
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_E.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # FAILS 20230316 -- no plots
+# add_test(NAME user5_F
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_F.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # FAILS 20230316 -- controlled oscillations, very similar to EPA SWMM in .13_NAT, .21NAT, 0.06_NAT, 700pipe, 702pipe, 717, 740pipe, 801,
+# add_test(NAME user5_G
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_G.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # FAILS 20230316 -- controlled oscillations, very similar to EPA SWMM -- see pipes in user5_G case
+# add_test(NAME user5_H
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_H.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # FAILS 20230316 -- controlled oscillations, very similar to EPA SWMM -- limited pipe output
+# add_test(NAME user5_I
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_I.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Passed 20230316, but strange results - plus/minus oscillations of small flowrate
+# add_test(NAME user5_JN
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_JN.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230316 -- zero flows, looks fine
+# add_test(NAME user5_KN
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_KN.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230316 -- zero flows, looks fine, EPA SWMM oscillating
+# add_test(NAME user5_L
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_L.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230316 -- zero flows, looks fine
+# add_test(NAME user5_LN
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_LN.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230316 -- zero flows, EPA SWMM is wildly oscillating
+# add_test(NAME user5_M
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_M.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230316 -- zero flows (1e-12)
+# add_test(NAME user5_MN
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_MN.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230316 -- zero flows
+# add_test(NAME user5_O
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_O.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+
+# # FAILED 20230316 -- no plots
 # add_test(NAME user5_reduced04
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_reduced04.inp -s ./ctest/internal_testing/level03_test/settings_user5reduced04.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
+
+
+# # FAILED 20230316 -- due to head, but flowrate looks good
+# add_test(NAME user5_reduced05
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_reduced05.inp -s ./ctest/internal_testing/level03_test/settings_user5reduced04.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # FAILED 20230315 -- no plot -- conservation issue
+# add_test(NAME user5_reduced06
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_reduced06.inp -s ./ctest/internal_testing/level03_test/settings_user5reduced04.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+

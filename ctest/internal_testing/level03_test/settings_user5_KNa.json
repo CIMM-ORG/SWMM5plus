@@ -6,8 +6,7 @@
         "Short" : "default"
     },
     "Discretization" : {
-        "NominalElemLength" : 100.00,
-        "ForceNodesJM" : true
+        "NominalElemLength" : 100.00
     },
     "Junction" : {
         "Method" : "Implicit0"

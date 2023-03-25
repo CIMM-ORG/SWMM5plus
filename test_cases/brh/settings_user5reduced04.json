@@ -6,7 +6,7 @@
         "Short" : "default"
     },
     "Discretization" : {
-        "NominalElemLength" : 200.00
+        "NominalElemLength" : 10.00
     },
     "Limiter" : {
         "Dt" : {

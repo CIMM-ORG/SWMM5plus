@@ -28,19 +28,20 @@ module diagnostic_elements
     private
 
     public :: diagnostic_toplevel
+    public :: diagnostic_fix_JB_adjacent
 
     contains
 !%==========================================================================
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine diagnostic_toplevel (isRKfirstStep)
+    subroutine diagnostic_toplevel (elemPCol, facePCol, istep)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Performs a single hydrology step
         !%-----------------------------------------------------------------------------
-        logical, intent(in) :: isRKfirstStep
-        integer, pointer :: thisCol, Npack, facePackCol
+        integer, intent(in) :: elemPCol, facePCol, istep
+        integer, pointer    :: facePackCol
         
         character(64) :: subroutine_name = 'diagnostic_toplevel'
         !%-----------------------------------------------------------------------------
@@ -51,8 +52,8 @@ module diagnostic_elements
         if (setting%Profile%useYN) call util_profiler_start (pfc_diagnostic_toplevel)
         !%-----------------------------------------------------------------------------
         !%
-        thisCol => col_elemP(ep_Diag)
-        Npack   => npack_elemP(thisCol)
+        !thisCol => col_elemP(ep_Diag)
+        !Npack   => npack_elemP(elemPCol)
 
         !% --- if (Npack > 0) was commented out by SS
         !%     within this conditional face update has been called.
@@ -64,16 +65,15 @@ module diagnostic_elements
         !%     element will never reach that condition.
 
         ! if (Npack > 0) then
-        ! print *, 'calling diagnostic by type Npack = ',Npack
 
             ! call util_utest_CLprint ('in diagnostic_toplevel  AAAA')
 
-        call diagnostic_by_type (thisCol, Npack, isRKfirstStep)
+        call diagnostic_by_type (elemPCol, istep)
 
             ! call util_utest_CLprint ('in diagnostic_toplevel  BBB')
 
         !% reset any face values affected
-        call face_interpolation (fp_Diag, dummy, .false.,.false.,.true.)
+        call face_interpolation (facePCol,.true.,.true.,.true.,.true.,.true.)
 
             ! call util_utest_CLprint ('in diagnostic_toplevel  CCC')
 
@@ -91,10 +91,64 @@ module diagnostic_elements
     end subroutine diagnostic_toplevel
 !%
 !%==========================================================================
+!%==========================================================================
+!% 
+    subroutine diagnostic_fix_JB_adjacent ()
+        !%------------------------------------------------------------------
+        !% Description
+        !% ensures that a diagnostic element adjacent to a JB junction branch
+        !% has exactly the JB flowrate on its faces and element
+        !% This assumes that JB flowrate has been forced to the faces of
+        !% the JB
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, pointer :: thisColP, Npack, thisE(:), fup(:), fdn(:)
+            logical, pointer :: fFrozenYN(:), fJBupstreamYN(:), fJBdownstreamYN(:)
+            integer :: mm, eIdx
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisColP =>   col_elemP(ep_Diag_JBadjacent)
+            Npack    => npack_elemP(thisColP)
+            if (Npack < 1) return
+
+            thisE => elemP(:,thisColP)
+            fup   => elemI(:,ei_Mface_uL)
+            fdn   => elemI(:,ei_Mface_dL)
+
+            fFrozenYN       => faceYN(:,fYN_isJB_QfrozenByDiag)
+            fJBupstreamYN   => faceYN(:,fYN_isUpstreamJBFace)
+            fJBdownstreamYN => faceYN(:,fYN_isDownstreamJBFace)
+        !%------------------------------------------------------------------
+
+        !% --- cycle throug diagnostic elements adjacent to JB
+        do mm=1,Npack
+            eIdx = thisE(mm)
+            !% --- check if faces are not frozen
+            if ( (.not. fFrozenYN(fup(eIdx))) .and. (.not. fFrozenYN(fdn(eIdx))) ) then
+                if (fJBupstreamYN(fup(eIdx))) then 
+                    !% --- if JB upstream then store that Q as the diagnostic element
+                    !%     and the downstream face
+                    elemR(eIdx,er_Flowrate)      = faceR(fup(eIdx),fr_Flowrate)
+                    faceR(fdn(eIdx),fr_Flowrate) = faceR(fup(eIdx),fr_Flowrate)
+                elseif (fJBdownstreamYN(fdn(eIdx))) then
+                    !% --- if JB downstreamstream then store that Q as the diagnostic element
+                    !%     and the upstream face
+                    elemR(eIdx,er_Flowrate)      = faceR(fdn(eIdx),fr_Flowrate)
+                    faceR(fup(eIdx),fr_Flowrate) = faceR(fdn(eIdx),fr_Flowrate)
+                else
+                    print *, 'CODE ERROR: unexpected else'
+                    call util_crashpoint(219874)
+                end if
+            end if
+        end do
+
+    end subroutine diagnostic_fix_JB_adjacent
+!%
+!%==========================================================================
 !% PRIVATE
 !%==========================================================================
 !%
-    subroutine diagnostic_by_type (thisCol, Npack, isRKfirstStep)
+    subroutine diagnostic_by_type (thisCol, istep)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Solves for flow/head on all the diagnostic elements.
@@ -106,12 +160,14 @@ module diagnostic_elements
         !% difficulty in storing them in vector groupings.
         !%-----------------------------------------------------------------------------
         !% Declarations
-            logical, intent(in) :: isRKfirstStep
-            integer, intent(in) :: Npack, thisCol
-            integer, pointer    :: thisType, thisP(:)
+            integer, intent(in) :: thisCol, istep
+            integer, pointer    :: thisType, thisP(:), Npack
             real(8), pointer    :: FlowRate(:)
             real(8)             :: FlowRateOld
             integer :: ii
+        !%-----------------------------------------------------------------------------
+            Npack => npack_elemP(thisCol)
+            if (Npack < 1) return
         !%-----------------------------------------------------------------------------
         !% Aliases
             FlowRate => elemR(:,er_Flowrate)    
@@ -154,7 +210,7 @@ module diagnostic_elements
             !% --- prevent an RK2 first step from setting the flowrate to zero
             !%     Otherwise the conservative flux is identically zero for the
             !%     entire time step
-            if ((isRKfirstStep) .and. (FlowRate(thisP(ii)) .eq. zeroR)) then
+            if ((istep == 1) .and. (FlowRate(thisP(ii)) .eq. zeroR)) then
                 FlowRate(thisP(ii)) = onehalfR * (FlowRate(thisP(ii)) + FlowRateOld)
             end if
         end do
@@ -163,14 +219,6 @@ module diagnostic_elements
 !%
 !%==========================================================================
 !%==========================================================================
-!%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !%
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-        !%
 !%
 !%==========================================================================
 !%==========================================================================

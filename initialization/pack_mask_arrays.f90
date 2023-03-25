@@ -21,8 +21,8 @@ module pack_mask_arrays
 
     public :: pack_mask_arrays_all
     public :: pack_dynamic_arrays
-    public :: pack_nodes
-    public :: pack_bc
+    public :: pack_nodes_BC
+    public :: pack_data_BC
     public :: pack_element_outputML
     public :: pack_face_outputML
     public :: pack_small_and_zero_depth_elements
@@ -70,7 +70,7 @@ contains
         call pack_small_and_zero_depth_elements(ALLtm, JM)
         call pack_small_and_zero_depth_elements(ETM, CC)
         call pack_small_and_zero_depth_elements(ETM, JM)
-        call pack_zero_depth_interior_faces ()
+        call pack_zero_depth_interior_faces (fp_all)
         ! call pack_zero_depth_shared_faces ()
 
         if (setting%Debug%File%initial_condition) then
@@ -124,7 +124,7 @@ contains
 !==========================================================================    
 !==========================================================================
 !
-    subroutine pack_nodes()
+    subroutine pack_nodes_BC()
         !--------------------------------------------------------------------------
         !% This allocates and packs the node data in the arrays of node%P.
         !% With this approach using the P type, each of the arrays on the images
@@ -156,17 +156,17 @@ contains
         end if
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine pack_nodes
+    end subroutine pack_nodes_BC
 !
 !==========================================================================
 !==========================================================================
 !
-    subroutine pack_bc
+    subroutine pack_data_BC
         !--------------------------------------------------------------------------
         !% 
         !--------------------------------------------------------------------------
         integer :: psize
-        character(64) :: subroutine_name = 'pack_bc'
+        character(64) :: subroutine_name = 'pack_data_BC'
         !--------------------------------------------------------------------------
         if (setting%Debug%File%pack_mask_arrays) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -209,7 +209,7 @@ contains
         end if
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine pack_bc
+    end subroutine pack_data_BC
 !
 !==========================================================================
 !==========================================================================
@@ -2719,7 +2719,7 @@ contains
         !% in Q or doesnotexist
         !
         !--------------------------------------------------------------------------
-        integer, pointer :: ptype, npack, eIDx(:)
+        integer, pointer :: ptype, npack, eIDx(:), fUp(:), fDn(:)
         character(64) :: subroutine_name = 'pack_nongeometry_static_elements'
         !--------------------------------------------------------------------------
         !if (crashYN) return
@@ -2727,8 +2727,10 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         eIdx => elemI(:,ei_Lidx)
+        fUp  => elemI(:,ei_Mface_uL)
+        fDn  => elemI(:,ei_Mface_dL)
 
-        !% ep_ALLtm
+    !% ep_ALLtm
         !% - all elements that have a time march
         ptype => col_elemP(ep_ALLtm)
         npack => npack_elemP(ptype)
@@ -2746,7 +2748,7 @@ contains
                 )
         end if
 
-        !% ep_CC_ALLtm
+    !% ep_CC_ALLtm
         !% - all time march elements that are CC
         ptype => col_elemP(ep_CC_ALLtm)
         npack => npack_elemP(ptype)
@@ -2771,7 +2773,7 @@ contains
                 )
         end if
 
-        !% ep_CCJB_ALLtm
+    !% ep_CCJB_ALLtm
         !% - all time march elements that are CC or JB
         ! ptype => col_elemP(ep_CCJB_ALLtm)
         ! npack => npack_elemP(ptype)
@@ -2802,7 +2804,7 @@ contains
         !         ))
         ! end if
 
-        !% ep_Diag
+    !% ep_Diag
         !% - all elements that are diagnostic
         ptype => col_elemP(ep_Diag)
         npack => npack_elemP(ptype)
@@ -2820,8 +2822,63 @@ contains
                 )
         end if
 
-        !print *, 'JM'
-        !% ep_JM
+    !% ep_Diag_notJB
+        !% --- elements that are diagnostic and NOT adjacent to JB
+        ptype => col_elemP(ep_Diag_notJB)
+        npack => npack_elemP(ptype)
+
+        npack = count ( &
+                ((elemI(:,ei_QeqType) == diagnostic)            &
+                    .or.                                        &
+                 (elemI(:,ei_HeqType) == diagnostic) )          &
+                .and.                                           &
+                ((.not. elemYN(:,eYN_isElementDownstreamOfJB))  &
+                    .and.                                        &
+                 (.not. elemYN(:,eYN_isElementUpstreamOfJB)))   &
+                )
+
+        if (npack > 0) then 
+            elemP(1:npack,ptype) = pack( eIdx,                  &
+                ((elemI(:,ei_QeqType) == diagnostic)            &
+                    .or.                                        &
+                 (elemI(:,ei_HeqType) == diagnostic) )          &
+                .and.                                           &
+                ((.not. elemYN(:,eYN_isElementDownstreamOfJB))  &
+                    .and.                                        &
+                 (.not. elemYN(:,eYN_isElementUpstreamOfJB)))   &
+                )
+        end if        
+
+    !% ep_Diag_JBadjacent
+        !% --- elements that are diagnostic and ARE adjacent to JB
+        ptype => col_elemP(ep_Diag_JBadjacent)
+        npack => npack_elemP(ptype)
+
+        npack = count ( &
+                ((elemI(:,ei_QeqType) == diagnostic)            &
+                    .or.                                        &
+                 (elemI(:,ei_HeqType) == diagnostic) )          &
+                .and.                                           &
+                ((elemYN(:,eYN_isElementDownstreamOfJB))  &
+                    .or.                                        &
+                 (elemYN(:,eYN_isElementUpstreamOfJB)))   &
+                )
+
+        if (npack > 0) then 
+            elemP(1:npack,ptype) = pack( eIdx,                  &
+                ((elemI(:,ei_QeqType) == diagnostic)            &
+                    .or.                                        &
+                 (elemI(:,ei_HeqType) == diagnostic) )          &
+                .and.                                           &
+                ((elemYN(:,eYN_isElementDownstreamOfJB))  &
+                    .or.                                        &
+                 (elemYN(:,eYN_isElementUpstreamOfJB)))   &
+                )
+        end if     
+
+
+
+    !% ep_JM
         !% - all elements that are JM
         ptype => col_elemP(ep_JM)
         npack => npack_elemP(ptype)
@@ -2891,14 +2948,14 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == JB) &
                 .and. &
-                (elemYN(:,eYN_isDownstreamJB)) &
+                (elemYN(:,eYN_isElementDownstreamOfJB)) &
                 )
         if (npack > 0) then
             elemP(1:npack,ptype) = pack( eIdx, &
                 ( &
                 (elemI(:,ei_elementType) == JB) &
                 .and. &
-                (elemYN(:,eYN_isDownstreamJB)) &
+                (elemYN(:,eYN_isElementDownstreamOfJB)) &
                 ))
         endif
 
@@ -3196,7 +3253,7 @@ contains
                 ) &
                 .and. &
                 ( &
-                    (elemSI(:,esi_JunctionBranch_Exists) == 1) &
+                    (elemSI(:,esi_JunctionBranch_Exists) == oneI) &
                 ) &
                 .and. &
                 ( &
@@ -3236,7 +3293,7 @@ contains
                 ) &
                 .and. &
                 ( &
-                    (elemSI(:,esi_JunctionBranch_Exists) == 1) &
+                    (elemSI(:,esi_JunctionBranch_Exists) == oneI) &
                 ) &
                 .and. &
                 ( &
@@ -4370,6 +4427,50 @@ contains
                         .and. &
                         (elemI(:,ei_tmType) == ETM))
                 end if
+
+            case (JB)
+                !% ep_SmallDepth_JB_ETM ====================================
+                !% - all Small depth that are JB and ETM time march
+                ptype => col_elemP(ep_SmallDepth_JB_ETM)
+                npack => npack_elemP(ptype)
+
+                npack = count( &
+                        (elemYN(:,eYN_isSmallDepth)) &
+                        .and. &
+                        (elemI(:,ei_elementType) == JB) &
+                        .and. &
+                        (elemI(:,ei_tmType) == ETM) )
+
+                if (npack > 0) then
+                    elemP(1:npack,ptype) = pack(eIdx,  &
+                        (elemYN(:,eYN_isSmallDepth)) &
+                        .and. &
+                        (elemI(:,ei_elementType) == JB) &
+                        .and. &
+                        (elemI(:,ei_tmType) == ETM))
+                end if
+
+                !% ep_ZeroDepth_JB_ETM ====================================
+                !% - all Zero depth that are JB for ETM
+                ptype => col_elemP(ep_ZeroDepth_JB_ETM)
+                npack => npack_elemP(ptype)
+
+                npack = count( &
+                        (elemYN(:,eYN_isZeroDepth)) &
+                        .and. &
+                        (elemI(:,ei_elementType) == JB) &
+                        .and. &
+                        (elemI(:,ei_tmType) == ETM))
+
+                if (npack > 0) then
+                    elemP(1:npack,ptype) = pack(eIdx,  &
+                        (elemYN(:,eYN_isZeroDepth)) &
+                        .and. &
+                        (elemI(:,ei_elementType) == JB) &
+                        .and. &
+                        (elemI(:,ei_tmType) == ETM))
+                end if
+                
             case default 
                 print *, 'unexpected case default'
                 call util_crashpoint(5598723)
@@ -4528,7 +4629,7 @@ contains
         npack = count( &
                 (      &
                       ( elemI(:,ei_elementType) == JM) &
-                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneR) ) &   
+                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneI) ) &   
                 ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSmallDepth)) &
@@ -4538,7 +4639,7 @@ contains
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (      &
                       ( elemI(:,ei_elementType) == JM) &
-                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneR) ) &   
+                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneI) ) &   
                 ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSmallDepth)) &
@@ -4556,7 +4657,7 @@ contains
                 (      &
                       ( elemI(:,ei_elementType) == CC) &
                  .or. ( elemI(:,ei_elementType) == JM) &
-                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneR) ) &   
+                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneI) ) &   
                 ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSmallDepth)) &
@@ -4570,7 +4671,7 @@ contains
                 (      &
                       ( elemI(:,ei_elementType) == CC) &
                  .or. ( elemI(:,ei_elementType) == JM) &
-                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneR) ) &   
+                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneI) ) &   
                 ) &
                 .and. &
                 (.not. elemYN(:,eYN_isSmallDepth)) &
@@ -4615,49 +4716,27 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine pack_zero_depth_interior_faces ()
+    subroutine pack_zero_depth_interior_faces (facePcol)
         !%------------------------------------------------------------------
         !% Description
         !% Dynamic pack for faces that have zero depth elements on one or
         !% both sides
         !%------------------------------------------------------------------
         !% Declarations
+            integer, intent(in) :: facePcol
             integer, pointer :: ptype, npack, npackAll
             integer, pointer :: eUp(:), eDn(:), fAll(:)
             integer :: ii
         !%------------------------------------------------------------------
         !% Aliases:
             !% --- all the interior non-shared faces
-            npackAll => npack_faceP(fp_all)
-            fAll     => faceP(1:npackAll,fp_all)
+            npackAll => npack_faceP(facePcol)
+            fAll     => faceP(1:npackAll,facePcol)
             !% --- upstream elements
             eUp      => faceI(:,fi_Melem_uL)
             !% --- downstream elements
             eDn      => faceI(:,fi_Melem_dL)
         !%------------------------------------------------------------------
-              
-        ! do ii=1,npackAll
-        !     !print *, ii, fAll(ii), faceI(fAll(ii),fi_Melem_uL), faceI(fAll(ii),fi_Melem_dL)
-        !     !print *, '                      ', eUp(fAll(ii)), eDn(fAll(ii))
-        !     print *, fAll(ii), elemYN(faceI(fAll(ii),fi_Melem_uL),eYN_isZeroDepth), elemYN(faceI(fAll(ii),fi_Melem_dL),eYN_isZeroDepth)
-        ! end do
-
-        ! print *, ' '
-        ! print *, 'fAll '
-        ! print *, fAll
-        ! print *, ' ' 
-        ! print *, 'eDn(fAll)'
-        ! print *, eDn(fAll)
-        ! print *, ' '
-        ! print *, 'ElemYN(eDn...'
-        ! print *, elemYN(eDn(fAll),eYN_isZeroDepth)
-        ! print *, ' '
-        ! print *, 'eUp(fAll)'
-        ! print *, eUp(fAll)
-        ! print *, ' '
-        ! print *, 'ElemYN(eUp...'
-        ! print *, elemYN(eUp(fAll),eYN_isZeroDepth)
-        ! print *, ' '
 
         !% --- reset the face zerodepth array
         faceI(:,fi_zeroDepth) = zeroI  !% default to no zerodepth
@@ -4745,8 +4824,8 @@ contains
         eup  => faceI(1:Nfaces,fi_Melem_uL)
         edn  => faceI(1:Nfaces,fi_Melem_dL)
 
-        !% fp_all
-        !% - all faces execpt boundary, null, and shared faces
+    !% fp_all
+        !% - all faces except boundary, null, and shared faces
         ptype => col_faceP(fp_all)
         npack => npack_faceP(ptype)
 
@@ -4758,7 +4837,30 @@ contains
                 )
         end if
 
-        !% fp_JB
+    !% fp_notJB
+        !% --- all interior faces (no boundary, null shared) without JB
+        ptype => col_faceP(fp_notJB)
+        npack => npack_faceP(ptype)
+        
+        npack = count( &
+            faceYN(1:Nfaces,fYN_isInteriorFace)         &
+                .and.                                   &
+                (   (elemI(edn,ei_elementType) .ne. JB) &
+                    .or.                                &
+                    (elemI(eup,ei_elementTYpe) .ne. JB) &
+                ) )
+
+        if (npack > 0) then 
+            faceP(1:npack,ptype) = pack(fIdx,           &
+                faceYN(1:Nfaces,fYN_isInteriorFace)     &
+                .and.                                   &
+                (   (elemI(edn,ei_elementType) .ne. JB) &
+                    .or.                                &
+                    (elemI(eup,ei_elementTYpe) .ne. JB) &
+                ) )
+        end if
+
+    !% fp_JB
         !% --- faces that are adjacent to a JM
         ptype => col_faceP(fp_JB)
         npack => npack_faceP(ptype)
@@ -4781,7 +4883,7 @@ contains
                 ) )
         end if
 
-        !% fp_J1
+    !% fp_J1
         !% - faces with only one link that are not inflow BC
         ptype => col_faceP(fp_J1)
         npack => npack_faceP(ptype)
@@ -4793,7 +4895,7 @@ contains
                     faceI(1:Nfaces,fi_BCtype)==BCnone)
         end if
 
-        !% fp_J1_BCup
+    !% fp_J1_BCup
         !% - faces with only one link that are not outfalls
         !%   these are either J1 or BCup
         ptype => col_faceP(fp_J1_BCup)
@@ -4811,7 +4913,7 @@ contains
                 (faceI(1:Nfaces,fi_BCtype)==BCup) )
         end if
 
-        !% fp_Diag
+    !% fp_Diag
         !% - all faces adjacent to a diagnostic element
         ptype => col_faceP(fp_Diag)
         npack => npack_faceP(ptype)
@@ -4843,8 +4945,54 @@ contains
                        (elemI(eup,ei_QeqType) == diagnostic) &
                     ) )
         end if
-
         faceYN(faceP(1:npack, ptype),fYN_isDiag_adjacent) = .true.
+
+    !% fp_Diag_notJB
+        !% --- faces that are diagnostic but face is not JB face
+        ptype => col_faceP(fp_Diag_notJB)
+        npack => npack_faceP(ptype)
+
+        npack =  count( &
+                faceYN(1:Nfaces,fYN_isInteriorFace)                 &
+                .and.                                               &
+                (                                                   &
+                   (elemI(edn,ei_HeqType) == diagnostic)            &
+                   .or.                                             &
+                   (elemI(edn,ei_QeqType) == diagnostic)            &
+                   .or.                                             &
+                   (elemI(eup,ei_HeqType) == diagnostic)            &
+                   .or.                                             &
+                   (elemI(eup,ei_QeqType) == diagnostic)            &
+                )                                                   &
+                .and.                                               &
+                (                                                   &
+                    (.not. faceYN(1:Nfaces,fYN_isDownstreamJBFace)) &
+                    .and.                                           &
+                    (.not. faceYN(1:Nfaces,fYN_isUpstreamJBFace))   &
+                ) )
+
+        if (npack > 0) then 
+            faceP(1:npack, ptype) = pack( fIdx,                     &
+                faceYN(1:Nfaces,fYN_isInteriorFace)                 &
+                .and.                                               &
+                (                                                   &
+                    (elemI(edn,ei_HeqType) == diagnostic)           &
+                    .or.                                            &
+                    (elemI(edn,ei_QeqType) == diagnostic)           &
+                    .or.                                            &
+                    (elemI(eup,ei_HeqType) == diagnostic)           &
+                    .or.                                            &
+                    (elemI(eup,ei_QeqType) == diagnostic)           &
+                )                                                   &
+                .and.                                               &
+                (                                                   &
+                    (.not. faceYN(1:Nfaces,fYN_isDownstreamJBFace)) &
+                    .and.                                           &
+                    (.not. faceYN(1:Nfaces,fYN_isUpstreamJBFace))   &
+                ) )
+        end if       
+
+
 
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

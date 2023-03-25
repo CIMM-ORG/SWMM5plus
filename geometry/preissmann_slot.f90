@@ -392,7 +392,7 @@ module preissmann_slot
             fPNumber   => faceR(:,fr_Preissmann_Number)
             isSurcharge=> elemYN(:,eYN_isSurcharged)
             isSlot     => elemYN(:,eYN_isPSsurcharged)
-            isDnJB     => elemYN(:,eYN_isDownstreamJB)
+            isDnJB     => elemYN(:,eYN_isElementDownstreamOfJB)
             fSlot      => faceYN(:,fYN_isPSsurcharged)
             SlotMethod      => setting%Solver%PreissmannSlot%Method
             TargetPCelerity => setting%Solver%PreissmannSlot%TargetCelerity

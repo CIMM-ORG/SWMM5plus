@@ -157,12 +157,14 @@ contains
 
             ! call util_utest_CLprint ('initial_condition afer IC_from_nodedata')
 
-
-
         !% --- second call for diagnostic that was next to JM/JB
         sync all
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
         call init_IC_diagnostic_geometry_from_adjacent (.false.)
+
+        !% --- identify special case diagnostic elements that have JB on either side
+        !%     these have the face flowrates frozen in the junction residual computation
+        call init_IC_diagnostic_JB_bounded ()
 
         !% --- error checking for nullvalues
         !%     keep for future debugging use.
@@ -278,7 +280,7 @@ contains
 
         !% --- create the packed set of nodes for BC
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_nodes'
-        call pack_nodes()
+        call pack_nodes_BC()
         call util_allocate_bc()
 
         !% --- initialize Manning's n for forcemain elements
@@ -316,7 +318,7 @@ contains
         call update_auxiliary_variables_CC (whichTM)
 
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables JM'
-        call update_auxiliary_variables_JM (whichTM)
+        call update_auxiliary_variables_JMJB (whichTM, .false.)
 
             ! call util_utest_CLprint ('initial_condition after update_auxiliary_variables')
 
@@ -346,7 +348,7 @@ contains
 
         !% --- update faces
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
-        call face_interpolation (fp_all,ALLtm,.false.,.false.,.false.)
+        call face_interpolation (fp_all,.true.,.true.,.true.,.false.,.false.)
 
             ! call util_utest_CLprint ('initial_condition after face_interpolation')
 
@@ -360,7 +362,7 @@ contains
 
         !% --- update the initial condition in all diagnostic elements
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
-        call diagnostic_toplevel (.false.)
+        call diagnostic_toplevel (ep_Diag, fp_Diag, 2)
 
            ! call util_utest_CLprint ('initial_condition after diagnostic_toplevel')
 
@@ -3047,8 +3049,7 @@ contains
         do ii=1,size(packIdx)
             !% --- the present point
             thisP  => packIdx(ii)
-            
-
+        
                 ! print *, '=========================='
                 ! print *, 'thisP ',thisP
                 ! print *, 'this elem type ',trim(reverseKey(elemI(thisP,ei_elementType)))
@@ -3181,6 +3182,87 @@ contains
             deallocate(packIdx)
 
     end subroutine init_IC_diagnostic_geometry_from_adjacent
+!%
+!%==========================================================================
+!%==========================================================================
+!% 
+    subroutine init_IC_diagnostic_JB_bounded ()
+        !%-----------------------------------------------------------------
+        !% Description: 
+        !% identifies the special case diagnostic elements that have JB
+        !% on either side.
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer, dimension(:), allocatable, target :: packIdx
+            integer, pointer :: eIdx, fUp, fDn, AidxUp, AidxDn
+            integer          :: ii, CiUp, CiDn
+        !%-----------------------------------------------------------------
+        !% Prelminiaries
+            !% --- initialize all faceYN(:,fYN_isJB_QfrozenByDiag) to false. 
+            !%     reset to true only if diagnostic bounded by two junctions
+            !%     is found
+            faceYN(:,fYN_isJB_QfrozenByDiag) = .false.
+
+            !% --- initialize elemSI(:,esi_JunctionBranchCanModifyQ) to oneI
+            !%     for all JB
+            packIdx = pack(elemI(:,ei_Lidx), (elemI(:,ei_elementType) .eq. JB))
+            if (size(packIdx) < 1) return !% no JB found, so not possible
+            !% --- initialization to allowing modification
+            elemSI(packIdx(1:size(packIdx)),esi_JunctionBranch_CanModifyQ) = oneI 
+
+            deallocate(packIdx)
+            
+            !% --- get the set of weirs, orifices, and pumps (does not include outlet)
+            packIdx = pack(elemI(:,ei_Lidx),              &
+                ((elemI(:,ei_elementType) .eq. pump)      &
+                 .or.                                     &
+                 (elemI(:,ei_elementType) .eq. weir)      &
+                 .or.                                     &
+                 (elemI(:,ei_elementType) .eq. orifice)) )
+        !%-----------------------------------------------------------------
+
+        !% --- cycle through diagnostic elements        
+        do ii=1,size(packIdx)
+            !% --- element and face indexes on this image
+            eIdx  => packIdx(ii)
+            fUp   => elemI(eIdx,ei_Mface_uL)
+            fDn   => elemI(eIdx,ei_Mface_dL)
+
+            !% --- identify upstream element
+            !%     which may be on a different image
+            if (elemYN(eIdx,eYN_isBoundary_up)) then 
+                CiUp   =  faceI(fUp,fi_Connected_image)
+                AidxUp => faceI(fUp,fi_GhostElem_uL)
+            else
+                CiUp   =  this_image()
+                AidxUp => faceI(fUp,fi_Melem_uL)
+            end if
+
+            !% --- identify downstream element
+            !%     which may be on a different image
+            if (elemYN(eIdx,eYN_isBoundary_dn)) then 
+                CiDn   =  faceI(fDn,fi_Connected_image)
+                AidxDn => faceI(fDn,fi_GhostElem_dL)
+            else
+                CiDn   =  this_image()
+                AidxDn => faceI(fDn,fi_Melem_dL)
+            end if
+
+            if ((elemI(AidxUp,ei_elementType)[CiUp] == JB)   &
+                .and.                                        &
+                (elemI(AidxDn,ei_elementType)[CiDn] == JB) ) then
+                !% --- diagnostic that requires special treatment
+                !%     during junction computation
+                faceYN(fUp,fYN_isJB_QfrozenByDiag) = .true.  
+                faceYN(fDn,fYN_isJB_QfrozenByDiag) = .true.
+                elemSI(eIdx,esi_JunctionBranch_CanModifyQ) = zeroI
+            end if
+
+        end do
+
+        deallocate(packIdx)
+
+    end subroutine init_IC_diagnostic_JB_bounded
 !%
 !%==========================================================================
 !%==========================================================================
@@ -3431,7 +3513,7 @@ contains
             !%     Zbottom with implied storage
             lowZ = huge(oneR)
             do kk=1,max_branch_per_node
-                if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) == 1) then 
+                if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) == oneI) then 
                     lowZ = min(lowZ, elemR(JMidx+kk,er_Zbottom))
                 end if
             end do
@@ -3702,10 +3784,19 @@ contains
             end if
 
             !% --- check if the connected element is CC
-            if (elemI(AIdx,ei_elementType) == CC) then 
+            if (elemI(Aidx,ei_elementType) == CC) then 
                 elemSI(JBidx,esi_JunctionBranch_CC_adjacent) = oneI
             else
                 elemSI(JBidx,esi_JunctionBranch_CC_adjacent) = zeroI
+            end if
+
+            !% --- check if the connected element is Diagnostic weir, pump or orifice
+            if ((elemI(Aidx,ei_elementType) == weir)    .or. &
+                (elemI(Aidx,ei_elementTYpe) == orifice) .or. &
+                (elemI(Aidx,ei_elementType) == pump)           ) then 
+                elemSI(JBidx,esi_JunctionBranch_Diag_adjacent) = oneI
+            else
+                elemSI(JBidx,esi_JunctionBranch_Diag_adjacent) = zeroI
             end if
 
             !% --- Ability to surcharge is set by JM
@@ -5470,7 +5561,7 @@ contains
         call bc_step()
         if (crashI==1) return
 
-        call pack_bc()
+        call pack_data_BC()
 
         if (setting%Profile%useYN) call util_profiler_stop (pfc_init_bc)
 

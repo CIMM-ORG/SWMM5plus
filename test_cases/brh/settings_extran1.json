@@ -1,0 +1,54 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "level02_test",
+        "Short" : "level02_test"
+    },
+    "Discretization" : {
+        "NominalElemLength" : 61.00
+    },
+    "Junction" : {
+        "ForceNodesJM" : true
+    },
+    "Limiter" : {
+        "Dt" : {
+            "Minimum"     : 1e-4
+        }
+    },    
+    "Output" : {
+        "StoredLevels" : 10000,
+        "CommandLine" : {
+            "interval" : 500
+        },
+        "DataOut" :{
+            "isAreaOut"         : true,
+            "isDepthOut"        : true,
+            "isFlowrateOut"     : true,
+            "isHeadOut"         : true,
+            "isManningsNout"    : true,
+            "isVelocityOut"     : true,
+            "isVolumeOut"       : true,
+            "isWaveSpeedOut"    : true,
+            "isPreissmannCelerityOut"   : true
+        },
+        "Report" : {
+            "useSWMMinpYN" : true,
+            "provideYN" : true,
+            "useHD5F"   : true,
+            "useCSV"    : true,
+            "suppress_MultiLevel_Output" : false,
+            "StartTime" : 0.0,
+            "TimeInterval" : 500.0,
+            "TimeUnits" : "Hours"
+        }
+    },
+    "Simulation" : {
+        "useHydrology" : false
+    },
+    "Solver" : {
+        "PreissmannSlot" : {
+            "Method" : "DynamicSlot"
+        }
+    }
+}

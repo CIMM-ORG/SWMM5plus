@@ -1,0 +1,41 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "test",
+        "Short" : "test"
+    },
+    "Discretization" : {
+        "NominalElemLength" : 100.00
+    },
+    "Output" : {
+        "Verbose" : true,
+        "Warning" : true,
+        "StoredLevels" : 10000,
+        "CommandLine" : {
+            "quietYN" : false,
+            "interval" : 500
+        },
+        "DataOut" :{
+            "isAreaOut"         : true,
+            "isDepthOut"        : true,
+            "isFlowrateOut"     : true,
+            "isFroudeNumberOut" : false,
+            "isHeadOut"         : true,
+            "isHydRadiusOut"    : false,
+            "isPerimeterOut"    : false,
+            "isManningsNout"    : true,
+            "isSlotWidthOut"    : false,
+            "isSlotDepthOut"    : false,
+            "isTopWidthOut"     : false,
+            "isVelocityOut"     : true,
+            "isVolumeOut"       : true,
+            "isWaveSpeedOut"    : true,
+            "isPreissmannCelerityOut"   : true
+        },
+        "Report" : {
+            "TimeInterval" : 300.0,
+            "TimeUnits" : "Hours"
+        }
+    }
+}

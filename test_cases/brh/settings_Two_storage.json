@@ -20,7 +20,7 @@
         }
     },
     "Discretization" : {
-        "AdustLinkLengthForJunctionBranchYN" : false,
+        "AdjustLinkLengthForJunctionBranchYN" : false,
         "ElemShortingFactor" : 0.33,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",

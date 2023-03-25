@@ -300,7 +300,7 @@ module orifice_elements
         EffectiveFullArea     => elemSR(eIdx,esr_Orifice_EffectiveFullArea)
         FractionCritDepth     => elemSR(eIdx,esr_Orifice_FractionCriticalDepth)
         Zcrest                => elemSR(eIdx,esr_Orifice_Zcrest)
-        dQdH                  => elemR(eIdx,er_dQdH)
+        dQdH                  => elemSR(eIdx,esr_Orifice_dQdHe)
         Flowrate              => elemR(eIdx,er_Flowrate)
         WeirExponent          => Setting%Orifice%TransverseWeirExponent
         grav                  => setting%constant%gravity

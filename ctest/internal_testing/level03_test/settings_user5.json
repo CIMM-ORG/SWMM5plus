@@ -6,11 +6,7 @@
         "Short" : "default"
     },
     "Discretization" : {
-        "NominalElemLength" : 50.00,
-        "ForceNodesJM" : true,
-        "JunctionBranchLengthFactor" : 1.0, 
-        "MinElemLengthFactor"        : 0.8,
-        "MinElemLengthMethod" : "ElemLengthAdjust"
+        "NominalElemLength" : 10.00
     },
     "Limiter" : {
         "Dt" : {

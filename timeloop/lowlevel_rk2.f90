@@ -1162,7 +1162,7 @@ module lowlevel_rk2
                     ! handle the upstream branches
                     do kk=1,max_branch_per_node,2
                         tB = tM + kk  !% JB branch ID
-                        if (BranchExists(tB)==1) then
+                        if (BranchExists(tB)==oneI) then
                             ! head difference across the branch
                             tFup => iFaceUp(tB)
                             !% use the downstream face, so that near-zero is handled
@@ -1336,7 +1336,7 @@ module lowlevel_rk2
                     do kk=2,max_branch_per_node,2
                         !print *, kk ,'in junction branch'
                         tB = tM + kk
-                        if (BranchExists(tB)==1) then
+                        if (BranchExists(tB)==oneI) then
                             !print *, kk, 'in junction branch'
                             tFdn => iFaceDn(tB)
                             !% use the upstream face so that near-zero is handled
@@ -1595,7 +1595,7 @@ module lowlevel_rk2
                 ! handle the upstream branches
                 do kk=1,max_branch_per_node,2
                     tB = tM + kk  !% JB branch ID
-                    if (BranchExists(tB)==1) then
+                    if (BranchExists(tB)==oneI) then
 
                         ! head difference across the branch
                         tFup => iFaceUp(tB)
@@ -1669,7 +1669,7 @@ module lowlevel_rk2
                 do kk=2,max_branch_per_node,2
                     !print *, kk ,'in junction branch'
                     tB = tM + kk
-                    if (BranchExists(tB)==1) then
+                    if (BranchExists(tB)==oneI) then
 
                         !print *, kk, 'in junction branch'
                         tFdn => iFaceDn(tB)
@@ -1905,7 +1905,7 @@ module lowlevel_rk2
                 do kk=1,max_branch_per_node,2
                     tB = tM + kk !% JB branchID 
 
-                    if (BranchExists(tB) == 1) then 
+                    if (BranchExists(tB) == oneI) then 
                         tFup => iFaceUp(tB)  !% index of upstream face
                         
                         !% --- provisional head difference
@@ -2135,7 +2135,7 @@ module lowlevel_rk2
                 do kk=2,max_branch_per_node,2
                     tB = tM + kk !% JB branchID 
 
-                    if (BranchExists(tB) == 1) then 
+                    if (BranchExists(tB) == oneI) then 
                         tFdn => iFaceDn(tB)  !% index of upstream face
 
                         !% --- provisional head difference

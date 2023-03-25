@@ -127,7 +127,7 @@ module pump_elements
         !% Aliases:
             CurveID  => elemSI(eIdx,esi_Pump_CurveID)
             FlowRate => elemR(eIdx,er_Flowrate)
-            dQdH     => elemR(eIdx,er_dQdH)
+            dQdH     => elemSR(eIdx,esr_Pump_dQdHp)
             Head     => elemR(eIdx,er_Head)
             Depth    => elemR(eIdx,er_Depth)
             Volume   => elemR(eIdx,er_Volume)
@@ -213,7 +213,7 @@ module pump_elements
             FlowRate  => elemR (eIdx,er_Flowrate)
             Head      => elemR (eIdx,er_Head)
             Depth     => elemR (eIdx,er_Depth)
-            dQdH      => elemR (eIdx,er_dQdH)
+            dQdH      => elemSR(eIdx,esr_Pump_dQdHp)
             tempFlowrate => elemR(eIdx,er_Temp01)
             tempDepth    => elemR(eIdx,er_Temp02)
         !%-----------------------------------------------------------------
@@ -298,7 +298,7 @@ module pump_elements
             CurveID  => elemSI(eIdx,esi_Pump_CurveID)
             Head     => elemR(eIdx,er_Head)
             Depth    => elemR(eIdx,er_Depth)
-            dQdH     => elemR(eIdx,er_dQdH)
+            dQdH     => elemSR(eIdx,esr_Pump_dQdHp)
             FlowRate => elemR(eIdx,er_Flowrate)
             tempFlowrate => elemR(eIdx,er_Temp01)
             tempDepth    => elemR(eIdx,er_Temp02)

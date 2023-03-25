@@ -342,7 +342,7 @@ module define_indexes
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
         enumerator :: er_DepthAtBreadthMax          !% depth below the point of maximum breadth
         enumerator :: er_dHdA                       !% geometric change in elevation with area (used in AC only)
-        enumerator :: er_dQdH
+        !enumerator :: er_dQdH
         enumerator :: er_2B_psiL                    !% intermediate term for elements adjacent to junctions
         enumerator :: er_dSlotArea                  !% change in slot volume
         enumerator :: er_dSlotDepth                 !% change in slot depth
@@ -456,8 +456,9 @@ module define_indexes
         enumerator :: eYN_hasFlapGate                   !% TRUE if 1-way flap gate is present
         enumerator :: eYN_isBoundary_up                 !% TRUE if the element is connected to a shared face upstream thus a boundary element of a partition
         enumerator :: eYN_isBoundary_dn                 !% TRUE if the element is connected to a shared face downstream thus a boundary element of a partition
-        enumerator :: eYN_isCulvert                     !% TRUE if element is inlet, outlet or culvert barrel
-        enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
+        enumerator :: eYN_isCulvert                     !% TRUE if CC element is inlet, outlet or culvert barrel
+        !enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
+        !enumerator :: eYN_isUpstreamJB                !% TRUE if the element is downstream JB
         enumerator :: eYN_isDummy
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
         enumerator :: eYN_isElementUpstreamOfJB
@@ -507,6 +508,8 @@ module define_indexes
         !enumerator :: ep_culvert_outlet             !% all CC elements that are also culvert outlets
         !enumerator :: ep_culvert_inout              !% all CC elements that are both culvert inlet and outlet
         enumerator :: ep_Diag                       !% diagnostic elements (static)
+        enumerator :: ep_Diag_notJB                 !% diagnostic elements not adjacent to JB (static)
+        enumerator :: ep_Diag_JBadjacent            !% diagnostic elements adjacent to JB element (static)
         enumerator :: ep_ETM                        !% all ETM elements
         enumerator :: ep_JM                         !% all JM elements
         enumerator :: ep_JM_AC                      !% junction mains using AC method
@@ -525,9 +528,11 @@ module define_indexes
         !enumerator :: ep_SmallDepth_CC_AC
         !enumerator :: ep_SmallDepth_JM_ALLtm  !% 20220122brh
         enumerator :: ep_SmallDepth_JM_ETM    !% 20220122brh
+        enumerator :: ep_SmallDepth_JB_ETM 
         !enumerator :: ep_SmallDepth_JM_AC     !% 20220122brh
         !enumerator :: ep_ZeroDepth_CC_ALLtm         !% zero depth with any time march
         enumerator :: ep_ZeroDepth_CC_ETM
+        enumerator :: ep_ZeroDepth_JB_ETM
         !enumerator :: ep_ZeroDepth_CC_AC
         !enumerator :: ep_ZeroDepth_JM_ALLtm         !% zero depth JM
         enumerator :: ep_ZeroDepth_JM_ETM
@@ -659,6 +664,8 @@ module define_indexes
         enumerator ::  esi_JunctionMain_OverflowType               !% NoOverflow, Ponding, OverflowWeir
         enumerator ::  esi_JunctionBranch_Exists                   !% assigned 1 if branch exists
         enumerator ::  esi_JunctionBranch_CC_adjacent              !% assigned 1 if CC is adjacent element
+        enumerator ::  esi_JunctionBranch_Diag_adjacent            !% assigned 1 if Diagnostic is adjacent element
+        enumerator ::  esi_JunctionBranch_CanModifyQ               !% assigned 1 if junction mass residual can modifyQ
         enumerator ::  esi_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
         enumerator ::  esi_JunctionBranch_Main_Index               !% elem idx of the junction main for this branch
         enumerator ::  esi_JunctionBranch_IsUpstream               !% 1 if this is an upstream branch, 0 if downstream
@@ -768,8 +775,13 @@ module define_indexes
         !enumerator ::  esr_JunctionMain_PondedVolume
         enumerator ::  esr_JunctionMain_SurchargeExtraDepth
         enumerator ::  esr_JunctionMain_OverflowOrifice_Length
-        enumerator ::  esr_Junctionmain_OverflowOrifice_Height
+        enumerator ::  esr_JunctionMain_OverflowOrifice_Height
+        enumerator ::  esr_JunctionMain_OverflowRate
+        enumerator ::  esr_JunctionMain_StorageRate
         enumerator ::  esr_JunctionBranch_Kfactor
+        enumerator ::  esr_JunctionBranch_fa 
+        enumerator ::  esr_JunctionBranch_fb
+        enumerator ::  esr_JunctionBranch_dQdH !% rate of change of Q with H in JM
         enumerator ::  esr_Storage_Constant
         enumerator ::  esr_Storage_Coefficient
         enumerator ::  esr_Storage_Exponent
@@ -785,6 +797,7 @@ module define_indexes
         enumerator ::  esr_Orifice_CriticalHead             !% critical head for weir flow through an orifice
         enumerator ::  esr_Orifice_FractionCriticalDepth    !% critical depth fracttion to distinct between weir and orifice flow
         enumerator ::  esr_Orifice_DischargeCoeff           !% discharge coefficient orifice
+        enumerator ::  esr_Orifice_dQdHe                    !% rate of change of flowrate with change in effective head
         enumerator ::  esr_Orifice_FullDepth                !% original orifice opening
         enumerator ::  esr_Orifice_FullArea                 !% original orifice opening area
         enumerator ::  esr_Orifice_EffectiveFullDepth       !% effective full depth after control intervention
@@ -807,6 +820,7 @@ module define_indexes
         enumerator ::  esr_Outlet_Exponent                 !% exponent for outlet dishcharge relation
         enumerator ::  esr_Outlet_Coefficient              !% power for outlet dishcharge relation
         enumerator ::  esr_Outlet_Zcrest                   !% outlet "crest" elevation - lowest edge of outlet
+        enumerator ::  esr_Outlet_dQdHe
         enumerator ::  esr_Outlet_lastplusone !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSR_Outlet = esr_Outlet_lastplusone-1
@@ -819,6 +833,7 @@ module define_indexes
         enumerator ::  esr_Pump_yOff                       !% pump shutoff depth
         enumerator ::  esr_Pump_xMin                       !% minimum pt. on pump curve 
         enumerator ::  esr_Pump_xMax                       !% maximum pt. on pump curve
+        enumerator ::  esr_Pump_dQdHp                      !% rate of change of Q with pump head
         enumerator ::  esr_Pump_lastplusone                !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSR_Pump = esr_Pump_lastplusone-1
@@ -829,6 +844,7 @@ module define_indexes
         enumerator ::  esr_Weir_Triangular              !% discharge coefficient for triangular weir part
         enumerator ::  esr_Weir_FullDepth               !% original weir opening
         enumerator ::  esr_Weir_FullArea                !% original weir opening area
+        enumerator ::  esr_Weir_dQdHe                   !% reate of change of flowrate with change in effective head
         enumerator ::  esr_Weir_EffectiveFullDepth      !% effective full depth after control intervention
         enumerator ::  esr_Weir_EffectiveHeadDelta      !% effective head delta across weir
         enumerator ::  esr_Weir_NominalDownstreamHead   !% nominal downstream head
@@ -1265,7 +1281,6 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator ::  ebgr_Area = 1                  !% cross-sectional flow area (latest) boundary/ghost element 
-        enumerator ::  ebgr_Topwidth                  !% topwidth of flow at free surfac boundary/ghost element
         enumerator ::  ebgr_Depth                     !% Depth of flow boundary/ghost element
         enumerator ::  ebgr_2B_psiL                   !% 2 * beta * psi * L term for junctions
         enumerator ::  ebgr_EnergyHead                !% total energy head
@@ -1351,9 +1366,12 @@ module define_indexes
         enumerator :: fr_GammaM                 !% gamma momentum source term
         enumerator :: fr_Head_u                 !% piezometric head on upstream side of face
         enumerator :: fr_Head_d                 !% piezometric head on downstream side of face
+        enumerator :: fr_Head_Adjacent          !% head of adjacent upstream or downstream element for JB faces
+        enumerator :: fr_Topwidth_Adjacent      !% topwidth of adjacent upstream or downstream element
+        enumerator :: fr_Length_Adjacent        !% length of adjacent upstream or downstream element
         enumerator :: fr_KJunction_MinorLoss    !% K factor for entrance/exit loss from element adjacent to nJM
-        enumerator :: fr_Length_u               !% length of upstream element
-        enumerator :: fr_Length_d               !% length of downstream element
+        !enumerator :: fr_Length_u               !% length of upstream element
+        !enumerator :: fr_Length_d               !% length of downstream element
         enumerator :: fr_psiL2                  !% head loss term for juction computation
         enumerator :: fr_Zbottom                !% zbottom of faces
         !enumerator :: fr_ZbreadthMax            !% elevation of maximum breadth
@@ -1392,9 +1410,12 @@ module define_indexes
         enumerator :: fYN_isnull
         enumerator :: fYN_isPSsurcharged
         enumerator :: fYN_isDownstreamJBFace
+        enumerator :: fYN_isUpstreamJBFace
         enumerator :: fYN_isFaceOut
-        !% HACK: The following might not be needed
         enumerator :: fYN_isDiag_adjacent
+        enumerator :: fYN_isJB_adjacent
+        enumerator :: fYN_isJB_QfrozenByDiag
+        !% HACK: The following might not be needed
         ! enumerator :: fYN_isETM_adjacent
         ! enumerator :: fYN_isBCface
         enumerator :: fYN_lastplusone !% must be last enum item
@@ -1411,9 +1432,11 @@ module define_indexes
     !% These are for the packed array of face data
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: fp_all = 1                !% all faces execpt boundary, null, and shared faces
+        enumerator :: fp_all = 1                !% all interior faces except boundary, null, and shared faces
+        enumerator :: fp_notJB                  !% all interior faces except JB, boundary, null, and shared
         enumerator :: fp_AC                     !% face with adjacent AC element
         enumerator :: fp_Diag                   !% face with adjacent diagnostic element
+        enumerator :: fp_Diag_notJB
         enumerator :: fp_JB                     !% face with adjacent JB
         enumerator :: fp_elem_downstream_is_zero
         enumerator :: fp_elem_upstream_is_zero

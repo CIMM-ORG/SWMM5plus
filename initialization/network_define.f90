@@ -1531,11 +1531,14 @@ contains
                     elemSI(ElemLocalCounter,esi_JunctionBranch_Exists)           = oneI
                     elemSI(ElemLocalCounter,esi_JunctionBranch_Link_Connection)  = upBranchIdx
                     elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(upBranchIdx)
+                    elemYN(ElemLocalCounter,eYN_isElementUpstreamOfJB) = .true.
                     faceI(FaceLocalCounter,fi_link_idx_BIPquick) = upBranchIdx
                     faceI(FaceLocalCounter,fi_link_idx_SWMM)     = link%I(upBranchIdx,li_parent_link)
                     !% set zbottom
                     elemR(ElemLocalCounter,er_Zbottom)  = link%R(upBranchIdx,lr_ZbottomDn)
                     faceR(FaceLocalCounter,fr_Zbottom)  = elemR(ElemLocalCounter,er_Zbottom)
+                    !% identifier for downstream junction branch faces
+                    faceYN(FaceLocalCounter,fYN_isUpstreamJBFace) = .true.
                     !% Check 4: this node is the connecting node across partitions
                     if ( (node%I(thisNode,ni_P_is_boundary) == EdgeNode)  .and. &
                          (link%I(upBranchIdx,li_P_image)    /= image   ) )  then
@@ -1611,14 +1614,14 @@ contains
                     elemSI(ElemLocalCounter,esi_JunctionBranch_Exists)          = oneI
                     elemSI(ElemLocalCounter,esi_JunctionBranch_Link_Connection) = dnBranchIdx
                     elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(dnBranchIdx)
-                    elemYN(ElemLocalCounter,eYN_isDownstreamJB) = .true.
+                    elemYN(ElemLocalCounter,eYN_isElementDownstreamOfJB) = .true.
                     faceI(FacelocalCounter,fi_link_idx_BIPquick) = dnBranchIdx
                     faceI(FaceLocalCounter,fi_link_idx_SWMM)     = link%I(dnBranchIdx,li_parent_link)
                     !% set zbottom
                     elemR(ElemLocalCounter,er_Zbottom)  = link%R(dnBranchIdx,lr_ZbottomUp)
                     faceR(FaceLocalCounter,fr_Zbottom)  = elemR(ElemLocalCounter,er_Zbottom)
                     !% identifier for downstream junction branch faces
-                    faceYN(FaceLocalCounter,fYN_isDownstreamJbFace) = .true.
+                    faceYN(FaceLocalCounter,fYN_isDownstreamJBFace) = .true.
                     !% Check 4: if the link connecting this branch is a part of this partition and
                     !% the node is not an edge node (meaning this node is the connecting node
                     !% across partitions)

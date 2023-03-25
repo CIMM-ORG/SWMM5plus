@@ -87,9 +87,9 @@ module roadway_weir_elements
         real(8) :: HeadUp, HeadDn, cD
         logical :: useVariableCoeff
     !%-----------------------------------------------------------------------------
-        dQdH                  => elemR(eIdx,er_dQdH)
-        Flowrate              => elemR(eIdx,er_Flowrate)
-        Head                  => elemR(eIdx,er_Head)
+        dQdH                  => elemSR(eIdx,esr_Weir_dQdHe)
+        Flowrate              => elemR (eIdx,er_Flowrate)
+        Head                  => elemR (eIdx,er_Head)
         RoadHeight            => elemSR(eIdx,esr_Weir_Zcrest) 
         RoadWidth             => elemSR(eIdx,esr_Wier_RoadWidth)
         disCoeff              => elemSR(eIdx,esr_Weir_Rectangular) 

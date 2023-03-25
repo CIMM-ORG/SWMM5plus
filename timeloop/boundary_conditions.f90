@@ -14,7 +14,7 @@ module boundary_conditions
     use xsect_tables
     use utility_crash
     use utility_datetime, only: util_datetime_seconds_precision
-   ! use utility_unit_testing, only: util_utest_CLprint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -46,7 +46,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% --- ensure that we have BC data that brackets the current time
-        !print *, 'calling bc_step'
+        ! print *, 'calling bc_step'
 
         call bc_step()
 
@@ -61,7 +61,7 @@ contains
         ! print *, 'calling bc_interpolate_head'
         call bc_interpolate_head()
 
-            ! call util_utest_CLprint ('2222 after bc_interpolate_head')
+            !  call util_utest_CLprint ('2222 after bc_interpolate_head')
 
         !% --- store the BC value in face arrays
         ! print *, 'calling face_interpolate_bc'
@@ -690,8 +690,8 @@ contains
         !% --- cycle throuhg the head BC
         do ii=1, N_headBC
 
-            ! print *, 'in bc_interpolate_head'
-            ! print *, ii
+            print *, 'in bc_interpolate_head'
+            print *, ii
 
             nIdx        => BC%headI(ii,bi_node_idx)
             fIdx        => BC%headI(ii,bi_face_idx)
@@ -721,9 +721,11 @@ contains
 
             critDepth = geo_criticaldepth_singular(BC%HeadI(ii,bi_UTidx))
             
-            ! print *, 'crit depth ',critDepth 
+             print *, 'crit depth ',critDepth 
 
             normDepth = geo_normaldepth_singular  (BC%HeadI(ii,bi_UTidx))
+
+             print *, 'norm depth ',normDepth
 
             ! print *, 'here at BBBB', BC%headI(ii,bi_subcategory) , ' ', trim(reverseKey(BC%headI(ii,bi_subcategory)))
             
@@ -791,44 +793,47 @@ contains
                 ! end if
 
             case (BCH_normal)
-                !% --- Error check, normal depth is infinite for a reverse flow, so a flap gate is needed
-                if (.not. BC%headYN(ii,bYN_hasFlapGate)) then
-                    print *, 'CONFIGURATION ERROR: a NORMAL OUTFALL must have flap gate set to YES'
-                    print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
-                    call util_crashpoint(5668663)
-                end if
 
-                if (elemI(eIdx,ei_elementType) == CC) then
-                    !% --- Error check, normal depth is infinite for adverse slope
-                    !%     Use setting%Eps%Machine so that slope must be greater than precision 
-                    if (elemR(eIdx,er_BottomSlope) .le. onehundredR*setting%Eps%Machine) then
-                        print *, 'CONFIGURATION ERROR: a NORMAL OUTFALL must be connected to an...'
-                        print *, '...conduit/channel element with non-zero, positive bottom slope.'
-                        print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
-                        print *, 'Connected to element ', eIdx
-                        print *, 'Part of link ',trim(  link%Names(elemI(eIdx,ei_link_Gidx_BIPquick))%str)
-                        print *, 'Bottom slope is ',elemR(eIdx,er_BottomSlope)
-                        call util_crashpoint(728474)
-                    end if
+                !% --- normal boundary handled in face_interp 20230325
 
-                    !% --- depth is the larger of the normal depth or the small depth cutoff
-                    thisDepth = max(normDepth, setting%SmallDepth%DepthCutoff)
+                ! !% --- Error check, normal depth is infinite for a reverse flow, so a flap gate is needed
+                ! if (.not. BC%headYN(ii,bYN_hasFlapGate)) then
+                !     print *, 'CONFIGURATION ERROR: a NORMAL OUTFALL must have flap gate set to YES'
+                !     print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
+                !     call util_crashpoint(5668663)
+                ! end if
 
-                    ! !% --- BC head is the normal depth + Zbottom - referencehead
-                    ! headValue(ii) = faceR(fIdx,fr_Zbottom)                   &
-                    !               + thisDepth                                &
-                    !               - setting%Solver%ReferenceHead
+                ! if (elemI(eIdx,ei_elementType) == CC) then
+                !     !% --- Error check, normal depth is infinite for adverse slope
+                !     !%     Use setting%Eps%Machine so that slope must be greater than precision 
+                !     if (elemR(eIdx,er_BottomSlope) .le. onehundredR*setting%Eps%Machine) then
+                !         print *, 'CONFIGURATION ERROR: a NORMAL OUTFALL must be connected to an...'
+                !         print *, '...conduit/channel element with non-zero, positive bottom slope.'
+                !         print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
+                !         print *, 'Connected to element ', eIdx
+                !         print *, 'Part of link ',trim(  link%Names(elemI(eIdx,ei_link_Gidx_BIPquick))%str)
+                !         print *, 'Bottom slope is ',elemR(eIdx,er_BottomSlope)
+                !         call util_crashpoint(728474)
+                !     end if
 
-                    ! !% --- Outfall head should not be larger than the upstream
-                    ! headValue(ii) = min(headValue(ii),elemR(eIdx,er_Head))    
+                !     !% --- depth is the larger of the normal depth or the small depth cutoff
+                !     thisDepth = max(normDepth, setting%SmallDepth%DepthCutoff)
 
-                else
-                    print *, 'CODE ERROR: NEED ALGORITHM DESIGN FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
-                    call util_crashpoint(792873)
-                    !% for free dnBC, if the upstream link is not CC (i.e. weir, orifice etc)
-                    !% the depth in the node is zero
-                    !headValue(ii) =  faceR(fIdx,fr_Zbottom)
-                end if
+                !     ! !% --- BC head is the normal depth + Zbottom - referencehead
+                !     ! headValue(ii) = faceR(fIdx,fr_Zbottom)                   &
+                !     !               + thisDepth                                &
+                !     !               - setting%Solver%ReferenceHead
+
+                !     ! !% --- Outfall head should not be larger than the upstream
+                !     ! headValue(ii) = min(headValue(ii),elemR(eIdx,er_Head))    
+
+                ! else
+                !     print *, 'CODE ERROR: NEED ALGORITHM DESIGN FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
+                !     call util_crashpoint(792873)
+                !     !% for free dnBC, if the upstream link is not CC (i.e. weir, orifice etc)
+                !     !% the depth in the node is zero
+                !     !headValue(ii) =  faceR(fIdx,fr_Zbottom)
+                ! end if
 
                 ! % --- Set final BC elevation following EPA SWMM in node.c/outfall_setOutletDepth
                 ! %     Note that outfall z should already be included in zbottom
@@ -838,54 +843,69 @@ contains
                 ! print *, 'in ',trim(subroutine_name)
                 ! print *, thisDepth, critDepth, normDepth
 
-                smallDepth = min(critDepth,normDepth)
-                if (thisDepth < smallDepth) then
-                    !% --- Head should not be larger than the upstream
-                    !%     to prohibit backwater and inflow when critical or normal depth controls.
-                    headValue(ii) = min(smallDepth + zbottom - setting%Solver%ReferenceHead, &
-                                        elemR(eIdx,er_Head)) 
-                else
-                    !% --- otherwise head based on thisDepth
-                    headValue(ii) = thisDepth + zbottom - setting%Solver%ReferenceHead
-                end if
+                ! smallDepth = min(critDepth,normDepth)
+                ! if (thisDepth < smallDepth) then
+                !     !% --- Head should not be larger than the upstream
+                !     !%     to prohibit backwater and inflow when critical or normal depth controls.
+                !     headValue(ii) = min(smallDepth + zbottom - setting%Solver%ReferenceHead, &
+                !                         elemR(eIdx,er_Head)) 
+                ! else
+                !     !% --- otherwise head based on thisDepth
+                !     headValue(ii) = thisDepth + zbottom - setting%Solver%ReferenceHead
+                ! end if
     
                 ! print *, 'head value ',headValue(ii)  !%- zbottom + setting%Solver%ReferenceHead
 
             case (BCH_free)
-                !% --- Error check: Free outfall needs a flap gate, otherwise the negative flowrate into
-                !%     the domain determines the outfall height, which can set up an instability
-                if (.not. BC%headYN(ii,bYN_hasFlapGate)) then
-                    print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
-                    write(*,*) '***************************************************************'
-                    write(*,*) '** WARNING -- a FREE OUTFALL must have flap gate to prevent, **'
-                    write(*,*) '**    back water flow. Thus, flap gate has been set to YES   **'
-                    write(*,*) '***************************************************************'
-                    BC%headYN(ii,bYN_hasFlapGate) = .true.
-                    ! call util_crashpoint(566823)
-                end if
 
-                if (elemI(eIdx,ei_elementType) == CC) then
-                    !% --- Use the smaller of critical depth or normal depth,
-                    !%     but always use the depth cutoff as the smallest
-                    !%     value allowed to prevent absurdly small depths
-                    thisDepth = max(min(critDepth,normDepth), setting%SmallDepth%DepthCutoff)
+                !% --- free boundary handled in face_interpolation  20230325
+
+                ! !% --- Error check: Free outfall needs a flap gate, otherwise the negative flowrate into
+                ! !%     the domain determines the outfall height, which can set up an instability
+                ! if (.not. BC%headYN(ii,bYN_hasFlapGate)) then
+                !     print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
+                !     write(*,*) '***************************************************************'
+                !     write(*,*) '** WARNING -- a FREE OUTFALL must have flap gate to prevent, **'
+                !     write(*,*) '**    back water flow. Thus, flap gate has been set to YES   **'
+                !     write(*,*) '***************************************************************'
+                !     BC%headYN(ii,bYN_hasFlapGate) = .true.
+                !     ! call util_crashpoint(566823)
+                ! end if
+
+                ! if (elemI(eIdx,ei_elementType) == CC) then
+                !     !% --- Use the smaller of critical depth or normal depth,
+                !     !%     but always use the depth cutoff as the smallest
+                !     !%     value allowed to prevent absurdly small depths
+                !     !thisDepth = max(min(critDepth,normDepth), setting%SmallDepth%DepthCutoff)
+                !     !% 20230226 CHANGING TO ZERODEPTH VALUE
+                !     thisDepth = max(min(critDepth,normDepth), setting%ZeroValue%Depth * 1.1d0)
+
+                !     print *, 'crit, norm ',critDepth, normDepth
+                !     print *, 'thisdepth  ',thisDepth
+
+                !     ! print *, 'thisDepth   ',thisDepth  !%, setting%Solver%ReferenceHead
                 
 
-                    !% --- BC head is the depth + Zbottom - referencehead
-                    headValue(ii) = faceR(fIdx,fr_Zbottom)        &
-                                  + thisDepth     &
-                                  - setting%Solver%ReferenceHead
+                !     !% --- BC head is the depth + Zbottom - referencehead
+                !     headValue(ii) = faceR(fIdx,fr_Zbottom)        &
+                !                   + thisDepth     &
+                !                   - setting%Solver%ReferenceHead
 
-                    !% --- Head should not be larger than the upstream
-                    headValue(ii) = min(headValue(ii),elemR(eIdx,er_Head))   
+                !     ! print *, 'headValue 1:', headValue(ii)              
+
+                !     !% --- Head should not be larger than the upstream
+                !     headValue(ii) = min(headValue(ii),elemR(eIdx,er_Head))   
+
+                !     ! print *, 'headValue 2:', headValue(ii)  
+                !     ! print *, 'Zbottom     ',faceR(fIdx,fr_Zbottom) 
                 
-                else
-                    print *, 'CODE ERROR: NEED ALGORITHM FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
-                    call util_crashpoint(792873)
-                    !% for free dnBC, if the upstream link is not CC (i.e. weir, orifice etc)
-                    !% the depth in the node is zero
-                    !headValue(ii) =  faceR(fIdx,fr_Zbottom)
-                end if
+                ! else
+                !     print *, 'CODE ERROR: NEED ALGORITHM FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
+                !     call util_crashpoint(792873)
+                !     !% for free dnBC, if the upstream link is not CC (i.e. weir, orifice etc)
+                !     !% the depth in the node is zero
+                !     !headValue(ii) =  faceR(fIdx,fr_Zbottom)
+                ! end if
 
                 ! print *, 'critdepth  ',critDepth
                 ! print *, 'normDepth  ',normDepth

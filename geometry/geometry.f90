@@ -50,7 +50,7 @@ module geometry
 
     public :: geometry_toplevel
     public :: geometry_toplevel_CC
-    public :: geometry_toplevel_JM
+    public :: geometry_toplevel_JMJB
     public :: geo_common_initialize
     public :: geo_sectionfactor_from_depth_singular
     public :: geo_Qcritical_from_depth_singular
@@ -196,7 +196,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geometry_toplevel_JM (whichTM)
+    subroutine geometry_toplevel_JMJB (whichTM)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes geometry on junction JM elements for the  
@@ -229,7 +229,7 @@ module geometry
         !% --- JM values
         call geo_assign_JM (whichTM)
 
-        end subroutine geometry_toplevel_JM 
+        end subroutine geometry_toplevel_JMJB 
 !% 
 !%==========================================================================
 !%==========================================================================
@@ -1820,7 +1820,8 @@ module geometry
         !%-------------------------------------------------------------------
             integer, intent(in) :: whichTM, thisColP_JM
 
-            integer, pointer ::  Npack, thisP(:), BranchExists(:), thisSolve(:),  tM
+            integer, pointer :: Npack, thisP(:), BranchExists(:), thisSolve(:),  tM
+            integer, pointer :: fup(:), fdn(:)
             real(8), pointer :: area(:), depth(:), head(:), hydradius(:)
             real(8), pointer :: length(:), perimeter(:), topwidth(:), velocity(:), flowrate(:)
             real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ellDepth(:) !, ellMax(:)
@@ -1829,11 +1830,13 @@ module geometry
             real(8), pointer :: fulltopwidth(:), breadthmax(:)
             real(8), pointer :: slotDepth(:), slotVolume(:), overflow(:), fullhydradius(:)
             real(8), pointer :: Atable(:), Ttable(:), Rtable(:), Stable(:)
-            real(8), pointer :: grav  
+            real(8), pointer :: grav, fVel_u(:), fVel_d(:)  
             logical, pointer :: isSlot(:)     
 
             real(8) :: depthnorm, zeroHydRadius
             integer :: tB, ii, kk, tBA(1)
+
+            logical :: isUpBranch
 
         !% thisColP_JM is the column for the junction mains of a particular
         !% whichTM. For ALL ep_JM, for ETM, ep_JM_ETM, for AC ep_JM_AC
@@ -1872,6 +1875,12 @@ module geometry
             Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
             BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
             thisSolve     => elemI(:,ei_tmType)
+
+            fVel_d        => faceR(:,fr_velocity_d)
+            fVel_u        => faceR(:,fr_velocity_u)
+
+            fup           => elemI(:,ei_Mface_uL)
+            fdn           => elemI(:,ei_Mface_dL)
             grav => setting%Constant%gravity
         !%------------------------------------------------------------------
 
@@ -1890,6 +1899,12 @@ module geometry
                 if ((whichTM == ALLtm) .or. (thisSolve(tM) == whichTM)) then
                     !% cycle through the possible junction branches
                     do kk=1,max_branch_per_node
+
+                        if (mod(kk,2)==0) then 
+                            isUpBranch = .false.
+                        else
+                            isUpBranch = .true.
+                        endif
                         
                         tB = tM + kk !% junction branch ID
                         tBA(1) = tB  !% array for pure array functions
@@ -1918,12 +1933,27 @@ module geometry
                                 !% of z_bottom of the branch (zero depth).
                                 !% Note this is a time-lagged velocity as the JB velocity
                                 !% is not updated until after face interpolation
-                                head(tB) = zBtm(tB) + sedimentDepth(tB)                            &
-                                    + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
-                                    *(velocity(tB)**twoR) / (grav) 
+                                ! head(tB) = zBtm(tB) + sedimentDepth(tB)                            &
+                                !     + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
+                                !     *(velocity(tB)**twoR) / (grav) 
 
-                                ! print *, 'HEAD B', head(tB)
-                                ! print *,'Velocity ',velocity(tB)
+                                !% 20230322 brh using velocity on face  
+                                if     ((      isUpBranch) .and. (fVel_d(fup(tB)) > zeroR)) then   
+
+                                    head(tB) = zBtm(tB) + sedimentDepth(tB)  &
+                                        + (fVel_d(fup(tB))**twoR) / grav
+
+                                elseif ((.not. isUpbranch) .and. (fVel_u(fdn(tB)) < zeroR)) then
+
+                                    head(tB) = zBtm(tB) + sedimentDepth(tB)  &
+                                        + (fVel_u(fdn(tB))**twoR) / grav
+
+                                else 
+                                    head(tB) = zBtm(tB) + sedimentDepth(tB) + 0.99d0 * setting%ZeroValue%Depth
+                                end if
+
+                                    ! print *, 'HEAD B, velocity', head(tB), velocity(tB)
+                                    ! print *,'Velocity ',velocity(tB)
                             end if
 
 
@@ -2266,6 +2296,12 @@ module geometry
                             if ((area(tB) > setting%ZeroValue%Area)  &
                                 .and. (.not. elemYN(tB,eYN_isSmallDepth))) then 
                                 velocity(tB) = flowrate(tB) / area(tB)
+
+                                ! if (tM == 31) then
+                                !     print *, ' '
+                                !     print *, 'in geometry JB ',tB, velocity(tB)
+                                ! end if
+
                             else
                                 velocity(tB) = zeroR
                             end if

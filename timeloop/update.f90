@@ -23,7 +23,7 @@ module update
 
     public :: update_auxiliary_variables
     public :: update_auxiliary_variables_CC
-    public :: update_auxiliary_variables_JM
+    public :: update_auxiliary_variables_JMJB
     public :: update_interpweights_JB
     public :: update_element_psi_CC
     public :: update_element_energyHead_CC
@@ -213,17 +213,18 @@ module update
 !%==========================================================================
 !%==========================================================================
 !% 
-    subroutine update_auxiliary_variables_JM (whichTM)
+    subroutine update_auxiliary_variables_JMJB  (whichTM, forceJByn)
         !%------------------------------------------------------------------
         !% Description:
         !% Updates the variables for JM junctions after their solution
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: whichTM  !% indicates which Time marching sets (ALLtm, AC, ETM)
+            logical, intent(in) :: forceJByn !% .true. forces interpweightQ to favor JB
             integer, pointer    :: Npack, thisCol, thisP(:), thisCol_JM
             integer, pointer    :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
             integer             :: mm
-            character(64) :: subroutine_name = 'update_auxiliary_variables_JM'
+            character(64) :: subroutine_name = 'update_auxiliary_variables_JMJB'
         !%------------------------------------------------------------------
         !% Aliases
             !% --- set packed column for updated elements
@@ -249,9 +250,9 @@ module update
         !%------------------------------------------------------------------
 
         !% --- geometry for both JM and JB
-        call geometry_toplevel_JM (whichTM)  
+        call geometry_toplevel_JMJB (whichTM)  
        
-            ! call util_utest_CLprint ('------- in update after geometry_toplevel_JM')
+            ! call util_utest_CLprint ('------- in update after geometry_toplevel_JMJB')
         
         !% --- compute element Froude number for JB
         call update_Froude_number_JB (thisCol_JM) 
@@ -260,10 +261,10 @@ module update
         call update_wavespeed_element(thisCol_JM)
 
         !% --- standard interpolation weights
-        call update_interpweights_JB (thisCol_JM)
+        call update_interpweights_JB (thisCol_JM, forceJByn)
 
         
-    end subroutine update_auxiliary_variables_JM
+    end subroutine update_auxiliary_variables_JMJB
 ! !%
 ! !%==========================================================================
 !%==========================================================================
@@ -287,6 +288,8 @@ module update
         !%------------------------------------------------------------------
         !%
 
+            print *, 'OBSOLETE' 
+            stop 298734
              ! ! call util_utest_CLprint ('in update before geometry toplevel')
         
         !% --- update the head (non-surcharged) and geometry
@@ -346,7 +349,8 @@ module update
             ! ! call util_utest_CLprint ('in update before JB interpweights')
 
         !% --- compute element-face interpolation weights on JB
-        call update_interpweights_JB (thisCol_JM)
+        !%     .false. as the general call to update aux does not force JB
+        call update_interpweights_JB (thisCol_JM, .false.)
 
         
             ! ! call util_utest_CLprint ('in update before update Froude Number Junction Branch')
@@ -476,7 +480,7 @@ module update
                 tM => thisP(ii)
                 do kk=1,max_branch_per_node
                     tB = tM + kk
-                    if (BranchExists(tB)==1) then
+                    if (BranchExists(tB)==oneI) then
                         !Froude(tB) = velocity(tB) / sqrt(grav * ellDepth(tB))
                         Froude(tB) = velocity(tB) / sqrt(grav * Depth(tB))
                         !print *, kk, tB, Froude(tB), velocity(tB),'  Froude JB'
@@ -682,12 +686,13 @@ module update
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine update_interpweights_JB (thisCol)
+    subroutine update_interpweights_JB (thisCol, forceJBQyn)
         !%------------------------------------------------------------------
         !% Description:
         !% compute the interpolation weights for junction branches
         !%------------------------------------------------------------------
             integer, intent(in) :: thisCol
+            logical, intent(in) :: forceJBQyn !% --- if true then forces JB weight to max
             integer, pointer    :: npack, thisP(:)
             integer             :: ii
             real(8), pointer    :: grav, wavespeed(:), PCelerity(:), velocity(:), length(:), depth(:)
@@ -730,30 +735,13 @@ module update
   
         !% cycle through the branches to compute weights
         do ii=1,max_branch_per_node
-            ! select case (setting%Junction%Method)
 
-                ! case (Implicit0, Explicit2)
-                !     !% -- baseline update pushes the element values to
-                !     !%    the JB faces
-                !     w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                !     w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                !     w_uH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                !     w_dH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                !     w_uG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                !     w_dG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                !     w_uP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                !     w_dP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+            if (elemSI(ii,esi_JunctionBranch_Exists)) then
+          
+                wavespeed(thisP+ii) = sqrt(grav * depth(thisP+ii))
 
-                ! case (Explicit1)
-                    wavespeed(thisP+ii) = sqrt(grav * depth(thisP+ii))
-
-                    ! print *, ' '
-                    ! print *, ii
-                    ! print *, 'wavespeed ',wavespeed(51)
-                    ! print *, 'velocity  ',velocity(51)
-                    ! print *, 'pcelerity ',PCelerity(51)
-                    ! print *, ' '
-
+                if (.not. forceJBQyn) then
+                    !% --- flowrate interpweight as time scaled
                     where (.not. isSlot(thisP+ii)) 
                         w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
                         w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
@@ -762,53 +750,58 @@ module update
                         w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - PCelerity(thisP+ii))
                         w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + PCelerity(thisP+ii))
                     endwhere
+                else
+                    w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                    w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                end if 
 
-                    !% apply limiters to timescales
-                    where (w_uQ(thisP+ii) < zeroR)
-                        w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                    endwhere
-                    where (w_uQ(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
-                        w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Minimum
-                    endwhere
-                    where (w_uQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
-                        w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                    endwhere
+                !% --- geometry interpweight as time scaled
+                where (.not. isSlot(thisP+ii)) 
+                    w_uG(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
+                    w_dG(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
+                elsewhere
+                    !% --- Preissmann slot
+                    w_uG(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - PCelerity(thisP+ii))
+                    w_dG(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + PCelerity(thisP+ii))
+                endwhere
 
-                    where (w_dQ(thisP+ii) < zeroR)
-                        w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                    endwhere
-                    where (w_dQ(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
-                        w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Minimum
-                    endwhere
-                    where (w_dQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
-                        w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                    endwhere
+                !% apply limiters to timescales for geometry
+                where (w_uG(thisP+ii) < zeroR)
+                       w_uG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                endwhere
+                where (w_uG(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
+                       w_uG(thisP+ii) = setting%Limiter%InterpWeight%Minimum
+                endwhere
+                where (w_uG(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
+                       w_uG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                endwhere
 
-                    !% set the geometry interp the same as flow interp
-                    w_uG(thisP+ii) = w_uQ(thisP+ii)
-                    w_dG(thisP+ii) = w_dQ(thisP+ii)
-                    w_uP(thisP+ii) = w_uQ(thisP+ii)
-                    w_dP(thisP+ii) = w_dQ(thisP+ii)
+                !% apply limiters to timescales for flowrate
+                where (w_dQ(thisP+ii) < zeroR)
+                       w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                endwhere
+                where (w_dQ(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
+                       w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Minimum
+                endwhere
+                where (w_dQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
+                       w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
+                endwhere
 
-                    !% use head interp as length-scaled
-                    w_uH(thisP+ii) = onehalfR * length(thisP+ii)
-                    w_dH(thisP+ii) = onehalfR * length(thisP+ii)  !% 20220224brh
+                !% OBSOLETE -- the decision on where to set the Preissmann interp
+                !% is made in face.f90 in the choice of whether it is in the G, H or Q
+                !% interpolation sets
+                !% set the Preissman interp the same as geometry interp
+                !w_uG(thisP+ii) = w_uQ(thisP+ii)
+                !w_dG(thisP+ii) = w_dQ(thisP+ii)
+                !w_uP(thisP+ii) = w_uG(thisP+ii)
+                !w_dP(thisP+ii) = w_dG(thisP+ii)
 
-                ! case default
-                !     print *, 'CODE ERROR: unexpected case default'
-                !     call util_crashpoint(6229087)
-            ! end select
+                !% --- set head interp as length-scaled
+                w_uH(thisP+ii) = onehalfR * length(thisP+ii)
+                w_dH(thisP+ii) = onehalfR * length(thisP+ii)
 
+            end if
         end do
-
-        !print *, ' '
-        ! print *, 'at end '
-        ! print *, 'Weights '
-        ! print *, 'H ',w_uH(51), w_dH(51)
-        ! print *, 'G ', w_uG(51), w_dG(51)
-        ! print *, 'P ',w_uP(51), w_dP(51)
-        ! print *, 'Q ',w_uQ(51), w_dQ(51)
-
 
     end subroutine update_interpweights_JB
 !%

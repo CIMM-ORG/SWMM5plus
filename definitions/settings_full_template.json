@@ -35,13 +35,12 @@
     },
     "Discretization" : {
         "AllowChannelOverflowTF" : false,
-        "AdustLinkLengthForJunctionBranchYN" : false,
-        "JunctionBranchLengthFactor" : 0.5,
+        "AdjustLinkLengthForJunctionBranchYN" : false,
+        "JunctionBranchLengthFactor" : 1.0,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 10.00,
-        "FullConduitTopwidthDepthFraction" : 0.95,
-        "ForceNodesJM" : false
+        "FullConduitTopwidthDepthFraction" : 0.95
     },
     "Eps" : {
         "FroudeJump" : 0.1,
@@ -61,6 +60,7 @@
         "inp_file" : ""
     },
     "Junction" : {
+        "ForceNodesJM": false,
         "FunStorageN" : 10,
         "kFactor"     : 0.0,
         "InfiniteExtraDepthValue"    : 1000.0

@@ -10,9 +10,6 @@
         "disableInterpolationYN": false
     },
     "Discretization" : {
-        "JunctionBranchLengthFactor" : 0.33,
-        "MinElemLengthFactor" : 0.5,
-        "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 500.00
     },
     "Limiter" : {
@@ -95,7 +92,7 @@
     },
     "Solver" : {
         "SubtractReferenceHead" : false,
-        "MomentumSourceMethod" : "T10",
+        "MomentumSourceMethod" : "T00",
         "SolverSelect" : "ETM",
         "SwitchFractionDn" : 0.8,
         "SwitchFractionUp" : 0.9,

@@ -881,7 +881,7 @@ module utility
             ! print *, 'VolOld ',VolOld(thisP)
             ! print *, 'VolOver',VolOver(thisP)
             ! print *, 'Qlat   ',eQlat(thisP)
-            ! print *, 'tempCons 01',tempCons(thisP)        
+             !print *, 'tempCons 01',tempCons(thisP)        
 
             !% --- get fluxes on branches for JM
             do ii=1,max_branch_per_node,2

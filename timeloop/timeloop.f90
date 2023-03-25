@@ -654,7 +654,7 @@ contains
         case (ETM)
             ! print *, ' '
             ! print *, ' '
-             !print *, 'here calling rk2 toplevel------------------------------------------',this_image()
+            ! print *, 'here calling rk2 toplevel------------------------------------------',this_image()
             ! print *, ' '
         !    call util_CLprint ()
 
@@ -664,8 +664,7 @@ contains
                 ! print *, 'into rk2 ETM'
             !% ETM with Preissmann slot for surcharge
 
-    
-            call rk2_toplevel_ETM_NEW()
+            call rk2_toplevel_ETM_4()
             
                 ! print *, 'out of rk2_toplevel_ETM'
                 !outstring = '    tl_hydraulics 222 '
@@ -1685,34 +1684,34 @@ contains
             if (this_image() == 1) then
                 if (mod(step,interval) == 0) then
                     thistime = timeNow
-                    call util_datetime_display_time (thistime, timeunit)
+                    ! call util_datetime_display_time (thistime, timeunit)
 
-                    ! write a time counter
-                    if (.not. inSpinUpYN) then
-                        if (dt > oneR) then
-                            write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
-                                'time step = ',step,'; model time = ',thistime, &
-                                ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max!, &
-                            !   '; cfl_CC = ',cfl_max_CC,'; cfl_JBJM = ',cfl_max_JBJM 
-                        else
-                            write(*,"(A12,i8,a17,F9.4,a1,a8,a6,f9.8,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
-                                'time step = ',step,'; model time = ',thistime, &
-                                ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max
-                        end if
-                    else
-                        write(*,"(A15,i8,a17,f9.2,a1,a8,a6,f9.2,a3,a8,f9.2)") &
-                            'spin-up step = ',step,'; model time = ',thistime, &
-                          ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max!, &
-                        !   '; cfl_CC = ',cfl_max_CC,'; cfl_JBJM = ',cfl_max_JBJM 
-                    end if
-                    if (.not. inSpinUpYN) then
-                        ! write estimate of time remaining
-                        thistime = seconds_to_completion
-                        call util_datetime_display_time (thistime, timeunit)
-                        write(*,"(A9,F10.2,A1,A3,A)") 'estimate ',thistime,' ',timeunit,' wall clock time until completion'
-                        !write(*,"(A9,F6.2,A1,A3,A)") 'execution time ',thistime,' ',timeunit,' wall clock time thus far'
-                    end if    
-                    print *
+                    ! ! write a time counter
+                    ! if (.not. inSpinUpYN) then
+                    !     if (dt > oneR) then
+                    !         write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
+                    !             'time step = ',step,'; model time = ',thistime, &
+                    !             ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max!, &
+                    !         !   '; cfl_CC = ',cfl_max_CC,'; cfl_JBJM = ',cfl_max_JBJM 
+                    !     else
+                    !         write(*,"(A12,i8,a17,F9.4,a1,a8,a6,f9.8,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
+                    !             'time step = ',step,'; model time = ',thistime, &
+                    !             ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max
+                    !     end if
+                    ! else
+                    !     write(*,"(A15,i8,a17,f9.2,a1,a8,a6,f9.2,a3,a8,f9.2)") &
+                    !         'spin-up step = ',step,'; model time = ',thistime, &
+                    !       ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max!, &
+                    !     !   '; cfl_CC = ',cfl_max_CC,'; cfl_JBJM = ',cfl_max_JBJM 
+                    ! end if
+                    ! if (.not. inSpinUpYN) then
+                    !     ! write estimate of time remaining
+                    !     thistime = seconds_to_completion
+                    !     call util_datetime_display_time (thistime, timeunit)
+                    !     write(*,"(A9,F10.2,A1,A3,A)") 'estimate ',thistime,' ',timeunit,' wall clock time until completion'
+                    !     !write(*,"(A9,F6.2,A1,A3,A)") 'execution time ',thistime,' ',timeunit,' wall clock time thus far'
+                    ! end if    
+                    ! print *
                 endif
             endif
         endif
