@@ -3848,14 +3848,14 @@ contains
         end select
 
         !% --- Minimum surface area for nodes from EPA SWMM is not used
-        ii=ii+1
+        !ii=ii+1
         setting%SWMMinput%SurfaceArea_Minimum = minimum_surface_area
-        if (minimum_surface_area .ne. zeroR) then
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .false.
-            thisVariable(ii) = 'MIN_SURFAREA'
-            thisProblem(ii)  = 'input value is ignored in SWMM5+.'
-        end if
+        ! if (minimum_surface_area .ne. zeroR) then
+        !     thisWarning(ii)  = .true.
+        !     thisFailure(ii)  = .false.
+        !     thisVariable(ii) = 'MIN_SURFAREA'
+        !     thisProblem(ii)  = 'input value is ignored in SWMM5+.'
+        ! end if
 
         !% --- Minimum slope is never used (default of 0.0 is ignored)
         ii=ii+1

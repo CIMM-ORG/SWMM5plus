@@ -147,7 +147,7 @@ module storage_geometry
         !%-------------------------------------------------------------------
         !% Description:
         !% Computes depth from volume for a junction that does not have SWMM
-        !% geometry specified using the storage plane area
+        !% geometry specified using the storage plan area
         !%-------------------------------------------------------------------
         !% Declarations:
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
@@ -182,15 +182,19 @@ module storage_geometry
         !%-----------------------------------------------------------------------------
         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
         integer, pointer :: thisP, curveID
-        real(8), pointer :: planeArea, tempPArea, volume
+        real(8), pointer :: planArea, tempPArea, volume
         integer :: ii
         !%-----------------------------------------------------------------------------
         do ii = 1, Npack
             thisP     => elemPGx(ii,thisCol) 
             tempPArea => elemR(thisP,er_Temp01)
             volume    => elemR(thisP,er_Volume)
-            planeArea => elemSR(thisP,esr_Storage_Plan_Area)
+            planArea  => elemSR(thisP,esr_Storage_Plan_Area)
             curveID   => elemSI(thisP,esi_JunctionMain_Curve_ID)
+
+            !% --- plan area is unchanged for implied or no storage
+            if (elemSI(thisP,esi_JunctionMain_type) == ImpliedStorage) return
+            if (elemSI(thisP,esi_JunctionMain_type) == NoStorage) return
            
             !% --- interpolate from the curve created in initial_condition/init_IC_get_junction_data
             !      using storage_create_curve_from_function()
@@ -198,7 +202,7 @@ module storage_geometry
                  curve_storage_area, 1)
 
             !% --- copy the data over from elemR temporary space to elemSR(thisP,esr_Storage_Plan_Area)
-            planeArea = tempPArea
+            planArea = tempPArea
 
         end do
 
@@ -324,21 +328,24 @@ module storage_geometry
         !%------------------------------------------------------------------
 
         select case(elemSI(idx,esi_JunctionMain_Type))
-        case (ImpliedStorage)
-            outvalue = storage_implied_volume_from_depth_singular(idx, indepth)
-           ! print *, 'implied storage ',outvalue
-        case (TabularStorage)
-            outvalue = storage_tabular_volume_from_depth_singular(idx, indepth)
-           ! print *, 'tabular storage ',outvalue
-        case (FunctionalStorage)
-            outvalue = storage_functional_volume_from_depth_singular(idx, indepth)
-           ! print *, 'functional storage ',outvalue
-        case default
-            print *, 'CODE ERROR: unexpected case default for storage '
-            print *, 'problem in (elemSI(idx,esi_JunctionMain_Type) '
-            print *, 'element index (idx)= ',idx
-            print *, 'junction main type of ',(elemSI(idx,esi_JunctionMain_Type))
-            print *, trim(reverseKey(elemSI(idx,esi_JunctionMain_Type)))
+            case (NoStorage)
+                !% no storage is assigned
+                outvalue = zeroR   
+            case (ImpliedStorage)
+                outvalue = storage_implied_volume_from_depth_singular(idx, indepth)
+            ! print *, 'implied storage ',outvalue
+            case (TabularStorage)
+                outvalue = storage_tabular_volume_from_depth_singular(idx, indepth)
+            ! print *, 'tabular storage ',outvalue
+            case (FunctionalStorage)
+                outvalue = storage_functional_volume_from_depth_singular(idx, indepth)
+            ! print *, 'functional storage ',outvalue
+            case default
+                print *, 'CODE ERROR: unexpected case default for storage '
+                print *, 'problem in (elemSI(idx,esi_JunctionMain_Type) '
+                print *, 'element index (idx)= ',idx
+                print *, 'junction main type of ',(elemSI(idx,esi_JunctionMain_Type))
+                print *, trim(reverseKey(elemSI(idx,esi_JunctionMain_Type)))
         end select
 
     end function storage_volume_from_depth_singular

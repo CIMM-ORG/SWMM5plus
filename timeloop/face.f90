@@ -10,7 +10,7 @@ module face
     use utility_profiler
     use utility, only: util_sign_with_ones, util_CLprint, util_syncwrite
     use utility_crash, only: util_crashpoint
-    use utility_unit_testing, only: util_utest_CLprint
+   ! use utility_unit_testing, only: util_utest_CLprint
 
 
     implicit none
@@ -78,7 +78,7 @@ module face
         !% --- face reconstruction of all the interior faces
         call face_interpolation_interior (faceCol, Gyn, Hyn, Qyn, skipJump)
 
-            call util_utest_CLprint ('    XXX01 face after face_interpolation_interior')
+            ! call util_utest_CLprint ('    XXX01 face after face_interpolation_interior')
 
         !% --- force zero fluxes on closed element downstream faces
         !%     note this does not require a "faceCol" argument as we
@@ -87,7 +87,7 @@ module face
             call adjust_face_for_zero_setting ()
         end if
 
-            call util_utest_CLprint ('    XXX02 face after adjust face for zero setting')
+            ! call util_utest_CLprint ('    XXX02 face after adjust face for zero setting')
 
 
         if (.not. skipZeroAdjust) then
@@ -96,25 +96,25 @@ module face
 
             call face_zerodepth_interior(fp_elem_downstream_is_zero)
 
-                call util_utest_CLprint ('    XXX03 face after face_zerodetph_interior 1')
+                ! call util_utest_CLprint ('    XXX03 face after face_zerodetph_interior 1')
 
             call face_zerodepth_interior(fp_elem_upstream_is_zero)
-                call util_utest_CLprint ('    XXX04 face after face_zerodetph_interior 2')
+                ! call util_utest_CLprint ('    XXX04 face after face_zerodetph_interior 2')
 
             call face_zerodepth_interior(fp_elem_bothsides_are_zero)
 
-                call util_utest_CLprint ('    XXX05 face after face_zerodetph_interior 3')
+                ! call util_utest_CLprint ('    XXX05 face after face_zerodetph_interior 3')
 
         end if
 
         !% --- face reconstruction of all the shared faces
         call face_interpolation_shared (faceCol, Gyn, Hyn, Qyn, skipJump)
 
-            ! call util_utest_CLprint ('    face after face interpolation_shared')
+            ! ! call util_utest_CLprint ('    face after face interpolation_shared')
 
         call face_interpolate_bc (isBConly)
 
-            call util_utest_CLprint ('    face after face_interpolate_BC')
+            ! call util_utest_CLprint ('    face after face_interpolate_BC')
 
 
         !%-------------------------------------------------------------------
@@ -405,7 +405,7 @@ module face
 
     !     print *, 'faceR value head ',faceR(idx_fBC, fr_Head_u), faceR(idx_fBC, fr_Head_d)
 
-    !     ! ! call util_utest_CLprint ('    face interpolate down BC')
+    !     ! ! ! call util_utest_CLprint ('    face interpolate down BC')
         
     !     !% --- get geometry for face from upstream element shape
     !     if (.not. isBConly) then
@@ -636,7 +636,7 @@ module face
 
     !         ! end do
 
-    !         ! ! call util_utest_CLprint ('    face YYYY')
+    !         ! ! ! call util_utest_CLprint ('    face YYYY')
 
     !         !% --- set the Preissmann number to the upstream element value
     !         faceR(idx_fBC, fr_Preissmann_Number) = elemR(eup(idx_fBC), er_Preissmann_Number) 
@@ -675,7 +675,7 @@ module face
     !             end where                    
     !         end if
 
-    !         ! ! call util_utest_CLprint ('    face ZZZZ')
+    !         ! ! ! call util_utest_CLprint ('    face ZZZZ')
     !     else
     !         !% continue
     !     end if
@@ -699,10 +699,10 @@ module face
             logical, intent(in) :: isBConly !% = true when only head BC is enforced
             
             integer, pointer :: nBC, eup, fidx(:), thisF, nodeIdx
-            real(8), pointer :: eHead(:), eDepth(:)
+            real(8), pointer :: eHead(:), eDepth(:), eArea(:)
         
             integer :: ii
-            real(8) :: maxQin, maxQout, headdif, critDepth, normDepth
+            real(8) :: maxQin, maxQout, headdif, critDepth, critArea, normDepth
         !%------------------------------------------------------------------
         !% Preliminaries
             
@@ -711,6 +711,7 @@ module face
             nBC           => npack_faceP(fp_BCdn)
             fidx          => faceP(1:nBC,fp_BCdn)    
             eHead         => elemR(:,er_Head)
+            eArea         => elemR(:,er_Area)
             eDepth        => elemR(:,er_Depth)
         !%------------------------------------------------------------------
 
@@ -735,6 +736,7 @@ module face
                     faceR(thisF, fr_Head_d)  = faceR(thisF, fr_Head_u)
                     faceR(thisF, fr_Depth_d) = faceR(thisF, fr_Depth_u)
 
+
                     !% --- for a flap gate on a BC with higher head downstream
                     if ( (BC%headYN(ii,bYN_hasFlapGate)) .and. (eHead(eup)  < faceR(thisF,fr_Head_u))) then
                     !% --- reset the head on the upstream side of face for closed gate
@@ -746,13 +748,12 @@ module face
                         !% faceR(thisF, fr_Depth_d) is unchanged
                     endif
 
-                case (BCH_normal)
+                    !% --- consistent areas
+                    faceR(thisF,fr_Area_u)  = geo_area_from_depth_singular   &
+                                    (eUp, faceR(thisF, fr_Depth_u), setting%ZeroValue%Area)
+                    faceR(thisF,fr_Area_d)  = faceR(thisF,fr_Area_u)
 
-                    if (.not. BC%headYN(ii,bYN_hasFlapGate)) then
-                        print *, 'CONFIGURATION ERROR: a NORMAL OUTFALL must have flap gate set to YES'
-                        print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
-                        call util_crashpoint(5668663)
-                    end if
+                case (BCH_normal)
 
                     if (elemI(eup,ei_elementType) == CC) then
                         !% --- Error check, normal depth is infinite for adverse slope
@@ -770,6 +771,17 @@ module face
                         !% --- get the normal depth
                         faceR(thisF,fr_Depth_u) = geo_normaldepth_singular (BC%HeadI(ii,bi_UTidx))
 
+                        ! print *, ' '
+                        ! print *, ' normal depth ',faceR(thisF,fr_Depth_u) 
+                        ! print *, ' '
+
+                        if (faceR(thisF,fr_Depth_u) > elemR(eup,er_Head)) then
+                            !% --- use upstream head if the normal depth is too large (no backflow allowed)
+                            faceR(thisF,fr_Depth_u) = elemR(eup,er_Head) - faceR(thisF,fr_Zbottom)
+                        end if
+
+ 
+
                         !% --- head is the normal depth + Zbottom - referencehead
                         faceR(thisF,fr_Head_u)  = faceR(thisF,fr_Zbottom)                   &
                                                 + faceR(thisF,fr_Depth_u)                  &
@@ -782,6 +794,11 @@ module face
                         faceR(thisF, fr_Head_d)  = faceR(thisF, fr_Head_u)
                         faceR(thisF, fr_Depth_d) = faceR(thisF, fr_Depth_u)
 
+                        !% --- consistent areas
+                        faceR(thisF,fr_Area_u)  = geo_area_from_depth_singular   &
+                                                    (eUp, faceR(thisF, fr_Depth_u), setting%ZeroValue%Area)
+                        faceR(thisF,fr_Area_d)  = faceR(thisF,fr_Area_u)
+
                     else
                         print *, 'CODE ERROR: NEED ALGORITHM DESIGN FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
                         call util_crashpoint(792873)
@@ -792,22 +809,35 @@ module face
 
                 case (BCH_free)
 
-                    normDepth = geo_normaldepth_singular  (BC%HeadI(ii,bi_UTidx))
-                    critDepth = geo_criticaldepth_singular(BC%HeadI(ii,bi_UTidx))
+                    normDepth = geo_normaldepth_singular   (BC%HeadI(ii,bi_UTidx))
+                    critDepth = geo_critical_value_singular(BC%HeadI(ii,bi_UTidx),utd_Qcrit_depth_nonuniform)
+                    critArea  = geo_critical_value_singular(BC%HeadI(ii,bi_UTidx),utd_Qcrit_area_nonuniform)
 
+                    ! print *, ' '
+                    ! print *, 'upstream   ', elemR(eup,er_Depth), eDepth(eup)
+                    ! print *, 'norm depth ', normDepth 
+                    ! print *, 'crit depth ', critDepth 
+                    ! print *, 'crit area  ', critArea
+                    ! print *, 'Flowrate   ', elemR(eup,er_Flowrate), critArea * sqrt(setting%Constant%gravity * critDepth)
+                    ! print *, ' '
+                    
                     !% --- select between normal and critical depth depending on conditions
                     if (normDepth > critDepth) then 
                         !% --- GVF mild slope
                         if (eDepth(eup) .ge. normDepth) then 
                             !% --- use normal depth when deep drawdown
                             faceR(thisF,fr_Depth_u) = normDepth
+                            faceR(thisF,fr_Area_u)  = geo_area_from_depth_singular   &
+                                    (eUp, normDepth, setting%ZeroValue%Area)
                         else
                             if (eDepth(eup) .ge. critDepth) then
                                 !% --- use critical depth for drawdown below normal
                                 faceR(thisF,fr_Depth_u) = critDepth
+                                faceR(thisF,fr_Area_u)  = critArea
                             else
                                 !% --- supercritical flow retains same depth
                                 faceR(thisF,fr_Depth_u) = eDepth(eup)
+                                faceR(thisF,fr_Depth_u) = eArea(eup)
                             end if
                         end if
                     else
@@ -815,12 +845,16 @@ module face
                         if (eDepth(eup) .ge. critDepth) then 
                             !% --- use critical depth for drawdown
                             faceR(thisF,fr_Depth_u) = critDepth
+                            faceR(thisF,fr_Area_u)  = critArea
                         else
                             if (eDepth(eup) .ge. normDepth) then 
                                 faceR(thisF,fr_Depth_u) = normDepth
+                                faceR(thisF,fr_Area_u)  = geo_area_from_depth_singular   &
+                                    (eUp, normDepth, setting%ZeroValue%Area)
                             else
                                 !% --- supercritical flow retains same depth
                                 faceR(thisF,fr_Depth_u) = eDepth(eup)
+                                faceR(thisF,fr_Depth_u) = eArea(eup)
                             end if
                         end if
                     end if
@@ -832,6 +866,7 @@ module face
                     !% --- the downstream side of face is the same as the upstream face
                     faceR(thisF, fr_Head_d)  = faceR(thisF, fr_Head_u)
                     faceR(thisF, fr_Depth_d) = faceR(thisF, fr_Depth_u)
+                    faceR(thisF, fr_Area_d)  = faceR(thisF, fr_Area_u)
 
                 case default
                     print *, 'CODE ERROR: unexpected case default'
@@ -849,14 +884,6 @@ module face
             do ii=1,nBC 
                 thisF   => fidx(ii)
                 eup     => faceI(thisF,fi_Melem_uL)
-                !% --- Area upstream
-                faceR(thisF,fr_Area_u) = geo_area_from_depth_singular   &
-                    (eUp, faceR(thisF,fr_Depth_u), setting%ZeroValue%Area)
-
-                !% --- Area downstream (should be irrelevant; done for consistency)
-                faceR(thisF,fr_Area_d) = geo_area_from_depth_singular   &
-                    (eUp, faceR(thisF,fr_Depth_d), setting%ZeroValue%Area)    
-
                 !% --- ensure face area isnot smaller than zero value
                 if (faceR(thisF,fr_Area_u) < setting%ZeroValue%Area) then 
                     faceR(thisF,fr_Area_u) = setting%ZeroValue%Area
@@ -864,8 +891,6 @@ module face
                 if (faceR(thisF,fr_Area_d) < setting%ZeroValue%Area) then 
                     faceR(thisF,fr_Area_d) = setting%ZeroValue%Area
                 end if
-
-
             end do
         end if
 
@@ -964,6 +989,15 @@ module face
                     !% -- no change to zero flowrate
                 end if
             end do
+
+
+            ! print *, ' '
+            ! print *, 'depth, area ',faceR(thisF,fr_Depth_u), faceR(thisF,fr_Area_u)
+            ! print *, 'flowrate ',elemR(eup,er_Flowrate), faceR(thisF,fr_Flowrate)
+            ! print *, 'Asqrt(gh)',faceR(thisF,fr_Area_u) * sqrt(setting%Constant%gravity * faceR(thisF,fr_Depth_u))
+            ! print *, 'FR ', (faceR(thisF,fr_Flowrate) / faceR(thisF,fr_Area_u)) / sqrt(setting%Constant%gravity * faceR(thisF,fr_Depth_u))
+            ! print *, ' '
+
         end if
 
         !% --- set the Preissmann number

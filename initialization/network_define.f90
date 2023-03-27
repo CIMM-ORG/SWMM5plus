@@ -688,6 +688,9 @@ contains
         !     !stop 
         !call util_crashpoint(77869)
 
+        ! print *, 'faceZ ',faceR(5,fr_Zbottom), faceR(6,fr_Zbottom),faceR(7,fr_Zbottom),faceR(16,fr_Zbottom)
+        ! stop 239874
+
         !%--------------------------------------------------------------------
         !% Closing
             deallocate(packed_link_idx) !% deallocate temporary array

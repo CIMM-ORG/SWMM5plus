@@ -1,32 +1,340 @@
 enable_testing()
 
-# add_test(NAME T001_0050 
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001.inp -s ./ctest/internal_testing/brh/settings_50.json -o ./ctest/outbrh/
+
+###############3333
+## PROBLEM 20230326
+## T002_RC_Fix_dx0100 is smooth
+## T002_CC_Fix_dx0100 has periodic oscillations, WHY?
+
+##########################################################################################
+## T001 downstream boundary condition tests
+##########################################################################################
+## single link of 1000 m 
+## no internal junctions, 
+## initial zero water levels
+## ramp up flow
+## end at steady-state flow value
+## no surcharge
+## CC = circular conduit; RC = Rectangular closed, RO = Rectangular open
+## Fix/Normal/Free = BC
+## dxNNN = subelement length
+
+## passed 20230326
+# add_test(NAME T001_CC_Fix_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_CC_Fix_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-add_test(NAME T001_0100 
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+# # passed 20230326
+# add_test(NAME T001_CC_Free_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_CC_Free_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230326
+# add_test(NAME T001_CC_Normal_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_CC_Normal_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## FAILS compare.py line 335
+# add_test(NAME T001_RC_Free_dx1000 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_RC_Free_dx1000.inp -s ./ctest/internal_testing/brh/settings_1000.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## FAILS compare.py line 335
+# add_test(NAME T001_RC_Free_dx0500 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_RC_Free_dx0500.inp -s ./ctest/internal_testing/brh/settings_500.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## FAILS compare.py line 335
+# add_test(NAME T001_RC_Free_dx0333 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_RC_Free_dx0333.inp -s ./ctest/internal_testing/brh/settings_333.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230326
+# add_test(NAME T001_RC_Free_dx0250 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_RC_Free_dx0250.inp -s ./ctest/internal_testing/brh/settings_250.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+## passed 20230326
+# add_test(NAME T001_RC_Free_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_RC_Free_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## FAILS compare.py line 335
+# add_test(NAME T001_RO_Free_dx1000 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_RC_Free_dx1000.inp -s ./ctest/internal_testing/brh/settings_1000.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## FAILS compare.py line 335
+# add_test(NAME T001_RO_Free_dx0500 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_RO_Free_dx0500.inp -s ./ctest/internal_testing/brh/settings_500.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## FAILS compare.py line 335
+# add_test(NAME T001_RO_Free_dx0250 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_RO_Free_dx0250.inp -s ./ctest/internal_testing/brh/settings_250.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230326
+# add_test(NAME T001_RO_Free_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_RO_Free_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230326
+# add_test(NAME T001_RO_Free_dx050 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_RO_Free_dx0050.inp -s ./ctest/internal_testing/brh/settings_50.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+##########################################################################################
+## T002 junction tests
+##########################################################################################
+## Similar to T002 with one junction
+## two links of 500 m 
+## one internal junction, 
+## initial zero water levels
+## ramp up flow
+## end at steady-state flow value
+## no surcharge
+## CC = circular conduit; RC = Rectangular closed, RO = Rectangular open
+## Fix/Normal/Free = BC
+## dxNNN = subelement length
+
+## passed 20230327
+# add_test(NAME T002_RC_Fix_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_RC_Fix_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## FAILS compare.py line 335
+# add_test(NAME T002_RO_Free_dx0500 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_RO_Free_dx0500.inp -s ./ctest/internal_testing/brh/settings_500.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## FAILS compare.py line 335
+# add_test(NAME T002_RO_Free_dx0250 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_RO_Free_dx0250.inp -s ./ctest/internal_testing/brh/settings_250.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327
+# add_test(NAME T002_RO_Free_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_RO_Free_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## FAILS compare.py line 335
+# add_test(NAME T002_RC_Free_dx0500 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_RC_Free_dx0500.inp -s ./ctest/internal_testing/brh/settings_500.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327
+# add_test(NAME T002_RC_Free_dx0250 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_RC_Free_dx0250.inp -s ./ctest/internal_testing/brh/settings_250.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327
+# add_test(NAME T002_RC_Free_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_RC_Free_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327
+# add_test(NAME T002_RC_Free_dx0010 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_RC_Free_dx0010.inp -s ./ctest/internal_testing/brh/settings_10.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## FAILS compare.py line 335
+# add_test(NAME T002_CC_Fix_dx0250 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_CC_Fix_dx0250.inp -s ./ctest/internal_testing/brh/settings_250.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327  
+# add_test(NAME T002_CC_Fix_dx0167 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_CC_Fix_dx0167.inp -s ./ctest/internal_testing/brh/settings_167.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327 
+# add_test(NAME T002_CC_Fix_dx0125 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_CC_Fix_dx0125.inp -s ./ctest/internal_testing/brh/settings_125.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327
+# add_test(NAME T002_CC_Fix_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_CC_Fix_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327 
+# add_test(NAME T002_CC_Fix_dx0010 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_CC_Fix_dx0010.inp -s ./ctest/internal_testing/brh/settings_10.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327
+# add_test(NAME T002_CC_Free_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_CC_Free_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327 
+# add_test(NAME T002_CC_Free_dx0010 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_CC_Free_dx0010.inp -s ./ctest/internal_testing/brh/settings_10.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 2023032
+# add_test(NAME T002_CC_Normal_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T002_CC_Normal_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+##########################################################################################
+## T003 junction tests
+##########################################################################################
+## Similar to T002 with two junctions
+## two links of 500 m 
+## one internal junction, 
+## initial zero water levels
+## ramp up flow
+## end at steady-state flow value
+## no surcharge
+## CC = circular conduit; RC = Rectangular closed, RO = Rectangular open
+## Fix/Normal/Free = BC
+## dxNNN = subelement length
+
+## FAILS compare.py line 335
+# add_test(NAME T003_RC_Free_dx0333 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_RC_Free_dx0333.inp -s ./ctest/internal_testing/brh/settings_333.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327
+# add_test(NAME T003_RC_Free_dx0167 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_RC_Free_dx0167.inp -s ./ctest/internal_testing/brh/settings_167.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327
+# add_test(NAME T003_RC_Free_dx0111 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_RC_Free_dx0111.inp -s ./ctest/internal_testing/brh/settings_111.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327
+# add_test(NAME T003_RC_Free_dx0048 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_RC_Free_dx0048.inp -s ./ctest/internal_testing/brh/settings_48.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230327 
+# add_test(NAME T003_CC_Free_dx0048 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_CC_Free_dx0048.inp -s ./ctest/internal_testing/brh/settings_48.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230327 
+# add_test(NAME T003_CC_Free_dx0010 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_CC_Free_dx0010.inp -s ./ctest/internal_testing/brh/settings_10.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+##########################################################################################
+## T004 junction tests
+##########################################################################################
+## Similar to T003, but with 9 junctions
+## ten links of 100 m 
+## nine internal junction, 
+## initial zero water levels
+## ramp up flow
+## end at steady-state flow value
+## no surcharge
+## CC = circular conduit; RC = Rectangular closed, RO = Rectangular open
+## Fix/Normal/Free = BC
+## dxNNN = subelement length
+
+add_test(NAME T004_CC_Free_dx0010_NJ2 
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0010_NJ2.inp -s ./ctest/internal_testing/brh/settings_10_faceNJ2.json -o ./ctest/outbrh/
 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
 
-# add_test(NAME T001_0250 
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001.inp -s ./ctest/internal_testing/brh/settings_250.json -o ./ctest/outbrh/
+## failed 20230327
+# add_test(NAME T004_CC_Free_dx0010 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0010.inp -s ./ctest/internal_testing/brh/settings_10.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# ## failed 20230327
+# add_test(NAME T004_CC_Free_dx0050 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0050.inp -s ./ctest/internal_testing/brh/settings_50.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## failed 20230327 LOOKS LIKE PROBLEM IS WHEN ONLY 1 ELEMENT PER LINK
+# add_test(NAME T004_CC_Free_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
 
-# add_test(NAME T001_0500 
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001.inp -s ./ctest/internal_testing/brh/settings_500.json -o ./ctest/outbrh/
+##########################################################################################
+## T005 junction tests
+##########################################################################################
+## Similar to T005, but with flow ramp down
+## ten links of 100 m 
+## nine internal junction, 
+## initial zero water levels
+## ramp up flow
+## ramp down flow after 2 hour steady
+## no surcharge
+## CC = circular conduit; RC = Rectangular closed, RO = Rectangular open
+## Fix/Normal/Free = BC
+## dxNNN = subelement length
+
+## passed 20230326
+# add_test(NAME T005_CC_Free_dx0010 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0010.inp -s ./ctest/internal_testing/brh/settings_10.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230326
+# add_test(NAME T005_CC_Free_dx0050 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0050.inp -s ./ctest/internal_testing/brh/settings_50.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230326
+# add_test(NAME T005_CC_Free_dx0100 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
 
-# add_test(NAME T001_1000 
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001.inp -s ./ctest/internal_testing/brh/settings_1000.json -o ./ctest/outbrh/
-# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-# )
+
+
+
 
 
 ###################################### GEOMETRY #############################
@@ -82,7 +390,7 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
 # # ###################################### LEVEL 1 PASSED #############################
-#  # passed 20230324
+#  # passed 20230326
 # add_test(NAME extran1_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_final_mod2.inp -s ./ctest/internal_testing/level01_test/settings_extran1.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}

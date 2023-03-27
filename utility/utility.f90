@@ -873,7 +873,7 @@ module utility
             tempCons(thisP) = dt * eQlat(thisP) - VolOver(thisP)
 
             !% --- volume and lateral flux terms on JM
-            where (elemSI(thisP,esi_JunctionMain_Type) .ne. ImpliedStorage)
+            where (elemSI(thisP,esi_JunctionMain_Type) .ne. NoStorage)
                 tempCons(thisP) =  tempCons(thisP) - (VolNew(thisP) - VolOld(thisP))
             endwhere
 

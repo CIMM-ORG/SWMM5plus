@@ -91,6 +91,7 @@
         enumerator :: outlet                !% outlet element
         enumerator :: JM                    !% junction main element
         enumerator :: JB                    !% junction branch element
+        enumerator :: NoStorage             !% junction that has zero storage
         enumerator :: ImpliedStorage        !% junction main storage is artificially created
         enumerator :: FunctionalStorage     !% junction main storage is cauculated from a user provided function
         enumerator :: TabularStorage        !% junction main storage is cauculated from a user provided table
@@ -434,6 +435,7 @@
         reverseKey(outlet) = 'outlet'
         reverseKey(JM) = 'JM'
         reverseKey(JB) = 'JB'
+        reverseKey(NoStorage) = 'NoStorage'
         reverseKey(ImpliedStorage) = 'ImpliedStorage'
         reverseKey(FunctionalStorage) = 'FunctionalStorage'
         reverseKey(TabularStorage) = 'TabularStorage'
@@ -642,7 +644,6 @@
         write(*,'(A," = ",i4)') trim(reverseKey(ALLtm)) , ALLtm
         write(*,'(A," = ",i4)') trim(reverseKey(arch)) , arch
         write(*,'(A," = ",i4)') trim(reverseKey(AreaValue)), AreaValue
-        write(*,'(A," = ",i4)') trim(reverseKey(ImpliedStorage)) , ImpliedStorage
         write(*,'(A," = ",i4)') trim(reverseKey(AverageElements)) , AverageElements
         write(*,'(A," = ",i4)') trim(reverseKey(basket_handle)) , basket_handle
         write(*,'(A," = ",i4)') trim(reverseKey(BCFlow)) , BCFlow
@@ -694,6 +695,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(horseshoe)) , horseshoe
         write(*,'(A," = ",i4)') trim(reverseKey(horiz_ellipse)) , horiz_ellipse
         write(*,'(A," = ",i4)') trim(reverseKey(Implicit0)), Implicit0
+        write(*,'(A," = ",i4)') trim(reverseKey(ImpliedStorage)) , ImpliedStorage
         write(*,'(A," = ",i4)') trim(reverseKey(InDays)) , InDays
         write(*,'(A," = ",i4)') trim(reverseKey(InHours)) , InHours
         write(*,'(A," = ",i4)') trim(reverseKey(InMinutes)) , InMinutes
@@ -763,6 +765,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(nJm)) , nJm
         write(*,'(A," = ",i4)') trim(reverseKey(NodeElemOut)) , NodeElemOut
         write(*,'(A," = ",i4)') trim(reverseKey(NodeFaceOut)) , NodeFaceOut
+        write(*,'(A," = ",i4)') trim(reverseKey(NoStorage)), NoStorage
         write(*,'(A," = ",i4)') trim(reverseKey(notused)) , notused
         write(*,'(A," = ",i4)') trim(reverseKey(NoOverflow)), NoOverflow
         write(*,'(A," = ",i4)') trim(reverseKey(NoRoadSurface)) , NoRoadSurface

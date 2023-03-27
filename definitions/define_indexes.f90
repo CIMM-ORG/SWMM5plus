@@ -610,6 +610,7 @@ module define_indexes
         enumerator :: epg_JM_functionalStorage        !% JM functional geometry relationship 
         enumerator :: epg_JM_tabularStorage           !% JM tabular geometry relationship 
         enumerator :: epg_JM_impliedStorage           !% JM with artificial storage
+        enumerator :: epg_JM_noStorage                !% JM with no storage
         enumerator :: epg_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_elemPGalltm =  epg_lastplusone-1

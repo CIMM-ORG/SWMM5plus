@@ -3502,22 +3502,30 @@ contains
             elemSR(JMidx,esr_Storage_FractionEvap)= node%R(thisJunctionNode,nr_StorageFevap)
         else
             !%-----------------------------------------------------------------------
-            !% Junction main with implied storage is rectangular
+            !% Junction main with implied or no storage
             !%-----------------------------------------------------------------------
-            elemSI(JMidx,esi_JunctionMain_Type)    = ImpliedStorage
+            if (setting%Junction%ForceStorage) then 
+                !% --- implied storage
+                elemSI(JMidx,esi_JunctionMain_Type)    = ImpliedStorage
+                setting%Junction%SurfaceArea_Minimum   = setting%SWMMinput%SurfaceArea_Minimum
+            else 
+                !% --- no storage
+                elemSI(JMidx,esi_JunctionMain_Type)    = NoStorage
+                setting%Junction%SurfaceArea_Minimum   = zeroR
+            end if
             elemI (JMidx,ei_geometryType)          = rectangular
             elemSR(JMidx,esr_Storage_FractionEvap) = zeroR  !% --- no evap from implied storage junction
 
-            !% --- check for low Zbottom in an implied storage
-            !%     Require junction bottom to be at or above the minimum branch
-            !%     Zbottom with implied storage
-            lowZ = huge(oneR)
-            do kk=1,max_branch_per_node
-                if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) == oneI) then 
-                    lowZ = min(lowZ, elemR(JMidx+kk,er_Zbottom))
-                end if
-            end do
-            elemR(JMidx,er_Zbottom) = max(elemR(JMidx,er_Zbottom), lowZ)
+            ! !% --- check for low Zbottom in an implied storage
+            ! !%     Require junction bottom to be at or above the minimum branch
+            ! !%     Zbottom with implied storage
+            ! lowZ = huge(oneR)
+            ! do kk=1,max_branch_per_node
+            !     if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) == oneI) then 
+            !         lowZ = min(lowZ, elemR(JMidx+kk,er_Zbottom))
+            !     end if
+            ! end do
+            ! elemR(JMidx,er_Zbottom) = max(elemR(JMidx,er_Zbottom), lowZ)
         end if
 
         ! print *, 'type ',elemSI(JMidx,esi_JunctionMain_Type),ImpliedStorage
@@ -3910,168 +3918,165 @@ contains
         select case (JmType)
 
             case (ImpliedStorage)
+                elemSR(JMidx,esr_Storage_Plan_Area) = setting%Junction%SurfaceArea_Minimum
+                elemR (JMidx,er_FullVolume)         = elemSR(JMidx,esr_Storage_Plan_Area) * elemR(JMidx, er_FullDepth)
+                elemR (JMidx,er_FullArea)           = elemSR(JMidx,esr_Storage_Plan_Area)
+                elemR (JMidx,er_BreadthMax)         = elemSGR(JMidx,esgr_Rectangular_Breadth)
 
-                !% --- Plane area is the sum of the branch plane area 
-                !%     This uses simplified geometry approximations as the junction main is only
-                !%     mass conservation only, which means its volume change can be approximated
-                !%     as if it is a rectangular box of Storage_Plan_Area x Depth
-                elemSR(JMidx,esr_Storage_Plan_Area) = zeroR
-
-                !% --- Full area (cross-sectional) is the sum of the branch full area for implied storage
-                elemR(JMidx,er_FullArea) = zeroR
-
-                do ii=1,max_branch_per_node
-                    JBidx = JMidx + ii
-                    if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
-
-                    BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
-                    JBgeometryType => elemI(JBidx,ei_geometryType)
-
-                    !% -- get the full area by summation of full area branches
-                    elemR(JMidx,er_FullArea) = elemR(JMidx,er_FullArea) + init_IC_get_branch_fullarea(JBidx)
-
-                    !% OBSOLETE: HACK -- needs to be removed after new junction proven 20230208
-                    !% --- compute the storage plane area by accumulation from branches
-                    select case (JBgeometryType)
-                        case (rectangular,rectangular_closed)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                            +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
-                                * elemR(  JBidx,er_Length)                                          &
-                                * elemSGR(JBidx,esgr_Rectangular_Breadth) )
-
-                        case (trapezoidal)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                    +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                  &
-                                        * elemR(  JBidx,er_Length)                                     &
-                                        * ( elemSGR(JBidx,esgr_Trapezoidal_Breadth)                    &
-                                            +elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)                  &
-                                            +elemSGR(JBidx,esgr_Trapezoidal_RightSlope)))
-
-                        case (triangular)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemSGR(JBidx,esgr_Triangular_TopBreadth)/twoR) )
-                        case (parabolic)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                            +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
-                                * elemR(  JBidx,er_Length)                                          &
-                                * elemSGR(JBidx,esgr_Parabolic_Breadth) )
-
-                        case (rect_triang)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI(JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemR( JBidx,er_BreadthMax)/twoR) )
-
-                        case (basket_handle)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
-                        
-                        case (arch)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
-
-                        case (horiz_ellipse)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
-                        
-                        case (vert_ellipse)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
-
-                        case (eggshaped)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
-
-                        case (horseshoe)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
-                        case (catenary)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
-
-                        case (gothic)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
-                        
-                        case (semi_elliptical)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
-                                            
-                        case (circular,force_main)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                            +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
-                                * elemR(  JBidx,er_Length)                                          &
-                                * (elemR(JBidx,er_BreadthMax)/twoR) )
-
-                        case (semi_circular)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
-                        
-                        case (filled_circular)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                            +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
-                                * elemR(  JBidx,er_Length)                                             &
-                                * elemR(  JBidx,er_BreadthMax) )
-                        
-                        case (mod_basket)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                            +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
-                                * elemR(  JBidx,er_Length)                                             &
-                                * elemR(  JBidx,er_BreadthMax) )
-                        
-                        case (rect_round)
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                                        +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
-                                            * elemR(  JBidx,er_Length)                                   &
-                                            * (elemR(JBidx,er_BreadthMax)/twoR) )
-
-                        case (irregular)    
-                            !% --- for irregular geometry, we use the average breadth for the area below
-                            !%     the maximum breadth as the characteristic width of the branch
-                            elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
-                            +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
-                                * elemR(  JBidx,er_Length)                                          &
-                                * elemR(  JBidx,er_AreaBelowBreadthMax) / elemR(JBidx,er_ZbreadthMax))
-
-                        case default
-                            print *, 'In, ', subroutine_name
-                            print *, 'CODE ERROR: geometry type unknown for # ', JBgeometryType
-                            print *, 'which has key ',trim(reverseKey(JBgeometryType))
-                            !stop 
-                            call util_crashpoint(308974)
-                            !return
-                    end select
-                end do
-
-                !% Breadth is consistent with length and plan area
-                elemSGR(JMidx,esgr_Rectangular_Breadth) =  elemSR(JMidx,esr_Storage_Plan_Area) &
-                                                        /   elemR(JMidx,er_Length)
-                elemR(JMidx,er_BreadthMax) =  elemSGR(JMidx,esgr_Rectangular_Breadth)     
+            case (NoStorage)
+                elemSR(JMidx,esr_Storage_Plan_Area)      = zeroR
+                elemR (JMidx,er_FullVolume)              = zeroR
+                elemR (JMidx,er_FullArea)                = zeroR  
+                elemR (JMidx,er_BreadthMax)              = zeroR     
                 
-                !% HACK -- for IMPLICIT0 junction ONLY -- revisit if EXPLICIT1 or EXPLICIT2 is used
-                elemR(JMidx,er_FullVolume) = zeroR
+
+                !% REMOVING 20230326
+                    ! do ii=1,max_branch_per_node
+                    !     JBidx = JMidx + ii
+                    !     if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
+
+                    !     BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
+                    !     JBgeometryType => elemI(JBidx,ei_geometryType)
+
+                    !     !% -- get the full area by summation of full area branches
+                    !     elemR(JMidx,er_FullArea) = elemR(JMidx,er_FullArea) + init_IC_get_branch_fullarea(JBidx)
+
+                    !     !% OBSOLETE: HACK -- needs to be removed after new junction proven 20230208
+                    !     !% --- compute the storage plan area by accumulation from branches
+                    !     select case (JBgeometryType)
+                    !         case (rectangular,rectangular_closed)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !             +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
+                    !                 * elemR(  JBidx,er_Length)                                          &
+                    !                 * elemSGR(JBidx,esgr_Rectangular_Breadth) )
+
+                    !         case (trapezoidal)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                     +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                  &
+                    !                         * elemR(  JBidx,er_Length)                                     &
+                    !                         * ( elemSGR(JBidx,esgr_Trapezoidal_Breadth)                    &
+                    !                             +elemSGR(JBidx,esgr_Trapezoidal_LeftSlope)                  &
+                    !                             +elemSGR(JBidx,esgr_Trapezoidal_RightSlope)))
+
+                    !         case (triangular)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemSGR(JBidx,esgr_Triangular_TopBreadth)/twoR) )
+                    !         case (parabolic)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !             +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
+                    !                 * elemR(  JBidx,er_Length)                                          &
+                    !                 * elemSGR(JBidx,esgr_Parabolic_Breadth) )
+
+                    !         case (rect_triang)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI(JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemR( JBidx,er_BreadthMax)/twoR) )
+
+                    !         case (basket_handle)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemR(JBidx,er_BreadthMax)/twoR) )
+                            
+                    !         case (arch)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemR(JBidx,er_BreadthMax)/twoR) )
+
+                    !         case (horiz_ellipse)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemR(JBidx,er_BreadthMax)/twoR) )
+                            
+                    !         case (vert_ellipse)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemR(JBidx,er_BreadthMax)/twoR) )
+
+                    !         case (eggshaped)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemR(JBidx,er_BreadthMax)/twoR) )
+
+                    !         case (horseshoe)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemR(JBidx,er_BreadthMax)/twoR) )
+                    !         case (catenary)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemR(JBidx,er_BreadthMax)/twoR) )
+
+                    !         case (gothic)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemR(JBidx,er_BreadthMax)/twoR) )
+                            
+                    !         case (semi_elliptical)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemR(JBidx,er_BreadthMax)/twoR) )
+                                                
+                    !         case (circular,force_main)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !             +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
+                    !                 * elemR(  JBidx,er_Length)                                          &
+                    !                 * (elemR(JBidx,er_BreadthMax)/twoR) )
+
+                    !         case (semi_circular)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemR(JBidx,er_BreadthMax)/twoR) )
+                            
+                    !         case (filled_circular)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !             +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
+                    !                 * elemR(  JBidx,er_Length)                                             &
+                    !                 * elemR(  JBidx,er_BreadthMax) )
+                            
+                    !         case (mod_basket)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !             +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                          &
+                    !                 * elemR(  JBidx,er_Length)                                             &
+                    !                 * elemR(  JBidx,er_BreadthMax) )
+                            
+                    !         case (rect_round)
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !                         +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)               &
+                    !                             * elemR(  JBidx,er_Length)                                   &
+                    !                             * (elemR(JBidx,er_BreadthMax)/twoR) )
+
+                    !         case (irregular)    
+                    !             !% --- for irregular geometry, we use the average breadth for the area below
+                    !             !%     the maximum breadth as the characteristic width of the branch
+                    !             elemSR(JMidx,esr_Storage_Plan_Area) = elemSR(JMidx,esr_Storage_Plan_Area)  &
+                    !             +(real(elemSI( JBidx,esi_JunctionBranch_Exists),8)                       &
+                    !                 * elemR(  JBidx,er_Length)                                          &
+                    !                 * elemR(  JBidx,er_AreaBelowBreadthMax) / elemR(JBidx,er_ZbreadthMax))
+
+                    !         case default
+                    !             print *, 'In, ', subroutine_name
+                    !             print *, 'CODE ERROR: geometry type unknown for # ', JBgeometryType
+                    !             print *, 'which has key ',trim(reverseKey(JBgeometryType))
+                    !             !stop 
+                    !             call util_crashpoint(308974)
+                    !             !return
+                    !     end select
+                    ! end do
+
+
 
             case (FunctionalStorage)     
                 !% --- create a storage curve from the function
@@ -4081,7 +4086,7 @@ contains
                 elemR(JMidx,er_FullVolume) = maxval(curve(CurveID)%ValueArray(:,curve_storage_volume))
                 !% --- Computing the Full (cross-sectional) Area for storage as
                 !%     Area = FullDepth * AverageTopwidth
-                !%          = FullDepth * sqrt(Average(PlaneArea))
+                !%          = FullDepth * sqrt(Average(PlanArea))
                 !%          = FullDepth * sqrt(FullVolume/FullDepth)
                 !%          = sqrt(FullDepth * Full Volume) 
                 !%     which would be simply sqrt(FullVolume * FullDepth)
@@ -4124,10 +4129,10 @@ contains
         elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
         elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
 
-        !% ---initial conditions plane storage areas
+        !% ---initial conditions plan storage areas
         select case (JmType)
-            case (ImpliedStorage)
-                elemSR(JMidx,esr_Storage_Plan_Area) = zeroR
+            case (NoStorage, ImpliedStorage)
+                !% -- already specified as constant
             case (FunctionalStorage,TabularStorage)
                 call util_curve_lookup_singular(CurveID, er_Volume, er_Temp01, curve_storage_volume, &
                                                 curve_storage_area, 1)
@@ -5580,7 +5585,7 @@ contains
         !% 20220726 -- only stored for elements upstream of an outfall
         !%------------------------------------------------------------------
             integer       :: ii,  lastUT_idx  , kk    
-            real(8) :: thisdepth, thiswidth
+            real(8) :: thisdepth, thiswidth, Qdelta
             character(64) :: subroutine_name = 'init_uniformtable_array'
         !%------------------------------------------------------------------
 
@@ -5593,7 +5598,11 @@ contains
         !% --- set up uniform tables for section factor and critical flow for head BC locations
         call init_BChead_uniformtable (lastUT_idx)
 
-        !stop 50987
+        ! print *, 'Qcrit max ',uniformTableR(1,utr_QcritMax) , uniformTableR(1,utr_AreaMax) * sqrt(setting%Constant%gravity * uniformTableR(1,utr_DepthMax) )
+        ! print *, 'Area max  ',uniformTableR(1,utr_AreaMax)
+        ! print *, 'DepthMax  ',uniformTableR(1,utr_DepthMax)
+
+        ! stop 50987
 
         !% THIS IS WHERE WE WOULD INSERT ANY OTHER UNIFORM TABLE INITIATIONS
         !% NEW DATA STARTs FROM lastUT_idx+1
@@ -5601,27 +5610,12 @@ contains
         !% --- fill of values for each location
         do ii = 1,size(uniformTableDataR,1)
 
-           ! print *, ii, uniformTableR(ii,utr_SFmax)
-
-            !stop 5509873
+               !print *, 'TEMP COMMENT OUT OF SECTION FACTOR'
 
             !% --- uniformly-distributed section factor
-            ! print *, 'calling init_uniformtabledata_Uvalue for section factor'
             call init_uniformtabledata_Uvalue(ii,utr_SFmax, utd_SF_uniform)
 
-            ! print *, ' '
-            ! print *, 'section factors'
-            ! do kk=1,size(uniformTableDataR,2)
-            !     print *, ii, uniformtableDataR(ii,kk,utd_SF_uniform),  &
-            !     uniformtableDataR(ii,kk,utd_SF_uniform)* uniformTableR(ii,utr_SFmax)
-            ! end do
-
-            !stop 209873
-
-            !print *, uniformTableR(ii,utr_SFmax)
-
             !% -- uniformly-distributed critical flow
-            ! print *, 'calling for uniform table Uvalue for Q critical'
             call init_uniformtabledata_Uvalue(ii,utr_QcritMax, utd_Qcrit_uniform)
    
             !% --- nonuniform values mapping from section factors
@@ -5653,19 +5647,38 @@ contains
             !      uniformtableDataR(ii,kk,utd_SF_uniform)* uniformTableR(ii,utr_SFmax)
             ! end do
 
-            ! print *, ' '
-            ! print *, 'implied Qcrit from depth and Qcrit from table for rectangular simple case'
-            ! thiswidth = elemR(1,er_BreadthMax)
+            !print *, ' '
+           ! print *, 'implied Qcrit from depth and Qcrit from table for rectangular simple case'
+            !thiswidth = elemR(1,er_BreadthMax)
             ! do kk=1,size(uniformTableDataR,2)
             !     thisdepth = uniformTableDataR(ii,kk,utd_Qcrit_depth_nonuniform) * uniformTableR(ii,utr_DepthMax)
             !     print *, ii, (thisdepth * thiswidth) * sqrt(9.81d0 * thisdepth), &
             !     uniformtableDataR(ii,kk,utd_Qcrit_uniform)* uniformTableR(ii,utr_QcritMax)
             ! end do
 
-            ! stop 34987
+            ! print *, ' '
+            ! Qdelta = uniformTableR(ii,utr_QcritMax) / real(size(uniformTableDataR,2)-1,8)
+            ! print *, 'Qmax, Qdelta, size'
+            ! print *, uniformTableR(ii,utr_QcritMax), Qdelta, size(uniformTableDataR,2)-1,8
+            ! do kk=1,size(uniformTableDataR,2)
+            !     print *, kk, uniformTableDataR(ii,kk,utd_Qcrit_Depth_nonuniform)
+            ! end do
+
+            !stop 34987
         end do
 
-        ! stop 5559783
+        ! print *, ' '
+        ! print *, 'Qmax ',uniformTableR(1,utr_QcritMax)
+        ! do kk=1,size(uniformTableDataR, 2)
+        !     !print *, kk, uniformTableDataR(1,kk,utd_Qcrit_depth_nonuniform) * uniformTableR(1,utr_DepthMax), &
+        !     !             uniformTableDataR(1,kk,utd_Qcrit_Area_nonuniform)  * uniformTableR(1,utr_AreaMax)
+        !     print *, uniformTableDataR(1,kk,utd_Qcrit_Area_nonuniform)  * uniformTableR(1,utr_AreaMax) &
+        !                 * sqrt(setting%Constant%gravity &
+        !                        * uniformTableDataR(1,kk,utd_Qcrit_depth_nonuniform) * uniformTableR(1,utr_DepthMax) ) &
+        !                 , (uniformTableR(1,utr_QcritMax)  / real((N_uniformTableData_items-1),8)) * real(kk-1,8)
+        ! end do
+
+        !  stop 5559783
 
     end subroutine init_uniformtable_array    
 !%
@@ -5695,13 +5708,11 @@ contains
         !% --- return if there are no head BC
         if (N_headBC < 1) return
 
-          !print *, 'in ',trim(subroutine_name)
-
         do ii = 1,N_headBC
 
-            ! print *, '---- ',ii
-
+            !% --- increment over the last-used uniform table index
             UT_idx = UT_idx + 1
+
             !% --- the element index for the element upstream of the BC
             eIdx => BC%headI(ii, bi_elem_idx)
 
@@ -5715,58 +5726,35 @@ contains
             uniformTableR(UT_idx,utr_DepthMax) =  elemR(eIdx,er_FullDepth)
             uniformTableR(UT_idx,utr_AreaMax)  =  elemR(eIdx,er_FullArea)
 
-            ! print *, '----- Full Depth ', uniformTableR(UT_idx,utr_DepthMax) 
-            ! print *, '----- Full Area  ', uniformTableR(UT_idx,utr_AreaMax)
+            ! print *, 'FULL AREA ',uniformTableR(UT_idx,utr_AreaMax)
+            ! stop 3409872
 
-            !% --- get other max values by stepping through cross-section
+            !% --- maximum Qcrit flow is where Fr = 1 or Q = A sqrt(gH)
+            uniformTableR(UT_idx,utr_QcritMax)  &
+                =   uniformTableR(UT_idx,utr_AreaMax) &
+                    * sqrt(grav * uniformTableR(UT_idx,utr_DepthMax))
+
+            !% --- get max value of SectionFactor by stepping through cross-section
             !%     this allows us to deal with slight non-monotonic behavior in nearly full conduits
             thisDepth = zeroR
             deltaD = uniformTableR(UT_idx,utr_DepthMax) / onethousandR
             uniformTableR(UT_idx,utr_SFmax)    = zeroR
-            uniformTableR(UT_idx,utr_QcritMax) = zeroR
-
+            
             !% --- include a depth tolerance to prevent round-off from
             !%     creating a step larger than the max depth
             depthTol = deltaD / tenR
-             jj=0
+            jj=0
             !% --- cycle through all the depths to find the maximum section factor
-            !%     and maximum Q critical
             do while (thisdepth .le. (uniformTableR(UT_idx,utr_DepthMax)-depthTol))
-                 !jj=jj+1
-                  !print *, 'jj= ',jj
                 thisDepth = thisDepth + deltaD
-                  !print *, '----- thisDepth     ',thisDepth 
 
                 !% --- section factor at this depth
                 sf = geo_sectionfactor_from_depth_singular (eIdx, thisDepth, setting%ZeroValue%Area, setting%ZeroValue%Depth)
 
-                 !print *, jj,'----- sectionfactor ',sf
-
                 !% --- check if this is the max sf thus far
                 uniformTableR(UT_idx,utr_SFmax)    = max(uniformTableR(UT_idx,utr_SFmax),sf)
-
-                !% -- critical flowrwate at this depth
-                qcrit = geo_Qcritical_from_depth_singular (eIdx, thisDepth, setting%ZeroValue%Area)
-
-                !  print *, '----- qcrit        ',qcrit
-                
-                !% --- check if this is the max q crit thus far
-                uniformTableR(UT_idx,utr_QcritMax) = max(uniformTableR(UT_idx,utr_QcritMax),qcrit)
-                ! print *, '----- '
-
-                !print *, 'SF, Qcrit ', uniformTableR(UT_idx,utr_SFmax) , uniformTableR(UT_idx,utr_QcritMax)
-                !print *, 'depth max ',uniformTableR(UT_idx,utr_DepthMax)
-
-                !stop 5908734
-
             end do
-
-            ! print *,uniformTableR(1,utr_SFmax)
-            ! stop 2098736
-
         end do
-
-        !print *,uniformTableR(1,utr_SFmax)
 
     end subroutine init_BChead_uniformtable
 !%
@@ -5803,36 +5791,36 @@ contains
         !%     must be consistent with type of max data
         !%     must be consistent with a utd_... index,
         select case (utd_nonU)
-        case (utd_SF_depth_nonuniform, utd_Qcrit_depth_nonuniform)
-            NUtype = DepthData
-        case (utd_SF_area_nonuniform, utd_Qcrit_area_nonuniform)
-            NUtype = AreaData
-        case default
-            print *, 'CODE ERROR: unexpected case default'
-            call util_crashpoint(6629873)
+            case (utd_SF_depth_nonuniform, utd_Qcrit_depth_nonuniform)
+                NUtype = DepthData
+            case (utd_SF_area_nonuniform, utd_Qcrit_area_nonuniform)
+                NUtype = AreaData
+            case default
+                print *, 'CODE ERROR: unexpected case default'
+                call util_crashpoint(6629873)
         end select
     
         !% set the type for the uniform data -- must be a utd_... index
         select case (utd_uniform)
-        case (utd_SF_uniform)
-            Utype = SectionFactorData
-            utr_max = utr_SFmax
-        case (utd_Qcrit_uniform)
-            Utype = QcriticalData
-            utr_max = utr_QcritMax
-        case default
-            print *, 'CODE ERROR: unexpected case default'
-            call util_crashpoint(3609433)
+            case (utd_SF_uniform)
+                Utype = SectionFactorData
+                utr_max = utr_SFmax
+            case (utd_Qcrit_uniform)
+                Utype = QcriticalData
+                utr_max = utr_QcritMax
+            case default
+                print *, 'CODE ERROR: unexpected case default'
+                call util_crashpoint(3609433)
         end select
 
         !% --- get the uniform data delta
         deltaUvalue = uniformTableR(UT_idx,utr_max) /  real((N_uniformTableData_items-1),8)
 
-        ! print *, 'deltaUvalue ',deltaUvalue
+            print *, 'deltaUvalue ',deltaUvalue
 
-        ! print *,'Umax ',uniformTableR(UT_idx,utr_max)
-        ! print *, 'by depth ',geo_sectionfactor_from_depth_singular (eIdx,20.d0)
-        ! print *, 'UT_idx ',UT_idx
+        !print *,'Umax ',uniformTableR(UT_idx,utr_max)
+        !print *, 'by depth ',geo_sectionfactor_from_depth_singular (eIdx,20.d0)
+        !print *, 'UT_idx ',UT_idx
  
         
         !% --- Get delta step for stepping through the non-uniform computation
@@ -5844,7 +5832,7 @@ contains
             print *, 'CONFIGURATION OR CODE ERROR: too small of a depth step in ',trim(subroutine_name)
         end if
 
-        ! print *, 'deltaDepth ',deltaDepth
+            print *, 'deltaDepth ',deltaDepth
 
         testUvalue    = zeroR
         testDepth     = zeroR
@@ -5859,6 +5847,9 @@ contains
             !% --- increment to the next value of the uniform data (unnormalize)
             thisUvalue = uniformTableDataR(UT_idx,jj,utd_uniform) * uniformTableR(UT_idx,utr_max)
 
+            ! print *, ' '
+            ! print *, 'jj, thisQcrit ',jj, thisUvalue
+
             !% --- iterate to find depth that provides uniform value just below and
             !%     just above the target (thisUvalue)
             isIncreasing = .true.
@@ -5872,13 +5863,15 @@ contains
                 oldtestPerimeter = testPerimeter
                 !% --- increment the test depth
                 testDepth     = testDepth + deltaDepth
-                testArea      = geo_area_from_depth_singular (eIdx, testDepth, setting%ZeroValue%Area)
+                testArea      = geo_area_from_depth_singular (eIdx, testDepth, zeroR)
                 !% --- compute values for incremented depth
                 select case (Utype)
                 case (SectionFactorData)
                     testUvalue    = geo_sectionfactor_from_depth_singular (eIdx, testDepth, setting%ZeroValue%Area, setting%ZeroValue%Depth)
                 case (QcriticalData)
-                    testUvalue    = geo_Qcritical_from_depth_singular (eIdx, testDepth, setting%ZeroValue%Area)
+                    testUvalue    = geo_Qcritical_from_depth_singular (eIdx, testDepth, zeroR)
+                    !print *, 'test Qcrit ',testUvalue
+                    !print *,  '   depth, depthfromArea ',testDepth, testArea / 1.5d0
                 case default
                     print *, 'CODE ERROR: unexpected case default'
                     call util_crashpoint(608723)
@@ -5910,6 +5903,8 @@ contains
                 !print *, 'ratio ',(thisUvalue - oldtestUvalue) / deltaUvalue
             endif
 
+            !print *, 'thisDepth Qcrit ',thisDepth, thisArea * sqrt(setting%Constant%gravity * thisDepth)
+
             !% --- store the table data (normalized)   
             select case (NUtype)
             case (DepthData) 
@@ -5928,7 +5923,7 @@ contains
                 ! print*, thisDepth, 'thisDepth'
                 testUvalue    = geo_sectionfactor_from_depth_singular (eIdx, thisDepth, setting%ZeroValue%Area, setting%ZeroValue%Depth)
             case (QcriticalData)
-                testUvalue    = geo_Qcritical_from_depth_singular (eIdx, thisDepth, setting%ZeroValue%Area)
+                testUvalue    = geo_Qcritical_from_depth_singular (eIdx, thisDepth, ZeroR)
             case default
                 print *, 'CODE ERROR: unexpected case default'
             end select
@@ -6394,13 +6389,11 @@ contains
                     else
                         ! print *, elemSI(eUp,esi_JunctionBranch_Main_Index)
                         JMidx => elemSI(eUp,esi_JunctionBranch_Main_Index)
-                        if (elemSI(JMidx,esi_JunctionMain_Type) == ImpliedStorage) then 
+                        if (elemSI(JMidx,esi_JunctionMain_Type) == NoStorage) then 
                             print *, 'USER CONFIGURATION ERROR'
-                            print *, 'Pump Type 1 requires a node that has either defined '
-                            print *, 'tabular storage or functional storage. '
-                            print *, 'SWMM5+ does not replicate the implied storage approach'
-                            print *, 'used in EPA SWMM for type 1 pumps when storage is not'
-                            print *, 'formally defined.'
+                            print *, 'NoStorage found for Pump Type 1 node.'
+                            print *, 'Change node to tabular storage or functional storage, or '
+                            print *, 'use setting%Junction%ForceStorage == true to get implied storage'
                             print *, 'link number ',elemI(ii,ei_link_Gidx_SWMM)
                             print *, 'link name   ',trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
                             call util_crashpoint(788734)

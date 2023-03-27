@@ -690,8 +690,8 @@ contains
         !% --- cycle throuhg the head BC
         do ii=1, N_headBC
 
-            print *, 'in bc_interpolate_head'
-            print *, ii
+            ! print *, 'in bc_interpolate_head'
+            ! print *, ii
 
             nIdx        => BC%headI(ii,bi_node_idx)
             fIdx        => BC%headI(ii,bi_face_idx)
@@ -719,13 +719,13 @@ contains
             ! print *, size(BC%HeadI,1), size(BC%HeadI,2)
             ! print *, BC%HeadI(ii,bi_UTidx)
 
-            critDepth = geo_criticaldepth_singular(BC%HeadI(ii,bi_UTidx))
+            !critDepth = geo_critical_value_singular (BC%HeadI(ii,bi_UTidx,utd_Qcrit_depth_nonuniform))
             
-             print *, 'crit depth ',critDepth 
+            ! print *, 'crit depth ',critDepth 
 
-            normDepth = geo_normaldepth_singular  (BC%HeadI(ii,bi_UTidx))
+            !normDepth = geo_normaldepth_singular  (BC%HeadI(ii,bi_UTidx))
 
-             print *, 'norm depth ',normDepth
+             !print *, 'norm depth ',normDepth
 
             ! print *, 'here at BBBB', BC%headI(ii,bi_subcategory) , ' ', trim(reverseKey(BC%headI(ii,bi_subcategory)))
             

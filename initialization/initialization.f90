@@ -1045,20 +1045,20 @@ contains
                 end if
 
             else if (interface_get_nodef_attribute(ii, api_nodef_type) == API_STORAGE) then
-                 write(*,*) '... is storage type '
+                    ! write(*,*) '... is storage type '
                 node%I(ii, ni_node_type) = nJm
                 node%YN(ii, nYN_has_storage) = .true.
             else 
                 !% --- classify by number of links connected
                 select case (total_n_links)
                 case (oneI)
-                    ! write(*,*) '... is 1 junction is an upstream BC'
+                        ! write(*,*) '... is 1 junction is an upstream BC nJ1'
                     node%I(ii, ni_node_type) = nJ1
                 case (twoI)
-                    ! write(*,*) '... is 2 junction type'        
+                        ! write(*,*) '... is 2 junction type nJ2'        
                     node%I(ii, ni_node_type) = nJ2
                 case default 
-                    ! write(*,*) '... is 3+ junction type'
+                        ! write(*,*) '... is 3+ junction type nJm'
                     node%I(ii, ni_node_type) = nJm
                 end select
             end if 
@@ -1074,7 +1074,7 @@ contains
                  (node%I(ii,ni_routeFrom) .ne. nullvalueI) &
                 )) then
                     !% ... switching to a 2 link nJm junction type'
-                    ! write(*,*) '... switching to a 2 link nJm junction type because of 2 up or 2 down links'
+                        ! write(*,*) '... switching to a 2 link nJm junction type because of 2 up or 2 down links'
                     node%I(ii, ni_node_type) = nJm
             end if
 
@@ -1113,7 +1113,7 @@ contains
                 linkUp => node%I(ii,ni_Mlink_u1)
                 linkDn => node%I(ii,ni_Mlink_d1)
 
-                ! write(*,*) '... is nJ2'
+                    ! write(*,*) '... is nJ2'
 
                 !% --- special channels and conduits that allow nJ2
                 if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)          &
@@ -1135,7 +1135,7 @@ contains
                     !%     overflow above the Surcharge Extra Depth
 
                     !% --- no action: retain nJ2
-                    ! write(*,*) 'retain nJ2 as open channel face'
+                        ! write(*,*) 'retain nJ2 as open channel face'
 
                 elseif ( (link%I(linkUp,li_link_type) .ne. lChannel)         &
                          .and.                                               &
@@ -1159,10 +1159,15 @@ contains
                         ! write(*,*) 'retain nJ2 as closed conduit face'
                 else
                     !% --- switch to nJm
-                    ! write(*,*) '... switching nJ2 to nJm due to closed conduit with less than InfiniteExtraDepthValue for surcharge'
-                    ! print *, 'infinite depth value ',setting%Junction%InfiniteExtraDepthValue, node%R(ii,nr_SurchargeExtraDepth)
+                    !write(*,*) '... switching nJ2 to nJm due to closed conduit with less than InfiniteExtraDepthValue for surcharge'
+                    !print *, 'infinite depth value ',setting%Junction%InfiniteExtraDepthValue, node%R(ii,nr_SurchargeExtraDepth)
 
                     node%I(ii, ni_node_type) = nJm
+
+                    write(*,*) '...NOTE: ',trim(node%Names(ii)%str),' is held as nJM node rather than nJ2 (faces).'
+                    write(*,*) '   This occurs because the input SurchargeDepth is less than the InfiniteDepthValue'
+                    write(*,*) '   Input SurcharegeDepth is ',node%R(ii,nr_SurchargeExtraDepth)
+                    write(*,*) '   InfiniteDepthValue is    ',setting%Junction%InfiniteExtraDepthValue
                 end if
 
                 !% --- regardless of the above, if either link up or down is a
@@ -1182,7 +1187,7 @@ contains
                        .and.                                        &
                       (link%I(linkDn,li_link_sub_type)  .eq. lType1Pump) &
                     ) then
-                    ! write(*,*) 'switch to nJm as type 1 pump downstream'
+                        ! write(*,*) 'switch to nJm as type 1 pump downstream'
                     node%I(ii, ni_node_type) = nJm 
                 end if
 
@@ -1192,12 +1197,12 @@ contains
                         .or.                                     &
                         (link%I(linkDn,li_culvertCode) > 0)      &
                     ) then
-                    ! write(*,*) 'switch to nJm because culvert'
+                        ! write(*,*) 'switch to nJm because culvert'
                     node%I(ii, ni_node_type) = nJm             
                 end if   
 
-                ! print *, ' at CCC'
-                ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
+                    ! print *, ' at CCC'
+                    ! print *, 'node ',ii, trim(reverseKey(node%I(ii,ni_node_type)))
 
             end if
             
@@ -1212,10 +1217,10 @@ contains
                       (link%I(linkUp,li_link_type) .eq. lOrifice)    &
                     ) then    
                     !% --- retain nJ2
-                    ! write(*,*) 'retain nJ2 as weir or orifice connecting with offset upstream'
+                        ! write(*,*) 'retain nJ2 as weir or orifice connecting with offset upstream'
                 else
                     !% --- switch to nJm
-                    ! write(*,*) '...switching nJ2 to nJm because of offsets upstream'
+                        ! write(*,*) '...switching nJ2 to nJm because of offsets upstream'
                     node%I(ii, ni_node_type) = nJm
                 end if
             end if
@@ -1228,10 +1233,10 @@ contains
                       (link%I(linkDn,li_link_type) .eq. lOrifice)    &
                     ) then    
                     !% --- retain nJ2
-                    ! write(*,*) 'retain nJ2 as weir or orifice connecting with offset downstream'
+                        ! write(*,*) 'retain nJ2 as weir or orifice connecting with offset downstream'
                 else
                     !% --- switch to nJm
-                    ! write(*,*) '.. switching to nJM because of offsets downstream'
+                        ! write(*,*) '.. switching to nJM because of offsets downstream'
                     node%I(ii, ni_node_type) = nJm
                 end if
             end if
@@ -1241,7 +1246,7 @@ contains
             if ((node%I(ii, ni_node_type) == nJ2)          .and.  &
                 setting%Junction%ForceNodesJM ) then
                 !% --- switch to nJm
-                write(*,*) 'Forced switch to nJM based on setting%Junction%ForceNodesJM'
+                    ! write(*,*) 'Forced switch to nJM based on setting%Junction%ForceNodesJM'
                 node%I(ii, ni_node_type) = nJm
             end if
 

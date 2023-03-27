@@ -54,7 +54,7 @@ module geometry
     public :: geo_common_initialize
     public :: geo_sectionfactor_from_depth_singular
     public :: geo_Qcritical_from_depth_singular
-    public :: geo_criticaldepth_singular
+    public :: geo_critical_value_singular
     public :: geo_normaldepth_singular
     !public :: geo_topwidth_from_depth_by_type_CC
     ! public :: geo_hyddepth_from_area_and_topwidth_singular
@@ -944,19 +944,19 @@ module geometry
 !%==========================================================================   
 !%
     real(8) function geo_Qcritical_from_depth_singular &
-         (eIdx, inDepth, ZeroValueArea) result (outvalue)
+         (eIdx, inDepth, ZeroValue) result (outvalue)
         !%------------------------------------------------------------------
         !% computes the critical flow for element eIdx with depth "inDepth"
         !%------------------------------------------------------------------
          !% Declarations
          integer, intent(in)  :: eIdx
-         real(8), intent(in)  :: inDepth, ZeroValueArea
+         real(8), intent(in)  :: inDepth, ZeroValue
          real(8), pointer     :: grav
          real(8)              :: thisArea
         !%------------------------------------------------------------------
             grav => setting%Constant%gravity
         !%------------------------------------------------------------------     
-        thisArea      = geo_area_from_depth_singular (eIdx, inDepth, ZeroValueArea)
+        thisArea      = geo_area_from_depth_singular (eIdx, inDepth, ZeroValue)
         outvalue      = thisArea * sqrt(inDepth * grav)
 
     end function geo_Qcritical_from_depth_singular
@@ -964,33 +964,46 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function geo_criticaldepth_singular (UT_idx) result (outvalue)
+    real(8) function geo_critical_value_singular (UT_idx, utd_sheet) result (outvalue)
         !%------------------------------------------------------------------
         !% Description
-        !% Computes the critical depth for the uniformtable(UT_idx)
+        !% Computes the critical depth or area for the uniformtable(UT_idx)
         !% using the flowrate in the associated element eIdx
+        !% utd_sheet = utd_Qcrit_depth_nonuniform
+        !%           = utd_Qcrit_area_nonuniform
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, intent(in) :: UT_idx
+            integer, intent(in) :: UT_idx, utd_sheet
             integer, pointer    :: eIdx
             real(8), pointer    :: gravity, thistable(:)
             real(8)             :: QcritNormalized
-            integer :: ii
+            integer :: ii, utr_Max
         !%------------------------------------------------------------------
         !% Aliases
             eIdx      => uniformTableI(UT_idx,uti_elem_idx)
-            thisTable => uniformTableDataR(UT_idx,:,utd_Qcrit_depth_nonuniform)
+            thisTable => uniformTableDataR(UT_idx,:,utd_sheet)
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            select case (utd_sheet)
+                case (utd_Qcrit_depth_nonuniform)
+                    utr_Max = utr_DepthMax
+                case (utd_Qcrit_area_nonuniform)
+                    utr_Max = utr_AreaMax
+                case default
+                    print *, 'CODE ERROR: unexpected case default'
+                    call util_crashpoint(6209873)
+                end select
         !%------------------------------------------------------------------
         ! print *, ' '
-        ! print *, 'in geo_criticaldepth_singular'
+        ! print *, 'in geo_critical_value_singular'
         ! print *, 'UT_idx',UT_idx
         ! print *, 'eIdx  ',eIdx
         ! print *, 'flowrate     ', elemR(eIdx,er_Flowrate)
-        ! print *, 'utr_Qcritmax ',utr_QcritMax
-        ! print *, 'table Qcritmax       ', uniformTableR(UT_idx,utr_QcritMax)
-        ! do ii=1,N_Elem(this_image())
-        !   print *, ii, elemR(ii,er_Flowrate), elemR(ii,er_Head)
-        ! end do
+        !print *, 'utr_Qcritmax ',utr_QcritMax
+        !print *, 'table Qcritmax       ', uniformTableR(UT_idx,utr_QcritMax)
+       !do ii=1,N_Elem(this_image())
+       !   print *, ii, elemR(ii,er_Flowrate), elemR(ii,er_Head)
+       ! end do
         ! print *, ' '
         
         !stop 2098374
@@ -1000,21 +1013,21 @@ module geometry
         !% --- normalize the critical flowrate
         QcritNormalized = abs(elemR(eIdx,er_Flowrate) / uniformTableR(UT_idx,utr_QcritMax))
         
-        !  print *, 'QcritNormalized',QcritNormalized
+            !print *, 'QcritNormalized',QcritNormalized
 
         !% --- lookup the normalized critical depth for this critical flow
         outvalue = xsect_table_lookup_singular (QcritNormalized, thistable)
 
-        ! print *, 'normalized critical depth',outvalue
+            !print *, 'normalized critical depth',outvalue
 
-        !  print *, 'DepthMax ',uniformTableR(UT_idx,utr_DepthMax)
+            !print *, 'DepthMax ',uniformTableR(UT_idx,utr_DepthMax)
 
         !% --- return depth to physical value
-        outvalue = outvalue * uniformTableR(UT_idx,utr_DepthMax)
+        outvalue = outvalue * uniformTableR(UT_idx,utr_Max)
 
-        !  print *, 'critical depth ',outvalue
+            ! print *, 'critical depth ',outvalue
 
-    end function geo_criticaldepth_singular
+    end function geo_critical_value_singular
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1377,6 +1390,8 @@ module geometry
             call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
         end if
 
+        !% --- note that NoStorage junctions have no volume
+
     end subroutine geo_depth_from_volume_by_type_JM
 !%
 !%==========================================================================
@@ -1411,14 +1426,7 @@ module geometry
         end if
 
         !% --- JM with implied geometry
-        !% JM does not have an implied storage anymore
-        !% thus, do nothing and the initially set zero
-        !% plan area will be carried over.
-        ! thisCol => col_elemPGx(epg_JM_impliedStorage)
-        ! Npack   => npack_elemPGx(thisCol)
-        ! if (Npack > 0) then
-        !     !% not needed
-        ! end if
+        !%     plan area is fixed
 
     end subroutine geo_plan_area_from_volume_by_type_JM    
 !%
@@ -2404,11 +2412,24 @@ module geometry
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             thisP => elemPGx(1:Npack, thisCol)
-            elemSR(thisP,esr_Storage_Plan_Area) = zeroR !% zero implied storage area
+            !% --- note that esr_Storage_Plan_Area is zero and never changes
+            !elemSR(thisP,esr_Storage_Plan_Area) = zeroR !% zero implied storage area
             elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
                                         elemR(thisP,er_FullDepth))
             elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth)
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)    
+        end if
+
+        !% --- set the depths for no storage
+        thisCol => col_elemPGx(epg_JM_noStorage)
+        Npack   => npack_elemPGx(thisCol)
+        if (Npack > 0) then 
+            thisP => elemPGx(1:Npack, thisCol)
+            !% --- note that esr_Storage_Plan_Area is zero and never changes
+            elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
+                                        elemR(thisP,er_FullDepth))
+            elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth)
+            elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)  
         end if
 
     end subroutine geo_assign_JM

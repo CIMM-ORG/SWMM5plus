@@ -550,7 +550,9 @@ module define_settings
     ! setting%Junction
     type JunctionType
         integer :: Method = Implicit0 !% keywords Explicit1, Explicit2, Implicit0
-        logical :: ForceNodesJM = .false.
+        logical :: ForceNodesJM = .true.  !% forces CC nodes between two conduits to be JM rather than faces
+        !%                                 !% note CC nodes will only be faces if SurchargeDepth = InfinitExtraDepthValue
+        logical :: ForceStorage = .false.  !% forces junctions without explicit storage to have implied storage
         !rm 20220207brh logical :: isDynamicYN    = .false.
         !rm 20220207brh real(8) :: CFLlimit     = 0.5d0   !% limiter on CFL to control dynamic junction
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
@@ -561,6 +563,7 @@ module define_settings
         real(8) :: InfiniteExtraDepthValue = 1000.d0  !% Surcharge Depth if this value or higher is treated as impossible to overflow
         real(8) :: OverflowOrificeLength = 1.5d0 !% length of overfloe orifice
         real(8) :: OverflowOrificeHeight = 0.15d0
+        real(8) :: SurfaceArea_Minimum
     end type JunctionType
 
     ! setting%Limiter

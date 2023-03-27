@@ -60,7 +60,7 @@ module runge_kutta2
         !% --- first step of the RK2
         istep = oneI
 
-            print *, ' '
+            !print *, ' '
             ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
 
         !% --- NOTE: Dynamic manning's n not included in this routine.
@@ -75,13 +75,13 @@ module runge_kutta2
         call junction_face_terms (fp_JB, istep)    
         call util_crashstop(6228745)
 
-            ! ! call util_utest_CLprint ('------- BBB  after junction_face_terms')
+            ! call util_utest_CLprint ('------- BBB  after junction_face_terms')
 
         !% --- Half-timestep advance on CC for U and UVolume
         call rk2_step_ETM_CC (istep)   
         call util_crashstop(7399287)
 
-            ! ! call util_utest_CLprint ('------- CCC  after rk2_step_ETM_cc')
+            ! call util_utest_CLprint ('------- CCC  after rk2_step_ETM_cc')
         
         !% --- Update all CC aux variables
         !%     Note, these updates CANNOT depend on face values
@@ -164,7 +164,7 @@ module runge_kutta2
         !%     one or more adjacent elements is zero.
         call pack_zero_depth_interior_faces (fp_all)
 
-            ! ! call util_utest_CLprint ('------- GGG  after pack zero depth interior faces')
+            ! call util_utest_CLprint ('------- GGG  after pack zero depth interior faces')
 
         !% --- face interpolation (all faces)
         !%     because of forceJByn = .true. in last call to update_auxiliary_variables_JMJB 
@@ -193,13 +193,13 @@ module runge_kutta2
         call junction_mass_conservation (ep_JM_ETM, istep)
         call util_crashstop(602984)
 
-            ! ! call util_utest_CLprint ('-------JJJ after junction_mas_conservation')
+            ! call util_utest_CLprint ('-------JJJ after junction_mass_conservation')
 
         !% --- fix flowrates in diagnostic elements adjacent to JB
         call diagnostic_fix_JB_adjacent ()
         call util_crashstop(998734)
 
-            ! ! call util_utest_CLprint ('-------JJJ01 after diagnostic_fix_JB_adjacent')
+            ! call util_utest_CLprint ('-------JJJ01 after diagnostic_fix_JB_adjacent')
 
         !% --- RK2 solution step -- check culverts
         !%     HACK: Can this be included in diagnostic?
@@ -269,7 +269,7 @@ module runge_kutta2
         call update_interpweights_JB (ep_JM_ETM, .false.)
         call util_crashstop(66888134) 
         
-            ! ! call util_utest_CLprint ('------- OOO08 after update_interpweights_JB')  
+            ! call util_utest_CLprint ('------- OOO08 after update_interpweights_JB')  
 
         !% --- interpolate flowrate (only) to face around JB
         !%     Qyn only, skipJump and skipZeroAdjust
@@ -277,19 +277,19 @@ module runge_kutta2
         call face_interpolation(fp_JB, .false., .false., .true., .true., .true.) 
         call util_crashstop (8334666)  
 
-            ! ! call util_utest_CLprint ('------- OOO09 after face_interpolation for JB') 
+            ! call util_utest_CLprint ('------- OOO09 after face_interpolation for JB') 
 
         !% --- Implicit junction for JB flowrate and head
         call junction_toplevel_3 (whichTM, istep)
         call util_crashstop (11287322)
 
-            ! ! call util_utest_CLprint ('------- PPP  after junction_toplevel')
+            ! call util_utest_CLprint ('------- PPP  after junction_toplevel')
 
         !% --- Update JM and JB auxiliary variables 
         !%     .true. = force interp weights for Q to favor JB
         call update_auxiliary_variables_JMJB (whichTM, .true.)
 
-            !  ! ! call util_utest_CLprint ('------- QQQ after update_aux...JM')
+             ! call util_utest_CLprint ('------- QQQ after update_aux...JM')
 
         !% --- JM/JB ELEMENT AD HOC ADJUSTMENTS 
             !% --- handle JB adjustments
@@ -302,7 +302,7 @@ module runge_kutta2
             call adjust_zero_or_small_depth_identify_NEW(JM,.false.)
             call pack_small_and_zero_depth_elements (whichTM, JM)
 
-                ! ! call util_utest_CLprint ('------- QQQ06  after adjust...JB JM')
+                ! call util_utest_CLprint ('------- QQQ06  after adjust...JB JM')
 
         !% --- Creates pack of fp_elem_upstream_is_zero, fp_elem_downstream_is_zero 
         !%     and fp_elem_bothsides_are_zero. USED IN face_zerodepth_interior
@@ -310,7 +310,7 @@ module runge_kutta2
         !%     one or more adjacent elements is zero.
         call pack_zero_depth_interior_faces (fp_all)
 
-            ! ! call util_utest_CLprint ('------- RRR  after pack zero depth interior faces')
+            ! call util_utest_CLprint ('------- RRR  after pack zero depth interior faces')
 
         !% --- face interpolation (all faces)
         !%     because of forceJByn = .true. in last call to update_auxiliary_variables_JMJB 
@@ -339,7 +339,7 @@ module runge_kutta2
         call junction_mass_conservation (ep_JM_ETM, istep)
         call util_crashstop(6209845)
 
-            !  ! ! call util_utest_CLprint ('-------UUU after junction_mas_conservation')
+            !  ! call util_utest_CLprint ('-------UUU after junction_mas_conservation')
 
         !% --- fix flowrates in diagnostic elements adjacent to JB
         call diagnostic_fix_JB_adjacent ()

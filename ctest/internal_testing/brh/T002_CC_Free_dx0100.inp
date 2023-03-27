@@ -16,7 +16,7 @@ START_TIME           00:00:00
 REPORT_START_DATE    06/14/2021
 REPORT_START_TIME    00:00:00
 END_DATE             06/14/2021
-END_TIME             00:40:00
+END_TIME             02:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -49,24 +49,27 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-J0               11.895      0          0.0        2.0        0         
+J0               11.895      0          0.0        2.0        0    
+J1               10.9475     0          0.0        1000.0        0    
      
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-Out1             10.0          FREE                          YES                       
+Out1             10.0          FREE                      NO                   
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-C1               J0               Out1              1000        0.015      0          0          0.0      0         
+C1               J0               J1                500        0.015      0          0          0.0      0      
+C2               J1               Out1              500        0.015      0          0          0.0      0       
 
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
-C1               RECT_OPEN     10.5             1.5          0          0          1                    
+C1               CIRCULAR    1.5                 0          0          0          1  
+C2               CIRCULAR    1.5                 0          0          0          1                       
            
 
 [INFLOWS]

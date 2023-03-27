@@ -2699,6 +2699,27 @@ contains
                 )
         end if 
 
+
+        !% --- JM with no storage
+        ptype => col_elemPGetm(epg_JM_noStorage)
+        npack => npack_elemPGetm(ptype)
+        npack = count( &
+                (elemI(:,ei_elementType) == JM) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == NoStorage) &
+                .and. &
+                ( elemI(:,ei_tmType) == ETM) &
+                )
+        if (npack > 0) then
+            elemPGetm(1:npack, ptype) = pack(eIdx, &
+                (elemI(:,ei_elementType) == JM) &
+                .and. &
+                (elemSI(:,esi_JunctionMain_Type) == NoStorage) &
+                .and. &
+                ( elemI(:,ei_tmType) == ETM) &
+                )
+        end if 
+
         if (setting%Debug%File%pack_mask_arrays) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine pack_geometry_etm_elements
