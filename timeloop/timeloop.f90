@@ -1307,6 +1307,7 @@ contains
         !% --- prevent large increases in the time step
         newDT = min(newDT,OldDT * increaseFactor)
 
+        !% saz 20230328
         !% --- HACK: limit the newDT to be greater than the reportDT
         !% this ensures we get consistant output at every reporting stepa
         !% however, this will slow down the timeloop if reportDT causes
