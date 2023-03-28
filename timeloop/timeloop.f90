@@ -1091,7 +1091,7 @@ contains
             logical, intent(in) :: inSpinUpYN
             logical, pointer :: matchHydrologyStep, useHydrology
             logical          :: do_roundoff
-            real(8)          :: oldDT, maxVelocity
+            real(8)          :: oldDT, reportDt, maxVelocity
             real(8)          :: timeleft, thisCFL, minCFL
             real(8), pointer :: targetCFL, maxCFL, maxCFLlow, timeNow, dtTol
             real(8), pointer :: increaseFactor
@@ -1134,8 +1134,9 @@ contains
             stepNow            => setting%Time%Hydraulics%Step
             lastCheckStep      => setting%VariableDT%LastCheckStep
         !%----------------------------------------------------------------------
-        oldDT =  setting%Time%Hydraulics%Dt  ! not a pointer (important!)
-        newDT => setting%Time%Hydraulics%Dt
+        oldDT    =  setting%Time%Hydraulics%Dt  ! not a pointer (important!)
+        newDT    => setting%Time%Hydraulics%Dt
+        reportDt = setting%Output%Report%TimeInterval
 
         ! print *, '============================================================='
         ! print *, 'in ', trim(subroutine_name) 
@@ -1305,6 +1306,12 @@ contains
 
         !% --- prevent large increases in the time step
         newDT = min(newDT,OldDT * increaseFactor)
+
+        !% --- HACK: limit the newDT to be greater than the reportDT
+        !% this ensures we get consistant output at every reporting stepa
+        !% however, this will slow down the timeloop if reportDT causes
+        !% lower cfl values. Needs to revisit later. 
+        newDT = min(newDT,reportDt)
             ! print *, 'newDT, oldDT :       ',newDT, OldDT
 
         !% 20220328brh time step limiter for inflows into small or zero volumes

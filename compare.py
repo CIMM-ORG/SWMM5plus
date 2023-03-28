@@ -75,7 +75,7 @@ Ytolerance = 50.0            # percentage depth tolerance
 Q_balance_error_tol = 10.0   # flow balance tolerance error for nodes
 Htolerance = 1.0             # absolute tolerance for head (m)
 recompile_swmmC  = False     # logical for recompiling swmmC
-print_timeseries = True      # logical to print individual swmm5 vs swmm5+ link and node results
+print_timeseries = False      # logical to print individual swmm5 vs swmm5+ link and node results
 print_plots      = True      # logical to print plots at the comparison results folder
 #-----------------------------------------------------------------------------------
 
