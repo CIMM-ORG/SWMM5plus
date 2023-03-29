@@ -694,7 +694,7 @@ module update
             integer, intent(in) :: thisCol
             logical, intent(in) :: forceJBQyn !% --- if true then forces JB weight to max
             integer, pointer    :: npack, thisP(:)
-            integer             :: ii
+            integer             :: ii, mm, jB
             real(8), pointer    :: grav, wavespeed(:), PCelerity(:), velocity(:), length(:), depth(:)
             real(8), pointer    :: w_uQ(:), w_dQ(:), w_uG(:), w_dG(:), w_uH(:), w_dH(:), w_uP(:), w_dP(:)
             logical, pointer    :: isSlot(:)
@@ -720,88 +720,83 @@ module update
             isSlot    => elemYN(:,eYN_isPSsurcharged)  !% Preissmann
         !%------------------------------------------------------------------
         ! print *, ' '
-        ! print *, ' in weight '
+        ! print *, ' in weight ' 
 
-        ! do ii=1,max_branch_per_node
-        !             w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-        !             w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-        !             w_uH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-        !             w_dH(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-        !             w_uG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-        !             w_dG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-        !             w_uP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-        !             w_dP(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-        ! end do    
-  
         !% cycle through the branches to compute weights
-        do ii=1,max_branch_per_node
+        do mm=1,npack
+            do ii=1,max_branch_per_node
+                jB = thisP(mm)+ ii
 
-            if (elemSI(ii,esi_JunctionBranch_Exists)) then
-          
-                wavespeed(thisP+ii) = sqrt(grav * depth(thisP+ii))
+                if (elemSI(jB,esi_JunctionBranch_Exists) == oneI) then
+            
+                    wavespeed(jB) = sqrt(grav * depth(jB))
 
-                if (.not. forceJBQyn) then
-                    !% --- flowrate interpweight as time scaled
-                    where (.not. isSlot(thisP+ii)) 
-                        w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
-                        w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
-                    elsewhere
+                    if (.not. forceJBQyn) then
+                        !% --- flowrate interpweight as time scaled
+                        if (.not. isSlot(jB)) then
+                            w_uQ(jB) = - onehalfR * length(jB)  / (velocity(jB) - wavespeed(jB))
+                            w_dQ(jB) = + onehalfR * length(jB)  / (velocity(jB) + wavespeed(jB))
+                        else
+                            !% --- Preissmann slot
+                            w_uQ(jB) = - onehalfR * length(jB)  / (velocity(jB) - PCelerity(jB))
+                            w_dQ(jB) = + onehalfR * length(jB)  / (velocity(jB) + PCelerity(jB))
+                        end if
+                    else
+                        w_uQ(jB) = setting%Limiter%InterpWeight%Maximum
+                        w_dQ(jB) = setting%Limiter%InterpWeight%Maximum
+                    end if 
+
+                    !% --- geometry interpweight as time scaled
+                    if (.not. isSlot(jB)) then
+                        w_uG(jB) = - onehalfR * length(jB)  / (velocity(jB) - wavespeed(jB))
+                        w_dG(jB) = + onehalfR * length(jB)  / (velocity(jB) + wavespeed(jB))
+                    else
                         !% --- Preissmann slot
-                        w_uQ(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - PCelerity(thisP+ii))
-                        w_dQ(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + PCelerity(thisP+ii))
-                    endwhere
-                else
-                    w_uQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                    w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                end if 
+                        w_uG(jB) = - onehalfR * length(jB)  / (velocity(jB) - PCelerity(jB))
+                        w_dG(jB) = + onehalfR * length(jB)  / (velocity(jB) + PCelerity(jB))
+                    end if
 
-                !% --- geometry interpweight as time scaled
-                where (.not. isSlot(thisP+ii)) 
-                    w_uG(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - wavespeed(thisP+ii))
-                    w_dG(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + wavespeed(thisP+ii))
-                elsewhere
-                    !% --- Preissmann slot
-                    w_uG(thisP+ii) = - onehalfR * length(thisP+ii)  / (velocity(thisP+ii) - PCelerity(thisP+ii))
-                    w_dG(thisP+ii) = + onehalfR * length(thisP+ii)  / (velocity(thisP+ii) + PCelerity(thisP+ii))
-                endwhere
+                    !% apply limiters to timescales for geometry
+                    if (w_uG(jB) < zeroR) then
+                        w_uG(jB) = setting%Limiter%InterpWeight%Maximum
+                    end if
+                    if (w_uG(jB) < setting%Limiter%InterpWeight%Minimum) then
+                        w_uG(jB) = setting%Limiter%InterpWeight%Minimum
+                    end if
+                    if (w_uG(jB) > setting%Limiter%InterpWeight%Maximum) then
+                        w_uG(jB) = setting%Limiter%InterpWeight%Maximum
+                    end if
 
-                !% apply limiters to timescales for geometry
-                where (w_uG(thisP+ii) < zeroR)
-                       w_uG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                endwhere
-                where (w_uG(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
-                       w_uG(thisP+ii) = setting%Limiter%InterpWeight%Minimum
-                endwhere
-                where (w_uG(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
-                       w_uG(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                endwhere
+                    !% apply limiters to timescales for flowrate
+                    if (w_dQ(jB) < zeroR) then
+                        w_dQ(jB) = setting%Limiter%InterpWeight%Maximum
+                    end if
+                    if (w_dQ(jB) < setting%Limiter%InterpWeight%Minimum) then
+                        w_dQ(jB) = setting%Limiter%InterpWeight%Minimum
+                    end if
+                    if (w_dQ(jB) > setting%Limiter%InterpWeight%Maximum) then
+                        w_dQ(jB) = setting%Limiter%InterpWeight%Maximum
+                    end if
 
-                !% apply limiters to timescales for flowrate
-                where (w_dQ(thisP+ii) < zeroR)
-                       w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                endwhere
-                where (w_dQ(thisP+ii) < setting%Limiter%InterpWeight%Minimum)
-                       w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Minimum
-                endwhere
-                where (w_dQ(thisP+ii) > setting%Limiter%InterpWeight%Maximum)
-                       w_dQ(thisP+ii) = setting%Limiter%InterpWeight%Maximum
-                endwhere
+                    !% OBSOLETE -- the decision on where to set the Preissmann interp
+                    !% is made in face.f90 in the choice of whether it is in the G, H or Q
+                    !% interpolation sets
+                    !% set the Preissman interp the same as geometry interp
+                    !w_uG(jB) = w_uQ(jB)
+                    !w_dG(jB) = w_dQ(jB)
+                    !w_uP(jB) = w_uG(jB)
+                    !w_dP(jB) = w_dG(jB)
 
-                !% OBSOLETE -- the decision on where to set the Preissmann interp
-                !% is made in face.f90 in the choice of whether it is in the G, H or Q
-                !% interpolation sets
-                !% set the Preissman interp the same as geometry interp
-                !w_uG(thisP+ii) = w_uQ(thisP+ii)
-                !w_dG(thisP+ii) = w_dQ(thisP+ii)
-                !w_uP(thisP+ii) = w_uG(thisP+ii)
-                !w_dP(thisP+ii) = w_dG(thisP+ii)
+                    !% --- set head interp as length-scaled
+                    w_uH(jB) = onehalfR * length(jB)
+                    w_dH(jB) = onehalfR * length(jB)
 
-                !% --- set head interp as length-scaled
-                w_uH(thisP+ii) = onehalfR * length(thisP+ii)
-                w_dH(thisP+ii) = onehalfR * length(thisP+ii)
-
-            end if
+                end if
+            end do
         end do
+
+        !print *, 'here we are ',w_uH(12)
+        !stop 5098723
 
     end subroutine update_interpweights_JB
 !%

@@ -75,8 +75,18 @@ module face
         !     isTM = .true.
         ! end if
         
+        ! print *, 'TEST20230327 FFF01'
+        ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
+        ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(12,er_Head)
+        ! print *, elemR(10,er_InterpWeight_dH), elemR(12,er_InterpWeight_uH)
+        ! print *, elemR(10,er_Length), elemR(12,er_Length)
+
         !% --- face reconstruction of all the interior faces
         call face_interpolation_interior (faceCol, Gyn, Hyn, Qyn, skipJump)
+
+        ! print *, 'TEST20230327 FFF02'
+        ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
+        ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(12,er_Head)
 
             ! call util_utest_CLprint ('    XXX01 face after face_interpolation_interior')
 
@@ -87,6 +97,9 @@ module face
             call adjust_face_for_zero_setting ()
         end if
 
+        ! print *, 'TEST20230327 FF03'
+        ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
+        ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
             ! call util_utest_CLprint ('    XXX02 face after adjust face for zero setting')
 
 

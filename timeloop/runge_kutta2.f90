@@ -62,6 +62,8 @@ module runge_kutta2
 
             !print *, ' '
             ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
+            !print *, 'TEST20230327   GGG',elemR(22,er_Head), elemR(22,er_Zbottom)
+            !stop 709873
 
         !% --- NOTE: Dynamic manning's n not included in this routine.
 
@@ -92,20 +94,22 @@ module runge_kutta2
         !% --- CC ELEMENT AD HOC ADJUSTMENTS    
             !% --- identify zero depths (.true. is zero depth)
             call adjust_zero_or_small_depth_identify_NEW(CC,.true.)
-                ! ! ! !  ! call util_utest_CLprint ('------- DDD01  after adjusts')
+                 ! call util_utest_CLprint ('------- DDD01  after adjusts')
             !% --- identify small depths (.false. is small depth)
             call adjust_zero_or_small_depth_identify_NEW(CC,.false.)
-                ! ! ! !  ! call util_utest_CLprint ('------- DDD02  after adjusts')
+                 ! call util_utest_CLprint ('------- DDD02  after adjusts')
             !% --- create packed arrays of zero and small depths
             call pack_small_and_zero_depth_elements (whichTM, CC)
-                ! ! ! !  ! call util_utest_CLprint ('------- DDD03  after adjusts')
+                 ! call util_utest_CLprint ('------- DDD03  after adjusts')
             !% --- adjust head, flowrate, and auxiliary values at zero depth
             call adjust_zerodepth_element_values (whichTM, CC) 
-                ! ! ! !  ! call util_utest_CLprint ('------- DDD04  after adjusts')
+                 ! call util_utest_CLprint ('------- DDD04  after adjusts')
             !% --- apply limiters to fluxes and velocity
             !%     (.false. so that smalldepth fluxes are not set to zero)
-            call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
-                ! ! !  ! call util_utest_CLprint ('------- DDD06  after adjusts')
+
+        print *, 'commenting out small depth adjustment'
+            !call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
+            !     ! call util_utest_CLprint ('------- DDD06  after adjusts')
             call adjust_limit_velocity_max_CC (whichTM) 
 
                 ! call util_utest_CLprint ('------- DDD07 after adjust... CC')
@@ -177,7 +181,8 @@ module runge_kutta2
 
         !% --- face ad hoc flux adjustments 
         !%     (.false. so that conservative fluxes are not altered)
-            call adjust_smalldepth_face_fluxes_CC (whichTM,.false.)
+        print *, 'commenting out small depth adjustment'
+            !call adjust_smalldepth_face_fluxes_CC (whichTM,.false.)
                  ! ! call util_utest_CLprint ('------- HHH01  after face_adjustment')
             call adjust_zerodepth_face_fluxes_CC  (whichTM,.false.)
                 
@@ -260,7 +265,9 @@ module runge_kutta2
             call adjust_zerodepth_element_values (whichTM, CC) 
             !% --- apply limiters to fluxes and velocity
             !%     .false. so that smalldepth fluxes are not set to zero
-            call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
+
+        print *, 'commenting out small depth adjustment'
+        !    call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
             call adjust_limit_velocity_max_CC (whichTM) 
 
             ! call util_utest_CLprint ('------- OOO07  after adjust... CC')
@@ -323,7 +330,8 @@ module runge_kutta2
 
         !% --- face ad hoc flux adjustments 
         !%     (.false. so that conservative fluxes are not altered)
-            call adjust_smalldepth_face_fluxes_CC (whichTM,.false.)
+        print *, 'commenting out small depth adjustment'
+        !    call adjust_smalldepth_face_fluxes_CC (whichTM,.false.)
                 !!  ! ! call util_utest_CLprint ('------- SSS01  after adjust smalldepth face flux')
             call adjust_zerodepth_face_fluxes_CC  (whichTM,.false.)
 
@@ -371,7 +379,8 @@ module runge_kutta2
             call adjust_zerodepth_element_values (whichTM, CC) 
             !% --- apply limiters to fluxes and velocity
             !%     (.false. so that smalldepth fluxes are not set to zero)
-            call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
+        print *, 'commenting out small depth adjustment'
+        !    call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
             call adjust_limit_velocity_max_CC (whichTM) 
 
             !  ! ! ! call util_utest_CLprint ('------- WWW after zero/small adjusts')

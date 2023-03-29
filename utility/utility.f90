@@ -925,7 +925,7 @@ module utility
                                 print *, 'branch Q Fdn',fdn(thisP(ii)+kk+1), fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8)  * real(fBarrels(fdn(thisP(ii)+kk+1)),8)
                             endif
                         end do
-                        call util_crashpoint(3587832)
+                        !call util_crashpoint(3587832)
 
                     end if    
                 end if

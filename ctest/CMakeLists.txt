@@ -274,10 +274,16 @@ enable_testing()
 ## Fix/Normal/Free = BC
 ## dxNNN = subelement length
 
-add_test(NAME T004_CC_Free_dx0010_NJ2 
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0010_NJ2.inp -s ./ctest/internal_testing/brh/settings_10_faceNJ2.json -o ./ctest/outbrh/
+# add_test(NAME T004_CC_Free_dx0010_NJ2 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0010_NJ2.inp -s ./ctest/internal_testing/brh/settings_10_faceNJ2.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+add_test(NAME T004_CC_Free_dx0010_ImpliedStorage 
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0010_ImpliedStorage.inp -s ./ctest/internal_testing/brh/settings_10_ImpliedStorage.json -o ./ctest/outbrh/
 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
+
 
 
 ## failed 20230327

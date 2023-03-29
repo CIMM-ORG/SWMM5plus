@@ -136,6 +136,8 @@ contains
 
             ! call util_utest_CLprint ('initial_condition after IC_from_linkdata')
 
+        !print *, 'TEST 98743987 ', elemR()
+
           !  stop 6398743
 
         sync all
@@ -313,12 +315,24 @@ contains
 
             ! call util_utest_CLprint ('initial_condition after IC_branch_dummy_values')
 
+        ! print *, 'TEST20230327 AAA'
+        ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
+        ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
+
         !% --- set all the auxiliary (dependent) variables
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables CC'
         call update_auxiliary_variables_CC (whichTM)
 
+        ! print *, 'TEST20230327 BBBB'
+        ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
+        ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
+
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables JM'
         call update_auxiliary_variables_JMJB (whichTM, .false.)
+
+        ! print *, 'TEST20230327 CCCC'
+        ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
+        ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
 
             ! call util_utest_CLprint ('initial_condition after update_auxiliary_variables')
 
@@ -337,6 +351,10 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,  'begin init_IC_diagnostic_interpolation_weights'
         call init_IC_diagnostic_interpolation_weights()
 
+        ! print *, 'TEST20230327 DDD'
+        ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
+        ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
+
             ! call util_utest_CLprint ('initial_condition after IC_diagnostic_interpolation_weights')
 
         !% --- set small values to diagnostic element interpolation sets
@@ -344,11 +362,19 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin  init_IC_small_values_diagnostic_elements'
         call init_IC_small_values_diagnostic_elements
 
+        ! print *, 'TEST20230327 EEE'
+        ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
+        ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
+
             ! call util_utest_CLprint ('initial_condition after IC_small_values_diagnostic')
 
         !% --- update faces
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
         call face_interpolation (fp_all,.true.,.true.,.true.,.false.,.false.)
+
+        ! print *, 'TEST20230327 FFF'
+        ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
+        ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
 
             ! call util_utest_CLprint ('initial_condition after face_interpolation')
 
@@ -379,6 +405,11 @@ contains
         ! call util_utest_CLprint ('initial_condition at end')
 
            !stop 666987
+
+        ! print *, 'TEST20230327'
+        ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
+        ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
+        ! stop 23908734
 
 
         ! print *, trim(reverseKey(elemI(iet(3),ei_geometryType)))

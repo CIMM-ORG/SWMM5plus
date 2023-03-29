@@ -744,7 +744,7 @@ module adjust
             !% use old velocity to prevent unreasonably large RK2 mid-step from affecting adjustment
             VelocityN0    => elemR(:,er_Velocity_N0) 
             Velocity      => elemR(:,er_Velocity)
-            VelocityBlend => elemR(:,er_Temp01)
+            !VelocityBlend => elemR(:,er_Temp01)
             CMvelocity2   => elemR(:,er_Temp02)
             Volume        => elemR(:,er_Volume)
             fHead_d       => faceR(:,fr_Head_d)
@@ -767,8 +767,8 @@ module adjust
         !%     limit to 1.0 needed for intermediate step where SV is being exceeded.
         svRatio(thisP) = min(Volume(thisP) / SmallVolume(thisP), oneR)  !% 20220122brh   
 
-        ! print *, 'thisP ',thisP
-        ! print *, 'svRatio ', svRatio(20)
+        print *, 'thisP small depth adjust',thisP
+        print *, 'svRatio ', svRatio(thisP)
     
         !% use the larger of available ManningsN values
         ManningsN(thisP) = setting%SmallDepth%ManningsN
@@ -804,8 +804,8 @@ module adjust
             * sqrt(abs(fHead_d(fup(thisP)) - Head(thisP)) / (onehalfR * Length(thisP)) )           &
             / ManningsN(thisP)
 
-        ! print *, 'CMvelocity ', CMvelocity(20)
-        ! print *, 'heads  ', fHead_d(fup(thisP)), Head(thisP)
+        ! print *, 'CMvelocity ', CMvelocity(thisP)
+        ! !print *, 'heads  ', fHead_d(fup(1thisP)), Head(1)
         ! print *, 'hydRad ', HydRadius(thisP)
         ! print *, 'mann n ',ManningsN(thisP)
         ! print *, 'length ',Length(thisP)
@@ -816,7 +816,7 @@ module adjust
                 * sqrt(abs(Head(thisP) - fHead_u(fdn(thisP))) / (onehalfR * Length(thisP)) )           &
                 / ManningsN(thisP)    
 
-        ! print *, 'CMvelocity2 ',CMvelocity2(20)        
+        print *, 'CMvelocity2 ',CMvelocity2(thisP)        
 
         !% if opposite signs use the sum, otherwise take the smaller magnitude
         where (CMvelocity(thisP) * CMvelocity(thisP) < zeroR)
@@ -825,7 +825,20 @@ module adjust
             CMvelocity(thisP) = sign(min(abs(CMVelocity(thisP)), abs(CMVelocity2(thisP))),CMvelocity(thisP))
         endwhere
                 
-        ! print *, 'CMvelocity3 ',CMvelocity(20)
+        print *, 'CMvelocity3 ',CMvelocity(thisP)
+
+        !% --- if svRatio > 1, then blend with existing flowrate
+        Flowrate(thisP) = Flowrate(thisP) * (svRatio(thisP) - oneR)         &
+                         + svRatio(thisP) * CMvelocity(thisP) * Area(thisP)
+
+        print *, 'Flowrate ',Flowrate(thisP)                 
+
+        !% new velocity  
+        elemR(thisP,er_Velocity) = Flowrate(thisP) / Area(thisP)
+
+        print *, 'Velocity ',elemR(thisP,er_Velocity)
+
+        !% --- If existing flowrate
                 
         ! print *, 'head dif  ',fHead_d(fup(iet(8))) - fHead_u(fdn(iet(8)))    
         ! print *, 'hydRadius ',HydRadius(iet(8))
@@ -833,41 +846,41 @@ module adjust
         ! print *, 'velocity  ', Velocity(iet(8)), VelocityN0(iet(8))
         ! print *, 'SVratio   ',svRatio(iet(8))
 
-        !% blend the computed velocity with CM velocity
-        VelocityBlend(thisP) = svRatio(thisP) * VelocityN0(thisP) &
-                            + (oneR - svRatio(thisP)) * CMvelocity(thisP)
+        ! !% blend the computed velocity with CM velocity
+        ! VelocityBlend(thisP) = svRatio(thisP) * VelocityN0(thisP) &
+        !                     + (oneR - svRatio(thisP)) * CMvelocity(thisP)
 
-        ! print *, 'VelocityBlend A', VelocityBlend(20)
+        ! print *, 'VelocityBlend A', VelocityBlend(thisP)
 
-        !% 20220716brh
-        !% --- use original RK2 velocity when its magnitude is smaller than blended CM                          
-        !% --- use the smaller magnitude of RK2 velocity or blend if both are positive)
-        where ((VelocityBlend(thisP) .ge. zeroR) .and. (Velocity(thisP) .ge. zeroR ))
-            VelocityBlend(thisP) = min(VelocityBlend(thisP),Velocity(thisP))      
-        endwhere       
+        ! !% 20220716brh
+        ! !% --- use original RK2 velocity when its magnitude is smaller than blended CM                          
+        ! !% --- use the smaller magnitude of RK2 velocity or blend if both are positive)
+        ! where ((VelocityBlend(thisP) .ge. zeroR) .and. (Velocity(thisP) .ge. zeroR ))
+        !     VelocityBlend(thisP) = min(VelocityBlend(thisP),Velocity(thisP))      
+        ! endwhere       
         
-        !% use the smaller magnitude whene both are negative
-        where ((VelocityBlend(thisP) < zeroR) .and. (Velocity(thisP) < zeroR ))
-            VelocityBlend(thisP) = max(VelocityBlend(thisP),Velocity(thisP))      
-        endwhere   
+        ! !% use the smaller magnitude whene both are negative
+        ! where ((VelocityBlend(thisP) < zeroR) .and. (Velocity(thisP) < zeroR ))
+        !     VelocityBlend(thisP) = max(VelocityBlend(thisP),Velocity(thisP))      
+        ! endwhere   
 
-        ! print *, 'Velblend ', VelocityBlend(iet(8))
+        ! !print *, 'Velblend ', VelocityBlend(11)
 
-        ! print *, 'VelocityBlend C ',VelocityBlend(20)
+        ! print *, 'VelocityBlend C ',VelocityBlend(thisP)
 
-        !% new flowrate
-        Flowrate(thisP) = Area(thisP) * VelocityBlend(thisP)
+        ! !% new flowrate
+        ! Flowrate(thisP) = Area(thisP) * VelocityBlend(thisP)
 
-        !% new velocity  % 20220712brh
-        elemR(thisP,er_Velocity) = VelocityBlend(thisP)
+        ! !% new velocity  % 20220712brh
+        ! elemR(thisP,er_Velocity) = VelocityBlend(thisP)
 
         ! print *, ' '
         ! print *, 'in adjust small depth element fluxes'
-        ! print *, 'Flowrate ',Flowrate(iet(7))
+        ! print *, 'Flowrate ',Flowrate(thisP)
         ! print *, ' '
 
         !% reset the temporary storage
-        VelocityBlend(thisP) = nullvalueR
+        !VelocityBlend(thisP) = nullvalueR
 
         !% -----------------------------------------------------------------
     end subroutine adjust_smalldepth_element_fluxes_CC  

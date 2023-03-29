@@ -169,6 +169,8 @@ contains
         call init_linknode_arrays ()
         call util_crashstop(31973)
 
+        !print *, 'TEST20230327   AAA',elemR(22,er_Head), elemR(22,er_Zbottom)
+
         !% --- initialize ForceMain settings (determines if FM is used)
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin Forcemain setting"
         call init_ForceMain_setting ()
@@ -181,6 +183,8 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
         call init_link_transect_array()
         call util_crashstop(42873)
+
+        !print *, 'TEST20230327   BBB',elemR(22,er_Head), elemR(22,er_Zbottom)
 
         !% --- initialize globals that are run-time dependent
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
@@ -207,6 +211,8 @@ contains
             call init_profiles()
         end if
 
+        !print *, 'TEST20230327   CCC',elemR(22,er_Head), elemR(22,er_Zbottom)
+
         !% --- initialize culverts
         if (setting%Output%Verbose) print *, "begin initializing culverts"
         call init_culvert()
@@ -220,6 +226,8 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
         call init_partitioning()
         call util_crashstop(5297)
+
+        !print *, 'TEST20230327   DDD',elemR(22,er_Head), elemR(22,er_Zbottom)
 
         !% HACK -- need to ensure that any phantom link defined is NOT a culvert.
         !% i.e., the original portion of the link from SWMM must be defined as the
@@ -249,10 +257,15 @@ contains
         call network_define_toplevel ()
         call util_crashstop(3293)
 
+        !print *, 'TEST20230327   EEE',elemR(22,er_Head), elemR(22,er_Zbottom)
+
         !%   LINK-ELEM DATA BROADCAST
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin init linkarray broadcast"
         call init_linkarray_broadcast()
         call util_crashstop(550987)
+
+
+        !print *, 'TEST20230327   FFF',elemR(22,er_Head), elemR(22,er_Zbottom)
 
         !% --- initialize boundary and ghost elem arrays for inter image data transfer
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init boundary ghost"
@@ -283,6 +296,8 @@ contains
             !% continue without hydrology    
         end if
         call util_crashstop(320983)
+
+        
 
         !% --- OUTPUT
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
@@ -322,6 +337,8 @@ contains
         !call util_CLprint ('before IC toplevel')
            !print *, 'zero depth ',setting%ZeroValue%Depth
 
+        ! print *, 'TEST20230327   GGG',elemR(22,er_Head), elemR(22,er_Zbottom)
+
         !%=======================================================================
         !%---INITIAL CONDITIONS ON ELEMENTS
         !%=======================================================================
@@ -329,6 +346,8 @@ contains
         !call util_CLprint ('before init_IC_toplevel')
         call init_IC_toplevel ()       
         call util_crashstop(4429873)
+
+        ! print *, 'TEST20230327   HHH',elemR(22,er_Head), elemR(22,er_Zbottom)
 
         !% --- SET CRASH (BLOWUP) LIMITS
         call util_crash_initialize
@@ -395,6 +414,8 @@ contains
         !% --- wait for all processors before exiting to the time loop
         sync all
  
+        ! print *, 'TEST20230327   III',elemR(22,er_Head), elemR(22,er_Zbottom)
+        ! stop 229873
         !%------------------------------------------------------------------- 
         !% Closing
             if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_check_setup_conditions"

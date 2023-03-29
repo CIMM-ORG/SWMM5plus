@@ -643,7 +643,7 @@ module define_settings
 
     ! setting%SmallDepth
     type SmallDepthType
-        real(8) :: DepthCutoff = 0.03d0 ! m
+        real(8) :: DepthCutoff = 0.005d0 ! m  !% prior to 20230327 using 0.03
         real(8) :: ManningsN = 0.1d0
         real(8) :: PumpVolumeFactor = 0.5d0  !% 
     end type SmallDepthType
@@ -1400,10 +1400,15 @@ contains
             end if
         end if
        
-                !%                       Junction.ForceNodesJM
+        !%                       Junction.ForceNodesJM
         call json%get('Junction.ForceNodesJM', logical_value, found)
         if (found) setting%Junction%ForceNodesJM = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.ForceNodesJM not found'
+
+        !%                       Junction.ForceStorage
+        call json%get('Junction.ForceStorage', logical_value, found)
+        if (found) setting%Junction%ForceStorage = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.ForceStorage not found'
 
         !%                       Junction.isDynamicYN
         ! call json%get('Junction.isDynamicYN', logical_value, found)
