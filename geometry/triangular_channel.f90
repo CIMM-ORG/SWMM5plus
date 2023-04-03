@@ -34,7 +34,7 @@ module triangular_channel
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine triangular_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine triangular_depth_from_volume (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on open channels 
@@ -42,16 +42,11 @@ module triangular_channel
         !% Assumes that volume > 0 is previuosly enforced in volume computations.
         !%------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:), volume(:)
             real(8), pointer ::fullvolume(:), fulldepth(:)
         !%------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
         !% Aliases:
-            thisP      => elemPGx(1:Npack,thisCol) 
             depth      => elemR(:,er_Depth)
             volume     => elemR(:,er_Volume)
             fulldepth  => elemR(:,er_FullDepth)
@@ -84,22 +79,16 @@ module triangular_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+    subroutine triangular_topwidth_from_depth (thisP)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a triangular channel
         !%-----------------------------------------------------------------------------
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: topwidth(:), depth(:)
             real(8), pointer :: volume(:), fullvolume(:)
         !%------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
         !% Aliases    
-            thisP       => elemPGx(1:Npack,thisCol) 
             topwidth    => elemR(:,er_Topwidth)
             volume      => elemR(:,er_Volume)
             fullvolume  => elemR(:,er_FullVolume)
@@ -125,23 +114,17 @@ module triangular_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+    subroutine triangular_perimeter_from_depth (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the perimeter from a known depth in a triangular channel
         !%------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: volume(:), fullvolume(:), perimeter(:)
             real(8), pointer :: depth(:)
         !%------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
         !% Aliases
-            thisP      => elemPGx(1:Npack,thisCol) 
             fullvolume => elemR(:,er_FullVolume)
             volume     => elemR(:,er_Volume)
             perimeter  => elemR(:,er_Perimeter)

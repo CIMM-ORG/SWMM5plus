@@ -30,23 +30,19 @@ contains
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine irregular_depth_from_volume(elemPGx, Npack, thisCol)
+    subroutine irregular_depth_from_volume(thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the depth from volume for irregular channel
-        !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
         !% Assumes that volume > 0 is previously enforced in volume computations.
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:), tidx(:)
+            integer, target, intent(in) :: thisP(:)
+            integer, pointer :: tidx(:)
             real(8), pointer :: depth(:), fulldepth(:), volume(:), fullvolume(:)
             real(8), pointer :: thisTable(:,:), normInput(:)
         !%------------------------------------------------------------------
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
         !% Aliases
-            thisP      => elemPGx(1:Npack,thisCol)
             depth      => elemR(:,er_Depth)
             fulldepth  => elemR(:,er_FullDepth)
             volume     => elemR(:,er_Volume)
@@ -91,7 +87,7 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine irregular_topwidth_from_depth(elemPGx, Npack, thisCol)
+    subroutine irregular_topwidth_from_depth(thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from depth for irregular channel
@@ -99,14 +95,13 @@ contains
         !% Assumes that volume > 0 is previousy enforced in volume computations.
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:), tidx(:)
+            integer, target, intent(in) :: thisP(:)
+            integer, pointer ::  tidx(:)
             real(8), pointer :: depth(:), fulldepth(:), topwidth(:)
             real(8), pointer :: volume(:), fullvolume(:)
             real(8), pointer :: thisTable(:,:), normInput(:)
         !%------------------------------------------------------------------
         !% Aliases
-            thisP      => elemPGx(1:Npack,thisCol)
             depth      => elemR(:,er_Depth)
             fulldepth  => elemR(:,er_FullDepth)
             topwidth   => elemR(:,er_TopWidth)
@@ -163,7 +158,7 @@ contains
 !%==========================================================================
 !%
     subroutine irregular_perimeter_and_hydradius_from_depth &
-        (elemPGx, Npack, thisCol, ZeroValuePerimeter, ZeroValueHydRadius)
+        (thisP, ZeroValuePerimeter, ZeroValueHydRadius)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the hydraulic radius from depth for irregular channel
@@ -172,14 +167,13 @@ contains
         !%------------------------------------------------------------------
         !% Declarations:
             real(8), intent(in) :: ZeroValuePerimeter, ZeroValueHydRadius
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:), tidx(:)
+            integer, intent(in) :: thisP(:)
+            integer, pointer :: tidx(:)
             real(8), pointer :: depth(:), fulldepth(:), hydradius(:)
             real(8), pointer :: perimeter(:), area(:), volume(:), fullvolume(:)
             real(8), pointer :: thisTable(:,:), normInput(:)
         !%------------------------------------------------------------------
         !% Aliases
-            thisP          => elemPGx(1:Npack,thisCol)
             depth          => elemR(:,er_Depth)
             fulldepth      => elemR(:,er_FullDepth)
             hydradius      => elemR(:,er_HydRadius)

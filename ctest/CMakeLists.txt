@@ -19,7 +19,7 @@ enable_testing()
 ## Fix/Normal/Free = BC
 ## dxNNN = subelement length
 
-## passed 20230326
+## passed 20230403
 # add_test(NAME T001_CC_Fix_dx0100 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T001_CC_Fix_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -274,15 +274,29 @@ enable_testing()
 ## Fix/Normal/Free = BC
 ## dxNNN = subelement length
 
+# # PASSED 20230403
 # add_test(NAME T004_CC_Free_dx0010_NJ2 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0010_NJ2.inp -s ./ctest/internal_testing/brh/settings_10_faceNJ2.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-add_test(NAME T004_CC_Free_dx0010_ImpliedStorage 
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0010_ImpliedStorage.inp -s ./ctest/internal_testing/brh/settings_10_ImpliedStorage.json -o ./ctest/outbrh/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# # PASSED 20230403
+# add_test(NAME T004_CC_Free_dx0010_ImpliedStorage 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0010_ImpliedStorage.inp -s ./ctest/internal_testing/brh/settings_10_ImpliedStorage.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # PASSED 20230403
+# add_test(NAME T004_CC_Fix_dx0010_ImpliedStorage 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Fix_dx0010_ImpliedStorage.inp -s ./ctest/internal_testing/brh/settings_10_ImpliedStorage.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # PASSED 20230403
+# add_test(NAME T004_CC_Free_dx0050_ImpliedStorage 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0050_ImpliedStorage.inp -s ./ctest/internal_testing/brh/settings_50_ImpliedStorage.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
 
 
@@ -396,8 +410,8 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
 # # ###################################### LEVEL 1 PASSED #############################
-#  # passed 20230326
-# add_test(NAME extran1_final
+ # passed 20230326
+# add_test(NAME extran1_final_mod2
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_final_mod2.inp -s ./ctest/internal_testing/level01_test/settings_extran1.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )

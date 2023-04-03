@@ -390,7 +390,7 @@ contains
         call util_crashstop(103897)
 
 
-           ! call util_utest_CLprint ('at end of initialization')
+           ! ! call util_utest_CLprint ('at end of initialization')
            !print *, 'zero depth ',setting%ZeroValue%Depth
 
 

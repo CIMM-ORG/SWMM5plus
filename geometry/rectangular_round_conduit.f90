@@ -37,7 +37,7 @@ module rectangular_round_conduit
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine rect_round_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine rect_round_depth_from_volume (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on open channels (or non-surcharged rectangular_round conduits)
@@ -45,8 +45,7 @@ module rectangular_round_conduit
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:), fullArea(:), fullDepth(:)
             real(8), pointer :: length(:), breadth(:), AoverAfull(:), YoverYfull(:)
             real(8), pointer :: volume(:), aBot(:), rBot(:), yBot(:), pi
@@ -54,11 +53,7 @@ module rectangular_round_conduit
             integer, allocatable, target :: thisP_analytical(:), thisP_lookup(:)
             integer, target              :: Npack_analytical, Npack_lookup
         !%--------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%--------------------------------------------------------------------
         !% Aliases
-            thisP       => elemPGx(1:Npack,thisCol) 
             depth       => elemR(:,er_Depth)
             fullDepth   => elemR(:,er_FullDepth)
             fullArea    => elemR(:,er_FullArea) 
@@ -123,23 +118,17 @@ module rectangular_round_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine rect_round_topwidth_from_depth (elemPGx, Npack, thisCol)
+    subroutine rect_round_topwidth_from_depth (thisP)
         !%  
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a rectangular_round channel
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:), topwidth(:), breadth(:), yBot(:), rBot(:)
         !%-------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%-------------------------------------------------------------------
         !% Aliases
-            thisP       => elemPGx(1:Npack,thisCol) 
             topwidth    => elemR(:,er_Topwidth)
             depth       => elemR(:,er_Depth)
             breadth     => elemR(:,er_BreadthMax)
@@ -163,24 +152,18 @@ module rectangular_round_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine rect_round_perimeter_from_depth (elemPGx, Npack, thisCol)
+    subroutine rect_round_perimeter_from_depth (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the perimeter from a known depth in a rectangular_round channel
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: perimeter(:), breadth(:), depth(:)
             real(8), pointer :: fullDepth(:), theta(:), yBot(:), rBot(:)
             real(8), pointer :: fullPerimeter(:)
         !%------------------------------------------------------------------
-        !% Preliminaries:
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
         !% Aliases:
-            thisP        => elemPGx(1:Npack,thisCol) 
             depth        => elemR(:,er_Depth)
             perimeter    => elemR(:,er_Perimeter)
             fullDepth    => elemR(:,er_FullDepth)

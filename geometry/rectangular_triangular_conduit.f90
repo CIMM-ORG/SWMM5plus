@@ -34,7 +34,7 @@ module rectangular_triangular_conduit
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine rectangular_triangular_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine rectangular_triangular_depth_from_volume (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on open channels 
@@ -44,17 +44,13 @@ module rectangular_triangular_conduit
         !% This will be done after the head is computed.
         !%-------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:), bottomDepth(:), bottomArea(:)
             real(8), pointer :: fulldepth(:)
             real(8), pointer :: volume(:), length(:), breadth(:), bottomSlope(:)
-        !%--------------------------------------------------------------------
-        !% Preliminaries:
-            if (Npack < 1) return
+
         !%-------------------------------------------------------------------
         !% Aliases
-            thisP       => elemPGx(1:Npack,thisCol) 
             depth       => elemR(:,er_Depth)
             fulldepth   => elemR(:,er_FullDepth)
             breadth     => elemR(:,er_FullTopWidth)
@@ -81,23 +77,17 @@ module rectangular_triangular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine rectangular_triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+    subroutine rectangular_triangular_topwidth_from_depth (thisP)
         !%  
         !%-------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a rectangular_triangular channel
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: breadth(:), topwidth(:), bottomSlope(:), depth(:), bottomDepth(:)
         !%--------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%--------------------------------------------------------------------
         !% Aliases
-            thisP       => elemPGx(1:Npack,thisCol) 
             topwidth    => elemR(:,er_Topwidth)
             depth       => elemR(:,er_Depth)
             breadth     => elemR(:,er_FullTopWidth)
@@ -117,23 +107,17 @@ module rectangular_triangular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine rectangular_triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+    subroutine rectangular_triangular_perimeter_from_depth (thisP)
         !%-------------------------------------------------------------------
         !% Description:
         !% Computes the perimeter from a known depth in a rectangular_triangular channel
         !%-------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: breadth(:), depth(:), bottomSlope(:), bottomDepth(:)
             real(8), pointer :: perimeter(:), fullPerimeter(:), fullDepth(:)
         !%-------------------------------------------------------------------
-        !% Preliminaries:
-            if (Npack < 1) return
-        !%-------------------------------------------------------------------
         !% Aliases:
-            thisP         => elemPGx(1:Npack,thisCol) 
             breadth       => elemR(:,er_FullTopWidth)
             depth         => elemR(:,er_Depth)
             bottomSlope   => elemSGR(:,esgr_Rectangular_Triangular_BottomSlope)

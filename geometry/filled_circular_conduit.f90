@@ -44,7 +44,7 @@ module filled_circular_conduit
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine filled_circular_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine filled_circular_depth_from_volume (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on conduits 
@@ -52,8 +52,7 @@ module filled_circular_conduit
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:), volume(:), length(:), AoverAfull(:)
             real(8), pointer :: YoverYfull(:), fullArea(:), fullDepth(:)
             real(8), pointer :: Ybottom(:), Abottom(:), tempYfull(:), tempAfull(:)
@@ -62,11 +61,7 @@ module filled_circular_conduit
             integer, target              :: Npack_analytical, Npack_lookup
             integer :: ii
         !%---------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%---------------------------------------------------------------------
         !% Aliases
-            thisP      => elemPGx(1:Npack,thisCol)
             depth      => elemR(:,er_Depth)
             volume     => elemR(:,er_Volume)
             length     => elemR(:,er_Length)
@@ -123,24 +118,19 @@ module filled_circular_conduit
 !%========================================================================== 
 !%==========================================================================
 !%
-    subroutine filled_circular_topwidth_from_depth (elemPGx, Npack, thisCol)
+    subroutine filled_circular_topwidth_from_depth (thisP)
         !%
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a filled_circular conduit
         !%-------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:), topwidth(:), YoverYfull(:)
             real(8), pointer :: fullDepth(:), Ybottom(:), tempYfull(:) 
             real(8), pointer :: breadthMax(:)
         !%-------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%-------------------------------------------------------------------
         !% Aliases
-            thisP      => elemPGx(1:Npack,thisCol)
             depth      => elemR(:,er_Depth)
             topwidth   => elemR(:,er_Topwidth)
             fullDepth  => elemR(:,er_fullDepth)
@@ -170,25 +160,20 @@ module filled_circular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine filled_circular_hydradius_and_perimeter_from_depth (elemPGx, Npack, thisCol)
+    subroutine filled_circular_hydradius_and_perimeter_from_depth (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the hydraulic radius from a known depth in a filled_circular conduit
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:), area(:), hydRadius(:), perimeter(:)
             real(8), pointer :: tempArea(:)
             real(8), pointer :: totalFullDepth(:), totalFullArea(:), totalFullHydRadius(:)
             real(8), pointer :: sedimentDepth(:), sedimentPerimeter(:), sedimentTopwidth(:)
             real(8), pointer :: YoverYfull(:) 
         !%-------------------------------------------------------------------
-        !% Preliminaries:
-            if (Npack < 1) return
-        !%-------------------------------------------------------------------
         !% Aliases
-            thisP              => elemPGx(1:Npack,thisCol)
             depth              => elemR(:,er_Depth)
             area               => elemR(:,er_Area)
             hydRadius          => elemR(:,er_HydRadius)

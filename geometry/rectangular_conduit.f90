@@ -34,7 +34,7 @@ module rectangular_conduit
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine rectangular_closed_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine rectangular_closed_depth_from_volume (thisP)
         !%-------------------------------------------------------------------
         !% Description:
         !% Only applies on open channels 
@@ -42,16 +42,11 @@ module rectangular_conduit
         !% Assumes that volume > 0 is enforced in volume computations.
         !%--------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:), volume(:), length(:), breadth(:)
             real(8), pointer :: fulldepth(:), fullvolume(:)
         !%--------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%--------------------------------------------------------------------
         !% Aliases
-            thisP       => elemPGx(1:Npack,thisCol) 
             depth       => elemR(:,er_Depth)
             volume      => elemR(:,er_Volume)
             fulldepth   => elemR(:,er_FullDepth)
@@ -77,22 +72,17 @@ module rectangular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine rectangular_closed_topwidth_from_depth (elemPGx, Npack, thisCol)
+    subroutine rectangular_closed_topwidth_from_depth (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a rectangular channel
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:), GeomType(:)
+            integer, target, intent(in) :: thisP(:)
+            integer, pointer :: GeomType(:)
             real(8), pointer :: breadth(:), topwidth(:), depth(:), fullDepth(:)
         !%-------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%-------------------------------------------------------------------
         !% Aliases:
-            thisP     => elemPGx(1:Npack,thisCol) 
             GeomType  => elemI(:,ei_geometryType)
             topwidth  => elemR(:,er_Topwidth)
             depth     => elemR(:,er_Depth)
@@ -112,23 +102,17 @@ module rectangular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine rectangular_closed_perimeter_from_depth (elemPGx, Npack, thisCol)
+    subroutine rectangular_closed_perimeter_from_depth (thisP)
         !%  
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the perimeter from a known depth in a rectangular channel
         !%------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: breadth(:), depth(:), perimeter(:), fulldepth(:), fullPerimeter(:)
-        !%------------------------------------------------------------------       
-        !% Preliminaries
-            if (Npack < 1) return
         !%------------------------------------------------------------------
         !% Aliases:
-            thisP     => elemPGx(1:Npack,thisCol) 
             breadth   => elemSGR(:,esgr_Rectangular_Breadth)
             depth     => elemR(:,er_Depth)
             fulldepth => elemR(:,er_FullDepth)

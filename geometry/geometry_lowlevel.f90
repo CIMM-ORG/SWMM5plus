@@ -46,6 +46,7 @@ module geometry_lowlevel
     public :: llgeo_tabular_hydradius_from_sectionfactor_and_area
 
     !% --- table look-ups (singular)
+    public :: llgeo_tabular_depth_from_volume_singular
     public :: llgeo_tabular_from_depth_singular
     public :: llgeo_tabular_hydradius_from_area_and_sectionfactor_singular
 
@@ -428,7 +429,7 @@ module geometry_lowlevel
 !%==========================================================================      
 !%
     subroutine llgeo_tabular_hydradius_from_depth &
-        (elemPGx, Npack, thisCol, Ytable, ZeroValueHydRadius )
+        (thisP, Ytable, ZeroValueHydRadius )
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on tabular look-ups (typically conduits) that have
@@ -436,17 +437,12 @@ module geometry_lowlevel
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
+            integer, target, intent(in) :: thisP(:)
             real(8),         intent(in) :: Ytable(:), ZeroValueHydRadius
-            integer, pointer :: thisP(:)
             real(8), pointer :: depth(:), HydRadius(:), fullHydRadius(:)
             real(8), pointer :: YoverYfull(:), fulldepth(:)
-        !%---------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
         !%--------------------------------------------------------------------
         !% Aliases
-            thisP         => elemPGx(1:Npack,thisCol)
             depth         => elemR(:,er_Depth)
             fulldepth     => elemR(:,er_FullDepth)
             HydRadius     => elemR(:,er_HydRadius)
@@ -474,7 +470,7 @@ module geometry_lowlevel
 !%==========================================================================      
 !%
     subroutine llgeo_tabular_hydradius_from_sectionfactor_and_area &
-        (elemPGx, Npack, thisCol, Stable, SoverScol, ZeroValueHydRadius, ZeroValueArea )
+        (thisP, Stable, SoverScol, ZeroValueHydRadius, ZeroValueArea )
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on tabular look-ups (typically conduits) that have
@@ -482,19 +478,14 @@ module geometry_lowlevel
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
+            integer, target, intent(in) :: thisP(:)
             integer,         intent(in) :: SoverScol
             real(8),         intent(in) :: Stable(:), ZeroValueHydRadius, ZeroValueArea
-            integer, pointer :: thisP(:)
             real(8), pointer :: area(:), fullarea(:), fulldepth(:), fullhydradius(:)
             real(8), pointer :: AoverAfull(:), SoverSfull(:), HydRadius(:)
             real(8), pointer :: SectionFactor(:)
-        !%---------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
         !%--------------------------------------------------------------------
         !% Aliases
-            thisP         => elemPGx(1:Npack,thisCol)
             area          => elemR(:,er_area)
             fullarea      => elemR(:,er_FullArea)
             fulldepth     => elemR(:,er_Fulldepth)
@@ -538,6 +529,44 @@ module geometry_lowlevel
 !%==========================================================================   
 !% TABLE LOOK UP (SINGULAR)
 !%========================================================================== 
+!%
+    real(8) function llgeo_tabular_depth_from_volume_singular (idx, Ytable)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% looks up tabular depth from volume
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: idx
+            real(8), intent(in) :: Ytable(:)
+
+            real(8), pointer :: depth, volume, length, fullArea, fulldepth
+            real(8), pointer :: AoverAfull, YoverYfull
+        !%------------------------------------------------------------------
+        !% Aliases
+            depth      => elemR(idx,er_Depth)
+            volume     => elemR(idx,er_Volume)
+            length     => elemR(idx,er_Length)
+            fullArea   => elemR(idx,er_FullArea)
+            fulldepth  => elemR(idx,er_FullDepth)
+            AoverAfull => elemR(idx,er_AoverAfull)
+            YoverYfull => elemR(idx,er_YoverYfull)
+        !%------------------------------------------------------------------
+        !% --- compute the relative volume
+        AoverAfull = volume / (length * fullArea)
+      
+        !% retrive the normalized Y/Yfull from the lookup table
+        YoverYfull = xsect_table_lookup_singular (AoverAfull, Ytable)  
+
+        !% finally get the depth by multiplying the normalized depth with full depth
+        depth = YoverYfull * fulldepth
+
+        !% ensure the full depth is not exceeded
+        llgeo_tabular_depth_from_volume_singular = min(depth,fulldepth)   
+
+    end function llgeo_tabular_depth_from_volume_singular
+!%
+!%==========================================================================
+!%==========================================================================     
 !%
     real(8) function llgeo_tabular_from_depth_singular &
             (indx, depth, maxValue, zeroValueDepth, ZeroValueThis, Xtable) result (outvalue)

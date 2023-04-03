@@ -36,13 +36,13 @@ module storage_geometry
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine storage_functional_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine storage_functional_depth_from_volume (thisP, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Only applies on JM that has storage by functional depth
         !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-        integer, pointer :: thisP, curveID
+        integer, target, intent(in) :: thisP(:), Npack
+        integer, pointer :: curveID
         real(8), pointer :: depth, fulldepth, volume
         real(8), pointer :: aConst, aCoeff, aExpon, bb, vv
         real(8) :: aa
@@ -50,20 +50,18 @@ module storage_geometry
         !%-----------------------------------------------------------------------------
 
         !% HACK: Find out a way to code this without do loop
-        do ii = 1, Npack
-            thisP     => elemPGx(ii,thisCol) 
-            depth     => elemR(thisP,er_Depth)
-            fulldepth => elemR(thisP,er_FullDepth)
-            volume    => elemR(thisP,er_Volume)
-            aConst    => elemSR(thisP,esr_Storage_Constant)
-            aCoeff    => elemSR(thisP,esr_Storage_Coefficient)
-            aExpon    => elemSR(thisP,esr_Storage_Exponent)
-            curveID   => elemSI(thisP,esi_JunctionMain_Curve_ID)
+        do ii = 1,Npack
+            depth     => elemR(thisP(ii),er_Depth)
+            fulldepth => elemR(thisP(ii),er_FullDepth)
+            volume    => elemR(thisP(ii),er_Volume)
+            aConst    => elemSR(thisP(ii),esr_Storage_Constant)
+            aCoeff    => elemSR(thisP(ii),esr_Storage_Coefficient)
+            aExpon    => elemSR(thisP(ii),esr_Storage_Exponent)
+            curveID   => elemSI(thisP(ii),esi_JunctionMain_Curve_ID)
 
 
         ! print *, 'in storage functional depth from volume'
-        ! print *, volume
-
+        ! print *, volum
 
             if (aExpon == zeroR) then
                 !% ---- if aExpon =  0, an explicit depth vs volume relation can be retrived
@@ -105,13 +103,13 @@ module storage_geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine storage_tabular_depth_from_volume (thisP, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Only applies on JM that has tabular storage (or non-surcharged trapezoidal conduits)
         !%-----------------------------------------------------------------------------
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP, curveID
+            integer, target, intent(in) :: thisP(:), Npack
+            integer, pointer :: curveID
             real(8), pointer :: depth, fulldepth, volume
             real(8), pointer :: aConst, aCoeff, aExpon
             integer :: ii
@@ -123,11 +121,10 @@ module storage_geometry
         
         !% HACK: Find out a way to code this without do loop
         do ii = 1, Npack
-            thisP     => elemPGx(ii,thisCol) 
-            depth     => elemR(thisP,er_Depth)
-            fulldepth => elemR(thisP,er_FullDepth)
-            volume    => elemR(thisP,er_Volume)
-            curveID   => elemSI(thisP,esi_JunctionMain_Curve_ID)
+            depth     => elemR(thisP(ii),er_Depth)
+            fulldepth => elemR(thisP(ii),er_FullDepth)
+            volume    => elemR(thisP(ii),er_Volume)
+            curveID   => elemSI(thisP(ii),esi_JunctionMain_Curve_ID)
 
             !% interpolate from the curve
             call util_curve_lookup_singular(curveID, er_Volume, er_Depth, curve_storage_volume, &
@@ -143,19 +140,17 @@ module storage_geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine storage_implied_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine storage_implied_depth_from_volume (thisP, Npack)
         !%-------------------------------------------------------------------
         !% Description:
         !% Computes depth from volume for a junction that does not have SWMM
         !% geometry specified using the storage plan area
         !%-------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:), Npack
             real(8), pointer :: depth(:), fulldepth(:), pArea(:), volume(:)
         !%-------------------------------------------------------------------
         !% Aliases
-            thisP     => elemPGx(1:Npack,thisCol)
             depth     => elemR(:,er_Depth)
             fulldepth => elemR(:,er_FullDepth)
             pArea     => elemSR(:,esr_Storage_Plan_Area)
@@ -175,26 +170,25 @@ module storage_geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine storage_plan_area_from_volume (elemPGx, Npack, thisCol)
+    subroutine storage_plan_area_from_volume (thisP, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% Only applies on JM that has storage by functional depth
         !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-        integer, pointer :: thisP, curveID
+        integer, target, intent(in) :: thisP(:), Npack
+        integer, pointer :: curveID
         real(8), pointer :: planArea, tempPArea, volume
         integer :: ii
         !%-----------------------------------------------------------------------------
         do ii = 1, Npack
-            thisP     => elemPGx(ii,thisCol) 
-            tempPArea => elemR(thisP,er_Temp01)
-            volume    => elemR(thisP,er_Volume)
-            planArea  => elemSR(thisP,esr_Storage_Plan_Area)
-            curveID   => elemSI(thisP,esi_JunctionMain_Curve_ID)
+            tempPArea => elemR(thisP(ii),er_Temp01)
+            volume    => elemR(thisP(ii),er_Volume)
+            planArea  => elemSR(thisP(ii),esr_Storage_Plan_Area)
+            curveID   => elemSI(thisP(ii),esi_JunctionMain_Curve_ID)
 
             !% --- plan area is unchanged for implied or no storage
-            if (elemSI(thisP,esi_JunctionMain_type) == ImpliedStorage) return
-            if (elemSI(thisP,esi_JunctionMain_type) == NoStorage) return
+            if (elemSI(thisP(ii),esi_JunctionMain_type) == ImpliedStorage) return
+            if (elemSI(thisP(ii),esi_JunctionMain_type) == NoStorage) return
            
             !% --- interpolate from the curve created in initial_condition/init_IC_get_junction_data
             !      using storage_create_curve_from_function()

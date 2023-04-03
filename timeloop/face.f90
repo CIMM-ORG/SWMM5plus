@@ -10,7 +10,7 @@ module face
     use utility_profiler
     use utility, only: util_sign_with_ones, util_CLprint, util_syncwrite
     use utility_crash, only: util_crashpoint
-   ! use utility_unit_testing, only: util_utest_CLprint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
 
     implicit none
@@ -27,6 +27,7 @@ module face
 
     public :: face_interpolation
     public :: face_interpolate_bc
+    public :: face_force_JBadjacent_values
     ! public :: face_FluxCorrection_interior
     ! public :: face_flowrate_max_interior
     ! public :: face_flowrate_max_shared
@@ -100,6 +101,7 @@ module face
         ! print *, 'TEST20230327 FF03'
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
         ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
+
             ! call util_utest_CLprint ('    XXX02 face after adjust face for zero setting')
 
 
@@ -112,22 +114,23 @@ module face
                 ! call util_utest_CLprint ('    XXX03 face after face_zerodetph_interior 1')
 
             call face_zerodepth_interior(fp_elem_upstream_is_zero)
+                
                 ! call util_utest_CLprint ('    XXX04 face after face_zerodetph_interior 2')
 
             call face_zerodepth_interior(fp_elem_bothsides_are_zero)
 
-                ! call util_utest_CLprint ('    XXX05 face after face_zerodetph_interior 3')
+                ! call util_utest_CLprint ('    XXX05 face after face_zerodepht_interior 3')
 
         end if
 
         !% --- face reconstruction of all the shared faces
         call face_interpolation_shared (faceCol, Gyn, Hyn, Qyn, skipJump)
 
-            ! ! call util_utest_CLprint ('    face after face interpolation_shared')
+            ! call util_utest_CLprint ('    XXX06 face after face interpolation_shared')
 
         call face_interpolate_bc (isBConly)
 
-            ! call util_utest_CLprint ('    face after face_interpolate_BC')
+            ! call util_utest_CLprint ('    XXX07 face after face_interpolate_BC')
 
 
         !%-------------------------------------------------------------------
@@ -172,6 +175,57 @@ module face
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine face_interpolate_bc
+!%    
+!%==========================================================================    
+!%==========================================================================
+!%    
+    subroutine face_force_JBadjacent_values (thisColP, isJBupstreamYN)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Forces faces adjacent to JB to JB values without interpolation
+        !%------------------------------------------------------------------
+        !% Declaration
+            integer, intent(in) :: thisColP
+            logical, intent(in) :: IsJBupstreamYN !% true if JB is upstream of JM
+            integer, pointer    :: thisJM(:), Npack
+            integer :: mm, ei_Mface, kstart
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            Npack => npack_elemP(thisColP)
+            if (Npack < 1) return
+            thisJM => elemP(1:Npack,thisColP) 
+            if (isJBupstreamYN) then 
+                ei_Mface = ei_Mface_uL
+                kstart = oneI !% JB upstream of JM
+            else
+                ei_Mface = ei_Mface_dL
+                kstart = twoI !% JB downstream of JM
+            end if
+        !%------------------------------------------------------------------
+
+            ! print *, 'in face_force_JBadjacent'
+            ! print *, 'Npack ',Npack
+
+        do mm=1,Npack
+
+            ! print *, 'mm',mm
+            ! print *, 'thisJM(mm)', thisJM(mm)
+
+            !% --- push junction JB flowrate values back to faces  
+            call face_force_JBvalues (fr_Flowrate, er_Flowrate, ei_Mface, thisJM(mm), kstart) 
+
+            !% --- push junction JB Delta Q values back to faces
+            call face_force_JBvalues (fr_DeltaQ, er_DeltaQ, ei_Mface, thisJM(mm), kstart) 
+
+            !print *, thisJM(mm)
+
+            !% --- push JB head to adjacent face
+            call face_force_JBvalues (fr_Head_d, er_Head, ei_Mface, thisJM(mm), kstart) 
+            call face_force_JBvalues (fr_Head_u, er_Head, ei_Mface, thisJM(mm), kstart) 
+
+        end do
+
+    end subroutine face_force_JBadjacent_values
 !%    
 !%==========================================================================    
 !% PRIVATE
@@ -286,420 +340,7 @@ module face
     end subroutine face_interpolation_upBC
 !%
 !%==========================================================================
-!%==========================================================================
-!%
-!% brh 20211211 moved and renamed -- this doesn't belong in Face routines
-! subroutine face_interpolation_latBC_byPack()
-        
-    !     !%-----------------------------------------------------------------------------
-    !     !% Description:
-    !     !% Interpolates all boundary faces using a pack arrays -- base on bi_category
-    !     !%-----------------------------------------------------------------------------
-    !     !integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
-    !     !integer :: fFlowSet(1), 
-    !     integer :: ii
-    !     integer, pointer :: elem_P(:), idx_P(:)
-    !     integer :: eFlowSet(1)
-    !     !integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
-    !     character(64) :: subroutine_name = 'face_interpolation_latBC_byPack'
 
-    !     !%-----------------------------------------------------------------------------
-    !     if (setting%Debug%File%boundary_conditions)  &
-    !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-
-    !     elem_P => elemP(1:npack_elemP(ep_BClat),ep_BClat)
-    !     idx_P  => BC%P%BClat
-
-    !     !fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
-    !     !fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
-    !     !eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
-
-    !     !fHeadSetU = [fr_Head_u]
-    !     !fHeadSetD = [fr_Head_d]
-    !     !eHeadSet = [er_Head]
-
-    !     !fFlowSet = [fr_Flowrate]
-    !     eFlowSet = [er_FlowrateLateral]
-
-    !     do ii=1,size(eFlowSet)
-    !         elemR(elem_P,eFlowSet(ii)) = BC%flowR(idx_P,br_value)
-    !     end do
-    !     !% For lateral flow, just update the flow at the element >> elemR(flow) + BC_lateral_flow
-
-    !     if (setting%Debug%File%boundary_conditions) &
-    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    ! end subroutine face_interpolation_latBC_byPack
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    ! subroutine face_interpolation_dnBC_OLD(isBConly)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Interpolates data to all downstream boundary faces
-    !     !% When called with isBConly == true, only does the BC update
-    !     !%-------------------------------------------------------------------
-    !     !% Declarations
-    !         logical, intent(in) :: isBConly
-    !         !integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
-    !         integer :: ii
-    !         integer, pointer :: idx_fBC(:), eup(:), idx_P(:)
-    !         integer, pointer :: elemUpstream
-    !         real(8), pointer :: depthBC(:), headBC(:), eHead(:),  eFlow(:)
-    !         real(8), pointer :: eVelocity(:), eZbottom(:), eLength(:)
-    !         real(8), pointer :: eVolume(:), grav, eDepth(:), eTopwidth(:)
-    !         logical, pointer :: isZeroDepth(:), hasFlapGateBC(:)
-    !         !real(8), pointer :: eArea(:), eHydDepth(:), eTopWidth(:)
-    !         real(8) :: Vtemp, headdif, thisDepth, thisVolume, thisQ
-    !         character(64) :: subroutine_name = 'face_interpolation_dnBC'
-    !     !%--------------------------------------------------------------------
-    !     !% Preliminaries
-    !         if (setting%Debug%File%boundary_conditions)  &
-    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    !     !%--------------------------------------------------------------------
-        
-    !         eup           => faceI(:,fi_Melem_uL)
-    !         idx_fBC       => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
-    !         idx_P         => BC%P%BCdn
-    !         depthBC       => BC%headR(:,br_Temp01)
-    !         headBC        => BC%headR(:,br_value)
-    !         hasFlapGateBC => BC%headYN(:,bYN_hasFlapGate) 
-    !         eDepth        => elemR(:,er_Depth)
-    !         eHead         => elemR(:,er_Head)
-    !         eFlow         => elemR(:,er_Flowrate)
-    !         eTopwidth     => elemR(:,er_TopWidth)
-    !         eVelocity     => elemR(:,er_Velocity)
-    !         eZbottom      => elemR(:,er_Zbottom)
-    !         eVolume       => elemR(:,er_Volume)
-    !         eLength       => elemR(:,er_Length)
-    !         isZeroDepth   => elemYN(:,eYN_isZeroDepth)
-    !         grav        => setting%Constant%gravity
-    !         ! eArea     => elemR(:,er_Area)
-    !         ! eHydDepth => elemR(:,er_HydDepth)
-    !         ! eTopWidth => elemR(:,er_TopWidth)
-    !     !%--------------------------------------------------------------------   
-
-    !     !% For fixed, tidal, and timeseries BC
-    !     !% The BC is imagined as enforced on a ghost cell outside the boundary
-    !     !% so the face value is given by linear interpolation using ghost and interior cells 
-
-    !     !% --- upstream face head is the BC
-    !     !faceR(idx_fBC, fr_Head_u) = 0.5 * (eHead(eup(idx_fBC)) + headBC) 
-    !     faceR(idx_fBC, fr_Head_u)  = headBC(idx_P)
-    !     faceR(idx_fBC, fr_Depth_u) = max(headBC(idx_P) - faceR(idx_fBC,fr_Zbottom), setting%ZeroValue%Depth*0.99d0)
-
-    !     print*, ' '
-    !     print *, 'in ',trim(subroutine_name)
-    !     print *, 'BC Head idx ', BC%headI(:, bi_idx)
-    !     print *, 'BC head cat ', BC%headI(:, bi_subcategory)
-    !     print *, 'BC head key ', trim(reverseKey(BC%headI(1, bi_subcategory))), ' ',trim(reverseKey(BC%headI(1, bi_subcategory)))
-    !     print *, 'face ID ', idx_fBC
-    !     print *, 'faceR head value ', faceR(idx_fBC, fr_Head_u)
-    !     print *, 'BC head          ',headBC(idx_P)
-    !     print *, 'BC depth         ',headBC(idx_P) - faceR(idx_fBC,fr_Zbottom)
-
-    
-
-    !     !% --- the downstream side of face is the same as the upstream face (unless gate, see below)
-    !     faceR(idx_fBC, fr_Head_d)  = faceR(idx_fBC, fr_Head_u)
-    !     faceR(idx_fBC, fr_Depth_d) = faceR(idx_fBC, fr_Depth_u)
-
-    !     print *, 'e head, head bc ', eHead(eup(idx_fBC)), headBC(idx_P)
-        
-    !     !% --- for a flap gate on a BC with higher head downstream
-    !     where ( hasFlapGateBC(idx_P) .and. (eHead(eup(idx_fBC))  < headBC(idx_P) ) )
-    !         !% --- reset the head on the upstream and downstream side of face for closed gate
-    !         faceR(idx_fBC, fr_Head_u)  = eHead(eup(idx_fBC))
-    !         faceR(idx_fBC, fr_Depth_u) = max(eHead(eup(idx_fBC)) - faceR(idx_fBC,fr_Zbottom), setting%ZeroValue%Depth*0.99d0)
-    !         faceR(idx_fBC, fr_Head_d)  = headBC(idx_P)
-    !         faceR(idx_fBC, fr_Depth_d) = max(headBC(idx_P)       - faceR(idx_fBC,fr_Zbottom), setting%ZeroValue%Depth*0.99d0)
-    !     endwhere
-
-    !     print *, 'faceR value head ',faceR(idx_fBC, fr_Head_u), faceR(idx_fBC, fr_Head_d)
-
-    !     ! ! ! call util_utest_CLprint ('    face interpolate down BC')
-        
-    !     !% --- get geometry for face from upstream element shape
-    !     if (.not. isBConly) then
-    !         !% --- get the depth on the face (upstream) from BC (temporary store)
-    !         !%     this ensures that if gate is closed the depth is the upstream depth
-    !         depthBC(idx_P) = faceR(idx_fBC, fr_Depth_u) !faceR(idx_fBC, fr_Head_u) - faceR(idx_fBC,fr_Zbottom)
-
-    !         !% --- compute elldepth, topwidth, area geometry from depth based on relationship for upstream element
-    !         !%     but using the depthBC at the upstream side of the face (which may be closed gate)   
-    !         do ii=1,size(idx_fBC)
-    !             elemUpstream => eup(idx_fBC(ii))
-    !             !faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
-    !             !faceR(idx_fBC(ii),fr_Length_u)   = elemR(elemupstream,er_Length)
-    !             !faceR(idx_fBC(ii),fr_Topwidth_u) = geo_topwidth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
-    !             faceR(idx_fBC(ii),fr_Area_u)     = geo_area_from_depth_singular   &
-    !                 (elemUpstream, depthBC(idx_P(ii)), setting%ZeroValue%Area)
-    !             !faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_area_and_topwidth_singular(elemUpstream, faceR(idx_fBC(ii),fr_Area_u),faceR(idx_fBC(ii),fr_Topwidth_u) )
-    !             ! faceR(idx_fBC(ii),fr_EllDepth_u) = geo_elldepth_singular &
-    !             !     (faceR(idx_fBC, fr_Head_u), faceR(idx_fBC(ii),fr_Area_u), faceR(idx_fBC(ii),fr_Topwidth_u), &
-    !             !      elemR(elemUpstream,er_AreaBelowBreadthMax), elemR(elemUpstream,er_BreadthMax), elemR(elemUpstream,er_ZbreadthMax))
-                
-    !             ! !% TEST 20220712--- apply simple linear interpolation to prevent large downstream area from causing numerical problems
-    !             ! !% 20220712brh
-    !             ! faceR(idx_fBC(ii),fr_Area_u)     =  (faceR(idx_fBC(ii),fr_Area_u)     + eArea(elemUpstream)    ) * onehalfR
-    !             ! faceR(idx_fBC(ii),fr_HydDepth_u) =  (faceR(idx_fBC(ii),fr_HydDepth_u) + eHydDepth(elemUpstream)) * onehalfR
-    !             ! faceR(idx_fBC(ii),fr_Topwidth_u) =  (faceR(idx_fBC(ii),fr_Topwidth_u) + eTopWidth(elemUpstream)) * onehalfR
-    !         end do
-    !         !% --- store downstream side of face
-    !         !faceR(idx_fBC,fr_Topwidth_d) = faceR(idx_fBC,fr_Topwidth_u) 
-    !         faceR(idx_fBC,fr_Area_d)     = faceR(idx_fBC,fr_Area_u) 
-    !         !faceR(idx_fBC,fr_HydDepth_d) = faceR(idx_fBC,fr_HydDepth_u)
-
-    !         print *, ' '
-    !         print *, 'in face_interpolation_dnBC'
-    !         print *, 'depthBC ',depthBC(idx_P(1))
-    !         print *, 'area    ',faceR(idx_fBC(1),fr_Area_u)
-    !         print *, ' '
-    !         ! !stop 2987355
-
-    !         !% --- set the flowrate at the boundary
-    !         do ii = 1,size(idx_fBC)
-    !             !% --- upstream element ID
-    !             elemUpstream => eup(idx_fBC(ii))
-
-    !             !% --- default face flowrate is the upstream element flowrate
-    !             faceR(idx_fBC(ii),fr_Flowrate) = eFlow(elemUpstream)
-
-    !             !% --- check for closed flap gate
-    !             if (hasFlapGateBC(idx_P(ii))) then
-    !                 ! print *, 'has flapgate'
-    !                 if (faceR(idx_fBC(ii), fr_Head_u) < headBC(idx_P(ii))) then
-    !                     !% --- set BC flow to zero for closed flap gate
-    !                     !%     no outflow until head at face upstream exceeds the gate BC head
-    !                     faceR(idx_fBC(ii), fr_Flowrate) = zeroR
-    !                     ! print *, 'setting face flowrate to zero'
-    !                 else
-    !                     !% --- set BC flow to the flow at the upstream element center
-    !                     !%     note that if the upstream value is negative the BC is set to zero
-    !                     !%     to prevent backflow.
-    !                     faceR(idx_fBC(ii), fr_Flowrate) = max(eFlow(elemUpstream),zeroR)
-    !                     ! print *, 'face flowrate ',faceR(idx_fBC(ii), fr_Flowrate)
-    !                 end if
-    !             end if
-
-    !             !% --- limit the flowrate based on volume to bring upstream element
-    !             !%     to the same elevation as the head BC
-    !             !%     if headdif > 0 then thisQ >0 represents a limit on the outflow
-    !             !%     if headdif < 0 then thisQ <0 represents a limit on the inflow
-    !             headdif = eHead(elemUpstream) - faceR(idx_fBC(ii), fr_Head_u)
-    !             !% --- positive thisQ is an outflow
-    !             thisQ   = onefourthR * headdif * eLength(elemUpstream)  &
-    !                         * eTopwidth(elemUpstream) / setting%Time%Hydraulics%Dt
-
-    !             print *, 'HeadDif     ', headdif
-    !             print *, 'fr_Q, thisQ ', faceR(idx_fBC(1),fr_Flowrate), thisQ
-
-    !             !% --- flow limiters
-    !             if (faceR(idx_fBC(ii), fr_Flowrate) .ge. zeroR) then 
-    !                 !% --- nominal outflow
-    !                 if (thisQ > zeroR) then
-    !                     !% --- limit outflow to the smaller value
-    !                     faceR(idx_fBC(ii), fr_Flowrate) = min(faceR(idx_fBC(ii), fr_Flowrate), thisQ) 
-    !                 else 
-    !                     !% --- outflow across a boundary of higher head should not occur
-    !                     faceR(idx_fBC(ii), fr_Flowrate) = zeroR        
-    !                 end if 
-    !             else 
-    !                 !% --- nominal inflow (cannot occur with flap gate)
-    !                 if (thisQ > zeroR)  then 
-    !                     !% --- inflow should not occur if thisQ > 0
-    !                     faceR(idx_fBC(ii), fr_Flowrate) = zeroR  
-    !                 else
-    !                     !% headdif < 0 and thisQ < 0 implies backflow
-    !                     if (isZeroDepth(elemUpstream))then
-    !                         !% --- for zero depth, limit headdif by 50% of the face depth as the driving head
-    !                         headdif = -min(-headdif, onehalfR * faceR(idx_fBC(ii),fr_Depth_d))
-    !                         thisQ   = onefourthR * headdif * eLength(elemUpstream)  &
-    !                                     * eTopwidth(elemUpstream) / setting%Time%Hydraulics%Dt
-    !                     end if
-    !                     if (eFlow(elemUpstream) < zeroR) then
-    !                         !% --- nominal inflow over BC
-    !                         !%     use the smaller magnitude (more positive value)
-    !                         faceR(idx_fBC(ii), fr_Flowrate) = max(thisQ,eFlow(elemUpstream))
-    !                     else
-    !                         !% -- - use the filling value
-    !                         faceR(idx_fBC(ii), fr_Flowrate) = thisQ
-    !                     end if
-    !                 end if
-    !             end if
-
-    !             print *, 'flowrate DD',faceR(idx_fBC(ii),fr_Flowrate)
-    !         end do
-
-    !             !% --- handle possible backflows---------------------
-                
-    !             ! !% ---compute adverse head difference (from downstreamface to upstream element center)
-    !             ! !%    that drives could drive an inflow on a downstream head BC        
-    !             ! headdif = faceR(idx_fBC(ii), fr_Head_u) - eHead(elemUpstream)
-    !             ! if (isZeroDepth(elemUpstream))then
-    !             !     !% --- for zero depth, limit headdif by 50% of the face depth as the driving head
-    !             !     !headdif = min(headdif, onehalfR * faceR(idx_fBC(ii),fr_HydDepth_d))
-    !             !     headdif = min(headdif, onehalfR * faceR(idx_fBC(ii),fr_Depth_d))
-    !             ! end if
-
-    !             !  print *, 'ii, headdif ',ii, headdif
-    !             !  print *, faceR(idx_fBC(ii), fr_Head_u), eHead(elemUpstream), eZbottom(elemUpstream)
-
-    !             !% --- check for adverse head gradient going upstream from boundary
-    !             !%     when element flow is downstream or zero
-    !             !      note that when element velocity is already negative we do not add the headdif term
-    !         !     if (headdif > zeroR) then 
-    !         !         !% --- adverse head gradient at outlet
-    !         !         if (eFlow(elemUpstream) .ge. zeroR) then
-    !         !             !% --- potential for inflow from downstream boundary despite downstream
-    !         !             !%     flow on element.
-    !         !             !%     Piezometric head difference minus upstream velocity
-    !         !             !%     head provides the velocity head of inflow
-    !         !             !%     If positive, then this is the upstream velocity at face
-    !         !             !%     If negative, then the downstream flow in element is
-    !         !             !%     able to overcome the adverse piezometric head gradient,
-    !         !             !%     so the difference provides a reduced outflow at face
-    !         !             !% --- The following is the estimated Bernoulli velocity squared. Note that
-    !         !             !%     this assumes Velocity sign is consistent with flowrate sign.
-    !         !             !Vtemp = twoR * grav * headdif - (eVelocity(elemUpstream)**twoI)
-    !         !             !%     Use the velocity head if the upstream flow is distributed over the downstream area
-    !         !             Vtemp = twoR * grav * headdif - ((eFlow(elemUpstream) / faceR(idx_fBC(ii),fr_Area_u))**twoI)
-    !         !             !% --- The +Vtemp is flow in the upstream (negative) direction
-    !         !             Vtemp = -sign(sqrt(abs(Vtemp)),Vtemp)
-    !         !             !% --- take the smaller of the Q implied by Vtemp and the downstream Q of the element
-    !         !             !%     Note Vtemp < 0 is upstream flow and will automatically be selected here since the upstream
-    !         !             !%     elem flowrate is guaranteed to be positive. The following statement simply
-    !         !             !%     ensures that the head balance approach for a downstream flow Vtemp > 0 does not exceed existing
-    !         !             !%     downstream flow on the element imlied by the (flowrate >= 0) conditional above.
-    !         !             !%     NOTE this flowrate may be either upstream or downstream!
-    !         !             faceR(idx_fBC(ii),fr_Flowrate) = min(Vtemp * faceR(idx_fBC(ii),fr_Area_u),eFlow(elemUpstream))
-
-    !         !             !  print *, 'naive face flowrate ', faceR(idx_fBC(ii),fr_Flowrate)
-    !         !         end if
-
-    !         !         !% --- Limit inflow magnitude to that the brings level up to the BC elevation
-    !         !         if (faceR(idx_fBC(ii),fr_Flowrate) < zeroR) then
-    !         !             !% --- volume rate adjustment: negative flowrate cannot provide more volume than 
-    !         !             !%     fills the pipe to the depth equivalent to the downstream BC head in a single time step.
-    !         !             !%     This reduces oscillatory behavior by preventing over filling on back flow
-    !         !             thisDepth  = faceR(idx_fBC(ii), fr_Head_u) - eZbottom(elemUpstream)
-
-    !         !             ! print *, 'thisDepth ',thisDepth, elemR(elemUpstream,er_Depth)
-    !         !             ! print *, 'this head ',faceR(idx_fBC(ii), fr_Head_u), elemR(elemUpstream,er_Head)
-    !         !             ! print *, ' '
-    !         !             ! print *, 'elemUpstream ',elemUpstream
-    !         !             ! print *, 'head,z ', elemR(elemUpstream,er_Head), elemR(elemUpstream,er_Zbottom)
-    !         !             ! print *, 'depth  ', elemR(elemUpstream,er_Head) - elemR(elemUpstream,er_Zbottom), elemR(elemUpstream,er_Depth)
-
-    !         !             if (thisDepth > zeroR) then
-    !         !                 ! !% --- get the volume of the upstream element if filled to the BC head level
-    !         !                 ! thisVolume = geo_area_from_depth_singular(elemUpstream, thisDepth, setting%ZeroValue%Area) * eLength(elemUpstream)
-    !         !                 ! !% --- flowrate to fill to this volume in one time step
-    !         !                 ! thisQ      = (thisVolume - eVolume(elemUpstream)) / setting%Time%Hydraulics%Dt
-
-    !         !                 ! print *, 'thisQ ',thisQ
-    !         !                 ! print *, thisVolume, eVolume(elemUpstream), eVolume(73)
-
-    !         !                 !% --- using volume caused problem with tables not being precisely invertable
-    !         !                 !%     from depth -> area  and from volume -> depth -> area
-    !         !                 !% --- approximate the volume flowrate into the upstream element
-    !         !                 !%     by the volume associated with the depth difference
-    !         !                 thisQ = onehalfR * (thisDepth - eDepth(elemUpstream)) * eLength(elemUpstream)  &
-    !         !                         * eTopwidth(elemUpstream) / setting%Time%Hydraulics%Dt
-
-    !         !                 if (thisQ > zeroR) then
-    !         !                     !% --- inflow is allowed, but use the smaller magnitude flow (larger negative value)
-    !         !                     faceR(idx_fBC(ii),fr_Flowrate) = max(faceR(idx_fBC(ii),fr_Flowrate),-thisQ)
-    !         !                 else
-    !         !                     !% --- if thisVolume <= 0, then upstream is already to the maximum level
-    !         !                     faceR(idx_fBC(ii),fr_Flowrate) = zeroR
-    !         !                 end if
-                            
-    !         !                 ! print *, 'face flowrate with depth ',faceR(idx_fBC(ii),fr_Flowrate)
-    !         !             else
-    !         !                 !% --- negative upstream depth implies Zbottom of upstream element is higher
-    !         !                 !%     than the downstream BC.  We shouldn't get here because it should only 
-    !         !                 !%     occur if headdif < 0, 
-    !         !                 print *, 'CODE ERROR -- unexpected else condition reached'
-    !         !                 call util_crashpoint(5593341)
-    !         !             end if
-    !         !         else
-    !         !             !% --- if flowrate is > 0, no volume rate adjustment needed and we accept 
-    !         !             !%     previously computed value
-    !         !         end if
-    !         !     else
-    !         !         !% --- limit inflow to that which brings upstream element up to the head of the BC
-    !         !         thisDepth  = faceR(idx_fBC(ii), fr_Head_u) - eZbottom(elemUpstream)
-    !         !         if (thisDepth > zeroR) then
-    !         !         else 
-    !         !             !% --- negative upstream depth implies Zbottom of upstream element is higher
-    !         !                 !%     than the downstream BC.  We shouldn't get here because it should only 
-    !         !                 !%     occur if headdif < 0, 
-    !         !             print *, 'CODE ERROR -- unexpected else condition reached'
-    !         !                 call util_crashpoint(5593341)
-    !         !         end if
-
-    !         !         !% --- if there is no adverse head gradient or if element velocity is already negative
-    !         !         !%     in/outflow rate is upstream element flowrate                        
-    !         !         faceR(idx_fBC(ii), fr_Flowrate) = eFlow(elemUpstream)
-    !         !     end if
-
-    !         !     ! print *, 'final face flowrate ', faceR(idx_fBC(ii),fr_Flowrate)
-
-    !         ! end do
-
-    !         ! ! ! call util_utest_CLprint ('    face YYYY')
-
-    !         !% --- set the Preissmann number to the upstream element value
-    !         faceR(idx_fBC, fr_Preissmann_Number) = elemR(eup(idx_fBC), er_Preissmann_Number) 
-
-    !         ! !% --- set to zero flow for closed gate  !% MOVED UP INTO DO LOOP 20220716brh
-    !         ! where ( BC%headYN(idx_P, bYN_hasFlapGate) .and. (faceR(idx_fBC, fr_Head_u) < BC%headR(idx_P,br_value)) )
-    !         !     faceR(idx_fBC, fr_Flowrate) = zeroR
-    !         ! end where
-
-    !         ! print *, 'face area u ', faceR(idx_fBC,fr_Area_u)
-    !         ! print *, 'face area d ', faceR(idx_fBC,fr_Area_d)
-
-    !         !% --- ensure face area_u is not smaller than zerovalue
-    !         where (faceR(idx_fBC,fr_Area_d) < setting%ZeroValue%Area)
-    !             faceR(idx_fBC,fr_Area_d) = setting%ZeroValue%Area
-    !         endwhere
-    !         where (faceR(idx_fBC,fr_Area_u) < setting%ZeroValue%Area)
-    !             faceR(idx_fBC,fr_Area_u) = setting%ZeroValue%Area
-    !         endwhere
-
-    !         faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_u)
-    !         faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_d)  
-
-    !         print *, 'face velocity u ', faceR(idx_fBC,fr_Velocity_u)
-    !         print *, 'face velocity d ', faceR(idx_fBC,fr_Velocity_d)
-
-    !         !%  limit high velocities
-    !         if (setting%Limiter%Velocity%UseLimitMaxYN) then
-    !             where(abs(faceR(idx_fBC,fr_Velocity_u))  > setting%Limiter%Velocity%Maximum)
-    !                 faceR(idx_fBC,fr_Velocity_u) = sign(0.99d0 * setting%Limiter%Velocity%Maximum, &
-    !                     faceR(idx_fBC,fr_Velocity_u))
-    !             endwhere 
-    !             where(abs(faceR(idx_fBC,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
-    !                 faceR(idx_fBC,fr_Velocity_d) = sign(0.99d0 * setting%Limiter%Velocity%Maximum, &
-    !                     faceR(idx_fBC,fr_Velocity_d))
-    !             end where                    
-    !         end if
-
-    !         ! ! ! call util_utest_CLprint ('    face ZZZZ')
-    !     else
-    !         !% continue
-    !     end if
-
-    !     !%--------------------------------------------------------------------
-    !     !% Closing
-    !         if (setting%Debug%File%boundary_conditions) &
-    !             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    ! end subroutine face_interpolation_dnBC_OLD
-!%
-!%==========================================================================
 !%==========================================================================
 !%
     subroutine face_interpolation_dnBC(isBConly)
@@ -1045,7 +686,6 @@ module face
         end if
 
     end subroutine face_interpolation_dnBC
-
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1110,9 +750,18 @@ module face
         if (Qyn) then
             fFlowSet = [fr_Flowrate, fr_Preissmann_Number]
             eFlowSet = [er_Flowrate, er_Preissmann_Number]
+            
+            ! print *, ' '
+            ! print *, 'in face before '
+            ! print *, elemR(10,er_Flowrate), faceR(11,fr_Flowrate), elemR(12,er_Flowrate)
+            ! print *, ' '
 
             call face_interp_interior_set &
                 (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
+
+                ! print *, 'in face after '
+                ! print *, elemR(10,er_Flowrate), faceR(11,fr_Flowrate), elemR(12,er_Flowrate)
+                ! print *, ' '
 
             !% --- calculate the velocity in faces and put limiter
             call face_velocities (facePackCol, .true.)
@@ -1323,26 +972,23 @@ module face
 
 
         do ii=1,size(fset)
-            ! if (ii == 2) then 
+
+            ! if (ii == 1) then 
             !     do jj=1,Npack
-            !         if (thisP(jj) == 42) then
+            !         if (thisP(jj) == 11) then
             !             print *, ' '
             !             print *, 'in face interpolation set'
             !             print *, thisP(jj), eWup, eWdn
             !             print *, 'eup, edn ',eup(thisP(jj)),edn(thisP(jj))
             !             print *, 'elemUp, elemD',elemR(eup(thisP(jj)),eset(ii)),elemR(edn(thisP(jj)),eset(ii))
-            !             print *, 'weightup,dn  ',elemR(edn(thisP(jj)),eWup),    elemR(eup(thisP(jj)),eWdn)
-            !             print *, 'G ',elemR(49,er_InterpWeight_uG),elemR(49,er_InterpWeight_dG)
+            !             print *, 'weights E up, E dn  ',elemR(eup(thisP(jj)),eWdn),    elemR(edn(thisP(jj)),eWup)
+            !             !print *, 'G ',elemR(thisP(),er_InterpWeight_uG),elemR(49,er_InterpWeight_dG)
             !             print *, ' '
             !         end if
             !     end do
             ! end if
 
-            ! print *, ' '
-            ! print *, ' ',ii, thisP(ii)
-            ! print *, eset(ii), er_Head
-            ! print *, elemR(eup(thisP(1)),eset(ii)), elemR(edn(thisP(1)),eWup)
-            ! print *, elemR(edn(thisP(1)),eset(ii)), elemR(eup(thisP(1)),eWdn)
+      
       
 
             faceR(thisP,fset(ii)) = &
@@ -1369,306 +1015,93 @@ module face
 !%==========================================================================
 !%==========================================================================
 !%
-    ! subroutine face_interp_shared_set_old &
-    !     (fset, eset, eWdn, eWup, facePackCol, Npack)
-    !     !%-------------------------------------------------------------------
-    !     !% Description:
-    !     !% Interpolates faces shared between processor
-    !     !%-------------------------------------------------------------------
-    !     !% Declarations
-    !         integer, intent(in) :: fset(:), eset(:), eWdn, eWup, facePackCol, Npack
-    !         integer, pointer :: thisP, eup, edn, connected_image, ghostUp, ghostDn
-    !         logical, pointer :: isGhostUp, isGhostDn
-    !         integer :: ii, jj   
-    !         integer(kind=8) :: crate, cmax, cval
-    !         character(64) :: subroutine_name = 'face_interp_shared_set_old'
-    !     !%--------------------------------------------------------------------
-    !     !%  Preliminaries
-    !         if (setting%Debug%File%face) &
-    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    subroutine face_interp_shared_set &
+        (fset, eset, eWdn, eWup, facePackCol, Npack)
+        !%-------------------------------------------------------------------
+        !% Description:
+        !% Interpolates faces shared between processor
+        !% NOTE cannot sync all in this subroutine
+        !%-------------------------------------------------------------------
+        !% Declarations
+            integer             :: ii, jj
+            integer, intent(in) :: fset(:), eset(:), eWdn, eWup
+            integer, intent(in) :: facePackCol, Npack
+            integer, pointer    :: thisP, eup, edn, BUpIdx, BDnIdx
+            logical, pointer    :: isGhostUp, isGhostDn
+            integer(kind=8)     :: crate, cmax, cval
+            character(64)       :: subroutine_name = 'face_interp_shared_set'
+        !%--------------------------------------------------------------------
+        !%  Preliminaries
+            if (setting%Debug%File%face) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-    !         sync all
-    !         if (this_image()==1) then
-    !             call system_clock(count=cval,count_rate=crate,count_max=cmax)
-    !             setting%Time%WallClock%SharedStart_A = cval
-    !         end if    
-    !     !%--------------------------------------------------------------------
-    !     !% cycle through all the shared faces
-    !     do ii = 1,Npack
-    !         !%-----------------------------------------------------------------
-    !         !% Aliases
-    !         thisP           => facePS(ii,facePackCol)
-    !         connected_image => faceI(thisP,fi_Connected_image)
-    !         eup             => faceI(thisP,fi_Melem_uL)
-    !         edn             => faceI(thisP,fi_Melem_dL)
-    !         ghostUp         => faceI(thisP,fi_GhostElem_uL)
-    !         ghostDn         => faceI(thisP,fi_GhostElem_dL)
-    !         isGhostUp       => faceYN(thisP,fYN_isUpGhost)
-    !         isGhostDn       => faceYN(thisP,fYN_isDnGhost)
-    !         !%-----------------------------------------------------------------
-    !         !% cycle through each element in the set.
-    !         !% This is designed for fset and eset being vectors, but it
-    !         !%   is not clear that this is needed.
-    !         do jj=1,size(fset)
+            if (this_image()==1) then
+                call system_clock(count=cval,count_rate=crate,count_max=cmax)
+                setting%Time%WallClock%SharedStart_A = cval
+            end if    
+        !%--------------------------------------------------------------------
+        !% cycle through all the shared faces
+        do ii = 1,Npack
+            !%-----------------------------------------------------------------
+            !% Aliases
+            thisP           => facePS(ii,facePackCol)
+            eup             => faceI(thisP,fi_Melem_uL)
+            edn             => faceI(thisP,fi_Melem_dL)
+            BUpIdx          => faceI(thisP,fi_BoundaryElem_uL)
+            BDnIdx          => faceI(thisP,fi_BoundaryElem_dL)
+            isGhostUp       => faceYN(thisP,fYN_isUpGhost)
+            isGhostDn       => faceYN(thisP,fYN_isDnGhost)
+            !%-----------------------------------------------------------------
+            !% cycle through each element in the set.
+            !% This is designed for fset and eset being vectors, but it
+            !%   is not clear that this is needed.
+            do jj=1,size(fset)
 
-    !             !% condition for upstream element of the shared face is ghost and in a different image
-    !             if (isGhostUp) then
+                !% condition for upstream element of the shared face is ghost and in a different image
+                if (isGhostUp) then
+                    faceR(thisP,fset(jj)) = &
+                        (+elemGR(ii,eset(jj))  * elemB%R(ii,eWup)  &
+                         +elemB%R(ii,eset(jj)) * elemGR(ii,eWdn) &
+                        ) / &
+                        ( elemB%R(ii,eWup) + elemGR(ii,eWdn) )
 
-    !                 faceR(thisP,fset(jj)) = &
-    !                     (+elemR(ghostUp,eset(jj))[connected_image] * elemR(edn,eWup) &
-    !                      +elemR(edn,eset(jj)) * elemR(ghostUp,eWdn)[connected_image] &
-    !                     ) / &
-    !                     ( elemR(edn,eWup) + elemR(ghostUp,eWdn)[connected_image] )
+                !% condition for downstream element of the shared face is ghost and in a different image
+                elseif (isGhostDn) then
 
-    !             !% condition for downstream element of the shared face is ghost and in a different image
-    !             elseif (isGhostDn) then
+                    faceR(thisP,fset(jj)) = &
+                        (+elemB%R(ii,eset(jj)) * elemGR(ii,eWup) &
+                         +elemGR(ii,eset(jj))  * elemB%R(ii,eWdn)  &
+                        ) / &
+                        ( elemGR(ii,eWup) + elemB%R(ii,eWdn) )
+                else
+                    write(*,*) 'CODE ERROR: unexpected else'
+                    !stop 
+                    call util_crashpoint( 487874)
+                    !return
+                end if      
+            end do
+        end do
 
-    !                 faceR(thisP,fset(jj)) = &
-    !                     (+elemR(eup,eset(jj)) * elemR(ghostDn,eWup)[connected_image] &
-    !                      +elemR(ghostDn,eset(jj))[connected_image] * elemR(eup,eWdn) &
-    !                     ) / &
-    !                     ( elemR(ghostDn,eWup)[connected_image] + elemR(eup,eWdn) )
-
-    !             else
-    !                 write(*,*) 'CODE ERROR: unexpected else'
-    !                 !stop 
-    !                 call util_crashpoint( 487874)
-    !                 !return
-    !             end if        
-    !         end do
-    !     end do
-
-    !     !% NOTES
-    !     !% elemR(eup,eset(jj)) is the element value upstream of the face
-    !     !% elemR(edn,eset(jj) is the element value downstream of the face.
-    !     !% elemR(eup,eWdn) is the downstream weighting of the upstream element
-    !     !% elemR(edn,eWup)) is the upstream weighting of the downstream element
-
-    !     !% elemR(ghostUp,eset(jj))[connected_image] is the elem value from the upstream image of the face
-    !     !% elemR(ghostDn,eset(jj))[connected_image] is the elem value from the downstream image of the face
-    !     !% elemR(ghostUp,eWdn)[connected_image] is the downstream weighting of the upstream image element
-    !     !% elemR(ghostDn,eWup))[connected_image] is the upstream weighting of the downstream image element
-
-    !     !%--------------------------------------------------------------------
-    !     !% Closing
-    !     sync all
-    !     if (this_image()==1) then
-    !         !% stop the shared timer
-    !         call system_clock(count=cval,count_rate=crate,count_max=cmax)
-    !         setting%Time%WallClock%SharedStop_A = cval
-    !         setting%Time%WallClock%SharedCumulative_A &
-    !                 = setting%Time%WallClock%SharedCumulative_A &
-    !                 + setting%Time%WallClock%SharedStop_A &
-    !                 - setting%Time%WallClock%SharedStart_A                    
-    !     end if 
-    !         if (setting%Debug%File%face) &
-    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    ! end subroutine face_interp_shared_set_old
-!%
-!%==========================================================================
-!%==========================================================================
-!%  
-    ! subroutine face_head_average_on_element &
-    !     (whichTM)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% computes the average head of the faces on an element
-    !     !%-------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer, intent(in) :: whichTM 
-    !         integer, pointer :: Npack, thisP(:), thisCol
-    !         integer, pointer :: mapUp(:), mapDn(:)
-    !         real(8), pointer :: fHeadU(:), fHeadD(:), eHeadAvg(:)
-    !         character(64) :: subroutine_name = 'face_head_average_on_element'
-    !     !%-------------------------------------------------------------------
-    !     !% Preliminaries
-    !         !if (.not. setting%Solver%QinterpWithLocalHeadGradient) return  
-    !         if (setting%Debug%File%face) &
-    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-    !         select case (whichTM)
-    !             case (ALLtm)
-    !                 thisCol => col_elemP(ep_CC_ALLtm)
-    !             case (ETM)
-    !                 thisCol => col_elemP(ep_CC_ETM)
-    !             case (AC)
-    !                 thisCol => col_elemP(ep_CC_AC)
-    !             case (dummy)
-    !                 ! print *, 'error - the FluxCorrection has not been coded for diagnostic elements'
-    !                 ! stop 58704
-    !                 return
-    !             case default
-    !                 print *, 'error, this default case should not be reached'
-    !                 stop 2394
-    !         end select         
-    !     !%-------------------------------------------------------------------
-    !     !% Aliases             
-    !         Npack    => npack_elemP(thisCol)
-    !         if (Npack .le. 0) return
-    !         thisP    => elemP(1:Npack,thisCol)
-    !         mapUp    => elemI(:,ei_Mface_uL)
-    !         mapDn    => elemI(:,ei_Mface_dL)   
-    !         fHeadU   => faceR(:,fr_Head_u)  
-    !         fHeadD   => faceR(:,fr_Head_d)
-    !         eHeadAvg => elemR(:,er_HeadAvg)    
-    !     !%-------------------------------------------------------------------   
-    !     !% The map up must use the downstream head on the face.
-    !     !% The map dn must use the upstream head on the face.
-    !     eHeadAvg(thisP) = onehalfR * (fHeadU(mapDn(thisP)) + fHeadD(mapUp(thisP)))
-
-    !     ! print *, 'in ',trim(subroutine_name)
-    !     ! print *, thisP
-    !     ! print *, eHeadAvg(thisP)
-    !     ! print *, ' '
-    !     ! print *, eHeadAvg(:)
-    !     ! print *, ' '
-    !     ! print *, fHeadU(:)
-    !     ! print *, ' '
-    !     ! print *, fHeadD(:)
-    !     ! print *, ' '
-    !     !%-------------------------------------------------------------------
-    !     !% Closing
-    !         if (setting%Debug%File%face) &
-    !             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    ! end subroutine face_head_average_on_element
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    ! subroutine face_FluxCorrection_interior &
-        !     (faceCol, whichTM)
-        !     !%------------------------------------------------------------------
-        !     !% Description:
-        !     !% Adds the head gradient term to the face flowrate for interior faces
-        !     !% should be done after Q and H are interpolated to face
-        !     !% and element HeadAvg is computed.
-        !     !%-------------------------------------------------------------------
-        !     !% Declarations
-        !         integer, intent(in) :: faceCol, whichTM
-        !         integer, pointer :: Npack, thisF(:), eup(:), edn(:), elist(:)
-        !         real(8), pointer :: fQ(:), eArea(:), eHead(:), eHeadAvg(:)
-        !         real(8), pointer :: eLength(:) !, qLateral(:), qChannel(:)
-        !         real(8), pointer ::  dt, grav !, qfac, qratio 
-        !         logical          :: isBConly
-        !         character(64) :: subroutine_name = 'face_FluxCorrection_interior'
-        !     !%-------------------------------------------------------------------
-        !     !% Preliminaries
-        !         !if (.not. setting%Solver%QinterpWithLocalHeadGradient) return  
-        !         if (setting%Debug%File%face) &
-        !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !     !%-------------------------------------------------------------------
-        !     !% Aliases   
-        !         eup      => faceI(:,fi_Melem_uL)
-        !         edn      => faceI(:,fi_Melem_dL)
-        !         fQ       => faceR(:,fr_Flowrate)
-        !         eArea    => elemR(:,er_Area)
-        !         eHead    => elemR(:,er_Head)
-        !         !eHeadAvg => elemR(:,er_HeadAvg)
-        !         eLength  => elemR(:,er_Length)
-        !         eList    => elemI(:,ei_Temp01)
-        !         dt       => setting%Time%Hydraulics%Dt
-        !         grav     => setting%constant%gravity
-
-        !         Npack => npack_faceP(faceCol)
-        !         if (Npack .le. 0) return
-        !         thisF    => faceP(1:Npack,faceCol)
-        !     !%-------------------------------------------------------------------
-        !     !% --- compute the average head for the elements 
-        !     !call face_head_average_on_element (whichTM)
-
-        !     !% -- we need a custom selector array because we don't have a packed array
-        !     !%    that handles the combined face/element condition needed
-        !     eList = zeroI
-        !     select case (whichTM)
-        !     case (ALLtm)
-        !         eList(ep_CC_ALLtm) = oneI
-        !     case (ETM)
-        !         eList(ep_CC_ETM) = oneI
-        !     case (AC)
-        !         eList(ep_CC_AC) = oneI
-        !     case (dummy)
-        !         ! print *, 'error - the FluxCorrection has not been coded for diagnostic elements'
-        !         return
-        !     case default
-        !         print *, 'error, this default case should not be reached'
-        !         stop 239483
-        !     end select
-
-        !     !% --- adds term dt * grav A [ (dh/dx) - (dh_avg/dx) ] where not zerovolume
-        !     where (      (.not. elemYN(eup(thisF),eYN_isZeroDepth   )        ) & 
-        !            .and. (.not. elemYN(eup(thisF),eYN_isSmallDepth  )        ) &
-        !            .and. (       elemR(eup(thisF),er_FlowrateLateral) > zeroR) &
-        !            .and. (       eList(eup(thisF))                    == oneI) )
-        !         fQ(thisF) = fQ(thisF) + dt * grav *                                         &
-        !             (                                                                       &
-        !                 +( eArea(eup(thisF)) * ( eHead(eup(thisF)) - eHeadAvg(eup(thisF)) ) &
-        !                     / ( onehalfR * eLength(eup(thisF) ) ) )                         &
-        !             )                        
-        !     end where
-
-        !     where (       (.not. elemYN(edn(thisF),eYN_isZeroDepth   )        ) & 
-        !             .and. (.not. elemYN(edn(thisF),eYN_isSmallDepth  )        ) &
-        !             .and. (       elemR(edn(thisF),er_FlowrateLateral) > zeroR) &
-        !             .and. (       eList(edn(thisF))                    == oneI) )
-        !         fQ(thisF) = fQ(thisF) + dt * grav *                                         &
-        !             (                                                                       &
-        !                 -( eArea(edn(thisF)) * ( eHead(edn(thisF)) - eHeadAvg(edn(thisF)) ) &
-        !                     / ( onehalfR * eLength(edn(thisF) ) ) )                         &
-        !             ) 
-        !     end where
-
-        !     !% --- need another call to face_interpolate so that the Q_HeadGradient
-        !         !%     does not change the upper boundary inflow condition
-        !     isBConly = .true.
-        !     call face_interpolate_bc (isBConly)
-
-        !     !% for lateral inflows upstream of a face with downstream flow 
-        !     !% note: null set for negative inflow   
-        !     ! where ( qLateral(eup(thisF)) > qratio * abs(qChannel(eup(thisF))) )
-        !     !     fQ(thisF) = fQ(thisF) + qfac * dt * grav                                       &
-        !     !         * ( util_sign_with_ones(fQ(thisF)) + oneR ) * onehalfR                     &
-        !     !         *(                                                                         &
-        !     !             +( eArea(eup(thisF)) * ( eHead(eup(thisF)) - eHeadAvg(eup(thisF)) ) )  &
-        !     !             / ( onehalfR * eLength(eup(thisF)) )                                   &
-        !     !         )
-        !     ! end where
-
-        !     ! !% for lateral inflows downstream of a face with an upstream flow
-        !     ! !% note: null set for negative inflow
-        !     ! where ( qLateral(edn(thisF)) > qratio * abs(qChannel(edn(thisF))) )
-        !     !     fQ(thisF) = fQ(thisF) + qfac * dt * grav                                       &
-        !     !         * ( util_sign_with_ones(fQ(thisF)) - oneR ) * onehalfR                     &
-        !     !         *(                                                                         &   
-        !     !           +( eArea(edn(thisF)) * ( eHead(edn(thisF)) - eHeadAvg(edn(thisF)) ) )    &
-        !     !             / ( onehalfR * eLength(edn(thisF)) )                                   &
-        !     !         )
-        !     ! end where
-
-        !     !% --- for downstream flow
-        !     ! where (.not. elemYN(eup(thisP),eYN_isZeroDepth))
-        !     !     fQ(thisP) = fQ(thisP) + qfac * dt * grav                                    &
-        !     !        *( util_sign_with_ones(fQ(thisP)) + oneR ) * onehalfR                    &
-        !     !        *(                                                                       &
-        !     !             +( eArea(eup(thisP)) * ( eHead(eup(thisP)) - eHeadAvg(eup(thisP)) ) &
-        !     !                 / ( onehalfR * eLength(eup(thisP) ) ) )                         &
-        !     !         ) 
-        !     ! end where
-
-        !     ! !% --- for upstream flow
-        !     ! where (.not. elemYN(edn(thisP),eYN_isZeroDepth))
-        !     !     fQ(thisP) = fQ(thisP) + qfac * dt * grav                                    &
-        !     !        *( util_sign_with_ones(fQ(thisP)) - oneR ) * onehalfR                    &
-        !     !        *(                                                                       &
-        !     !             -( eArea(edn(thisP)) * ( eHead(edn(thisP)) - eHeadAvg(edn(thisP)) ) &
-        !     !                 / ( onehalfR * eLength(edn(thisP) ) ) )                         &
-        !     !         ) 
-        !     ! end where
-        
-        !     !%-------------------------------------------------------------------
-        !     !% Closing
-        !         if (setting%Debug%File%face) &
-        !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        ! end subroutine face_FluxCorrection_interior
+        !% NOTES
+        !% elemB%R(ii,eset(jj)) is the element value of the boundary element
+        !% elemGR(ii,eset(jj)) is the element value of the ghost element
+        !% elemB%R(ii,eWdn) is the downstream weighting of the boundary element
+        !% elemGR(ii,eWup)) is the upstream weighting of the ghost element
+        !%--------------------------------------------------------------------
+        !% Closing
+        sync all
+        if (this_image()==1) then
+            !% stop the shared timer
+            call system_clock(count=cval,count_rate=crate,count_max=cmax)
+            setting%Time%WallClock%SharedStop_A = cval
+            setting%Time%WallClock%SharedCumulative_A &
+                    = setting%Time%WallClock%SharedCumulative_A &
+                    + setting%Time%WallClock%SharedStop_A &
+                    - setting%Time%WallClock%SharedStart_A                    
+        end if 
+            if (setting%Debug%File%face) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine face_interp_shared_set
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1691,7 +1124,7 @@ module face
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"  
 
             !% HACK: this eset has to be exactly mimic the indexes for ebgr_... 
-            eColumns = [er_Area, er_Topwidth, er_Depth, er_2B_psiL, er_EnergyHead, &
+            eColumns = [er_Area, er_Topwidth, er_Depth, er_DeltaQ, &
                         er_Head, er_Flowrate, er_Preissmann_Number, er_Volume,     &
                         er_Velocity, er_GammaM, er_Length, er_KJunction_MinorLoss, &
                         er_InterpWeight_dG, er_InterpWeight_uG,                    &
@@ -1820,97 +1253,6 @@ module face
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine inter_image_data_transfer
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine face_interp_shared_set &
-        (fset, eset, eWdn, eWup, facePackCol, Npack)
-        !%-------------------------------------------------------------------
-        !% Description:
-        !% Interpolates faces shared between processor
-        !% NOTE cannot sync all in this subroutine
-        !%-------------------------------------------------------------------
-        !% Declarations
-            integer             :: ii, jj
-            integer, intent(in) :: fset(:), eset(:), eWdn, eWup
-            integer, intent(in) :: facePackCol, Npack
-            integer, pointer    :: thisP, eup, edn, BUpIdx, BDnIdx
-            logical, pointer    :: isGhostUp, isGhostDn
-            integer(kind=8)     :: crate, cmax, cval
-            character(64)       :: subroutine_name = 'face_interp_shared_set'
-        !%--------------------------------------------------------------------
-        !%  Preliminaries
-            if (setting%Debug%File%face) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-            if (this_image()==1) then
-                call system_clock(count=cval,count_rate=crate,count_max=cmax)
-                setting%Time%WallClock%SharedStart_A = cval
-            end if    
-        !%--------------------------------------------------------------------
-        !% cycle through all the shared faces
-        do ii = 1,Npack
-            !%-----------------------------------------------------------------
-            !% Aliases
-            thisP           => facePS(ii,facePackCol)
-            eup             => faceI(thisP,fi_Melem_uL)
-            edn             => faceI(thisP,fi_Melem_dL)
-            BUpIdx          => faceI(thisP,fi_BoundaryElem_uL)
-            BDnIdx          => faceI(thisP,fi_BoundaryElem_dL)
-            isGhostUp       => faceYN(thisP,fYN_isUpGhost)
-            isGhostDn       => faceYN(thisP,fYN_isDnGhost)
-            !%-----------------------------------------------------------------
-            !% cycle through each element in the set.
-            !% This is designed for fset and eset being vectors, but it
-            !%   is not clear that this is needed.
-            do jj=1,size(fset)
-
-                !% condition for upstream element of the shared face is ghost and in a different image
-                if (isGhostUp) then
-                    faceR(thisP,fset(jj)) = &
-                        (+elemGR(ii,eset(jj))  * elemB%R(ii,eWup)  &
-                         +elemB%R(ii,eset(jj)) * elemGR(ii,eWdn) &
-                        ) / &
-                        ( elemB%R(ii,eWup) + elemGR(ii,eWdn) )
-
-                !% condition for downstream element of the shared face is ghost and in a different image
-                elseif (isGhostDn) then
-
-                    faceR(thisP,fset(jj)) = &
-                        (+elemB%R(ii,eset(jj)) * elemGR(ii,eWup) &
-                         +elemGR(ii,eset(jj))  * elemB%R(ii,eWdn)  &
-                        ) / &
-                        ( elemGR(ii,eWup) + elemB%R(ii,eWdn) )
-                else
-                    write(*,*) 'CODE ERROR: unexpected else'
-                    !stop 
-                    call util_crashpoint( 487874)
-                    !return
-                end if      
-            end do
-        end do
-
-        !% NOTES
-        !% elemB%R(ii,eset(jj)) is the element value of the boundary element
-        !% elemGR(ii,eset(jj)) is the element value of the ghost element
-        !% elemB%R(ii,eWdn) is the downstream weighting of the boundary element
-        !% elemGR(ii,eWup)) is the upstream weighting of the ghost element
-        !%--------------------------------------------------------------------
-        !% Closing
-        sync all
-        if (this_image()==1) then
-            !% stop the shared timer
-            call system_clock(count=cval,count_rate=crate,count_max=cmax)
-            setting%Time%WallClock%SharedStop_A = cval
-            setting%Time%WallClock%SharedCumulative_A &
-                    = setting%Time%WallClock%SharedCumulative_A &
-                    + setting%Time%WallClock%SharedStop_A &
-                    - setting%Time%WallClock%SharedStart_A                    
-        end if 
-            if (setting%Debug%File%face) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine face_interp_shared_set
 !%
 !%==========================================================================
 !%==========================================================================
@@ -2055,7 +1397,6 @@ module face
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine face_velocities
-!%
 !%  
 !%========================================================================== 
 !%==========================================================================
@@ -2418,7 +1759,34 @@ module face
         end do
  
     end subroutine face_junction_adjacent_values    
-!%
+    !%
+!%==========================================================================
+!%==========================================================================
+!% 
+    subroutine face_force_JBvalues (frCol, erCol, fiIdx, JMidx, kstart)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Forces the JB element value to the adjacent face
+        !%------------------------------------------------------------------
+            integer, intent(in) :: frCol  !% column in faceR array for output
+            integer, intent(in) :: erCol  !% column in elemR array for input
+            integer, intent(in) :: fiIdx  !% face index column for up/dn map
+            integer, intent(in) :: JMidx  !% junction main index
+            integer, intent(in) :: kstart !% =1 for upstream, 2 for downstream
+            integer :: kk
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        !do concurrent (kk=kstart:max_branch_per_node:2)
+        do kk=kstart,max_branch_per_node,2
+            if (elemSI(JMidx+kk,esi_JunctionBranch_Exists).ne. oneI) cycle
+
+            faceR(elemI(JMidx+kk,fiIdx),frCol) = elemR(JMidx+kk,erCol)
+
+        end do
+    
+    end subroutine face_force_JBvalues
+!%    
 !%==========================================================================
 !%==========================================================================
 !%
@@ -2704,6 +2072,724 @@ module face
     !     if (setting%Debug%File%face) &
     !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     ! end subroutine face_interp_set_byMask
+    !%==========================================================================
+!%
+!% brh 20211211 moved and renamed -- this doesn't belong in Face routines
+! subroutine face_interpolation_latBC_byPack()
+        
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Interpolates all boundary faces using a pack arrays -- base on bi_category
+    !     !%-----------------------------------------------------------------------------
+    !     !integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
+    !     !integer :: fFlowSet(1), 
+    !     integer :: ii
+    !     integer, pointer :: elem_P(:), idx_P(:)
+    !     integer :: eFlowSet(1)
+    !     !integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
+    !     character(64) :: subroutine_name = 'face_interpolation_latBC_byPack'
+
+    !     !%-----------------------------------------------------------------------------
+    !     if (setting%Debug%File%boundary_conditions)  &
+    !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+
+    !     elem_P => elemP(1:npack_elemP(ep_BClat),ep_BClat)
+    !     idx_P  => BC%P%BClat
+
+    !     !fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
+    !     !fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
+    !     !eGeoSet  = [er_Area,   er_Topwidth,   er_HydDepth]
+
+    !     !fHeadSetU = [fr_Head_u]
+    !     !fHeadSetD = [fr_Head_d]
+    !     !eHeadSet = [er_Head]
+
+    !     !fFlowSet = [fr_Flowrate]
+    !     eFlowSet = [er_FlowrateLateral]
+
+    !     do ii=1,size(eFlowSet)
+    !         elemR(elem_P,eFlowSet(ii)) = BC%flowR(idx_P,br_value)
+    !     end do
+    !     !% For lateral flow, just update the flow at the element >> elemR(flow) + BC_lateral_flow
+
+    !     if (setting%Debug%File%boundary_conditions) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine face_interpolation_latBC_byPack
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    ! subroutine face_interpolation_dnBC_OLD(isBConly)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Interpolates data to all downstream boundary faces
+    !     !% When called with isBConly == true, only does the BC update
+    !     !%-------------------------------------------------------------------
+    !     !% Declarations
+    !         logical, intent(in) :: isBConly
+    !         !integer :: fGeoSetU(3), fGeoSetD(3), eGeoSet(3)
+    !         integer :: ii
+    !         integer, pointer :: idx_fBC(:), eup(:), idx_P(:)
+    !         integer, pointer :: elemUpstream
+    !         real(8), pointer :: depthBC(:), headBC(:), eHead(:),  eFlow(:)
+    !         real(8), pointer :: eVelocity(:), eZbottom(:), eLength(:)
+    !         real(8), pointer :: eVolume(:), grav, eDepth(:), eTopwidth(:)
+    !         logical, pointer :: isZeroDepth(:), hasFlapGateBC(:)
+    !         !real(8), pointer :: eArea(:), eHydDepth(:), eTopWidth(:)
+    !         real(8) :: Vtemp, headdif, thisDepth, thisVolume, thisQ
+    !         character(64) :: subroutine_name = 'face_interpolation_dnBC'
+    !     !%--------------------------------------------------------------------
+    !     !% Preliminaries
+    !         if (setting%Debug%File%boundary_conditions)  &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%--------------------------------------------------------------------
+        
+    !         eup           => faceI(:,fi_Melem_uL)
+    !         idx_fBC       => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
+    !         idx_P         => BC%P%BCdn
+    !         depthBC       => BC%headR(:,br_Temp01)
+    !         headBC        => BC%headR(:,br_value)
+    !         hasFlapGateBC => BC%headYN(:,bYN_hasFlapGate) 
+    !         eDepth        => elemR(:,er_Depth)
+    !         eHead         => elemR(:,er_Head)
+    !         eFlow         => elemR(:,er_Flowrate)
+    !         eTopwidth     => elemR(:,er_TopWidth)
+    !         eVelocity     => elemR(:,er_Velocity)
+    !         eZbottom      => elemR(:,er_Zbottom)
+    !         eVolume       => elemR(:,er_Volume)
+    !         eLength       => elemR(:,er_Length)
+    !         isZeroDepth   => elemYN(:,eYN_isZeroDepth)
+    !         grav        => setting%Constant%gravity
+    !         ! eArea     => elemR(:,er_Area)
+    !         ! eHydDepth => elemR(:,er_HydDepth)
+    !         ! eTopWidth => elemR(:,er_TopWidth)
+    !     !%--------------------------------------------------------------------   
+
+    !     !% For fixed, tidal, and timeseries BC
+    !     !% The BC is imagined as enforced on a ghost cell outside the boundary
+    !     !% so the face value is given by linear interpolation using ghost and interior cells 
+
+    !     !% --- upstream face head is the BC
+    !     !faceR(idx_fBC, fr_Head_u) = 0.5 * (eHead(eup(idx_fBC)) + headBC) 
+    !     faceR(idx_fBC, fr_Head_u)  = headBC(idx_P)
+    !     faceR(idx_fBC, fr_Depth_u) = max(headBC(idx_P) - faceR(idx_fBC,fr_Zbottom), setting%ZeroValue%Depth*0.99d0)
+
+    !     print*, ' '
+    !     print *, 'in ',trim(subroutine_name)
+    !     print *, 'BC Head idx ', BC%headI(:, bi_idx)
+    !     print *, 'BC head cat ', BC%headI(:, bi_subcategory)
+    !     print *, 'BC head key ', trim(reverseKey(BC%headI(1, bi_subcategory))), ' ',trim(reverseKey(BC%headI(1, bi_subcategory)))
+    !     print *, 'face ID ', idx_fBC
+    !     print *, 'faceR head value ', faceR(idx_fBC, fr_Head_u)
+    !     print *, 'BC head          ',headBC(idx_P)
+    !     print *, 'BC depth         ',headBC(idx_P) - faceR(idx_fBC,fr_Zbottom)
+
+    
+
+    !     !% --- the downstream side of face is the same as the upstream face (unless gate, see below)
+    !     faceR(idx_fBC, fr_Head_d)  = faceR(idx_fBC, fr_Head_u)
+    !     faceR(idx_fBC, fr_Depth_d) = faceR(idx_fBC, fr_Depth_u)
+
+    !     print *, 'e head, head bc ', eHead(eup(idx_fBC)), headBC(idx_P)
+        
+    !     !% --- for a flap gate on a BC with higher head downstream
+    !     where ( hasFlapGateBC(idx_P) .and. (eHead(eup(idx_fBC))  < headBC(idx_P) ) )
+    !         !% --- reset the head on the upstream and downstream side of face for closed gate
+    !         faceR(idx_fBC, fr_Head_u)  = eHead(eup(idx_fBC))
+    !         faceR(idx_fBC, fr_Depth_u) = max(eHead(eup(idx_fBC)) - faceR(idx_fBC,fr_Zbottom), setting%ZeroValue%Depth*0.99d0)
+    !         faceR(idx_fBC, fr_Head_d)  = headBC(idx_P)
+    !         faceR(idx_fBC, fr_Depth_d) = max(headBC(idx_P)       - faceR(idx_fBC,fr_Zbottom), setting%ZeroValue%Depth*0.99d0)
+    !     endwhere
+
+    !     print *, 'faceR value head ',faceR(idx_fBC, fr_Head_u), faceR(idx_fBC, fr_Head_d)
+
+    !     ! ! ! ! ! call util_utest_CLprint ('    face interpolate down BC')
+        
+    !     !% --- get geometry for face from upstream element shape
+    !     if (.not. isBConly) then
+    !         !% --- get the depth on the face (upstream) from BC (temporary store)
+    !         !%     this ensures that if gate is closed the depth is the upstream depth
+    !         depthBC(idx_P) = faceR(idx_fBC, fr_Depth_u) !faceR(idx_fBC, fr_Head_u) - faceR(idx_fBC,fr_Zbottom)
+
+    !         !% --- compute elldepth, topwidth, area geometry from depth based on relationship for upstream element
+    !         !%     but using the depthBC at the upstream side of the face (which may be closed gate)   
+    !         do ii=1,size(idx_fBC)
+    !             elemUpstream => eup(idx_fBC(ii))
+    !             !faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
+    !             !faceR(idx_fBC(ii),fr_Length_u)   = elemR(elemupstream,er_Length)
+    !             !faceR(idx_fBC(ii),fr_Topwidth_u) = geo_topwidth_from_depth_singular(elemUpstream,depthBC(idx_P(ii)))
+    !             faceR(idx_fBC(ii),fr_Area_u)     = geo_area_from_depth_singular   &
+    !                 (elemUpstream, depthBC(idx_P(ii)), setting%ZeroValue%Area)
+    !             !faceR(idx_fBC(ii),fr_HydDepth_u) = geo_hyddepth_from_area_and_topwidth_singular(elemUpstream, faceR(idx_fBC(ii),fr_Area_u),faceR(idx_fBC(ii),fr_Topwidth_u) )
+    !             ! faceR(idx_fBC(ii),fr_EllDepth_u) = geo_elldepth_singular &
+    !             !     (faceR(idx_fBC, fr_Head_u), faceR(idx_fBC(ii),fr_Area_u), faceR(idx_fBC(ii),fr_Topwidth_u), &
+    !             !      elemR(elemUpstream,er_AreaBelowBreadthMax), elemR(elemUpstream,er_BreadthMax), elemR(elemUpstream,er_ZbreadthMax))
+                
+    !             ! !% TEST 20220712--- apply simple linear interpolation to prevent large downstream area from causing numerical problems
+    !             ! !% 20220712brh
+    !             ! faceR(idx_fBC(ii),fr_Area_u)     =  (faceR(idx_fBC(ii),fr_Area_u)     + eArea(elemUpstream)    ) * onehalfR
+    !             ! faceR(idx_fBC(ii),fr_HydDepth_u) =  (faceR(idx_fBC(ii),fr_HydDepth_u) + eHydDepth(elemUpstream)) * onehalfR
+    !             ! faceR(idx_fBC(ii),fr_Topwidth_u) =  (faceR(idx_fBC(ii),fr_Topwidth_u) + eTopWidth(elemUpstream)) * onehalfR
+    !         end do
+    !         !% --- store downstream side of face
+    !         !faceR(idx_fBC,fr_Topwidth_d) = faceR(idx_fBC,fr_Topwidth_u) 
+    !         faceR(idx_fBC,fr_Area_d)     = faceR(idx_fBC,fr_Area_u) 
+    !         !faceR(idx_fBC,fr_HydDepth_d) = faceR(idx_fBC,fr_HydDepth_u)
+
+    !         print *, ' '
+    !         print *, 'in face_interpolation_dnBC'
+    !         print *, 'depthBC ',depthBC(idx_P(1))
+    !         print *, 'area    ',faceR(idx_fBC(1),fr_Area_u)
+    !         print *, ' '
+    !         ! !stop 2987355
+
+    !         !% --- set the flowrate at the boundary
+    !         do ii = 1,size(idx_fBC)
+    !             !% --- upstream element ID
+    !             elemUpstream => eup(idx_fBC(ii))
+
+    !             !% --- default face flowrate is the upstream element flowrate
+    !             faceR(idx_fBC(ii),fr_Flowrate) = eFlow(elemUpstream)
+
+    !             !% --- check for closed flap gate
+    !             if (hasFlapGateBC(idx_P(ii))) then
+    !                 ! print *, 'has flapgate'
+    !                 if (faceR(idx_fBC(ii), fr_Head_u) < headBC(idx_P(ii))) then
+    !                     !% --- set BC flow to zero for closed flap gate
+    !                     !%     no outflow until head at face upstream exceeds the gate BC head
+    !                     faceR(idx_fBC(ii), fr_Flowrate) = zeroR
+    !                     ! print *, 'setting face flowrate to zero'
+    !                 else
+    !                     !% --- set BC flow to the flow at the upstream element center
+    !                     !%     note that if the upstream value is negative the BC is set to zero
+    !                     !%     to prevent backflow.
+    !                     faceR(idx_fBC(ii), fr_Flowrate) = max(eFlow(elemUpstream),zeroR)
+    !                     ! print *, 'face flowrate ',faceR(idx_fBC(ii), fr_Flowrate)
+    !                 end if
+    !             end if
+
+    !             !% --- limit the flowrate based on volume to bring upstream element
+    !             !%     to the same elevation as the head BC
+    !             !%     if headdif > 0 then thisQ >0 represents a limit on the outflow
+    !             !%     if headdif < 0 then thisQ <0 represents a limit on the inflow
+    !             headdif = eHead(elemUpstream) - faceR(idx_fBC(ii), fr_Head_u)
+    !             !% --- positive thisQ is an outflow
+    !             thisQ   = onefourthR * headdif * eLength(elemUpstream)  &
+    !                         * eTopwidth(elemUpstream) / setting%Time%Hydraulics%Dt
+
+    !             print *, 'HeadDif     ', headdif
+    !             print *, 'fr_Q, thisQ ', faceR(idx_fBC(1),fr_Flowrate), thisQ
+
+    !             !% --- flow limiters
+    !             if (faceR(idx_fBC(ii), fr_Flowrate) .ge. zeroR) then 
+    !                 !% --- nominal outflow
+    !                 if (thisQ > zeroR) then
+    !                     !% --- limit outflow to the smaller value
+    !                     faceR(idx_fBC(ii), fr_Flowrate) = min(faceR(idx_fBC(ii), fr_Flowrate), thisQ) 
+    !                 else 
+    !                     !% --- outflow across a boundary of higher head should not occur
+    !                     faceR(idx_fBC(ii), fr_Flowrate) = zeroR        
+    !                 end if 
+    !             else 
+    !                 !% --- nominal inflow (cannot occur with flap gate)
+    !                 if (thisQ > zeroR)  then 
+    !                     !% --- inflow should not occur if thisQ > 0
+    !                     faceR(idx_fBC(ii), fr_Flowrate) = zeroR  
+    !                 else
+    !                     !% headdif < 0 and thisQ < 0 implies backflow
+    !                     if (isZeroDepth(elemUpstream))then
+    !                         !% --- for zero depth, limit headdif by 50% of the face depth as the driving head
+    !                         headdif = -min(-headdif, onehalfR * faceR(idx_fBC(ii),fr_Depth_d))
+    !                         thisQ   = onefourthR * headdif * eLength(elemUpstream)  &
+    !                                     * eTopwidth(elemUpstream) / setting%Time%Hydraulics%Dt
+    !                     end if
+    !                     if (eFlow(elemUpstream) < zeroR) then
+    !                         !% --- nominal inflow over BC
+    !                         !%     use the smaller magnitude (more positive value)
+    !                         faceR(idx_fBC(ii), fr_Flowrate) = max(thisQ,eFlow(elemUpstream))
+    !                     else
+    !                         !% -- - use the filling value
+    !                         faceR(idx_fBC(ii), fr_Flowrate) = thisQ
+    !                     end if
+    !                 end if
+    !             end if
+
+    !             print *, 'flowrate DD',faceR(idx_fBC(ii),fr_Flowrate)
+    !         end do
+
+    !             !% --- handle possible backflows---------------------
+                
+    !             ! !% ---compute adverse head difference (from downstreamface to upstream element center)
+    !             ! !%    that drives could drive an inflow on a downstream head BC        
+    !             ! headdif = faceR(idx_fBC(ii), fr_Head_u) - eHead(elemUpstream)
+    !             ! if (isZeroDepth(elemUpstream))then
+    !             !     !% --- for zero depth, limit headdif by 50% of the face depth as the driving head
+    !             !     !headdif = min(headdif, onehalfR * faceR(idx_fBC(ii),fr_HydDepth_d))
+    !             !     headdif = min(headdif, onehalfR * faceR(idx_fBC(ii),fr_Depth_d))
+    !             ! end if
+
+    !             !  print *, 'ii, headdif ',ii, headdif
+    !             !  print *, faceR(idx_fBC(ii), fr_Head_u), eHead(elemUpstream), eZbottom(elemUpstream)
+
+    !             !% --- check for adverse head gradient going upstream from boundary
+    !             !%     when element flow is downstream or zero
+    !             !      note that when element velocity is already negative we do not add the headdif term
+    !         !     if (headdif > zeroR) then 
+    !         !         !% --- adverse head gradient at outlet
+    !         !         if (eFlow(elemUpstream) .ge. zeroR) then
+    !         !             !% --- potential for inflow from downstream boundary despite downstream
+    !         !             !%     flow on element.
+    !         !             !%     Piezometric head difference minus upstream velocity
+    !         !             !%     head provides the velocity head of inflow
+    !         !             !%     If positive, then this is the upstream velocity at face
+    !         !             !%     If negative, then the downstream flow in element is
+    !         !             !%     able to overcome the adverse piezometric head gradient,
+    !         !             !%     so the difference provides a reduced outflow at face
+    !         !             !% --- The following is the estimated Bernoulli velocity squared. Note that
+    !         !             !%     this assumes Velocity sign is consistent with flowrate sign.
+    !         !             !Vtemp = twoR * grav * headdif - (eVelocity(elemUpstream)**twoI)
+    !         !             !%     Use the velocity head if the upstream flow is distributed over the downstream area
+    !         !             Vtemp = twoR * grav * headdif - ((eFlow(elemUpstream) / faceR(idx_fBC(ii),fr_Area_u))**twoI)
+    !         !             !% --- The +Vtemp is flow in the upstream (negative) direction
+    !         !             Vtemp = -sign(sqrt(abs(Vtemp)),Vtemp)
+    !         !             !% --- take the smaller of the Q implied by Vtemp and the downstream Q of the element
+    !         !             !%     Note Vtemp < 0 is upstream flow and will automatically be selected here since the upstream
+    !         !             !%     elem flowrate is guaranteed to be positive. The following statement simply
+    !         !             !%     ensures that the head balance approach for a downstream flow Vtemp > 0 does not exceed existing
+    !         !             !%     downstream flow on the element imlied by the (flowrate >= 0) conditional above.
+    !         !             !%     NOTE this flowrate may be either upstream or downstream!
+    !         !             faceR(idx_fBC(ii),fr_Flowrate) = min(Vtemp * faceR(idx_fBC(ii),fr_Area_u),eFlow(elemUpstream))
+
+    !         !             !  print *, 'naive face flowrate ', faceR(idx_fBC(ii),fr_Flowrate)
+    !         !         end if
+
+    !         !         !% --- Limit inflow magnitude to that the brings level up to the BC elevation
+    !         !         if (faceR(idx_fBC(ii),fr_Flowrate) < zeroR) then
+    !         !             !% --- volume rate adjustment: negative flowrate cannot provide more volume than 
+    !         !             !%     fills the pipe to the depth equivalent to the downstream BC head in a single time step.
+    !         !             !%     This reduces oscillatory behavior by preventing over filling on back flow
+    !         !             thisDepth  = faceR(idx_fBC(ii), fr_Head_u) - eZbottom(elemUpstream)
+
+    !         !             ! print *, 'thisDepth ',thisDepth, elemR(elemUpstream,er_Depth)
+    !         !             ! print *, 'this head ',faceR(idx_fBC(ii), fr_Head_u), elemR(elemUpstream,er_Head)
+    !         !             ! print *, ' '
+    !         !             ! print *, 'elemUpstream ',elemUpstream
+    !         !             ! print *, 'head,z ', elemR(elemUpstream,er_Head), elemR(elemUpstream,er_Zbottom)
+    !         !             ! print *, 'depth  ', elemR(elemUpstream,er_Head) - elemR(elemUpstream,er_Zbottom), elemR(elemUpstream,er_Depth)
+
+    !         !             if (thisDepth > zeroR) then
+    !         !                 ! !% --- get the volume of the upstream element if filled to the BC head level
+    !         !                 ! thisVolume = geo_area_from_depth_singular(elemUpstream, thisDepth, setting%ZeroValue%Area) * eLength(elemUpstream)
+    !         !                 ! !% --- flowrate to fill to this volume in one time step
+    !         !                 ! thisQ      = (thisVolume - eVolume(elemUpstream)) / setting%Time%Hydraulics%Dt
+
+    !         !                 ! print *, 'thisQ ',thisQ
+    !         !                 ! print *, thisVolume, eVolume(elemUpstream), eVolume(73)
+
+    !         !                 !% --- using volume caused problem with tables not being precisely invertable
+    !         !                 !%     from depth -> area  and from volume -> depth -> area
+    !         !                 !% --- approximate the volume flowrate into the upstream element
+    !         !                 !%     by the volume associated with the depth difference
+    !         !                 thisQ = onehalfR * (thisDepth - eDepth(elemUpstream)) * eLength(elemUpstream)  &
+    !         !                         * eTopwidth(elemUpstream) / setting%Time%Hydraulics%Dt
+
+    !         !                 if (thisQ > zeroR) then
+    !         !                     !% --- inflow is allowed, but use the smaller magnitude flow (larger negative value)
+    !         !                     faceR(idx_fBC(ii),fr_Flowrate) = max(faceR(idx_fBC(ii),fr_Flowrate),-thisQ)
+    !         !                 else
+    !         !                     !% --- if thisVolume <= 0, then upstream is already to the maximum level
+    !         !                     faceR(idx_fBC(ii),fr_Flowrate) = zeroR
+    !         !                 end if
+                            
+    !         !                 ! print *, 'face flowrate with depth ',faceR(idx_fBC(ii),fr_Flowrate)
+    !         !             else
+    !         !                 !% --- negative upstream depth implies Zbottom of upstream element is higher
+    !         !                 !%     than the downstream BC.  We shouldn't get here because it should only 
+    !         !                 !%     occur if headdif < 0, 
+    !         !                 print *, 'CODE ERROR -- unexpected else condition reached'
+    !         !                 call util_crashpoint(5593341)
+    !         !             end if
+    !         !         else
+    !         !             !% --- if flowrate is > 0, no volume rate adjustment needed and we accept 
+    !         !             !%     previously computed value
+    !         !         end if
+    !         !     else
+    !         !         !% --- limit inflow to that which brings upstream element up to the head of the BC
+    !         !         thisDepth  = faceR(idx_fBC(ii), fr_Head_u) - eZbottom(elemUpstream)
+    !         !         if (thisDepth > zeroR) then
+    !         !         else 
+    !         !             !% --- negative upstream depth implies Zbottom of upstream element is higher
+    !         !                 !%     than the downstream BC.  We shouldn't get here because it should only 
+    !         !                 !%     occur if headdif < 0, 
+    !         !             print *, 'CODE ERROR -- unexpected else condition reached'
+    !         !                 call util_crashpoint(5593341)
+    !         !         end if
+
+    !         !         !% --- if there is no adverse head gradient or if element velocity is already negative
+    !         !         !%     in/outflow rate is upstream element flowrate                        
+    !         !         faceR(idx_fBC(ii), fr_Flowrate) = eFlow(elemUpstream)
+    !         !     end if
+
+    !         !     ! print *, 'final face flowrate ', faceR(idx_fBC(ii),fr_Flowrate)
+
+    !         ! end do
+
+    !         ! ! ! ! ! call util_utest_CLprint ('    face YYYY')
+
+    !         !% --- set the Preissmann number to the upstream element value
+    !         faceR(idx_fBC, fr_Preissmann_Number) = elemR(eup(idx_fBC), er_Preissmann_Number) 
+
+    !         ! !% --- set to zero flow for closed gate  !% MOVED UP INTO DO LOOP 20220716brh
+    !         ! where ( BC%headYN(idx_P, bYN_hasFlapGate) .and. (faceR(idx_fBC, fr_Head_u) < BC%headR(idx_P,br_value)) )
+    !         !     faceR(idx_fBC, fr_Flowrate) = zeroR
+    !         ! end where
+
+    !         ! print *, 'face area u ', faceR(idx_fBC,fr_Area_u)
+    !         ! print *, 'face area d ', faceR(idx_fBC,fr_Area_d)
+
+    !         !% --- ensure face area_u is not smaller than zerovalue
+    !         where (faceR(idx_fBC,fr_Area_d) < setting%ZeroValue%Area)
+    !             faceR(idx_fBC,fr_Area_d) = setting%ZeroValue%Area
+    !         endwhere
+    !         where (faceR(idx_fBC,fr_Area_u) < setting%ZeroValue%Area)
+    !             faceR(idx_fBC,fr_Area_u) = setting%ZeroValue%Area
+    !         endwhere
+
+    !         faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_u)
+    !         faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_d)  
+
+    !         print *, 'face velocity u ', faceR(idx_fBC,fr_Velocity_u)
+    !         print *, 'face velocity d ', faceR(idx_fBC,fr_Velocity_d)
+
+    !         !%  limit high velocities
+    !         if (setting%Limiter%Velocity%UseLimitMaxYN) then
+    !             where(abs(faceR(idx_fBC,fr_Velocity_u))  > setting%Limiter%Velocity%Maximum)
+    !                 faceR(idx_fBC,fr_Velocity_u) = sign(0.99d0 * setting%Limiter%Velocity%Maximum, &
+    !                     faceR(idx_fBC,fr_Velocity_u))
+    !             endwhere 
+    !             where(abs(faceR(idx_fBC,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
+    !                 faceR(idx_fBC,fr_Velocity_d) = sign(0.99d0 * setting%Limiter%Velocity%Maximum, &
+    !                     faceR(idx_fBC,fr_Velocity_d))
+    !             end where                    
+    !         end if
+
+    !         ! ! ! ! ! call util_utest_CLprint ('    face ZZZZ')
+    !     else
+    !         !% continue
+    !     end if
+
+    !     !%--------------------------------------------------------------------
+    !     !% Closing
+    !         if (setting%Debug%File%boundary_conditions) &
+    !             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine face_interpolation_dnBC_OLD
+!%
+!%==========================================================================
+    !%==========================================================================
+!%
+    ! subroutine face_interp_shared_set_old &
+    !     (fset, eset, eWdn, eWup, facePackCol, Npack)
+    !     !%-------------------------------------------------------------------
+    !     !% Description:
+    !     !% Interpolates faces shared between processor
+    !     !%-------------------------------------------------------------------
+    !     !% Declarations
+    !         integer, intent(in) :: fset(:), eset(:), eWdn, eWup, facePackCol, Npack
+    !         integer, pointer :: thisP, eup, edn, connected_image, ghostUp, ghostDn
+    !         logical, pointer :: isGhostUp, isGhostDn
+    !         integer :: ii, jj   
+    !         integer(kind=8) :: crate, cmax, cval
+    !         character(64) :: subroutine_name = 'face_interp_shared_set_old'
+    !     !%--------------------------------------------------------------------
+    !     !%  Preliminaries
+    !         if (setting%Debug%File%face) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+    !         sync all
+    !         if (this_image()==1) then
+    !             call system_clock(count=cval,count_rate=crate,count_max=cmax)
+    !             setting%Time%WallClock%SharedStart_A = cval
+    !         end if    
+    !     !%--------------------------------------------------------------------
+    !     !% cycle through all the shared faces
+    !     do ii = 1,Npack
+    !         !%-----------------------------------------------------------------
+    !         !% Aliases
+    !         thisP           => facePS(ii,facePackCol)
+    !         connected_image => faceI(thisP,fi_Connected_image)
+    !         eup             => faceI(thisP,fi_Melem_uL)
+    !         edn             => faceI(thisP,fi_Melem_dL)
+    !         ghostUp         => faceI(thisP,fi_GhostElem_uL)
+    !         ghostDn         => faceI(thisP,fi_GhostElem_dL)
+    !         isGhostUp       => faceYN(thisP,fYN_isUpGhost)
+    !         isGhostDn       => faceYN(thisP,fYN_isDnGhost)
+    !         !%-----------------------------------------------------------------
+    !         !% cycle through each element in the set.
+    !         !% This is designed for fset and eset being vectors, but it
+    !         !%   is not clear that this is needed.
+    !         do jj=1,size(fset)
+
+    !             !% condition for upstream element of the shared face is ghost and in a different image
+    !             if (isGhostUp) then
+
+    !                 faceR(thisP,fset(jj)) = &
+    !                     (+elemR(ghostUp,eset(jj))[connected_image] * elemR(edn,eWup) &
+    !                      +elemR(edn,eset(jj)) * elemR(ghostUp,eWdn)[connected_image] &
+    !                     ) / &
+    !                     ( elemR(edn,eWup) + elemR(ghostUp,eWdn)[connected_image] )
+
+    !             !% condition for downstream element of the shared face is ghost and in a different image
+    !             elseif (isGhostDn) then
+
+    !                 faceR(thisP,fset(jj)) = &
+    !                     (+elemR(eup,eset(jj)) * elemR(ghostDn,eWup)[connected_image] &
+    !                      +elemR(ghostDn,eset(jj))[connected_image] * elemR(eup,eWdn) &
+    !                     ) / &
+    !                     ( elemR(ghostDn,eWup)[connected_image] + elemR(eup,eWdn) )
+
+    !             else
+    !                 write(*,*) 'CODE ERROR: unexpected else'
+    !                 !stop 
+    !                 call util_crashpoint( 487874)
+    !                 !return
+    !             end if        
+    !         end do
+    !     end do
+
+    !     !% NOTES
+    !     !% elemR(eup,eset(jj)) is the element value upstream of the face
+    !     !% elemR(edn,eset(jj) is the element value downstream of the face.
+    !     !% elemR(eup,eWdn) is the downstream weighting of the upstream element
+    !     !% elemR(edn,eWup)) is the upstream weighting of the downstream element
+
+    !     !% elemR(ghostUp,eset(jj))[connected_image] is the elem value from the upstream image of the face
+    !     !% elemR(ghostDn,eset(jj))[connected_image] is the elem value from the downstream image of the face
+    !     !% elemR(ghostUp,eWdn)[connected_image] is the downstream weighting of the upstream image element
+    !     !% elemR(ghostDn,eWup))[connected_image] is the upstream weighting of the downstream image element
+
+    !     !%--------------------------------------------------------------------
+    !     !% Closing
+    !     sync all
+    !     if (this_image()==1) then
+    !         !% stop the shared timer
+    !         call system_clock(count=cval,count_rate=crate,count_max=cmax)
+    !         setting%Time%WallClock%SharedStop_A = cval
+    !         setting%Time%WallClock%SharedCumulative_A &
+    !                 = setting%Time%WallClock%SharedCumulative_A &
+    !                 + setting%Time%WallClock%SharedStop_A &
+    !                 - setting%Time%WallClock%SharedStart_A                    
+    !     end if 
+    !         if (setting%Debug%File%face) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine face_interp_shared_set_old
+!%
+!%==========================================================================
+!%==========================================================================
+!%  
+    ! subroutine face_head_average_on_element &
+    !     (whichTM)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% computes the average head of the faces on an element
+    !     !%-------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer, intent(in) :: whichTM 
+    !         integer, pointer :: Npack, thisP(:), thisCol
+    !         integer, pointer :: mapUp(:), mapDn(:)
+    !         real(8), pointer :: fHeadU(:), fHeadD(:), eHeadAvg(:)
+    !         character(64) :: subroutine_name = 'face_head_average_on_element'
+    !     !%-------------------------------------------------------------------
+    !     !% Preliminaries
+    !         !if (.not. setting%Solver%QinterpWithLocalHeadGradient) return  
+    !         if (setting%Debug%File%face) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+    !         select case (whichTM)
+    !             case (ALLtm)
+    !                 thisCol => col_elemP(ep_CC_ALLtm)
+    !             case (ETM)
+    !                 thisCol => col_elemP(ep_CC_ETM)
+    !             case (AC)
+    !                 thisCol => col_elemP(ep_CC_AC)
+    !             case (dummy)
+    !                 ! print *, 'error - the FluxCorrection has not been coded for diagnostic elements'
+    !                 ! stop 58704
+    !                 return
+    !             case default
+    !                 print *, 'error, this default case should not be reached'
+    !                 stop 2394
+    !         end select         
+    !     !%-------------------------------------------------------------------
+    !     !% Aliases             
+    !         Npack    => npack_elemP(thisCol)
+    !         if (Npack .le. 0) return
+    !         thisP    => elemP(1:Npack,thisCol)
+    !         mapUp    => elemI(:,ei_Mface_uL)
+    !         mapDn    => elemI(:,ei_Mface_dL)   
+    !         fHeadU   => faceR(:,fr_Head_u)  
+    !         fHeadD   => faceR(:,fr_Head_d)
+    !         eHeadAvg => elemR(:,er_HeadAvg)    
+    !     !%-------------------------------------------------------------------   
+    !     !% The map up must use the downstream head on the face.
+    !     !% The map dn must use the upstream head on the face.
+    !     eHeadAvg(thisP) = onehalfR * (fHeadU(mapDn(thisP)) + fHeadD(mapUp(thisP)))
+
+    !     ! print *, 'in ',trim(subroutine_name)
+    !     ! print *, thisP
+    !     ! print *, eHeadAvg(thisP)
+    !     ! print *, ' '
+    !     ! print *, eHeadAvg(:)
+    !     ! print *, ' '
+    !     ! print *, fHeadU(:)
+    !     ! print *, ' '
+    !     ! print *, fHeadD(:)
+    !     ! print *, ' '
+    !     !%-------------------------------------------------------------------
+    !     !% Closing
+    !         if (setting%Debug%File%face) &
+    !             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine face_head_average_on_element
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    ! subroutine face_FluxCorrection_interior &
+        !     (faceCol, whichTM)
+        !     !%------------------------------------------------------------------
+        !     !% Description:
+        !     !% Adds the head gradient term to the face flowrate for interior faces
+        !     !% should be done after Q and H are interpolated to face
+        !     !% and element HeadAvg is computed.
+        !     !%-------------------------------------------------------------------
+        !     !% Declarations
+        !         integer, intent(in) :: faceCol, whichTM
+        !         integer, pointer :: Npack, thisF(:), eup(:), edn(:), elist(:)
+        !         real(8), pointer :: fQ(:), eArea(:), eHead(:), eHeadAvg(:)
+        !         real(8), pointer :: eLength(:) !, qLateral(:), qChannel(:)
+        !         real(8), pointer ::  dt, grav !, qfac, qratio 
+        !         logical          :: isBConly
+        !         character(64) :: subroutine_name = 'face_FluxCorrection_interior'
+        !     !%-------------------------------------------------------------------
+        !     !% Preliminaries
+        !         !if (.not. setting%Solver%QinterpWithLocalHeadGradient) return  
+        !         if (setting%Debug%File%face) &
+        !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !     !%-------------------------------------------------------------------
+        !     !% Aliases   
+        !         eup      => faceI(:,fi_Melem_uL)
+        !         edn      => faceI(:,fi_Melem_dL)
+        !         fQ       => faceR(:,fr_Flowrate)
+        !         eArea    => elemR(:,er_Area)
+        !         eHead    => elemR(:,er_Head)
+        !         !eHeadAvg => elemR(:,er_HeadAvg)
+        !         eLength  => elemR(:,er_Length)
+        !         eList    => elemI(:,ei_Temp01)
+        !         dt       => setting%Time%Hydraulics%Dt
+        !         grav     => setting%constant%gravity
+
+        !         Npack => npack_faceP(faceCol)
+        !         if (Npack .le. 0) return
+        !         thisF    => faceP(1:Npack,faceCol)
+        !     !%-------------------------------------------------------------------
+        !     !% --- compute the average head for the elements 
+        !     !call face_head_average_on_element (whichTM)
+
+        !     !% -- we need a custom selector array because we don't have a packed array
+        !     !%    that handles the combined face/element condition needed
+        !     eList = zeroI
+        !     select case (whichTM)
+        !     case (ALLtm)
+        !         eList(ep_CC_ALLtm) = oneI
+        !     case (ETM)
+        !         eList(ep_CC_ETM) = oneI
+        !     case (AC)
+        !         eList(ep_CC_AC) = oneI
+        !     case (dummy)
+        !         ! print *, 'error - the FluxCorrection has not been coded for diagnostic elements'
+        !         return
+        !     case default
+        !         print *, 'error, this default case should not be reached'
+        !         stop 239483
+        !     end select
+
+        !     !% --- adds term dt * grav A [ (dh/dx) - (dh_avg/dx) ] where not zerovolume
+        !     where (      (.not. elemYN(eup(thisF),eYN_isZeroDepth   )        ) & 
+        !            .and. (.not. elemYN(eup(thisF),eYN_isSmallDepth  )        ) &
+        !            .and. (       elemR(eup(thisF),er_FlowrateLateral) > zeroR) &
+        !            .and. (       eList(eup(thisF))                    == oneI) )
+        !         fQ(thisF) = fQ(thisF) + dt * grav *                                         &
+        !             (                                                                       &
+        !                 +( eArea(eup(thisF)) * ( eHead(eup(thisF)) - eHeadAvg(eup(thisF)) ) &
+        !                     / ( onehalfR * eLength(eup(thisF) ) ) )                         &
+        !             )                        
+        !     end where
+
+        !     where (       (.not. elemYN(edn(thisF),eYN_isZeroDepth   )        ) & 
+        !             .and. (.not. elemYN(edn(thisF),eYN_isSmallDepth  )        ) &
+        !             .and. (       elemR(edn(thisF),er_FlowrateLateral) > zeroR) &
+        !             .and. (       eList(edn(thisF))                    == oneI) )
+        !         fQ(thisF) = fQ(thisF) + dt * grav *                                         &
+        !             (                                                                       &
+        !                 -( eArea(edn(thisF)) * ( eHead(edn(thisF)) - eHeadAvg(edn(thisF)) ) &
+        !                     / ( onehalfR * eLength(edn(thisF) ) ) )                         &
+        !             ) 
+        !     end where
+
+        !     !% --- need another call to face_interpolate so that the Q_HeadGradient
+        !         !%     does not change the upper boundary inflow condition
+        !     isBConly = .true.
+        !     call face_interpolate_bc (isBConly)
+
+        !     !% for lateral inflows upstream of a face with downstream flow 
+        !     !% note: null set for negative inflow   
+        !     ! where ( qLateral(eup(thisF)) > qratio * abs(qChannel(eup(thisF))) )
+        !     !     fQ(thisF) = fQ(thisF) + qfac * dt * grav                                       &
+        !     !         * ( util_sign_with_ones(fQ(thisF)) + oneR ) * onehalfR                     &
+        !     !         *(                                                                         &
+        !     !             +( eArea(eup(thisF)) * ( eHead(eup(thisF)) - eHeadAvg(eup(thisF)) ) )  &
+        !     !             / ( onehalfR * eLength(eup(thisF)) )                                   &
+        !     !         )
+        !     ! end where
+
+        !     ! !% for lateral inflows downstream of a face with an upstream flow
+        !     ! !% note: null set for negative inflow
+        !     ! where ( qLateral(edn(thisF)) > qratio * abs(qChannel(edn(thisF))) )
+        !     !     fQ(thisF) = fQ(thisF) + qfac * dt * grav                                       &
+        !     !         * ( util_sign_with_ones(fQ(thisF)) - oneR ) * onehalfR                     &
+        !     !         *(                                                                         &   
+        !     !           +( eArea(edn(thisF)) * ( eHead(edn(thisF)) - eHeadAvg(edn(thisF)) ) )    &
+        !     !             / ( onehalfR * eLength(edn(thisF)) )                                   &
+        !     !         )
+        !     ! end where
+
+        !     !% --- for downstream flow
+        !     ! where (.not. elemYN(eup(thisP),eYN_isZeroDepth))
+        !     !     fQ(thisP) = fQ(thisP) + qfac * dt * grav                                    &
+        !     !        *( util_sign_with_ones(fQ(thisP)) + oneR ) * onehalfR                    &
+        !     !        *(                                                                       &
+        !     !             +( eArea(eup(thisP)) * ( eHead(eup(thisP)) - eHeadAvg(eup(thisP)) ) &
+        !     !                 / ( onehalfR * eLength(eup(thisP) ) ) )                         &
+        !     !         ) 
+        !     ! end where
+
+        !     ! !% --- for upstream flow
+        !     ! where (.not. elemYN(edn(thisP),eYN_isZeroDepth))
+        !     !     fQ(thisP) = fQ(thisP) + qfac * dt * grav                                    &
+        !     !        *( util_sign_with_ones(fQ(thisP)) - oneR ) * onehalfR                    &
+        !     !        *(                                                                       &
+        !     !             -( eArea(edn(thisP)) * ( eHead(edn(thisP)) - eHeadAvg(edn(thisP)) ) &
+        !     !                 / ( onehalfR * eLength(edn(thisP) ) ) )                         &
+        !     !         ) 
+        !     ! end where
+        
+        !     !%-------------------------------------------------------------------
+        !     !% Closing
+        !         if (setting%Debug%File%face) &
+        !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        ! end subroutine face_FluxCorrection_interior
+!%
+!%==========================================================================
 !%
 !%==========================================================================
 !% END OF MODULE

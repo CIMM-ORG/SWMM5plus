@@ -50,24 +50,24 @@ contains
 
         call bc_step()
 
-            ! call util_utest_CLprint ('0000 after bc_step')
+            ! ! call util_utest_CLprint ('0000 after bc_step')
 
         !% --- interpolate the BC to the present time
         ! print *, 'calling bc_interpolate_flow'
         call bc_interpolate_flow()
 
-            ! call util_utest_CLprint ('1111 after bc_interpolate_flow')
+            ! ! call util_utest_CLprint ('1111 after bc_interpolate_flow')
 
         ! print *, 'calling bc_interpolate_head'
         call bc_interpolate_head()
 
-            !  call util_utest_CLprint ('2222 after bc_interpolate_head')
+            !  ! call util_utest_CLprint ('2222 after bc_interpolate_head')
 
         !% --- store the BC value in face arrays
         ! print *, 'calling face_interpolate_bc'
         call face_interpolate_bc(isBConly) 
 
-            ! call util_utest_CLprint ('3333 after face_interpolate_bc')
+            ! ! call util_utest_CLprint ('3333 after face_interpolate_bc')
 
         !% --- check for inflow BC that imply a large velocity if the
         !%     cross-section is full

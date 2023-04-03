@@ -42,7 +42,7 @@ module circular_conduit
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine circular_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine circular_depth_from_volume (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on conduits 
@@ -50,18 +50,15 @@ module circular_conduit
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:), thisP_lookup(:), thisP_analytical(:)
+            integer, target, intent(in) :: thisP(:)
+            integer, pointer :: thisP_lookup(:), thisP_analytical(:)
             integer, pointer :: thisPA(:), thisPL(:)
             real(8), pointer :: depth(:), volume(:), length(:), AoverAfull(:)
             real(8), pointer :: YoverYfull(:), fullArea(:), fulldepth(:)
             integer, target  :: Npack_analytical, Npack_lookup
         !%---------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
         !%------------- --------------------------------------------------------
         !% Aliases
-            thisP       => elemPGx(1:Npack,thisCol)
             depth       => elemR(:,er_Depth)
             volume      => elemR(:,er_Volume)
             length      => elemR(:,er_Length)
@@ -252,40 +249,40 @@ module circular_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-!     subroutine circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-!         !%
-!         !%-----------------------------------------------------------------------------
-!         !% Description:
-!         !% Computes the hydraulic (average) depth from a known depth in a circular conduit
-!         !%-----------------------------------------------------------------------------
-!         integer, target, intent(in) :: elemPGx(:,:)
-!         integer, intent(in) ::  Npack, thisCol
-!         integer, pointer    :: thisP(:)
-!         real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
-!         real(8), pointer    :: depth(:), hyddepth(:)
-!         !%-----------------------------------------------------------------------------
-!         !!if (crashYN) return
-!         thisP        => elemPGx(1:Npack,thisCol)
-!         area         => elemR(:,er_Area)
-!         topwidth     => elemR(:,er_Topwidth)
-!         depth        => elemR(:,er_Depth)
-!         hyddepth     => elemR(:,er_HydDepth)
-!         fullHydDepth => elemR(:,er_FullHydDepth)
-!         !%--------------------------------------------------
+    !     subroutine circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
+    !         !%
+    !         !%-----------------------------------------------------------------------------
+    !         !% Description:
+    !         !% Computes the hydraulic (average) depth from a known depth in a circular conduit
+    !         !%-----------------------------------------------------------------------------
+    !         integer, target, intent(in) :: elemPGx(:,:)
+    !         integer, intent(in) ::  Npack, thisCol
+    !         integer, pointer    :: thisP(:)
+    !         real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
+    !         real(8), pointer    :: depth(:), hyddepth(:)
+    !         !%-----------------------------------------------------------------------------
+    !         !!if (crashYN) return
+    !         thisP        => elemPGx(1:Npack,thisCol)
+    !         area         => elemR(:,er_Area)
+    !         topwidth     => elemR(:,er_Topwidth)
+    !         depth        => elemR(:,er_Depth)
+    !         hyddepth     => elemR(:,er_HydDepth)
+    !         fullHydDepth => elemR(:,er_FullHydDepth)
+    !         !%--------------------------------------------------
 
-!         !% calculating hydraulic depth needs conditional since,
-!         !% topwidth can be zero in circular cross section for both
-!         !% full and empty condition.
+    !         !% calculating hydraulic depth needs conditional since,
+    !         !% topwidth can be zero in circular cross section for both
+    !         !% full and empty condition.
 
-!         !% when conduit is empty
-!         where (depth(thisP) <= setting%ZeroValue%Depth)
-!             hyddepth(thisP) = setting%ZeroValue%Depth
+    !         !% when conduit is empty
+    !         where (depth(thisP) <= setting%ZeroValue%Depth)
+    !             hyddepth(thisP) = setting%ZeroValue%Depth
 
-!         !% when conduit is not empty
-!         elsewhere (depth(thisP) > setting%ZeroValue%Depth)
-!             !% limiter for when the conduit is full
-!             hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
-!         endwhere
+    !         !% when conduit is not empty
+    !         elsewhere (depth(thisP) > setting%ZeroValue%Depth)
+    !             !% limiter for when the conduit is full
+    !             hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
+    !         endwhere
 
 !     end subroutine circular_hyddepth_from_topwidth
 ! !%

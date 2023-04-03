@@ -48,7 +48,7 @@ module geometry
 
     private
 
-    public :: geometry_toplevel
+    !public :: geometry_toplevel
     public :: geometry_toplevel_CC
     public :: geometry_toplevel_JMJB
     public :: geo_common_initialize
@@ -63,62 +63,51 @@ module geometry
     public :: geo_perimeter_from_depth_singular
     !public :: geo_elldepth_pure
     !public :: geometry_table_initialize
-    public :: geo_depth_from_volume_by_type
+    public :: geo_depth_from_volume_by_type_allCC
 
     contains
 !%==========================================================================
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine geometry_toplevel_CC(whichTM)
+    subroutine geometry_toplevel_CC (                          &
+            thisP, npackP, thisP_Open, npackP_Open,            &
+            thisP_Closed, npackP_Closed, isSingularYN, isALLYN)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes geometry on channel/conduit (CC) elements for the  
         !% time-marching scheme of whichTM (ETM, AC, ALLtm)
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: whichTM  !% time march
-            integer, pointer    :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
-            integer, pointer    :: thisP(:)
-            integer, pointer    :: thisColP_CC, thisColP_Open_CC, thisColP_Closed_CC
-            integer, pointer    :: Npack
+            !% packed data
+            integer,  intent(in) :: thisP(:), thisP_Open(:), thisP_Closed(:)
+            integer,  intent(in) :: npackP, npackP_Open, npackP_Closed
+            !% singular element
+            logical, intent(in) :: isSingularYN, isAllYN
         !%------------------------------------------------------------------
         !% Aliases
-            select case (whichTM)
-                ! case (ALLtm)
-                case (ETM)
-                    elemPGx                => elemPGetm(:,:)
-                    npack_elemPGx          => npack_elemPGetm(:)
-                    col_elemPGx            => col_elemPGetm(:)
-                    thisColP_CC            => col_elemP(ep_CC_ETM)
-                    thisColP_Open_CC       => col_elemP(ep_CC_Open_Elements)
-                    thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
-                ! case (AC)
-                case default
-                    print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                    print *, 'which has key ',trim(reverseKey(whichTM))
-                    call util_crashpoint(7389)
-            end select
-            call util_crashstop(49872)
+        !%------------------------------------------------------------------
+        !% Preliminary
+            if (npackP < 1) return
         !%------------------------------------------------------------------
 
         !% --- PREISSMAN SLOT    
         !% --- Handle Preissmann Slot for closed CC elements
         !%     with this time march type.
-        Npack  => npack_elemP(thisColP_Closed_CC)
-        if (Npack > 0) then
-            call slot_CC_ETM (thisColP_Closed_CC, Npack)
+        if (npackP_Closed > 0) then
+            call slot_CC_ETM (thisP_Closed)
         end if
-
-        !% NOTE we're skipping the adjust_limit_by_zerovalues(Volume) used in the
-        !% old version of this subroutine as the call is now made in the RK step for
-        !% continuity.
 
         !% --- DEPTH
         !%     compute the depth on all elements of CC based on geometry.
         !%     If surcharged, this call returns the full depth of a closed conduit 
         !%     without adding Preissmann Slot depth.
-        call geo_depth_from_volume_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx)
+        if (isAllYN) then
+            call geo_depth_from_volume_by_type_allCC (elemPGetm, npack_elemPGetm, col_elemPGetm)
+        else
+            call geo_depth_from_volume_by_element_CC (thisP, npackP)
+        end if
+
 
         !% --- ZERO DEPTH CC
         !%     reset all zero or near-zero depths in CC
@@ -126,19 +115,15 @@ module geometry
         !%     in geo_depth_from_volume_by_type_CC should use the zerovalues as minimums
         !%     but this needs to be confirmed.
         call adjust_limit_by_zerovalues &
-            (er_Depth, setting%ZeroValue%Depth, thisColP_CC, .false.)
+            (er_Depth, setting%ZeroValue%Depth, thisP, .false.)
 
         !% --- PIEZOMETRIC HEAD
         !%     compute the head on all elements of CC
         !%     This sets head consistent with depth computed in geo_depth_from_volume
         !%     Head is strictly limited to the max depth + zbottom so it does not
         !%     include surcharge effects     
-        Npack     => npack_elemP(thisColP_CC)
-        if (Npack > 0) then
-            thisP => elemP(1:Npack,thisColP_CC)
-            elemR(thisP,er_Head) = llgeo_head_from_depth_pure &
+        elemR(thisP,er_Head) = llgeo_head_from_depth_pure &
                                     (thisP, elemR(thisP,er_Depth))
-        end if
 
         !% --- OPEN CHANNEL OVERFLOW
         !%     Compute the overflow lost for CC open channels above
@@ -146,47 +131,58 @@ module geometry
         !%     Note that overflow or ponding for JM elements is handled 
         !%     in slot_JM_ETM.
         !%     Note, this is NOT standard in EPA-SWMM
-        if (setting%Discretization%AllowChannelOverflowTF) then
-            call geo_overflow_openchannels (thisColP_Open_CC)
+        if (npackP_Open > 0) then
+            if (setting%Discretization%AllowChannelOverflowTF) then
+                call geo_overflow_openchannels (thisP_Open)
+            end if
         end if
 
         !% --- PREISSMAN SLOT VOLUME LIMIT CLOSED CONDUIT CC
         !%     limit the volume in closed element (CC) to the full volume
         !%     Note the excess volume has already been stored in the Preissman Slot
-        call geo_volumelimit_closed (thisColP_Closed_CC)
+        if (npackP_Closed > 0) then
+            call geo_volumelimit_closed (thisP_Closed)
+        end if
 
         !% --- CROSS-SECTIONAL AREA
         !%     compute area from volume for CC
         !%     For closed conduits this is based on the volume limited by full volume.
         !%     For open channels the volume limit depends on if AllowChanneOverflowTF is false.
-        Npack     => npack_elemP(thisColP_CC)
-        if (Npack > 0) then
-            thisP => elemP(1:Npack,thisColP_CC)
-            elemR(thisP,er_Area) = llgeo_area_from_volume_pure(thisP,elemR(thisP,er_Volume))
-            elemR(thisP,er_Area) = max(elemR(thisP,er_Area),setting%ZeroValue%Area)
-        end if
+        elemR(thisP,er_Area) = llgeo_area_from_volume_pure(thisP,elemR(thisP,er_Volume))
+        elemR(thisP,er_Area) = max(elemR(thisP,er_Area),setting%ZeroValue%Area)
 
         !% --- TOPWIDTH CC
         !%     compute topwidth from depth for all CC
         !%     Note: volume is limited to full depth UNLESS AllowChannelOverflowTF is false
-        call geo_topwidth_from_depth_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx)
+
+        if (isAllYN) then
+            call geo_topwidth_from_depth_by_type_allCC (elemPGetm, npack_elemPGetm, col_elemPGetm)
+        else
+            call geo_topwidth_from_depth_by_element_CC (thisP, npackP)
+        end if
 
         !% --- PERIMETER AND HYDRAULIC RADIUS CC
         !%     compute hydraulic radius and perimeter
         !%     note these two are done together because for analytical cross-sections
         !%     we have equations for perimeter, whereas lookup cross-sections
         !%     have tables for hydraulic radius.
-        call geo_perimeter_and_hydradius_from_depth_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx) 
+        if (isAllYN) then
+            call geo_perimeter_and_hydradius_from_depth_by_type_CC (elemPGetm, npack_elemPGetm, col_elemPGetm) 
+        else 
+            call geo_perimeter_and_hydradius_from_depth_by_element_CC (thisP, npackP)
+        end if
 
         !% --- ELLDEPTH MODIFIED HYDRAULIC DEPTH
         !%     the modified hydraulic depth "ell" is used for 
         !%     for Froude number computations on all CC elements
-        call geo_elldepth_from_head_CC (thisColP_CC)
+        call geo_elldepth_from_head_CC (thisP)
 
         !% ---- ADJUST SLOT 
         !%      make adjustments for slots on closed elements only
         !%     These add slot values to volume, depth, head
-        call slot_CC_adjustments (thisColP_Closed_CC)
+        if (npackP_Closed > 0) then
+            call slot_CC_adjustments (thisP_Closed)
+        end if
 
         !% --- check for crashpoint and stop here
         call util_crashstop(830984)
@@ -196,410 +192,27 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geometry_toplevel_JMJB (whichTM)
+    subroutine geometry_toplevel_JMJB ()
         !%------------------------------------------------------------------
         !% Description:
         !% Computes geometry on junction JM elements for the  
-        !% time-marching scheme of whichTM (ETM, AC, ALLtm)
+        !% time-marching scheme 
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: whichTM  !% time march
-            integer, pointer    :: thisColP_JM
         !%------------------------------------------------------------------
-        !% Aliases
-            select case (whichTM)
-                ! case (ALLtm)
-                case (ETM)
-                    thisColP_JM  => col_elemP(ep_JM_ETM)
-                ! case (AC)
-                case default
-                    print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                    print *, 'which has key ',trim(reverseKey(whichTM))
-                    call util_crashpoint(7389)
-            end select
-            call util_crashstop(49872)
 
         !% --- JB VALUES
         !%    assign the non-volume geometry on junction branches JB based on JM head
         !%    Values limited by full volume. Volume assigned is area * length
-        call geo_assign_JB (whichTM,thisColP_JM)
+        call geo_assign_JB (ep_JM_ETM)
 
-            ! call util_utest_CLprint ('------- in geometry after geo_assign_JB')
+            ! ! call util_utest_CLprint ('------- in geometry after geo_assign_JB')
 
         !% --- JM values
-        call geo_assign_JM (whichTM)
+        call geo_assign_JM ()
 
         end subroutine geometry_toplevel_JMJB 
 !% 
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine geometry_toplevel(whichTM)
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Input whichTM is one of ETM, AC, or ALLtm
-        !% This should never be called for diagnostic arrays
-        !% Note that the elemPGx arrays contain only time-marched elements so they
-        !% will only handle CC and JM elements as the JB elements are not time-marched.
-        !%------------------------------------------------------------------
-        !% Declarations
-            integer, intent(in) :: whichTM
-            integer, pointer :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
-            !integer, pointer :: thisColP_surcharged, thisColP_NonSurcharged, 
-            integer, pointer :: thisColP_all_TM, thisColP_Open_CC
-            integer, pointer :: thisColP_JM, thisColP_JB, thisColP_CC
-            integer, pointer :: thisColP_Closed_CC, thisColP_Closed_JB
-            integer, pointer :: Npack, thisP(:)
-            !integer, pointer ::  thisColP_Closed_JM
-            logical :: isreset
-            real(8), pointer :: depth(:), volume(:), area(:), topwidth(:)
-            integer, allocatable :: tempP(:) !% debugging
-            character(64) :: subroutine_name = 'geometry_toplevel'
-        !%------------------------------------------------------------------
-        !% Preliminaries
-            !!if (crashYN) return
-            if (setting%Debug%File%geometry) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%------------------------------------------------------------------
-        !% Aliases
-            area   => elemR(:,er_Area)
-            depth  => elemR(:,er_Depth)
-            topwidth => elemR(:,er_Topwidth)
-            volume => elemR(:,er_Volume)
-        !% set the packed geometry element array (elemPG) to use and columns of the
-        !% packed elemP to use
-            select case (whichTM)
-                ! case (ALLtm)
-                !     elemPGx                => elemPGalltm(:,:) 
-                !     npack_elemPGx          => npack_elemPGalltm(:)
-                !     col_elemPGx            => col_elemPGalltm(:)
-                !     thisColP_CC            => col_elemP(ep_CC_ALLtm)
-                !     thisColP_JM            => col_elemP(ep_JM_ALLtm)
-                !     thisColP_JB            => col_elemP(ep_JB_ALLtm)
-                !     !thisColP_surcharged    => col_elemP(ep_ALLtmSurcharged)
-                !     !thisColP_NonSurcharged => col_elemP(ep_ALLtm_NonSurcharged)
-                !     thisColP_all           => col_elemP(ep_ALLtm)
-                !     thisColP_Open_CC       => col_elemP(ep_CC_Open_Elements)
-                !     thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
-                !     thisColP_Closed_JB     => col_elemP(ep_JB_Closed_Elements)
-                !     !thisColP_Closed_JM     => col_elemP(ep_JM_Closed_Elements)
-                case (ETM)
-                    elemPGx                => elemPGetm(:,:)
-                    npack_elemPGx          => npack_elemPGetm(:)
-                    col_elemPGx            => col_elemPGetm(:)
-                    thisColP_CC            => col_elemP(ep_CC_ETM)
-                    thisColP_JM            => col_elemP(ep_JM_ETM)
-                    !thisColP_JB            => col_elemP(ep_JB_ETM)
-                    !thisColP_surcharged    => col_elemP(ep_PSsurcharged)
-                    !thisColP_NonSurcharged => col_elemP(ep_ETM_PSnonSurcharged)
-                    thisColP_all_TM        => col_elemP(ep_ETM)
-                    thisColP_Open_CC       => col_elemP(ep_CC_Open_Elements)
-                    thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
-                    thisColP_Closed_JB     => col_elemP(ep_JB_Closed_Elements)
-                    !thisColP_Closed_JM     => col_elemP(ep_JM_Closed_Elements)
-                ! case (AC)
-                !     elemPGx                => elemPGac(:,:)
-                !     npack_elemPGx          => npack_elemPGac(:)
-                !     col_elemPGx            => col_elemPGac(:)
-                !     thisColP_CC            => col_elemP(ep_CC_AC)
-                !     thisColP_JM            => col_elemP(ep_JM_AC)
-                !     thisColP_JB            => col_elemP(ep_JB_AC)
-                !     !thisColP_surcharged    => col_elemP(ep_ACsurcharged)
-                !     !thisColP_NonSurcharged => col_elemP(ep_AC_ACnonSurcharged)
-                !     thisColP_all           => col_elemP(ep_AC)
-                !     thisColP_Open_CC       => col_elemP(ep_CC_Open_Elements)
-                !     thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
-                !     thisColP_Closed_JB     => col_elemP(ep_JB_Closed_Elements)
-                !     !thisColP_Closed_JM     => col_elemP(ep_JM_Closed_Elements)
-                case default
-                    print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                    print *, 'which has key ',trim(reverseKey(whichTM))
-                    call util_crashpoint(7389)
-                    !return
-                    !stop 7389
-            end select
-            call util_crashstop(49872)
-        !%--------------------------------------------------------------------
-            ! call util_utestLprint ('in geometry at top==========================================')  
-
-        !% STATUS: at this point we know volume and velocity on all elements
-        !% from RK2 solution
-
-        !% --- PONDING
-        !%     adjust time-march volume for ponding inflow
-        !%     This affects JM that have previous ponding but now have volumes
-        !%     below the full volume
-        if (setting%SWMMinput%AllowPonding) then
-            call geo_ponding_inflow (thisColP_JM)   
-        end if
-            ! call util_utestLprint ('in geometry after ponding inflow') 
-           
-        !% --- PREISSMAN SLOT    
-        !%     also adds to ponded volume or computes overflow volume for JM (only)
-        !%     where slot depth + invert height exceeds maximum surcharge height
-        !%     The Element Volume in JM is adjusted for any overflow or ponding
-        !%     (but not for the slot)
-        call slot_toplevel (whichTM, thisColP_Closed_CC, thisColP_JM)
-
-            ! call util_utestLprint ('in geometry after slot toplevel') 
-
-            !stop 29387488
-
-        !% STATUS: The Preissmann Slot values have been assigned for all CC and JM
-        !% Overflow and Ponding have been assigned for JM (only). 
-        !% JM element volumes have been adjusted for overflow or ponding, but
-        !% not for slot volume. So both JM and CC have volume > fullvolume
-        !% in surcharged elements.
-
-        !% --- assign all geometry for surcharged elements CC, JM
-        !%     Note: not used in Preissmann Slot (only AC)
-        !%     DO NOT DELETE. HOLD THIS FOR LATER USE 20220909brh
-        ! if ((whichTM .eq. ALLtm) .or. (whichTM .eq. AC)) then
-        !     call geo_ACsurcharged (thisColP_surcharged)
-        ! end if
-
-        !% --- ZERO VOLUMES CC JM
-        !%     reset all zero or near-zero volumes in all CC, JM
-        !call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged, .true.)
-        call adjust_limit_by_zerovalues &
-            (er_Volume, setting%ZeroValue%Volume, thisColP_all_TM, .true.)
-
-            ! call util_utestLprint ('in geometry after limit_by_zerovalues (volume)') 
-
-        !% --- DEPTH
-        !%     compute the depth on all elements of CC JM based on geometry.
-        !%     If surcharged, this call returns the full depth of a closed conduit 
-        !%     without adding Preissmann Slot depth.
-        call geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
-
-        ! print *, 'after geo_depth_from_volume '
-        ! print *, elemR(50,er_Depth), elemR(51,er_Depth)
-
-            ! call util_utestLprint ('in geometry after depth_from_volume') 
-
-        !% --- ZERO DEPTH CC JM -- now done in geo_depth_from_volume_by_type 20230113
-        !%     reset all zero or near-zero depths in aa CC and JM
-        !call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged, .false.)
-        call adjust_limit_by_zerovalues &
-            (er_Depth, setting%ZeroValue%Depth, thisColP_all_TM, .false.)
-
-            ! call util_utestLprint ('in geometry after limit_by_zerovalues (depth)') 
-
-        !% --- PIEZOMETRIC HEAD
-        !%     compute the head on all elements of CC and JM
-        !%     This sets head consistent with depth computed in geo_depth_from_volume
-        !%     Head is strictly limited to the max depth + zbottom so it does not
-        !%     include surcharge effects     
-        Npack     => npack_elemP(thisColP_all_TM)
-        if (Npack > 0) then
-            thisP => elemP(1:Npack,thisColP_all_TM)
-            elemR(thisP,er_Head) = llgeo_head_from_depth_pure (thisP, depth(thisP))
-            !elemR(thisP,er_PressureHead) = llgeo_head_from_depth_pure (thisP)
-            !call geo_head_from_depth (thisColP_all_TM)
-        end if
- 
-        ! print *, 'after geo_head_from_depth '
-        ! print *, elemR(50,er_Head), elemR(51,er_Head)
-            ! call util_utestLprint ('in geometry after head_from_depth')
-
-        !% --- OPEN CHANNEL OVERFLOW
-        !%     Compute the overflow lost for CC open channels above
-        !%     their maximum volume (no ponding allowed from open CC). 
-        !%     Note that overflow or ponding for JM elements is handled 
-        !%     in slot_JM_ETM.
-        !%     Note, this is NOT standard in EPA-SWMM
-        if (setting%Discretization%AllowChannelOverflowTF) then
-            call geo_overflow_openchannels (thisColP_Open_CC)
-        end if
-
-            ! call util_utestLprint ('in geometry after overflow_openchannels')
-
-        !% --- PREISSMAN SLOT VOLUME LIMIT CLOSED CONDUIT CC JM
-        !%     limit the volume in closed element (CC, JM) to the full volume
-        !%     Note the excess volume has already been stored in the Preissman Slot
-        call geo_volumelimit_closed (thisColP_Closed_CC)
-        call geo_volumelimit_closed (thisColP_JM)
-
-            ! call util_utestLprint ('in geometry after volumelimit_closed')
-
-        !% REMOVED 20220909 brh
-        !% --- limit volume for incipient surcharge. This is done after depth is computed
-        !%     so that the "depth" algorithm can include depths greater than fulldepth
-        !%     as a way to handle head for incipient surcharge.
-        !call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.true.) !% 20220124brh
-            ! call util_utestLprint ('in geometry before geo_limit_incipient_surcharge (Depth)')  
-        !% --- limit depth for surcharged on CC. This is done after head is computed
-        !%     so that the depth algorithm can include depths greater than fulldepth where the 
-        !%     geometry algorithm does not enforrce full depth
-        !call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged,.false.) 
-        !@call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_all,.false.) 
-        !% END REMOVE 20220909
-
-        !% STATUS: At this point, the depths, heads and volumes of all CC, JM elements are
-        !% at or below their full value.  For CC closed conduits and all JM the
-        !% surcharged volume is stored in the er_SlotVolume and the surcharged extra
-        !% depth is stored in the er_SlotDepth 
-
-        !% --- PREISSMAN SLOT HEAD ADD IN JM 
-        !%     adjust JM head to include Preissmann Slot Depth and ponding
-        !%     This is needed before JB are computed
-        call slot_JM_head_PSadd (thisColP_JM)
-
-            ! call util_utestLprint ('in geometry after JM_head_PSadd') 
-           
-        !% --- JB VALUES
-        !%    assign the non-volume geometry on junction branches JB based on JM head
-        !%    Values limited by full volume. Volume assigned is area * length
-        call geo_assign_JB (whichTM, thisColP_JM)
-
-            ! call util_utestLprint ('in geometry after assign_JB') 
-
-        !% --- JB CLOSED CONDUIT VOLUME LIMIT
-        !%     further limiting the JB volume by full is probably not needed,
-        !%     but might be useful if there's a numerical precision issues
-        !%     with JB volume assigned by area * length.
-        call geo_volumelimit_closed (thisColP_Closed_JB)
-
-            ! call util_utestLprint ('in geometry after volumelimit_closed') 
-
-        !% --- PREISSMANN SLOT HEAD REMOVE IN JM
-        !%     we need to remove the PS and ponding from the JM cells so that we can easily
-        !%     compute other geometry without full JM causing problems
-        call slot_JM_head_PSremove (thisColP_JM)
-
-            ! call util_utestLprint ('in geometry after JM_head_PSremove')  
-
-        !% STATUS: at this point we have all geometry on CC, JM, JB that is
-        !% limited by the full volume values. The CC and JM have slot values stored
-        !% but no slot values have been computed for JB
-        
-        !% --- CROSS-SECTIONAL AREA
-        !%    compute area from volume for CC, JM
-        !%     For closed conduits this is based on the volume limited by full volume.
-        !%     For open channels the volume limit depends on if AllowChanneOverflowTF is false.
-        !%     Note that JB areas are already assigned in geo_assign_JB()
-        Npack     => npack_elemP(thisColP_all_TM)
-        if (Npack > 0) then
-            thisP => elemP(1:Npack,thisColP_all_TM)
-            elemR(thisP,er_Area) = llgeo_area_from_volume_pure (thisP, volume(thisP))
-            elemR(thisP,er_Area) = max(elemR(thisP,er_Area),setting%ZeroValue%Area)
-            !call geo_area_from_volume (thisColP_all_TM)
-        end if
-
-            ! call util_utestLprint ('in geometry after area_from_volume') 
-
-        ! !% --- ZERO AREA CC JM
-        ! !%     reset all zero or near-zero areas in CC and JM
-        ! call adjust_limit_by_zerovalues &
-        !      (er_Area, setting%ZeroValue%Area, thisColP_all_TM, .false.)
-
-            ! call util_utestLprint ('in geometry after adjust_limit_by_zeroValues area')   
-
-        !% --- TOPWIDTH CC
-        !%     compute topwidth from depth for all CC
-        !%     Note: Topwidth for JM is undefined in this subroutine
-        !%     Note: volume is limited to full depth UNLESS AllowChannelOverflowTF is false
-        call geo_topwidth_from_depth_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx)
-
-            ! call util_utestLprint ('in geometry after topwidth_from_depth') 
-
-        ! !% --- ZERO TOPWIDTH CC
-        ! !%     reset all zero or near-zero topwidth in CC 
-        ! !%     but do not change the eYN(:,eYN_isZeroDepth) mask
-        ! call adjust_limit_by_zerovalues &
-        !      (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_CC, .false.)
-
-            ! call util_utestLprint ('in geometry after adjust_limit_by_zerovalues topwidth') 
-
-        !% --- PERIMETER AND HYDRAULIC RADIUS CC
-        !%     compute hydraulic radius and perimeter
-        !%     note these two are done together because for analytical cross-sections
-        !%     we have equations for perimeter, whereas lookup cross-sections
-        !%     have tables for hydraulic radius.
-        call geo_perimeter_and_hydradius_from_depth_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx)  
-
-        ! % --- compute perimeter from maximum depth for all CC
-        ! %     Note: perimeter for JM is undefined in this subroutine
-        !OBSOLETE  call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
-
-            ! call util_utestLprint ('in geometry after perimeter from depth') 
-
-        !% --- compute hyddepth
-        !call geo_hyddepth_from_depth_or_topwidth (elemPGx, npack_elemPGx, col_elemPGx)
-        !% 20220930 replace with unified call
-        ! Npack     => npack_elemP(thisColP_CC)
-        ! if (Npack > 0) then
-        !     thisP => elemP(1:Npack,thisColP_CC)
-        !     elemR(thisP,er_HydDepth) = llgeo_hyddepth_from_area_and_topwidth_pure &
-        !                                 (thisP, area(thisP), topwidth(thisP))
-        ! end if
-        ! OBSOLETE call geo_hyddepth_from_area_and_topwidth (thisColP_CC)
-
-        !    util_utest_CLprint ('in geometry after hyddepth_from_depth')
-
-        !% --- compute hydradius
-        !%     Note: cannot be used for JM unless perimeter is defined prior.
-        !OBSOLETE call geo_hydradius_from_area_perimeter (thisColP_CC)
-
-        !    util_utest_CLprint ('in geometry after hydradius_from_area_perimeter') 
-
-        !% --- the modified hydraulic depth "ell" is used for 
-        !%     for Froude number computations on all CC elements
-        !%     Note: ell for JM is undefined in this subroutine
-
-        call geo_elldepth_from_head_CC (thisColP_CC)
-
-        !% --- compute pressure head from the modified hydraulic depth
-        ! Npack     => npack_elemP(thisColP_CC)
-        ! if (Npack > 0) then
-        !     thisP => elemP(1:Npack,thisColP_CC)
-        !     !elemR(thisP,er_Pressure_Head) = llgeo_pressure_head_from_hyddepth_pure (thisP)
-        !     !call geo_pressure_head_from_hyddepth (thisColP_CC)
-        ! end if
-
-            ! call util_utestLprint ('in geometry after ell_from_head') 
-
-        !% --- make adjustments for slots on closed elements only
-        !%     These add slot values to volume, depth, head
-        call slot_CC_adjustments (thisColP_Closed_CC)
-
-            ! call util_utestLprint ('in geometry after slot_CC_adustments') 
-
-        call slot_JM_adjustments (thisColP_JM)
-
-            ! call util_utestLprint ('in geometry after slot_JM_adjustments') 
-
-        !% --- compute the SlotDepth, SlotArea, SlotVolume and update
-        !%     elem volume and depth for JB. Note elem head on JB either with or
-        !%     without surcharge is assigned in geo_assign_JB
-        call slot_JB_computation (thisColP_JM)
-        
-            ! call util_utestLprint ('in geometry after slot_JB_computation') 
-
-        !% Set JM values that are not otherwise defined
-        !% HydDepth, ell. Note that topwidth, hydradius, perimeter are undefined.
-        call geo_JM_values ()
-
-            ! call util_utestLprint ('in geometry after JM_values') 
-
-        !% HOLD UNTIL AC RE-VISITED
-        ! !% compute the dHdA that are only for AC nonsurcharged
-        ! if (whichTM .ne. ETM) then
-        !     call geo_dHdA (ep_AC_ACnonSurcharged)
-        ! end if
-
-            ! call util_utestLprint ('in geometry at end') 
-
-
-        !stop 2397843
-
-        !% --- check for crashpoint and stop here
-        call util_crashstop(322983)
-
-        if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geometry_toplevel
-!%
 !%==========================================================================
 !%==========================================================================    
 !%
@@ -1134,7 +747,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_depth_from_volume_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx)
+    subroutine geo_depth_from_volume_by_type_allCC (elemPGx, npack_elemPGx, col_elemPGx)
         !%------------------------------------------------------------------
         !% Description:
         !% This updates depths in nonsurcharged CC elements in PGx arrays
@@ -1151,7 +764,6 @@ module geometry
                 ! print *, 'at start of geo_depth_from_volume_by_type'
                 ! print *, 54, elemR(54,er_Depth), elemR(54,er_Volume)
                 ! print *, ' '
-        
                 
         !% --- open channels ------------------------------------------
 
@@ -1159,8 +771,8 @@ module geometry
         thisCol => col_elemPGx(epg_CC_irregular)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call irregular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call irregular_depth_from_volume (elemPGx(1:Npack,thisCol))
+            call geo_ZeroDepth_from_volume   (elemPGx(1:Npack,thisCol))
         end if    
                 
         !% -- POWER FUNCTION
@@ -1169,16 +781,16 @@ module geometry
         if (Npack > 0) then
             print *, 'POWER FUNCTION CROSS-SECTION NOT COMPLETE'
             call util_crashpoint(5559872)
-            !call powerfunction_depth_from_volume (elemPGx, Npack, thisCol)
-            !call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            !call powerfunction_depth_from_volume (elemPGx(1:Npack,thisCol))
+            !call geo_ZeroDepth_from_volume  (elemPGx(1:Npack,thisCol))
         end if
 
         !% -- PARABOLIC
         thisCol => col_elemPGx(epg_CC_parabolic)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call parabolic_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call parabolic_depth_from_volume (elemPGx(1:Npack,thisCol))
+            call geo_ZeroDepth_from_volume   (elemPGx(1:Npack,thisCol))
         end if
                 
         !% --- RECTANGULAR CHANNEL
@@ -1187,24 +799,24 @@ module geometry
         if (Npack > 0) then
                 ! print *, 'rect here Volume/length',elemR(15,er_Volume)/elemR(15,er_Length)
                 ! print *,  'zero area           ',setting%ZeroValue%Area
-            call rectangular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call rectangular_depth_from_volume (elemPGx(1:Npack,thisCol))
+            call geo_ZeroDepth_from_volume     (elemPGx(1:Npack,thisCol))
         end if    
 
         !% --- TRAPEZOIDAL CHANNEL
         thisCol => col_elemPGx(epg_CC_trapezoidal)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call trapezoidal_depth_from_volume (elemPGx(1:Npack,thisCol))
+            call geo_ZeroDepth_from_volume     (elemPGx(1:Npack,thisCol))
         end if
 
         !% --- TRIANGULAR CHANNEL
         thisCol => col_elemPGx(epg_CC_triangular)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call triangular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call triangular_depth_from_volume (elemPGx(1:Npack,thisCol))
+            call geo_ZeroDepth_from_volume    (elemPGx(1:Npack,thisCol))
         end if
 
         !% --- CLOSED CONDUITS  ---------------------------------------
@@ -1215,7 +827,7 @@ module geometry
         if (Npack > 0) then
             call llgeo_tabular_depth_from_volume   &
                 (elemPGx, Npack, thisCol, YArch)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx(1:Npack,thisCol))
         end if
 
         !% --  BASKET_HANDLE
@@ -1224,7 +836,7 @@ module geometry
         if (Npack > 0) then
             call llgeo_tabular_depth_from_volume           &
                 (elemPGx, Npack, thisCol, YBasketHandle)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)   
+            call geo_ZeroDepth_from_volume  (elemPGx(1:Npack,thisCol))   
         end if
 
         !% --  CATENARY
@@ -1233,15 +845,15 @@ module geometry
         if (Npack > 0) then
             call llgeo_tabular_depth_from_volume           &
                 (elemPGx, Npack, thisCol, YCatenary)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+            call geo_ZeroDepth_from_volume  (elemPGx(1:Npack,thisCol))    
         end if
 
         !% --- CIRCULAR CONDUIT
         thisCol => col_elemPGx(epg_CC_circular)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call circular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call circular_depth_from_volume (elemPGx(1:Npack,thisCol))
+            call geo_ZeroDepth_from_volume  (elemPGx(1:Npack,thisCol))
         end if
 
         !% --  EGG_SHAPED
@@ -1250,15 +862,15 @@ module geometry
         if (Npack > 0) then
             call llgeo_tabular_depth_from_volume           &
                 (elemPGx, Npack, thisCol, YEgg)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call geo_ZeroDepth_from_volume  (elemPGx(1:Npack,thisCol))
         end if
 
         !% --- FILLED CIRCULAR CONDUIT
         thisCol => col_elemPGx(epg_CC_filled_circular)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call filled_circular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call filled_circular_depth_from_volume (elemPGx(1:Npack,thisCol))
+            call geo_ZeroDepth_from_volume         (elemPGx(1:Npack,thisCol))
         end if
 
         !% --  GOTHIC
@@ -1267,7 +879,7 @@ module geometry
         if (Npack > 0) then
             call llgeo_tabular_depth_from_volume           &
                 (elemPGx, Npack, thisCol, YGothic)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+            call geo_ZeroDepth_from_volume  (elemPGx(1:Npack,thisCol))    
         end if
 
         !% --  HORIZONTAL ELLIPSE
@@ -1276,7 +888,7 @@ module geometry
         if (Npack > 0) then
             call llgeo_tabular_depth_from_volume           &
                 (elemPGx, Npack, thisCol, YHorizEllip)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+            call geo_ZeroDepth_from_volume  (elemPGx(1:Npack,thisCol))    
         end if
 
         !% --  HORSESHOE
@@ -1285,39 +897,39 @@ module geometry
         if (Npack > 0) then
             call llgeo_tabular_depth_from_volume           &
                 (elemPGx, Npack, thisCol, YHorseShoe)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+            call geo_ZeroDepth_from_volume  (elemPGx(1:Npack,thisCol))    
         end if
 
         !% --  MODIFIED BASKET HANDLE
         thisCol => col_elemPGx(epg_CC_mod_basket)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call mod_basket_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call mod_basket_depth_from_volume (elemPGx(1:Npack,thisCol))
+            call geo_ZeroDepth_from_volume    (elemPGx(1:Npack,thisCol))
         end if
 
         !% --- RECTANGULAR CLOSED CONDUIT
         thisCol => col_elemPGx(epg_CC_rectangular_closed)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call rectangular_closed_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call rectangular_closed_depth_from_volume (elemPGx(1:Npack,thisCol))
+            call geo_ZeroDepth_from_volume            (elemPGx(1:Npack,thisCol))
         end if        
 
         !% --- RECTANGULAR ROUND CONDUIT
         thisCol => col_elemPGx(epg_CC_rectangular_round)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call rect_round_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call rect_round_depth_from_volume (elemPGx(1:Npack,thisCol))
+            call geo_ZeroDepth_from_volume    (elemPGx(1:Npack,thisCol))
         end if
 
         !% -- RECTANGULAR TRIANGULAR
         thisCol => col_elemPGx(epg_CC_rectangular_triangular)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call rectangular_triangular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            call rectangular_triangular_depth_from_volume (elemPGx(1:Npack,thisCol))
+            call geo_ZeroDepth_from_volume                (elemPGx(1:Npack,thisCol))
         end if
 
         ! % --- SEMI-CIRCULAR CONDUIT
@@ -1326,7 +938,7 @@ module geometry
         if (Npack > 0) then
             call llgeo_tabular_depth_from_volume           &
                 (elemPGx, Npack, thisCol, YSemiCircular)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+            call geo_ZeroDepth_from_volume  (elemPGx(1:Npack,thisCol))    
         end if
 
         !% --  SEMI ELLIPTICAL
@@ -1335,7 +947,7 @@ module geometry
         if (Npack > 0) then
             call llgeo_tabular_depth_from_volume           &
                 (elemPGx, Npack, thisCol, YSemiEllip)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+            call geo_ZeroDepth_from_volume  (elemPGx(1:Npack,thisCol))    
         end if
 
         !% --  VERTICAL ELLIPSE
@@ -1344,10 +956,101 @@ module geometry
         if (Npack > 0) then
             call llgeo_tabular_depth_from_volume           &
                 (elemPGx, Npack, thisCol, YVertEllip)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+            call geo_ZeroDepth_from_volume  (elemPGx(1:Npack,thisCol))    
         end if
 
-    end subroutine geo_depth_from_volume_by_type_CC
+    end subroutine geo_depth_from_volume_by_type_allCC
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine geo_depth_from_volume_by_element_CC (thisP, Npack)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Companion to geo_depth_from_volume_by_type_allCC that
+        !% computes for the entire set of cells of a given type.  This
+        !% cycles through the set, so is less efficient, but is needed
+        !% where only a subset of elements to be evaluated
+        !%------------------------------------------------------------------
+            integer, intent(in) :: thisP(:), Npack
+            integer :: mm
+            integer, dimension(1) :: ap
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        do mm=1,Npack
+            ap(1) = thisP(mm)
+            select case (elemI(ap(1),ei_geometryType))
+                case (irregular)
+                    call irregular_depth_from_volume (ap)
+                case (power_function)
+                    print *, 'POWER FUNCTION CROSS-SECTION NOT COMPLETE'
+                    call util_crashpoint(5559867)
+                case (parabolic)
+                    call parabolic_depth_from_volume (ap)
+                case (rectangular)
+                    call rectangular_depth_from_volume (ap)
+                case (trapezoidal)
+                    call trapezoidal_depth_from_volume (ap)
+                case (triangular)
+                    call triangular_depth_from_volume (ap)
+                case (arch)
+                    elemR(ap,er_Depth) &
+                        = llgeo_tabular_depth_from_volume_singular (ap(1), YArch)
+                case (basket_handle)
+                    elemR(ap,er_Depth) &
+                        = llgeo_tabular_depth_from_volume_singular (ap(1), YBasketHandle)
+                case (catenary)
+                    elemR(ap,er_Depth) &
+                        = llgeo_tabular_depth_from_volume_singular (ap(1), YCatenary)
+                case (circular)
+                    call circular_depth_from_volume (ap)
+                case (eggshaped)
+                    elemR(ap,er_Depth) &
+                        = llgeo_tabular_depth_from_volume_singular (ap(1), YEgg)
+                case (filled_circular)
+                    call filled_circular_depth_from_volume (ap)
+                case (gothic)
+                    elemR(ap,er_Depth) &
+                        = llgeo_tabular_depth_from_volume_singular (ap(1), YGothic)
+                case (horiz_ellipse)
+                    elemR(ap,er_Depth) &
+                        = llgeo_tabular_depth_from_volume_singular (ap(1), YHorizEllip)
+                case (horseshoe)
+                    elemR(ap,er_Depth) &
+                        = llgeo_tabular_depth_from_volume_singular (ap(1), YHorseShoe)
+                case (mod_basket)
+                    call mod_basket_depth_from_volume (ap)
+                case (rectangular_closed)
+                    call rectangular_closed_depth_from_volume (ap)
+                case (rect_round)
+                    call rect_round_depth_from_volume (ap)
+                case (rect_triang)
+                    call rectangular_triangular_depth_from_volume (ap)
+                case (semi_circular)
+                    elemR(ap,er_Depth) &
+                        = llgeo_tabular_depth_from_volume_singular (ap(1), YSemiCircular)
+                case (semi_elliptical)
+                    elemR(ap,er_Depth) &
+                    = llgeo_tabular_depth_from_volume_singular (ap(1), YSemiEllip)
+                case (vert_ellipse)
+                    elemR(ap,er_Depth) &
+                        = llgeo_tabular_depth_from_volume_singular (ap(1), YVertEllip)
+                case (custom)
+                    print *, 'CUSTOM CROSS-SECTION NOT COMPLETE'
+                    call util_crashpoint(52498767)
+                case default
+                    print *, 'CODE ERROR: Unexpected case default'
+                    call util_crashpoint(7209874)
+            end select
+
+            !% --- set zero depths
+            call geo_ZeroDepth_from_volume (ap)
+
+        end do
+
+    end subroutine geo_depth_from_volume_by_element_CC    
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1360,7 +1063,7 @@ module geometry
         !%------------------------------------------------------------------
         !% Declarations:
             integer, target, intent(in) :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
-            integer, pointer :: Npack, thisCol
+            integer, pointer :: Npack, thisP(:), thisCol
             character(64) :: subroutine_name = 'geo_depth_from_volume_by_type_JM'
         !%-------------------------------------------------------------------
         
@@ -1370,24 +1073,27 @@ module geometry
         thisCol => col_elemPGx(epg_JM_functionalStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call storage_functional_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            thisP => elemPGx(1:Npack,thisCol)
+            call storage_functional_depth_from_volume (thisP,Npack)
+            call geo_ZeroDepth_from_volume  (thisP)
         end if
 
         !% JM with tabular geometry
         thisCol => col_elemPGx(epg_JM_tabularStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            thisP => elemPGx(1:Npack,thisCol)
+            call storage_tabular_depth_from_volume (thisP, Npack)
+            call geo_ZeroDepth_from_volume  (thisP)
         end if
 
         !% JM with implied storage 
         thisCol => col_elemPGx(epg_JM_impliedStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call storage_implied_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+            thisP => elemPGx(1:Npack,thisCol)
+            call storage_implied_depth_from_volume (thisP, Npack)
+            call geo_ZeroDepth_from_volume  (thisP)
         end if
 
         !% --- note that NoStorage junctions have no volume
@@ -1405,7 +1111,7 @@ module geometry
         !%------------------------------------------------------------------
         !% Declarations:
             integer, target, intent(in) :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
-            integer, pointer :: Npack, thisCol
+            integer, pointer :: Npack, thisP(:), thisCol
             character(64) :: subroutine_name = 'geo_depth_from_volume_by_type_JM'
         !%-------------------------------------------------------------------
         
@@ -1415,14 +1121,16 @@ module geometry
         thisCol => col_elemPGx(epg_JM_functionalStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
+            thisP => elemPGx(1:Npack,thisCol)
+            call storage_plan_area_from_volume (thisP,Npack)
         end if
 
         !% --- JM with tabular geometry
         thisCol => col_elemPGx(epg_JM_tabularStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
+            thisP => elemPGx(1:Npack,thisCol)
+            call storage_plan_area_from_volume (thisP,Npack)
         end if
 
         !% --- JM with implied geometry
@@ -1433,302 +1141,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
-
-        !% OBSOLETE WITH JUNCTION IMPLICIT. REPLACED BY ..._CC and ..._JM
-
-        !%------------------------------------------------------------------
-        !% Description:
-        !% This solves nonsurcharged CCJMJB elements because of PGx arrays
-        !% The elemPGx determines whether this is ALLtm, ETM or AC elements
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
-            integer, pointer :: Npack, thisCol
-            character(64) :: subroutine_name = 'geo_depth_from_volume_by_type'
-        !%-------------------------------------------------------------------
-        !% Preliminaries
-            !!if (crashYN) return
-            if (setting%Debug%File%geometry) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-------------------------------------------------------------------    
-        !% cycle through different geometries  
-
-                ! print *, ' '
-                ! print *, 'at start of geo_depth_from_volume_by_type'
-                ! print *, 54, elemR(54,er_Depth), elemR(54,er_Volume)
-                ! print *, ' '
-        
-                
-        !% --- open channels ------------------------------------------
-
-        !% --- IRREGULAR
-        thisCol => col_elemPGx(epg_CC_irregular)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call irregular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if    
-                
-        !% -- POWER FUNCTION
-        thisCol => col_elemPGx(epg_CC_power_function)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            print *, 'POWER FUNCTION CROSS-SECTION NOT COMPLETE'
-            call util_crashpoint(5559872)
-            !call powerfunction_depth_from_volume (elemPGx, Npack, thisCol)
-            !call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- PARABOLIC
-        thisCol => col_elemPGx(epg_CC_parabolic)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call parabolic_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-                
-        !% --- RECTANGULAR CHANNEL
-        thisCol => col_elemPGx(epg_CC_rectangular)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-                ! print *, 'rect here Volume/length',elemR(15,er_Volume)/elemR(15,er_Length)
-                ! print *,  'zero area           ',setting%ZeroValue%Area
-            call rectangular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if    
-
-        !% --- TRAPEZOIDAL CHANNEL
-        thisCol => col_elemPGx(epg_CC_trapezoidal)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- TRIANGULAR CHANNEL
-        thisCol => col_elemPGx(epg_CC_triangular)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call triangular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- CLOSED CONDUITS  ---------------------------------------
-
-        !% --  ARCH CONDUIT
-        thisCol => col_elemPGx(epg_CC_arch)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call llgeo_tabular_depth_from_volume   &
-                (elemPGx, Npack, thisCol, YArch)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        !% --  BASKET_HANDLE
-        thisCol => col_elemPGx(epg_CC_basket_handle)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call llgeo_tabular_depth_from_volume           &
-                (elemPGx, Npack, thisCol, YBasketHandle)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)   
-        end if
-
-        !% --  CATENARY
-        thisCol => col_elemPGx(epg_CC_catenary)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call llgeo_tabular_depth_from_volume           &
-                (elemPGx, Npack, thisCol, YCatenary)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
-        end if
-
-        !% --- CIRCULAR CONDUIT
-        thisCol => col_elemPGx(epg_CC_circular)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call circular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        !% --  EGG_SHAPED
-        thisCol => col_elemPGx(epg_CC_egg_shaped)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call llgeo_tabular_depth_from_volume           &
-                (elemPGx, Npack, thisCol, YEgg)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- FILLED CIRCULAR CONDUIT
-        thisCol => col_elemPGx(epg_CC_filled_circular)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call filled_circular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        !% --  GOTHIC
-        thisCol => col_elemPGx(epg_CC_gothic)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call llgeo_tabular_depth_from_volume           &
-                (elemPGx, Npack, thisCol, YGothic)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
-        end if
-
-        !% --  HORIZONTAL ELLIPSE
-        thisCol => col_elemPGx(epg_CC_horiz_ellipse)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call llgeo_tabular_depth_from_volume           &
-                (elemPGx, Npack, thisCol, YHorizEllip)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
-        end if
-
-        !% --  HORSESHOE
-        thisCol => col_elemPGx(epg_CC_horse_shoe)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call llgeo_tabular_depth_from_volume           &
-                (elemPGx, Npack, thisCol, YHorseShoe)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
-        end if
-
-        !% --  MODIFIED BASKET HANDLE
-        thisCol => col_elemPGx(epg_CC_mod_basket)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call mod_basket_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        !% --- RECTANGULAR CLOSED CONDUIT
-        thisCol => col_elemPGx(epg_CC_rectangular_closed)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call rectangular_closed_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if        
-
-        !% --- RECTANGULAR ROUND CONDUIT
-        thisCol => col_elemPGx(epg_CC_rectangular_round)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call rect_round_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        !% -- RECTANGULAR TRIANGULAR
-        thisCol => col_elemPGx(epg_CC_rectangular_triangular)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call rectangular_triangular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        ! % --- SEMI-CIRCULAR CONDUIT
-        thisCol => col_elemPGx(epg_CC_semi_circular)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call llgeo_tabular_depth_from_volume           &
-                (elemPGx, Npack, thisCol, YSemiCircular)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
-        end if
-
-        !% --  SEMI ELLIPTICAL
-        thisCol => col_elemPGx(epg_CC_semi_elliptical)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call llgeo_tabular_depth_from_volume           &
-                (elemPGx, Npack, thisCol, YSemiEllip)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
-        end if
-
-        !% --  VERTICAL ELLIPSE
-        thisCol => col_elemPGx(epg_CC_vert_ellipse)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call llgeo_tabular_depth_from_volume           &
-                (elemPGx, Npack, thisCol, YVertEllip)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
-        end if
-
-        
-        !% --- JUNCTIONS ---------------------------------------------------- 
-
-        !% JM with functional geometry
-        thisCol => col_elemPGx(epg_JM_functionalStorage)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call storage_functional_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        !% JM with tabular geometry
-        thisCol => col_elemPGx(epg_JM_tabularStorage)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        !% JM with implied storage 
-        thisCol => col_elemPGx(epg_JM_impliedStorage)
-        Npack   => npack_elemPGx(thisCol)
-        if (Npack > 0) then
-            call storage_implied_depth_from_volume (elemPGx, Npack, thisCol)
-            call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
-        end if
-
-        !%-------------------------------------------------------------------
-        !% Closing
-            if (setting%Debug%File%geometry) &
-                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_depth_from_volume_by_type
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    ! subroutine geo_head_from_depth (thisColP)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Computes head from depth for elements of CC, JM
-    !     !%------------------------------------------------------------------
-    !         integer, intent(in) :: thisColP
-    !         integer, pointer :: Npack, thisP(:)
-    !         real(8), pointer :: depth(:), fulldepth(:), head(:), Zbtm(:)
-    !         !real(8), pointer :: pressurehead(:)
-
-    !         character(64) :: subroutine_name = 'geo_head_from_depth'
-    !     !%------------------------------------------------------------------
-    !     !% Preliminaries
-    !         Npack     => npack_elemP(thisColP)
-    !         if (Npack < 1) return
-    !     !%------------------------------------------------------------------
-    !     !% Aliases    
-    !         thisP     => elemP(1:Npack,thisColP)
-    !         depth     => elemR(:,er_Depth)
-    !         fulldepth => elemR(:,er_FullDepth)
-    !         head      => elemR(:,er_Head)
-    !         !pressurehead => elemR(:,er_Pressure_Head)
-    !         Zbtm      => elemR(:,er_Zbottom)
-    !     !%------------------------------------------------------------------
-    !     !%
-        
-    !     head(thisP) = depth(thisP) + Zbtm(thisP)
-    !     !% set the pressure head to piezometric head
-    !     !% this will be fixed later for CC and JB elements
-    !     !pressurehead(thisP) = head(thisP)
-
-    !     if (setting%Debug%File%geometry) &
-    !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    ! end subroutine geo_head_from_depth
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine geo_overflow_openchannels (thisColP_Open_CC)
+    subroutine geo_overflow_openchannels (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Adds the overflow of open channels that exceed their 
@@ -1737,18 +1150,15 @@ module geometry
         !% Note that open channels CANNOT pond in present version.
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: thisColP_Open_CC !% must be open channels
-            integer, pointer    :: Npack, thisP(:), nBarrels(:)
+            integer, intent(in) :: thisP(:) !% must be open channels
+            integer, pointer    :: nBarrels(:)
             real(8), pointer    :: volume(:), fullvolume(:), overflow(:)
             real(8), pointer    :: temp(:)
         !%------------------------------------------------------------------
         !% Preliminaries
-            Npack      => npack_elemP(thisColP_Open_CC)
-            if (Npack < 1) return
             if (.not. setting%Discretization%AllowChannelOverflowTF) return
         !%------------------------------------------------------------------
         !% Aliases
-            thisP      => elemP(1:Npack,thisColP_Open_CC)
             volume     => elemR(:,er_Volume)
             fullvolume => elemR(:,er_FullVolume)
             overflow   => elemR(:,er_VolumeOverFlow) 
@@ -1773,22 +1183,16 @@ module geometry
 !%==========================================================================    
 !%==========================================================================
 !%
-    subroutine geo_volumelimit_closed (thisColP_Closed) 
+    subroutine geo_volumelimit_closed (thisP) 
         !%------------------------------------------------------------------
         !% Description
         !% Sets closed element volumes to the full volume
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, intent(in) :: thisColP_Closed
-            integer, pointer    :: Npack, thisP(:)
+            integer, intent(in) :: thisP(:)
             real(8), pointer    :: volume(:), fullvolume(:)
         !%------------------------------------------------------------------
-        !% Preliminaries
-            Npack      => npack_elemP(thisColP_Closed)
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
         !% Aliases:
-            thisP      => elemP(1:Npack,thisColP_Closed)
             volume     => elemR(:,er_Volume)
             fullvolume => elemR(:,er_FullVolume)
         !%------------------------------------------------------------------
@@ -1801,7 +1205,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_assign_JB (whichTM, thisColP_JM)
+    subroutine geo_assign_JB (thisColP_JM)
         !%------------------------------------------------------------------
         !% Description:
         !% Assigns geometry for head, depth, area and volume for JB (junction branches)
@@ -1826,7 +1230,7 @@ module geometry
         !% FullHydDepth, FullPerimeter, FullVolume, Roughness
         !%
         !%-------------------------------------------------------------------
-            integer, intent(in) :: whichTM, thisColP_JM
+            integer, intent(in) ::thisColP_JM
 
             integer, pointer :: Npack, thisP(:), BranchExists(:), thisSolve(:),  tM
             integer, pointer :: fup(:), fdn(:)
@@ -1838,7 +1242,8 @@ module geometry
             real(8), pointer :: fulltopwidth(:), breadthmax(:)
             real(8), pointer :: slotDepth(:), slotVolume(:), overflow(:), fullhydradius(:)
             real(8), pointer :: Atable(:), Ttable(:), Rtable(:), Stable(:)
-            real(8), pointer :: grav, fVel_u(:), fVel_d(:)  
+            real(8), pointer :: grav, fVel_u(:), fVel_d(:) 
+            real(8), pointer :: fZcrown_u(:), fZcrown_d(:), fHead_u(:), fHead_d(:) 
             logical, pointer :: isSlot(:)     
 
             real(8) :: depthnorm, zeroHydRadius
@@ -1886,6 +1291,10 @@ module geometry
 
             fVel_d        => faceR(:,fr_velocity_d)
             fVel_u        => faceR(:,fr_velocity_u)
+            fZcrown_d     => faceR(:,fr_Zcrown_d)
+            fZcrown_u     => faceR(:,fr_Zcrown_u)
+            fHead_d       => faceR(:,fr_Head_d)
+            fHead_u       => faceR(:,fr_Head_u)
 
             fup           => elemI(:,ei_Mface_uL)
             fdn           => elemI(:,ei_Mface_dL)
@@ -1903,424 +1312,432 @@ module geometry
                 ! print *, '===================================================='
                 ! print *, 'tM ',tM
 
-                !% only execute for whichTM of ALL or thisSolve (of JM) matching input whichTM
-                if ((whichTM == ALLtm) .or. (thisSolve(tM) == whichTM)) then
-                    !% cycle through the possible junction branches
-                    do kk=1,max_branch_per_node
+              
+                !% cycle through the possible junction branches
+                do kk=1,max_branch_per_node
 
-                        if (mod(kk,2)==0) then 
-                            isUpBranch = .false.
-                        else
-                            isUpBranch = .true.
-                        endif
+                    if (mod(kk,2)==0) then 
+                        isUpBranch = .false.
+                    else
+                        isUpBranch = .true.
+                    endif
+                    
+                    tB = tM + kk !% junction branch ID
+                    tBA(1) = tB  !% array for pure array functions
+
+                    ! print *, 'tB ',tB 
+
+                    if (BranchExists(tB) .ne. oneI) cycle
+
+                    !% only when a branch exists.
+                    !% --- head(tB) has already been updated in junction_calculation
+                    !%     for any element that has head(tM) > bottom + sediment
+                    !%     here we need to handle any JB elements that would have
+                    !%     Froude =1 overflow
+                    if ( head(tM) > (zBtm(tB) + sedimentDepth(tB)) ) then
+                        !% 20230401 -- no action needed as this is done in junction_calculation
+
+                        !% OBSOLETE IN THIS SECTION
+                        ! % for main head above branch bottom entrance use a head
+                        ! % loss approach. The branchsign and velocity sign ensure
+                        ! % the headloss is added to an inflow and subtracted at
+                        ! % an outflow
+                        ! % Note this is a time-lagged velocity as the JB velocity
+                        ! % is not updated until after face interpolation                                
+                        ! head(tB) = head(tM)                                    &
+                        !     + branchsign(kk) * sign(oneR,velocity(tB))         &
+                        !     * (Kfac(tB) / (twoR * grav)) * (velocity(tB)**twoR)
                         
-                        tB = tM + kk !% junction branch ID
-                        tBA(1) = tB  !% array for pure array functions
+                        ! print *, 'HEAD A', head(tB)
+                        ! print *,'Velocity ',velocity(tB)
+                    else
+                        !% for main head below the branch bottom entrance we assign a
+                        !% Froude number of one on an inflow to the junction main. Note
+                        !% an outflow from a junction main for this case gets head
+                        !% of z_bottom of the branch (zero depth).
+                        !% Note this is a time-lagged velocity as the JB velocity
+                        !% is not updated until after face interpolation
+                        ! head(tB) = zBtm(tB) + sedimentDepth(tB)                            &
+                        !     + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
+                        !     *(velocity(tB)**twoR) / (grav) 
 
-                        ! print *, 'tB ',tB 
-
-                        if (BranchExists(tB) == 1) then
-                            !% only when a branch exists.
-                            if ( head(tM) > (zBtm(tB) + sedimentDepth(tB)) ) then
-                                !% for main head above branch bottom entrance use a head
-                                !% loss approach. The branchsign and velocity sign ensure
-                                !% the headloss is added to an inflow and subtracted at
-                                !% an outflow
-                                !% Note this is a time-lagged velocity as the JB velocity
-                                !% is not updated until after face interpolation                                
-                                head(tB) = head(tM)                                    &
-                                    + branchsign(kk) * sign(oneR,velocity(tB))         &
-                                    * (Kfac(tB) / (twoR * grav)) * (velocity(tB)**twoR)
-                               
-                                ! print *, 'HEAD A', head(tB)
-                                ! print *,'Velocity ',velocity(tB)
+                        !% 20230322 brh using velocity on face  
+                        if     ((      isUpBranch) .and. (fVel_d(fup(tB)) > zeroR)) then 
+                            !% --- upstream branch with inflow
+                            if (fHead_d(fup(tB)) > fZcrown_d(fup(tB))) then
+                                !% --- surcharged inflow of upstream branch
+                                !%     reduce by Kfactor
+                                head(tB) = fHead_d(fup(tB)) &
+                                    - Kfac(tB) * (fVel_d(fup(tB))**twoI) / (twoR * grav)
                             else
-                                !% for main head below the branch bottom entrance we assign a
-                                !% Froude number of one on an inflow to the junction main. Note
-                                !% an outflow from a junction main for this case gets head
-                                !% of z_bottom of the branch (zero depth).
-                                !% Note this is a time-lagged velocity as the JB velocity
-                                !% is not updated until after face interpolation
-                                ! head(tB) = zBtm(tB) + sedimentDepth(tB)                            &
-                                !     + onehalfR * (oneR + branchsign(kk) * sign(oneR,velocity(tB))) &
-                                !     *(velocity(tB)**twoR) / (grav) 
-
-                                !% 20230322 brh using velocity on face  
-                                if     ((      isUpBranch) .and. (fVel_d(fup(tB)) > zeroR)) then   
-
-                                    head(tB) = zBtm(tB) + sedimentDepth(tB)  &
-                                        + (fVel_d(fup(tB))**twoR) / grav
-
-                                elseif ((.not. isUpbranch) .and. (fVel_u(fdn(tB)) < zeroR)) then
-
-                                    head(tB) = zBtm(tB) + sedimentDepth(tB)  &
-                                        + (fVel_u(fdn(tB))**twoR) / grav
-
-                                else 
-                                    head(tB) = zBtm(tB) + sedimentDepth(tB) + 0.99d0 * setting%ZeroValue%Depth
-                                end if
-
-                                    ! print *, 'HEAD B, velocity', head(tB), velocity(tB)
-                                    ! print *,'Velocity ',velocity(tB)
-                            end if
-
-
-                            !% HACK -- the above uses a Froude number argument for head(TM) < zBtm(tB)
-                            !%      however, when the JB is surcharged we probably should be using the
-                            !%      K factor approach and require K=1.
-                           
-                            !% compute provisional depth
-                            depth(tB) = head(tB) - (zBtm(tB) + sedimentDepth(tB))
-
-                            ! print *, 'DEPTH ',depth(tB)
-
-                            if (depth(tB) .ge. fulldepth(tB)) then
-                                !% surcharged or incipient surcharged
-                                depth(tB)        = fulldepth(tB)
-                                area(tB)         = fullArea(tB)
-                                perimeter(tB)    = fullperimeter(tB)
-                                topwidth(tB)     = setting%ZeroValue%Topwidth
-                                hydRadius(tB)    = fulldepth(tB) / fullperimeter(tB)
-                                dHdA(tB)         = oneR / setting%ZeroValue%Topwidth
-                                ellDepth(tBA)    = llgeo_elldepth_pure(tBA)
-
-                            elseif (depth(tB) .le. setting%ZeroValue%Depth) then
-                                !% negligible depth is treated with ZeroValues
-                                depth(tB)        = setting%ZeroValue%Depth * 0.99d0
-                                area(tB)         = setting%ZeroValue%Area
-                                topwidth(tB)     = setting%ZeroValue%Topwidth
-                                perimeter(tB)    = setting%ZeroValue%Topwidth + setting%ZeroValue%Depth
-                                hydRadius(tB)    = setting%ZeroValue%Depth
-                                dHdA(tB)         = oneR / setting%ZeroValue%Topwidth
-                                ellDepth(tB)     = setting%ZeroValue%Depth 
-
+                                !% --- Fr=1 inflow from upstream branch
+                                head(tB) = zBtm(tB) + sedimentDepth(tB)  &
+                                    + (fVel_d(fup(tB))**twoI) / grav
+                            endif
+                        elseif ((.not. isUpbranch) .and. (fVel_u(fdn(tB)) < zeroR)) then
+                            !% --- downstream branch with inflow
+                            if (fHead_u(fdn(tB)) > fZcrown_u(fdn(tB))) then
+                                !% --- surcharged inflow of downstream branch
+                                !%     reduce by Kfactor
+                                head(tB) = fHead_u(fdn(tB)) &
+                                    - Kfac(tB) * (fVel_u(fdn(tB))**twoI) / (twoR * grav)
                             else
-                                !% --- set lookup table names
-                                select case (elemI(tB,ei_geometryType))
-                                    !% --- for tables using HydRadius
-                                    case (arch)
-                                        Atable => AArch
-                                        Rtable => RArch
-                                        Ttable => TArch
-                                    case (basket_handle)
-                                        Atable => ABasketHandle
-                                        Rtable => RBasketHandle
-                                        Ttable => TBasketHandle
-                                    case (circular)
-                                        Atable => ACirc
-                                        Rtable => RCirc
-                                        Ttable => TCirc
-                                    case (eggshaped)
-                                        Atable => AEgg
-                                        Rtable => REgg
-                                        Ttable => TEgg
-                                    case (horiz_ellipse)
-                                        Atable => AHorizEllip
-                                        Rtable => RHorizEllip
-                                        Ttable => THorizEllip
-                                    case (horseshoe)
-                                        Atable => AHorseShoe
-                                        Rtable => RHorseShoe
-                                        Ttable => THorseShoe
-                                    case (vert_ellipse)
-                                        Atable => AHorseShoe
-                                        Rtable => RHorseShoe
-                                        Ttable => THorseShoe
-
-                                    !% --- for tables using section factor
-                                    case (catenary)
-                                        Atable => ACatenary
-                                        Stable => SCatenary
-                                        Ttable => TCatenary
-                                    case (gothic)
-                                        Atable => AGothic
-                                        Stable => SGothic
-                                        Ttable => TGothic
-                                    case (semi_circular)
-                                        Atable => ASemiCircular
-                                        Stable => SSemiCircular
-                                        Ttable => TSemiCircular
-                                    case (semi_elliptical)
-                                        Atable => ASemiEllip
-                                        Stable => SSemiEllip
-                                        Ttable => TSemiEllip
-                                end select
-
-                                ! if (ii > 98) util_utest_CLprint('IIII')
-                                !% HACK --- dHdA, which is needed for AC method
-                                !% is not computed in the following
-
-                                !% --- not surcharged and non-negligible depth
-                                select case (elemI(tB,ei_geometryType))
-
-                                    !% --- OPEN CHANNEL
-                                    !%     typical open channels have computations for area, topwidth, perimeter
-                                    !%     with standard geo_ function for hydraulic radius, hydraulic depth and ell
-
-                                    case (parabolic)   !% analytical
-                                        ! if (ii > 98) util_utest_CLprint('IIIIaa')
-                                        area(tBA)     = llgeo_parabolic_area_from_depth_pure         (tBA, depth(tBA))
-                                        area(tB )     = max(area(tB),setting%ZeroValue%Area)
-
-                                        topwidth(tBA) = llgeo_parabolic_topwidth_from_depth_pure     (tBA, depth(tBA))
-                                        topwidth(tB)  = max(topwidth(tB),setting%ZeroValue%Topwidth)
-
-                                        perimeter(tBA)= llgeo_parabolic_perimeter_from_depth_pure    (tBA, depth(tBA))
-                                        perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
-
-                                        hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
-                                                            (tBA, area(tBA), perimeter(tBA))
-                                        hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
-
-                                        ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure   &
-                                                            (tBA, area(tBA), topwidth(tBA))
-                                        ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
-    
-                                    case (power_function) !% POSSIBLY LOOKUP
-                                        print *, 'CODE ERROR power function x-section not finished'
-                                        call util_crashpoint(6298349)
-
-                                    case (rectangular) !% analytical
-                                        ! if (ii > 98) util_utest_CLprint('IIIIb')
-                                        area(tBA)     = llgeo_rectangular_area_from_depth_pure       (tBA, depth(tBA))
-                                        area(tB)      = max(area(tB),setting%ZeroValue%Area)
-
-                                        topwidth(tBA) = llgeo_rectangular_topwidth_from_depth_pure   (tBA, depth(tBA))
-                                        topwidth(tB)  = max(topwidth(tB),setting%ZeroValue%Topwidth)
-
-                                        perimeter(tBA)= llgeo_rectangular_perimeter_from_depth_pure  (tBA, depth(tBA))
-                                        perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
-
-                                        hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
-                                                            (tBA, area(tBA), perimeter(tBA))
-                                        hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
-
-                                        ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure  &
-                                                            (tBA, area(tBA), topwidth(tBA))
-                                        ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
-
-                                    case (trapezoidal) !% analytical
-                                        ! if (ii > 98) util_utest_CLprint('IIIIc')
-                                        area(tBA)     = llgeo_trapezoidal_area_from_depth_pure       (tBA, depth(tBA))
-                                        area(tB)      = max(area(tB),setting%ZeroValue%Area)
-
-                                        topwidth(tBA) = llgeo_trapezoidal_topwidth_from_depth_pure   (tBA, depth(tBA))
-                                        topwidth(tB)  = max(topwidth(tB),setting%ZeroValue%Topwidth)
-
-                                        perimeter(tBA)= llgeo_trapezoidal_perimeter_from_depth_pure  (tBA, depth(tBA))
-                                        perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
-
-                                        hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
-                                                            (tBA, area(tBA), perimeter(tBA))
-                                        hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
-                                        
-                                        ellDepth(tBA)  = llgeo_hyddepth_from_area_and_topwidth_pure   &
-                                                            (tBA, area(tBA), topwidth(tBA))
-                                        ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
-
-                                    case (triangular) !% analytical
-                                        ! if (ii > 98) util_utest_CLprint('IIIId')
-                                        area(tBA)     = llgeo_triangular_area_from_depth_pure        (tBA, depth(tBA))
-                                        area(tB)      = max(area(tB),setting%ZeroValue%Area)
-
-                                        topwidth(tBA) = llgeo_triangular_topwidth_from_depth_pure    (tBA, depth(tBA))
-                                        topwidth(tB)  = max(topwidth(tB),setting%ZeroValue%Topwidth)
-
-                                        perimeter(tBA)= llgeo_triangular_perimeter_from_depth_pure   (tBA, depth(tBA))
-                                        perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
-
-                                        hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
-                                                            (tBA, area(tBA), perimeter(tBA))
-                                        hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
-
-                                        ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure   &
-                                                            (tBA, area(tBA), topwidth(tBA))
-                                        ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
-
-                                    case (irregular)  !% lookup
-                                        area(tB)     = irregular_geometry_from_depth_singular ( &
-                                                            tB,tt_area, depth(tB), elemR(tB,er_FullArea), setting%ZeroValue%Area)
-
-                                        ! if (ii > 98) util_utest_CLprint('IIIIe-1')
-                                        topwidth(tB) = irregular_geometry_from_depth_singular ( &
-                                                            tB,tt_width, depth(tB), elemR(tB,er_FullTopWidth),setting%ZeroValue%TopWidth)
-
-                                        ! if (ii > 98) util_utest_CLprint('IIIIe-2')
-                                        !% --- note the irregular stores hyd radius rather than perimeter
-                                        hydRadius(tB) = irregular_geometry_from_depth_singular ( &
-                                                            tB,tt_hydradius, depth(tB), elemR(tB,er_FullHydRadius), setting%ZeroValue%Depth)    
-
-                                        !% --- perimeter is derived geometry for irregular
-                                        ! if (ii > 98) util_utest_CLprint('IIIIe-4')
-                                        perimeter(tB) = area(tB) / hydRadius(tB)
-                                        perimeter(tB)= max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
-
-                                        !% --- irregular must be continuously-increasing in width
-                                        ! if (ii > 98) util_utest_CLprint('IIIIe-5')
-                                        ellDepth(tB)  = geo_hyddepth_from_area_and_topwidth_singular (tB, area(tB), topwidth(tB), setting%ZeroValue%Depth) 
-
-                                    !% --- CLOSED CONDUITS
-                                    !%     closed conduits typically have look-up functions for area, topwidth and hydraulic
-                                    !%     radius, with standard geo_functions for perimeter, hydraulic depth, and ell
-                                    !%     However, where analytical functions are used, the perimeter is usually computed
-                                    !%     first and hydraulic radius is a geo_ function
-
-                                    !% --- lookups with Hydraulic Radius stored
-                                    case (arch, basket_handle, circular, eggshaped, horiz_ellipse, horseshoe, vert_ellipse) 
-                                        ! if (ii > 98) util_utest_CLprint('IIIIf')                                   
-                                        area(tB)     = llgeo_tabular_from_depth_singular &
-                                            (tB, depth(tB), fullArea(tB), setting%ZeroValue%Depth, setting%ZeroValue%Area, Atable)
-
-                                        topwidth(tB) = llgeo_tabular_from_depth_singular &
-                                            (tB, depth(tB), breadthmax(tB), setting%ZeroValue%Depth, setting%ZeroValue%Topwidth, Ttable)
-
-                                        topwidth(tB) = max(topwidth(tB), fulltopwidth(tB))
-
-                                        hydRadius(tB)= llgeo_tabular_from_depth_singular &
-                                            (tB, depth(tB), fullHydRadius(tB), setting%ZeroValue%Depth, setting%ZeroValue%Depth, Rtable)
-
-                                        perimeter(tBA)= llgeo_perimeter_from_hydradius_and_area_pure &
-                                                            (tBA, hydradius(tBA), area(tBA))
-                                        perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth) 
-                                                        
-                                        ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
-                                        ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
-
-                                    !% --- lookups with SectionFactor stored
-                                    case (catenary, gothic, semi_circular, semi_elliptical)   
-                                        ! if (ii > 98) util_utest_CLprint('IIIIg') 
-                                        area(tB)     = llgeo_tabular_from_depth_singular &
-                                            (tB, depth(tB), fullArea(tB), setting%ZeroValue%Depth, setting%ZeroValue%Area, Atable)
-
-                                        topwidth(tB) = llgeo_tabular_from_depth_singular &
-                                            (tB, depth(tB), breadthmax(tB), setting%ZeroValue%Depth, setting%ZeroValue%Topwidth, Ttable)
-
-                                        topwidth(tB) = max(topwidth(tB), fulltopwidth(tB))
-
-                                        hydRadius(tB)= llgeo_tabular_hydradius_from_area_and_sectionfactor_singular &
-                                            (tB, area(tB), fullhydradius(tB), setting%ZeroValue%Depth, Stable)
-
-                                        perimeter(tBA)= llgeo_perimeter_from_hydradius_and_area_pure &
-                                                            (tBA, hydradius(tBA), area(tBA))
-                                        perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
-
-                                        ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
-                                        ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
-
-                                    !% --- lookup with sediment
-                                    case (filled_circular)  
-                                        ! if (ii > 98) util_utest_CLprint('IIIIh')
-                                        area(tB)      = llgeo_filled_circular_area_from_depth_singular      (tB,depth(tB),setting%ZeroValue%Area)
-                                        topwidth(tB)  = llgeo_filled_circular_topwidth_from_depth_singular  (tB,depth(tB),setting%ZeroValue%Topwidth)
-                                        perimeter(tB) = llgeo_filled_circular_perimeter_from_depth_singular (tB,depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
-                                        
-                                        hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
-                                                            (tBA, area(tBA), perimeter(tBA))
-                                        hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
-
-                                        ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
-                                        ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
-
-                                    !% --- analytical closed-conduit cases
-                                    case (mod_basket)   !% analytical            
-                                        ! if (ii > 98) util_utest_CLprint('IIIIi')                     
-                                        area(tB)      = llgeo_mod_basket_area_from_depth_singular        (tB,depth(tB),setting%ZeroValue%Area)
-                                        topwidth(tB)  = llgeo_mod_basket_topwidth_from_depth_singular    (tB,depth(tB),setting%ZeroValue%Topwidth)
-                                        perimeter(tB) = llgeo_mod_basket_perimeter_from_depth_singular   (tB,depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
-                                        
-                                        hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
-                                                            (tBA, area(tBA), perimeter(tBA))
-                                        hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
-
-                                        ellDepth(tBA) = llgeo_elldepth_pure (tBA)
-                                        ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
-
-                                    case (rectangular_closed) !% analytical
-                                        ! if (ii > 98) util_utest_CLprint('IIIIj')
-                                        area(tB)      = llgeo_rectangular_closed_area_from_depth_singular      (tB, depth(tB),setting%ZeroValue%Area)
-                                        topwidth(tB)  = llgeo_rectangular_closed_topwidth_from_depth_singular  (tB, depth(tB),setting%ZeroValue%Topwidth)
-                                        perimeter(tB) = llgeo_rectangular_closed_perimeter_from_depth_singular (tB, depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
-                                        
-                                        hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
-                                                            (tBA, area(tBA), perimeter(tBA))
-                                        hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
-
-                                        ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
-                                        ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
-
-                                    case (rect_round)  !% analytical         
-                                        ! if (ii > 98) util_utest_CLprint('IIIIk')                         
-                                        area(tB)      = llgeo_rect_round_area_from_depth_singular       (tB,depth(tB),setting%ZeroValue%Area)
-                                        topwidth(tB)  = llgeo_rect_round_topwidth_from_depth_singular   (tB,depth(tB),setting%ZeroValue%Topwidth)
-                                        perimeter(tB) = llgeo_rect_round_perimeter_from_depth_singular  (tB,depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
-                                        
-                                        hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
-                                                            (tBA, area(tBA), perimeter(tBA))
-                                        hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
-
-                                        ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
-                                        ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
-
-                                    case (rect_triang) !% analytical           
-                                        ! if (ii > 98) util_utest_CLprint('IIIIl')                        
-                                        area(tB)      = llgeo_rectangular_triangular_area_from_depth_singular      (tB,depth(tB),setting%ZeroValue%Area)
-                                        topwidth(tB)  = llgeo_rectangular_triangular_topwidth_from_depth_singular  (tB,depth(tB),setting%ZeroValue%Topwidth)
-                                        perimeter(tB) = llgeo_rectangular_triangular_perimeter_from_depth_singular (tB,depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
-                                        
-                                        hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
-                                                            (tBA, area(tBA), perimeter(tBA))
-                                        hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
-
-                                        ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
-                                        ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
-                                
-                                    case default
-                                    print *, 'CODE ERROR: geometry type unknown for # ', elemI(tB,ei_geometryType)
-                                    print *, 'which has key ',trim(reverseKey(elemI(tB,ei_geometryType)))
-                                    print *, 'in ',trim(subroutine_name)
-                                    call util_crashpoint(399848)
-                                    !return
-                                    !stop 399848
-                                end select
-
-                                ! if (ii > 98) util_utest_CLprint('JJJJ')
-                                !% --- standard for all geometries
-                                !hydDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure &
-                                !                    (tBA, area(tBA), topwidth(tBA))
-                                dHdA(tB)     = oneR / topwidth(tB)
-
-                                ! if (ii > 98) util_utest_CLprint('KKKK')
+                                !% --- Fr=1 inflow from downstream branch
+                                head(tB) = zBtm(tB) + sedimentDepth(tB)  &
+                                    + (fVel_u(fdn(tB))**twoI) / grav
                             end if
-                            !% --- universal computation of volume
-                            volume(tB) = area(tB) * length(tB)
-
-                            ! print *, 'DEPTH B  ',depth(tB), setting%ZeroValue%Depth
-                            ! print *, 'AREA  B  ',area(tB), setting%ZeroValue%Area
-                            ! print *, 'FLOWRATE ',flowrate(tB)
-                            ! print *, 'is small depth ',elemYN(tB,eYN_isSmallDepth)
-                            ! print *, ' '
-
-                            !% --- universal computation of velocity
-                            if ((area(tB) > setting%ZeroValue%Area)  &
-                                .and. (.not. elemYN(tB,eYN_isSmallDepth))) then 
-                                velocity(tB) = flowrate(tB) / area(tB)
-
-                                ! if (tM == 31) then
-                                !     print *, ' '
-                                !     print *, 'in geometry JB ',tB, velocity(tB)
-                                ! end if
-
-                            else
-                                velocity(tB) = zeroR
-                            end if
-
-                            if (velocity(tB) > setting%Limiter%Velocity%Maximum) then
-                                velocity(tB) = 0.9d0 * setting%Limiter%Velocity%Maximum 
-                            end if
-                                
+                        else 
+                            !% --- no flow, set below zerovalue
+                            head(tB) = zBtm(tB) + sedimentDepth(tB) + 0.99d0 * setting%ZeroValue%Depth
                         end if
-                    end do
-                end if
+
+                            ! print *, 'HEAD B, velocity', head(tB), velocity(tB)
+                            ! print *,'Velocity ',velocity(tB)
+                    end if
+
+                    !% compute provisional depth
+                    depth(tB) = head(tB) - (zBtm(tB) + sedimentDepth(tB))
+
+                    ! print *, 'DEPTH ',depth(tB)
+
+                    if (depth(tB) .ge. fulldepth(tB)) then
+                        !% surcharged or incipient surcharged
+                        depth(tB)        = fulldepth(tB)
+                        area(tB)         = fullArea(tB)
+                        perimeter(tB)    = fullperimeter(tB)
+                        topwidth(tB)     = setting%ZeroValue%Topwidth
+                        hydRadius(tB)    = fulldepth(tB) / fullperimeter(tB)
+                        dHdA(tB)         = oneR / setting%ZeroValue%Topwidth
+                        ellDepth(tBA)    = llgeo_elldepth_pure(tBA)
+
+                    elseif (depth(tB) .le. setting%ZeroValue%Depth) then
+                        !% negligible depth is treated with ZeroValues
+                        depth(tB)        = setting%ZeroValue%Depth * 0.99d0
+                        area(tB)         = setting%ZeroValue%Area
+                        topwidth(tB)     = setting%ZeroValue%Topwidth
+                        perimeter(tB)    = setting%ZeroValue%Topwidth + setting%ZeroValue%Depth
+                        hydRadius(tB)    = setting%ZeroValue%Depth
+                        dHdA(tB)         = oneR / setting%ZeroValue%Topwidth
+                        ellDepth(tB)     = setting%ZeroValue%Depth 
+
+                    else
+                        !% --- set lookup table names
+                        select case (elemI(tB,ei_geometryType))
+                            !% --- for tables using HydRadius
+                            case (arch)
+                                Atable => AArch
+                                Rtable => RArch
+                                Ttable => TArch
+                            case (basket_handle)
+                                Atable => ABasketHandle
+                                Rtable => RBasketHandle
+                                Ttable => TBasketHandle
+                            case (circular)
+                                Atable => ACirc
+                                Rtable => RCirc
+                                Ttable => TCirc
+                            case (eggshaped)
+                                Atable => AEgg
+                                Rtable => REgg
+                                Ttable => TEgg
+                            case (horiz_ellipse)
+                                Atable => AHorizEllip
+                                Rtable => RHorizEllip
+                                Ttable => THorizEllip
+                            case (horseshoe)
+                                Atable => AHorseShoe
+                                Rtable => RHorseShoe
+                                Ttable => THorseShoe
+                            case (vert_ellipse)
+                                Atable => AHorseShoe
+                                Rtable => RHorseShoe
+                                Ttable => THorseShoe
+
+                            !% --- for tables using section factor
+                            case (catenary)
+                                Atable => ACatenary
+                                Stable => SCatenary
+                                Ttable => TCatenary
+                            case (gothic)
+                                Atable => AGothic
+                                Stable => SGothic
+                                Ttable => TGothic
+                            case (semi_circular)
+                                Atable => ASemiCircular
+                                Stable => SSemiCircular
+                                Ttable => TSemiCircular
+                            case (semi_elliptical)
+                                Atable => ASemiEllip
+                                Stable => SSemiEllip
+                                Ttable => TSemiEllip
+                        end select
+
+                        !% HACK --- dHdA, which is needed for AC method
+                        !% is not computed in the following
+
+                        !% --- not surcharged and non-negligible depth
+                        select case (elemI(tB,ei_geometryType))
+
+                            !% --- OPEN CHANNEL
+                            !%     typical open channels have computations for area, topwidth, perimeter
+                            !%     with standard geo_ function for hydraulic radius, hydraulic depth and ell
+
+                            case (parabolic)   !% analytical
+                                ! if (ii > 98) util_utest_CLprint('IIIIaa')
+                                area(tBA)     = llgeo_parabolic_area_from_depth_pure         (tBA, depth(tBA))
+                                area(tB )     = max(area(tB),setting%ZeroValue%Area)
+
+                                topwidth(tBA) = llgeo_parabolic_topwidth_from_depth_pure     (tBA, depth(tBA))
+                                topwidth(tB)  = max(topwidth(tB),setting%ZeroValue%Topwidth)
+
+                                perimeter(tBA)= llgeo_parabolic_perimeter_from_depth_pure    (tBA, depth(tBA))
+                                perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                                hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
+                                                    (tBA, area(tBA), perimeter(tBA))
+                                hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
+
+                                ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure   &
+                                                    (tBA, area(tBA), topwidth(tBA))
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+
+                            case (power_function) !% POSSIBLY LOOKUP
+                                print *, 'CODE ERROR power function x-section not finished'
+                                call util_crashpoint(6298349)
+
+                            case (rectangular) !% analytical
+                                ! if (ii > 98) util_utest_CLprint('IIIIb')
+                                area(tBA)     = llgeo_rectangular_area_from_depth_pure       (tBA, depth(tBA))
+                                area(tB)      = max(area(tB),setting%ZeroValue%Area)
+
+                                topwidth(tBA) = llgeo_rectangular_topwidth_from_depth_pure   (tBA, depth(tBA))
+                                topwidth(tB)  = max(topwidth(tB),setting%ZeroValue%Topwidth)
+
+                                perimeter(tBA)= llgeo_rectangular_perimeter_from_depth_pure  (tBA, depth(tBA))
+                                perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                                hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
+                                                    (tBA, area(tBA), perimeter(tBA))
+                                hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
+
+                                ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure  &
+                                                    (tBA, area(tBA), topwidth(tBA))
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+
+                            case (trapezoidal) !% analytical
+                                ! if (ii > 98) util_utest_CLprint('IIIIc')
+                                area(tBA)     = llgeo_trapezoidal_area_from_depth_pure       (tBA, depth(tBA))
+                                area(tB)      = max(area(tB),setting%ZeroValue%Area)
+
+                                topwidth(tBA) = llgeo_trapezoidal_topwidth_from_depth_pure   (tBA, depth(tBA))
+                                topwidth(tB)  = max(topwidth(tB),setting%ZeroValue%Topwidth)
+
+                                perimeter(tBA)= llgeo_trapezoidal_perimeter_from_depth_pure  (tBA, depth(tBA))
+                                perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                                hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
+                                                    (tBA, area(tBA), perimeter(tBA))
+                                hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
+                                
+                                ellDepth(tBA)  = llgeo_hyddepth_from_area_and_topwidth_pure   &
+                                                    (tBA, area(tBA), topwidth(tBA))
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+
+                            case (triangular) !% analytical
+                                ! if (ii > 98) util_utest_CLprint('IIIId')
+                                area(tBA)     = llgeo_triangular_area_from_depth_pure        (tBA, depth(tBA))
+                                area(tB)      = max(area(tB),setting%ZeroValue%Area)
+
+                                topwidth(tBA) = llgeo_triangular_topwidth_from_depth_pure    (tBA, depth(tBA))
+                                topwidth(tB)  = max(topwidth(tB),setting%ZeroValue%Topwidth)
+
+                                perimeter(tBA)= llgeo_triangular_perimeter_from_depth_pure   (tBA, depth(tBA))
+                                perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                                hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
+                                                    (tBA, area(tBA), perimeter(tBA))
+                                hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
+
+                                ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure   &
+                                                    (tBA, area(tBA), topwidth(tBA))
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+
+                            case (irregular)  !% lookup
+                                area(tB)     = irregular_geometry_from_depth_singular ( &
+                                                    tB,tt_area, depth(tB), elemR(tB,er_FullArea), setting%ZeroValue%Area)
+
+                                ! if (ii > 98) util_utest_CLprint('IIIIe-1')
+                                topwidth(tB) = irregular_geometry_from_depth_singular ( &
+                                                    tB,tt_width, depth(tB), elemR(tB,er_FullTopWidth),setting%ZeroValue%TopWidth)
+
+                                ! if (ii > 98) util_utest_CLprint('IIIIe-2')
+                                !% --- note the irregular stores hyd radius rather than perimeter
+                                hydRadius(tB) = irregular_geometry_from_depth_singular ( &
+                                                    tB,tt_hydradius, depth(tB), elemR(tB,er_FullHydRadius), setting%ZeroValue%Depth)    
+
+                                !% --- perimeter is derived geometry for irregular
+                                ! if (ii > 98) util_utest_CLprint('IIIIe-4')
+                                perimeter(tB) = area(tB) / hydRadius(tB)
+                                perimeter(tB)= max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                                !% --- irregular must be continuously-increasing in width
+                                ! if (ii > 98) util_utest_CLprint('IIIIe-5')
+                                ellDepth(tB)  = geo_hyddepth_from_area_and_topwidth_singular (tB, area(tB), topwidth(tB), setting%ZeroValue%Depth) 
+
+                            !% --- CLOSED CONDUITS
+                            !%     closed conduits typically have look-up functions for area, topwidth and hydraulic
+                            !%     radius, with standard geo_functions for perimeter, hydraulic depth, and ell
+                            !%     However, where analytical functions are used, the perimeter is usually computed
+                            !%     first and hydraulic radius is a geo_ function
+
+                            !% --- lookups with Hydraulic Radius stored
+                            case (arch, basket_handle, circular, eggshaped, horiz_ellipse, horseshoe, vert_ellipse) 
+                                ! if (ii > 98) util_utest_CLprint('IIIIf')                                   
+                                area(tB)     = llgeo_tabular_from_depth_singular &
+                                    (tB, depth(tB), fullArea(tB), setting%ZeroValue%Depth, setting%ZeroValue%Area, Atable)
+
+                                topwidth(tB) = llgeo_tabular_from_depth_singular &
+                                    (tB, depth(tB), breadthmax(tB), setting%ZeroValue%Depth, setting%ZeroValue%Topwidth, Ttable)
+
+                                topwidth(tB) = max(topwidth(tB), fulltopwidth(tB))
+
+                                hydRadius(tB)= llgeo_tabular_from_depth_singular &
+                                    (tB, depth(tB), fullHydRadius(tB), setting%ZeroValue%Depth, setting%ZeroValue%Depth, Rtable)
+
+                                perimeter(tBA)= llgeo_perimeter_from_hydradius_and_area_pure &
+                                                    (tBA, hydradius(tBA), area(tBA))
+                                perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth) 
+                                                
+                                ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+
+                            !% --- lookups with SectionFactor stored
+                            case (catenary, gothic, semi_circular, semi_elliptical)   
+                                ! if (ii > 98) util_utest_CLprint('IIIIg') 
+                                area(tB)     = llgeo_tabular_from_depth_singular &
+                                    (tB, depth(tB), fullArea(tB), setting%ZeroValue%Depth, setting%ZeroValue%Area, Atable)
+
+                                topwidth(tB) = llgeo_tabular_from_depth_singular &
+                                    (tB, depth(tB), breadthmax(tB), setting%ZeroValue%Depth, setting%ZeroValue%Topwidth, Ttable)
+
+                                topwidth(tB) = max(topwidth(tB), fulltopwidth(tB))
+
+                                hydRadius(tB)= llgeo_tabular_hydradius_from_area_and_sectionfactor_singular &
+                                    (tB, area(tB), fullhydradius(tB), setting%ZeroValue%Depth, Stable)
+
+                                perimeter(tBA)= llgeo_perimeter_from_hydradius_and_area_pure &
+                                                    (tBA, hydradius(tBA), area(tBA))
+                                perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                                ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+
+                            !% --- lookup with sediment
+                            case (filled_circular)  
+                                ! if (ii > 98) util_utest_CLprint('IIIIh')
+                                area(tB)      = llgeo_filled_circular_area_from_depth_singular      (tB,depth(tB),setting%ZeroValue%Area)
+                                topwidth(tB)  = llgeo_filled_circular_topwidth_from_depth_singular  (tB,depth(tB),setting%ZeroValue%Topwidth)
+                                perimeter(tB) = llgeo_filled_circular_perimeter_from_depth_singular (tB,depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                                
+                                hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
+                                                    (tBA, area(tBA), perimeter(tBA))
+                                hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
+
+                                ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+
+                            !% --- analytical closed-conduit cases
+                            case (mod_basket)   !% analytical            
+                                ! if (ii > 98) util_utest_CLprint('IIIIi')                     
+                                area(tB)      = llgeo_mod_basket_area_from_depth_singular        (tB,depth(tB),setting%ZeroValue%Area)
+                                topwidth(tB)  = llgeo_mod_basket_topwidth_from_depth_singular    (tB,depth(tB),setting%ZeroValue%Topwidth)
+                                perimeter(tB) = llgeo_mod_basket_perimeter_from_depth_singular   (tB,depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                                
+                                hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
+                                                    (tBA, area(tBA), perimeter(tBA))
+                                hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
+
+                                ellDepth(tBA) = llgeo_elldepth_pure (tBA)
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+
+                            case (rectangular_closed) !% analytical
+                                ! if (ii > 98) util_utest_CLprint('IIIIj')
+                                area(tB)      = llgeo_rectangular_closed_area_from_depth_singular      (tB, depth(tB),setting%ZeroValue%Area)
+                                topwidth(tB)  = llgeo_rectangular_closed_topwidth_from_depth_singular  (tB, depth(tB),setting%ZeroValue%Topwidth)
+                                perimeter(tB) = llgeo_rectangular_closed_perimeter_from_depth_singular (tB, depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                                
+                                hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
+                                                    (tBA, area(tBA), perimeter(tBA))
+                                hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
+
+                                ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+
+                            case (rect_round)  !% analytical         
+                                ! if (ii > 98) util_utest_CLprint('IIIIk')                         
+                                area(tB)      = llgeo_rect_round_area_from_depth_singular       (tB,depth(tB),setting%ZeroValue%Area)
+                                topwidth(tB)  = llgeo_rect_round_topwidth_from_depth_singular   (tB,depth(tB),setting%ZeroValue%Topwidth)
+                                perimeter(tB) = llgeo_rect_round_perimeter_from_depth_singular  (tB,depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                                
+                                hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
+                                                    (tBA, area(tBA), perimeter(tBA))
+                                hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
+
+                                ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+
+                            case (rect_triang) !% analytical           
+                                ! if (ii > 98) util_utest_CLprint('IIIIl')                        
+                                area(tB)      = llgeo_rectangular_triangular_area_from_depth_singular      (tB,depth(tB),setting%ZeroValue%Area)
+                                topwidth(tB)  = llgeo_rectangular_triangular_topwidth_from_depth_singular  (tB,depth(tB),setting%ZeroValue%Topwidth)
+                                perimeter(tB) = llgeo_rectangular_triangular_perimeter_from_depth_singular (tB,depth(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                                
+                                hydRadius(tBA)= llgeo_hydradius_from_area_and_perimeter_pure &
+                                                    (tBA, area(tBA), perimeter(tBA))
+                                hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
+
+                                ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+                        
+                            case default
+                            print *, 'CODE ERROR: geometry type unknown for # ', elemI(tB,ei_geometryType)
+                            print *, 'which has key ',trim(reverseKey(elemI(tB,ei_geometryType)))
+                            print *, 'in ',trim(subroutine_name)
+                            call util_crashpoint(399848)
+                            !return
+                            !stop 399848
+                        end select
+
+                        !% --- standard for all geometries
+                        !hydDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure &
+                        !                    (tBA, area(tBA), topwidth(tBA))
+                        dHdA(tB)     = oneR / topwidth(tB)
+
+                        ! if (ii > 98) util_utest_CLprint('KKKK')
+                    end if
+                    !% --- universal computation of volume
+                    volume(tB) = area(tB) * length(tB)
+
+                    ! print *, 'DEPTH B  ',depth(tB), setting%ZeroValue%Depth
+                    ! print *, 'AREA  B  ',area(tB), setting%ZeroValue%Area
+                    ! print *, 'FLOWRATE ',flowrate(tB)
+                    ! print *, 'is small depth ',elemYN(tB,eYN_isSmallDepth)
+                    ! print *, ' '
+
+                    !% --- universal computation of velocity
+                    if ((area(tB) > setting%ZeroValue%Area)  &
+                        .and. (.not. elemYN(tB,eYN_isSmallDepth))) then 
+                        velocity(tB) = flowrate(tB) / area(tB)
+
+                    else
+                        velocity(tB) = zeroR
+                    end if
+
+                    if (velocity(tB) > setting%Limiter%Velocity%Maximum) then
+                        velocity(tB) = 0.9d0 * setting%Limiter%Velocity%Maximum 
+                    end if
+                            
+                end do
             end do
         end if
 
@@ -2337,7 +1754,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_assign_JM (whichTM)
+    subroutine geo_assign_JM ()
         !%------------------------------------------------------------------
         !% Description:
         !% Assigns depths and storage data for JM
@@ -2351,39 +1768,23 @@ module geometry
         !%     
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: whichTM
+
             integer, pointer    :: thisCol, Npack, thisP(:)
             integer, pointer    :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
         !%------------------------------------------------------------------
-                  !% Aliases
+            !% Aliases
             !% --- set packed column for updated elements
-            select case (whichTM)
-            case (ALLtm)
-                print *, 'CODE UNFINISHED'
-                call util_crashpoint(12109874)
-                !thisCol_JM             => col_elemP(ep_JM_ALLtm)
-            case (ETM)
                 elemPGx                => elemPGetm(:,:)
                 npack_elemPGx          => npack_elemPGetm(:)
                 col_elemPGx            => col_elemPGetm(:)
-                !thisCol_JM             => col_elemP(ep_JM_ETM)
-            case (AC)
-                print *, 'CODE UNFINISHED'
-                call util_crashpoint(2109874)
-                !thisCol_JM  => col_elemP(ep_JM_AC)
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                call util_crashpoint(45834)
-        end select
 
         !% --- update the plan area and depths for functional storage
         !    print *, 'functional storage'
         thisCol => col_elemPGx(epg_JM_functionalStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
             thisP => elemPGx(1:Npack, thisCol)
+            call storage_plan_area_from_volume (thisP, Npack)
             elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
                                         elemR(thisP,er_FullDepth))
             elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth) 
@@ -2398,8 +1799,8 @@ module geometry
         !print *, 'npack ',Npack
         !print *, elemPGx(1:Npack, thisCol)
         if (Npack > 0) then
-            call storage_plan_area_from_volume (elemPGx, Npack, thisCol)
             thisP => elemPGx(1:Npack, thisCol)
+            call storage_plan_area_from_volume (thisP, Npack)
             elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
                                         elemR(thisP,er_FullDepth))
             elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth) 
@@ -2437,44 +1838,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    ! subroutine geo_area_from_volume (thisColP)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% sets area = volume/length which is common to all nonsurcharged elements
-    !     !% Note this assumes volume has been limited by surcharge and zero values
-    !     !%------------------------------------------------------------------
-    !     !% Declarations
-    !         integer, intent(in) :: thisColP
-    !         integer, pointer :: thisP(:), Npack
-    !         real(8), pointer :: area(:), volume(:), length(:)
-
-    !         character(64) :: subroutine_name = 'geo_area_from_volume'
-    !     !%--------------------------------------------------------------------
-    !     !% Preliminaries
-    !         Npack  => npack_elemP(thisColP)
-    !         if (Npack < 1) return
-    !         if (setting%Debug%File%geometry) &
-    !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    !     !%--------------------------------------------------------------------
-    !     !% Aliases
-    !         thisP  => elemP(1:Npack,thisColP)
-    !         area   => elemR(:,er_Area)
-    !         volume => elemR(:,er_Volume)
-    !         length => elemR(:,er_Length)
-    !     !%--------------------------------------------------------------------
-     
-    !     !% --- note, this could cause issues if length = 0, which should not happen
-    !     area(thisP) = volume(thisP) / length(thisP)
-
-    !     !%--------------------------------------------------------------------
-    !         if (setting%Debug%File%geometry) &
-    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    ! end subroutine geo_area_from_volume
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine geo_topwidth_from_depth_by_type_CC &
+    subroutine geo_topwidth_from_depth_by_type_allCC &
         (elemPGx, npack_elemPGx, col_elemPGx)
         !%------------------------------------------------------------------
         !% Description:
@@ -2505,7 +1869,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_irregular)
             thisP   => elemPGx(1:Npack,thisCol)
-            call irregular_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call irregular_topwidth_from_depth (thisP)
             topwidth(thisP) = max(topwidth(thisP),setting%ZeroValue%Topwidth)
         end if
 
@@ -2514,7 +1878,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_parabolic)
             thisP   => elemPGx(1:Npack,thisCol)
-            call parabolic_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call parabolic_topwidth_from_depth (thisP)
             topwidth(thisP) = max(topwidth(thisP),setting%ZeroValue%Topwidth)
         end if
 
@@ -2523,7 +1887,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_power_function)
             thisP   => elemPGx(1:Npack,thisCol)
-            call powerfunction_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call powerfunction_topwidth_from_depth (thisP)
             topwidth(thisP) = max(topwidth(thisP),setting%ZeroValue%Topwidth)
         end if
 
@@ -2532,7 +1896,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular)
             thisP   => elemPGx(1:Npack,thisCol)
-            call rectangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call rectangular_topwidth_from_depth (thisP)
             topwidth(thisP) = max(topwidth(thisP),setting%ZeroValue%Topwidth)
         end if
 
@@ -2541,7 +1905,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_trapezoidal)
             thisP   => elemPGx(1:Npack,thisCol)
-            call trapezoidal_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call trapezoidal_topwidth_from_depth (thisP)
             topwidth(thisP) = max(topwidth(thisP),setting%ZeroValue%Topwidth)
         end if
 
@@ -2550,7 +1914,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_triangular)
             thisP   => elemPGx(1:Npack,thisCol)
-            call triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call triangular_topwidth_from_depth (thisP)
             topwidth(thisP) = max(topwidth(thisP),setting%ZeroValue%Topwidth)
         end if
 
@@ -2608,7 +1972,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_filled_circular)
             thisP   => elemPGx(1:Npack,thisCol)
-            call filled_circular_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call filled_circular_topwidth_from_depth (thisP)
             topwidth(thisP) = max(topwidth(thisP),setting%ZeroValue%Topwidth)
         end if
 
@@ -2644,7 +2008,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_mod_basket)
             thisP   => elemPGx(1:Npack,thisCol)
-            call mod_basket_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call mod_basket_topwidth_from_depth (thisP)
             topwidth(thisP) = max(topwidth(thisP),setting%ZeroValue%Topwidth)
         end if
 
@@ -2653,7 +2017,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_closed)
             thisP   => elemPGx(1:Npack,thisCol)
-            call rectangular_closed_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call rectangular_closed_topwidth_from_depth (thisP)
             topwidth(thisP) = max(topwidth(thisP),setting%ZeroValue%Topwidth)
         end if
 
@@ -2662,7 +2026,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_round)
             thisP   => elemPGx(1:Npack,thisCol)
-            call rect_round_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call rect_round_topwidth_from_depth (thisP)
             topwidth(thisP) = max(topwidth(thisP),setting%ZeroValue%Topwidth)
         end if
         
@@ -2671,7 +2035,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_triangular)
             thisP   => elemPGx(1:Npack,thisCol)
-            call rectangular_triangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+            call rectangular_triangular_topwidth_from_depth (thisP)
             topwidth(thisP) = max(topwidth(thisP),setting%ZeroValue%Topwidth)
         end if
 
@@ -2709,7 +2073,153 @@ module geometry
         !%-------------------------------------------------------------------
             if (setting%Debug%File%geometry) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_topwidth_from_depth_by_type_CC
+    end subroutine geo_topwidth_from_depth_by_type_allCC
+ !%
+!%========================================================================== 
+!%==========================================================================  
+!%
+    subroutine geo_topwidth_from_depth_by_element_CC (thisP, Npack)   
+        !%------------------------------------------------------------------
+        !% Description
+        !% Companion to geo_topwidth_from_depth_by_type_allCC that
+        !% computes for the entire set of cells of a given type.  This
+        !% cycles through the set, so is less efficient, but is needed
+        !% where only a subset of elements to be evaluated
+        !%------------------------------------------------------------------
+            integer, intent(in) :: thisP(:), Npack
+            integer :: mm
+            integer, dimension(1) :: ap
+            real(8), pointer :: breadthMax(:)
+        !%------------------------------------------------------------------
+            breadthMax => elemR(:,er_BreadthMax)
+        !%------------------------------------------------------------------
+
+            do mm=1,Npack
+                ap(1) = thisP(mm)
+                select case (elemI(ap(1),ei_geometryType))
+                    case (irregular)
+                        call irregular_topwidth_from_depth (ap)
+
+                    case (power_function)
+                        print *, 'POWER FUNCTION CROSS-SECTION NOT COMPLETE'
+                        call util_crashpoint(5559867)
+
+                    case (parabolic)
+                        call parabolic_topwidth_from_depth (ap)
+
+                    case (rectangular)
+                        call rectangular_topwidth_from_depth (ap)
+
+                    case (trapezoidal)
+                        call trapezoidal_topwidth_from_depth (ap)
+
+                    case (triangular)
+                        call triangular_topwidth_from_depth (ap)
+
+                    case (arch)
+                        elemR(ap(1),er_Topwidth) &
+                            = llgeo_tabular_from_depth_singular (                      &
+                                ap(1), elemR(ap(1),er_Depth), breadthMax(ap(1)),       &
+                                setting%ZeroValue%Depth, setting%ZeroValue%Topwidth,   &
+                                TArch)
+
+                    case (basket_handle)
+                        elemR(ap(1),er_Topwidth) &
+                            = llgeo_tabular_from_depth_singular (                      &
+                                ap(1), elemR(ap(1),er_Depth), breadthMax(ap(1)),       &
+                                setting%ZeroValue%Depth, setting%ZeroValue%Topwidth,   &
+                                TBasketHandle)
+
+                    case (catenary)
+                        elemR(ap(1),er_Topwidth) &
+                            = llgeo_tabular_from_depth_singular (                      &
+                                ap(1), elemR(ap(1),er_Depth), breadthMax(ap(1)),       &
+                                setting%ZeroValue%Depth, setting%ZeroValue%Topwidth,   &
+                                TCatenary)
+
+                    case (circular)
+                        elemR(ap(1),er_Topwidth) &
+                            = llgeo_tabular_from_depth_singular (                      &
+                                ap(1), elemR(ap(1),er_Depth), breadthMax(ap(1)),       &
+                                setting%ZeroValue%Depth, setting%ZeroValue%Topwidth,   &
+                                TCirc)
+
+
+                    case (eggshaped)
+                        elemR(ap(1),er_Topwidth) &
+                            = llgeo_tabular_from_depth_singular (                      &
+                                ap(1), elemR(ap(1),er_Depth), breadthMax(ap(1)),       &
+                                setting%ZeroValue%Depth, setting%ZeroValue%Topwidth,   &
+                                TEgg)
+
+                    case (filled_circular)
+                        call filled_circular_topwidth_from_depth (ap)
+
+                    case (gothic)
+                        elemR(ap(1),er_Topwidth) &
+                            = llgeo_tabular_from_depth_singular (                      &
+                                ap(1), elemR(ap(1),er_Depth), breadthMax(ap(1)),       &
+                                setting%ZeroValue%Depth, setting%ZeroValue%Topwidth,   &
+                                TGothic)
+
+                    case (horiz_ellipse)
+                        elemR(ap(1),er_Topwidth) &
+                            = llgeo_tabular_from_depth_singular (                      &
+                                ap(1), elemR(ap(1),er_Depth), breadthMax(ap(1)),       &
+                                setting%ZeroValue%Depth, setting%ZeroValue%Topwidth,   &
+                                THorizEllip)
+
+                    case (horseshoe)
+                        elemR(ap(1),er_Topwidth) &
+                            = llgeo_tabular_from_depth_singular (                      &
+                                ap(1), elemR(ap(1),er_Depth), breadthMax(ap(1)),       &
+                                setting%ZeroValue%Depth, setting%ZeroValue%Topwidth,   &
+                                THorseShoe)
+
+                    case (mod_basket)
+                        call mod_basket_topwidth_from_depth (ap)
+
+                    case (rectangular_closed)
+                        call rectangular_closed_topwidth_from_depth (ap)
+
+                    case (rect_round)
+                        call rect_round_topwidth_from_depth (ap)
+
+                    case (rect_triang)
+                        call rectangular_triangular_topwidth_from_depth (ap)
+
+                    case (semi_circular)
+                        elemR(ap(1),er_Topwidth) &
+                            = llgeo_tabular_from_depth_singular (                      &
+                                ap(1), elemR(ap(1),er_Depth), breadthMax(ap(1)),       &
+                                setting%ZeroValue%Depth, setting%ZeroValue%Topwidth,   &
+                                TSemiCircular)
+
+                    case (semi_elliptical)
+                        elemR(ap(1),er_Topwidth) &
+                            = llgeo_tabular_from_depth_singular (                      &
+                                ap(1), elemR(ap(1),er_Depth), breadthMax(ap(1)),       &
+                                setting%ZeroValue%Depth, setting%ZeroValue%Topwidth,   &
+                                TSemiEllip)
+
+                    case (vert_ellipse)
+                        elemR(ap(1),er_Topwidth) &
+                            = llgeo_tabular_from_depth_singular (                      &
+                                ap(1), elemR(ap(1),er_Depth), breadthMax(ap(1)),       &
+                                setting%ZeroValue%Depth, setting%ZeroValue%Topwidth,   &
+                                TVertEllip)
+
+                    case (custom)
+                        print *, 'CUSTOM CROSS-SECTION NOT COMPLETE'
+                        call util_crashpoint(52498767)
+                    case default
+                        print *, 'CODE ERROR: Unexpected case default'
+                        call util_crashpoint(7209874)
+                end select
+    
+            end do
+
+    end subroutine geo_topwidth_from_depth_by_element_CC
 !%
 !%========================================================================== 
 !%==========================================================================  
@@ -2748,12 +2258,12 @@ module geometry
         !% --- OPEN CHANNELS -------------------------------
 
         !% --- IRREGULAR
-        Npack => npack_elemPGx(epg_CC_irregular)
+        thisCol =>   col_elemPGx(epg_CC_irregular)
+        Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_irregular)
+            thisP   => elemPGx(1:Npack,thisCol)
             !% --- solve both perimeter and hydraulic radius
-            call irregular_perimeter_and_hydradius_from_depth          &
-                (elemPGx, Npack, thisCol,                              &
+            call irregular_perimeter_and_hydradius_from_depth (thisP,  &
                  setting%ZeroValue%TopWidth + setting%ZeroValue%Depth, &
                  setting%ZeroValue%Depth)
             !call irregular_perimeter_from_hydradius_area (elemPGx, Npack, thisCol)
@@ -2764,11 +2274,11 @@ module geometry
 
 
         !% --- PARABOLIC
-        Npack => npack_elemPGx(epg_CC_parabolic)
+        thisCol =>   col_elemPGx(epg_CC_parabolic)
+        Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_parabolic)
             thisP   => elemPGx(1:Npack,thisCol)
-            call parabolic_perimeter_from_depth (elemPGx, Npack, thisCol)
+            call parabolic_perimeter_from_depth (thisP)
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
             hydradius(thisP) = llgeo_hydradius_from_area_and_perimeter_pure &
                                         (thisP, area(thisP), perimeter(thisP))
@@ -2779,13 +2289,13 @@ module geometry
 
         
         !% --- POWER FUNCTION
-        Npack => npack_elemPGx(epg_CC_power_function)
+        thisCol => col_elemPGx(epg_CC_power_function)
+        Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_power_function)
             thisP   => elemPGx(1:Npack,thisCol)
             print *, 'POWER FUNCTION CROSS SECTION NOT COMPLETED'
             call util_crashpoint(54987)
-            call powerfunction_perimeter_from_depth (elemPGx, Npack, thisCol)
+            call powerfunction_perimeter_from_depth (thisP)
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
             hydRadius(thisP) = llgeo_hydradius_from_area_and_perimeter_pure &
                                          (thisP, area(thisP), perimeter(thisP))
@@ -2793,11 +2303,11 @@ module geometry
         end if
 
         !% --- RECTANGULAR
-        Npack => npack_elemPGx(epg_CC_rectangular)
+        thisCol => col_elemPGx(epg_CC_rectangular)
+        Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
-            thisCol => col_elemPGx(epg_CC_rectangular)
             thisP   => elemPGx(1:Npack,thisCol)
-            call rectangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+            call rectangular_perimeter_from_depth (thisP)
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
             hydRadius(thisP) = llgeo_hydradius_from_area_and_perimeter_pure &
                                         (thisP, area(thisP), perimeter(thisP))
@@ -2812,7 +2322,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_trapezoidal)
             thisP   => elemPGx(1:Npack,thisCol)
-            call trapezoidal_perimeter_from_depth (elemPGx, Npack, thisCol)
+            call trapezoidal_perimeter_from_depth (thisP)
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
             hydRadius(thisP) = llgeo_hydradius_from_area_and_perimeter_pure &
                                         (thisP, area(thisP), perimeter(thisP))
@@ -2827,7 +2337,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_triangular)
             thisP   => elemPGx(1:Npack,thisCol)
-            call triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+            call triangular_perimeter_from_depth (thisP)
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
             hydRadius(thisP) = llgeo_hydradius_from_area_and_perimeter_pure &
                                         (thisP, area(thisP), perimeter(thisP))
@@ -2846,7 +2356,7 @@ module geometry
             thisCol => col_elemPGx(epg_CC_arch)
             thisP   => elemPGx(1:Npack,thisCol)
             call llgeo_tabular_hydradius_from_depth  &
-                (elemPGx, Npack, thisCol, RArch, setting%ZeroValue%Depth)
+                (thisP, RArch, setting%ZeroValue%Depth)
             perimeter(thisP) = llgeo_perimeter_from_hydradius_and_area_pure &
                                             (thisP, hydradius(thisP), area(thisP))
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
@@ -2862,7 +2372,7 @@ module geometry
             thisCol => col_elemPGx(epg_CC_basket_handle)
             thisP   => elemPGx(1:Npack,thisCol)
             call llgeo_tabular_hydradius_from_depth  &
-                (elemPGx, Npack, thisCol, RBasketHandle, setting%ZeroValue%Depth)
+                (thisP, RBasketHandle, setting%ZeroValue%Depth)
             perimeter(thisP) = llgeo_perimeter_from_hydradius_and_area_pure &
                                             (thisP, hydradius(thisP), area(thisP))
             perimeter(thisP)=  max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
@@ -2878,7 +2388,7 @@ module geometry
             thisCol => col_elemPGx(epg_CC_catenary)
             thisP   => elemPGx(1:Npack,thisCol)
             call llgeo_tabular_hydradius_from_sectionfactor_and_area &
-                (elemPGx, Npack, thisCol, SCatenary, esgr_Catenary_SoverSfull, &
+                (thisP, SCatenary, esgr_Catenary_SoverSfull, &
                 setting%ZeroValue%Depth, setting%ZeroValue%Area)
             perimeter(thisP) = llgeo_perimeter_from_hydradius_and_area_pure &
                                             (thisP, hydradius(thisP), area(thisP))
@@ -2895,7 +2405,7 @@ module geometry
             thisCol => col_elemPGx(epg_CC_circular)
             thisP   => elemPGx(1:Npack,thisCol)
             call llgeo_tabular_hydradius_from_depth  &
-                (elemPGx, Npack, thisCol, RCirc, setting%ZeroValue%Depth)
+                (thisP, RCirc, setting%ZeroValue%Depth)
             perimeter(thisP) = llgeo_perimeter_from_hydradius_and_area_pure &
                                             (thisP, hydradius(thisP), area(thisP))
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
@@ -2912,7 +2422,7 @@ module geometry
             thisCol => col_elemPGx(epg_CC_egg_shaped)
             thisP   => elemPGx(1:Npack,thisCol)
             call llgeo_tabular_hydradius_from_depth  &
-                (elemPGx, Npack, thisCol, REgg, setting%ZeroValue%Depth)
+                (thisP, REgg, setting%ZeroValue%Depth)
             perimeter(thisP) = llgeo_perimeter_from_hydradius_and_area_pure &
                                             (thisP, hydradius(thisP), area(thisP))
             perimeter(thisP)= max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
@@ -2927,7 +2437,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_filled_circular)
             thisP   => elemPGx(1:Npack,thisCol)
-            call filled_circular_hydradius_and_perimeter_from_depth (elemPGx, Npack, thisCol)
+            call filled_circular_hydradius_and_perimeter_from_depth (thisP)
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
             hydradius(thisP) = max(hydradius(thisP),setting%ZeroValue%Depth)
 
@@ -2942,7 +2452,7 @@ module geometry
             thisCol => col_elemPGx(epg_CC_gothic)
             thisP   => elemPGx(1:Npack,thisCol)
             call llgeo_tabular_hydradius_from_sectionfactor_and_area &
-                (elemPGx, Npack, thisCol, SGothic, esgr_Gothic_SoverSfull, &
+                (thisP, SGothic, esgr_Gothic_SoverSfull, &
                 setting%ZeroValue%Depth, setting%ZeroValue%Area)
             perimeter(thisP) = llgeo_perimeter_from_hydradius_and_area_pure &
                                             (thisP, hydradius(thisP), area(thisP))
@@ -2960,7 +2470,7 @@ module geometry
             thisCol => col_elemPGx(epg_CC_horiz_ellipse)
             thisP   => elemPGx(1:Npack,thisCol)
             call llgeo_tabular_hydradius_from_depth  &
-                (elemPGx, Npack, thisCol, RHorizEllip, setting%ZeroValue%Depth)
+                (thisP, RHorizEllip, setting%ZeroValue%Depth)
             perimeter(thisP) = llgeo_perimeter_from_hydradius_and_area_pure &
                                            (thisP, hydradius(thisP), area(thisP))
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
@@ -2977,7 +2487,7 @@ module geometry
             thisCol => col_elemPGx(epg_CC_horse_shoe)
             thisP   => elemPGx(1:Npack,thisCol)
             call llgeo_tabular_hydradius_from_depth  &
-                (elemPGx, Npack, thisCol, RHorseShoe, setting%ZeroValue%Depth)
+                (thisP, RHorseShoe, setting%ZeroValue%Depth)
             perimeter(thisP) = llgeo_perimeter_from_hydradius_and_area_pure &
                                             (thisP, hydradius(thisP), area(thisP))
             perimeter(thisP)= max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
@@ -2993,7 +2503,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_mod_basket)
             thisP   => elemPGx(1:Npack,thisCol)
-            call mod_basket_perimeter_from_depth (elemPGx, Npack, thisCol)
+            call mod_basket_perimeter_from_depth (thisP)
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
             hydradius(thisP) = llgeo_hydradius_from_area_and_perimeter_pure &
                                          (thisP, area(thisP), perimeter(thisP))
@@ -3010,7 +2520,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_closed)
             thisP   => elemPGx(1:Npack,thisCol)
-            call rectangular_closed_perimeter_from_depth (elemPGx, Npack, thisCol)
+            call rectangular_closed_perimeter_from_depth (thisP)
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
             hydradius(thisP) = llgeo_hydradius_from_area_and_perimeter_pure &
                                          (thisP, area(thisP), perimeter(thisP))
@@ -3025,7 +2535,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_round)
             thisP   => elemPGx(1:Npack,thisCol)
-            call rect_round_perimeter_from_depth (elemPGx, Npack, thisCol)
+            call rect_round_perimeter_from_depth (thisP)
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
             hydradius(thisP) = llgeo_hydradius_from_area_and_perimeter_pure &
                                          (thisP, area(thisP), perimeter(thisP))
@@ -3041,7 +2551,7 @@ module geometry
         if (Npack > 0) then
             thisCol => col_elemPGx(epg_CC_rectangular_triangular)
             thisP   => elemPGx(1:Npack,thisCol)
-            call rectangular_triangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+            call rectangular_triangular_perimeter_from_depth (thisP)
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
             hydradius(thisP) = llgeo_hydradius_from_area_and_perimeter_pure &
                                         (thisP, area(thisP), perimeter(thisP))
@@ -3057,7 +2567,7 @@ module geometry
             thisCol => col_elemPGx(epg_CC_semi_circular)
             thisP   => elemPGx(1:Npack,thisCol)
             call llgeo_tabular_hydradius_from_sectionfactor_and_area &
-                (elemPGx, Npack, thisCol, SSemiCircular, esgr_Semi_Circular_SoverSfull, &
+                (thisP, SSemiCircular, esgr_Semi_Circular_SoverSfull, &
                 setting%ZeroValue%Depth, setting%ZeroValue%Area)
             perimeter(thisP) = llgeo_perimeter_from_hydradius_and_area_pure &
                                             (thisP, hydradius(thisP), area(thisP))
@@ -3074,7 +2584,7 @@ module geometry
             thisCol => col_elemPGx(epg_CC_semi_elliptical)
             thisP   => elemPGx(1:Npack,thisCol)
             call llgeo_tabular_hydradius_from_sectionfactor_and_area &
-                (elemPGx, Npack, thisCol, SSemiEllip, esgr_Semi_Elliptical_SoverSfull, &
+                (thisP, SSemiEllip, esgr_Semi_Elliptical_SoverSfull, &
                 setting%ZeroValue%Depth, setting%ZeroValue%Area)
             perimeter(thisP) = llgeo_perimeter_from_hydradius_and_area_pure &
                                             (thisP, hydradius(thisP), area(thisP))
@@ -3092,7 +2602,7 @@ module geometry
             thisCol => col_elemPGx(epg_CC_vert_ellipse)
             thisP   => elemPGx(1:Npack,thisCol)
             call llgeo_tabular_hydradius_from_depth  &
-                (elemPGx, Npack, thisCol, RVertEllip, setting%ZeroValue%Depth)
+                (thisP, RVertEllip, setting%ZeroValue%Depth)
             perimeter(thisP) = llgeo_perimeter_from_hydradius_and_area_pure &
                                             (thisP, hydradius(thisP), area(thisP))
             perimeter(thisP) = max(perimeter(thisP),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
@@ -3110,6 +2620,191 @@ module geometry
     end subroutine geo_perimeter_and_hydradius_from_depth_by_type_CC
 !%
 !%========================================================================== 
+!%==========================================================================  
+!%
+    subroutine geo_perimeter_and_hydradius_from_depth_by_element_CC (thisP, Npack)   
+        !%------------------------------------------------------------------
+        !% Description
+        !% Companion to geo_perimeter_and_hydradius_from_depth_by_type_allCC that
+        !% computes for the entire set of cells of a given type.  This
+        !% cycles through the set, so is less efficient, but is needed
+        !% where only a subset of elements to be evaluated
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisP(:), Npack
+            integer :: mm
+            integer, dimension(1) :: ap
+
+            real(8), pointer :: area(:), perimeter(:), hydradius(:)
+        !%------------------------------------------------------------------
+        !% Aliases
+            area      => elemR(:,er_Area)
+            hydradius => elemR(:,er_HydRadius)
+            perimeter => elemR(:,er_Perimeter)
+        !%------------------------------------------------------------------
+
+        do mm=1,Npack
+            ap(1) = thisP(mm)
+            select case (elemI(ap(1),ei_geometryType))
+                case (irregular)
+                    call irregular_perimeter_and_hydradius_from_depth (ap, &
+                        setting%ZeroValue%TopWidth + setting%ZeroValue%Depth,     &
+                        setting%ZeroValue%Depth)
+
+                case (power_function)
+                    print *, 'POWER FUNCTION CROSS-SECTION NOT COMPLETE'
+                    call util_crashpoint(5559867)
+
+                case (parabolic)
+                    call parabolic_perimeter_from_depth (ap)
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                    hydradius(ap) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                        (ap, area(ap), perimeter(ap))
+                    hydradius(ap) = max(hydradius(ap),setting%ZeroValue%Depth)
+
+                case (rectangular)
+                    call rectangular_perimeter_from_depth (ap)
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                    hydRadius(ap) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                        (ap, area(ap), perimeter(ap))
+                    hydradius(ap) = max(hydradius(ap),setting%ZeroValue%Depth)
+
+                case (trapezoidal)
+                    call trapezoidal_perimeter_from_depth (ap)
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                    hydRadius(ap) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                        (ap, area(ap), perimeter(ap))
+                    hydradius(ap) = max(hydradius(ap),setting%ZeroValue%Depth)
+
+                case (triangular)
+                    call triangular_perimeter_from_depth (ap)
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                    hydRadius(ap) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                        (ap, area(ap), perimeter(ap))
+                    hydradius(ap) = max(hydradius(ap),setting%ZeroValue%Depth)
+
+                case (arch)
+                    call llgeo_tabular_hydradius_from_depth (ap, RArch, setting%ZeroValue%Depth)
+                    perimeter(ap) = llgeo_perimeter_from_hydradius_and_area_pure &
+                                            (ap, hydradius(ap), area(ap))
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                case (basket_handle)
+                    call llgeo_tabular_hydradius_from_depth (ap, RBasketHandle, setting%ZeroValue%Depth)
+                    perimeter(ap) = llgeo_perimeter_from_hydradius_and_area_pure &
+                                            (ap, hydradius(ap), area(ap))
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                case (catenary)
+                    call llgeo_tabular_hydradius_from_sectionfactor_and_area &
+                        (ap, SCatenary, esgr_Catenary_SoverSfull,       &
+                        setting%ZeroValue%Depth, setting%ZeroValue%Area)
+                    perimeter(ap) = llgeo_perimeter_from_hydradius_and_area_pure &
+                                                    (ap, hydradius(thisP), area(ap))
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                case (circular)
+                    call llgeo_tabular_hydradius_from_depth (ap, RCirc, setting%ZeroValue%Depth)
+                    perimeter(ap) = llgeo_perimeter_from_hydradius_and_area_pure &
+                                            (ap, hydradius(ap), area(ap))
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                case (eggshaped)
+                    call llgeo_tabular_hydradius_from_depth (ap, REgg, setting%ZeroValue%Depth)
+                    perimeter(ap) = llgeo_perimeter_from_hydradius_and_area_pure &
+                                            (ap, hydradius(ap), area(ap))
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                case (filled_circular)
+                    call filled_circular_hydradius_and_perimeter_from_depth (ap)
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                    hydradius(ap) = max(hydradius(ap),setting%ZeroValue%Depth)
+
+                case (gothic)
+                    call llgeo_tabular_hydradius_from_sectionfactor_and_area &
+                        (ap, SGothic, esgr_Gothic_SoverSfull,       &
+                        setting%ZeroValue%Depth, setting%ZeroValue%Area)
+                    perimeter(ap) = llgeo_perimeter_from_hydradius_and_area_pure &
+                                             (ap, hydradius(thisP), area(ap))
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                case (horiz_ellipse)
+                    call llgeo_tabular_hydradius_from_depth (ap, RHorizEllip, setting%ZeroValue%Depth)
+                    perimeter(ap) = llgeo_perimeter_from_hydradius_and_area_pure &
+                                            (ap, hydradius(ap), area(ap))
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                case (horseshoe)
+                    call llgeo_tabular_hydradius_from_depth (ap, RHorseShoe, setting%ZeroValue%Depth)
+                    perimeter(ap) = llgeo_perimeter_from_hydradius_and_area_pure &
+                                            (ap, hydradius(ap), area(ap))
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                case (mod_basket)
+                    call mod_basket_perimeter_from_depth (ap)
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                    hydradius(ap) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                                (ap, area(ap), perimeter(ap))
+                    hydradius(ap) = max(hydradius(ap),setting%ZeroValue%Depth)
+
+                case (rectangular_closed)
+                    call rectangular_closed_perimeter_from_depth (ap)
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                    hydradius(ap) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                         (ap, area(ap), perimeter(ap))
+                    hydradius(ap) = max(hydradius(ap),setting%ZeroValue%Depth)
+
+                case (rect_round)
+                    call rect_round_perimeter_from_depth (ap)
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                    hydradius(ap) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                         (ap, area(ap), perimeter(ap))
+                    hydradius(ap) = max(hydradius(ap),setting%ZeroValue%Depth)
+
+                case (rect_triang)
+                    call rectangular_triangular_perimeter_from_depth (ap)
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+                    hydradius(ap) = llgeo_hydradius_from_area_and_perimeter_pure &
+                                        (ap, area(ap), perimeter(ap))
+                    hydradius(ap) = max(hydradius(ap),setting%ZeroValue%Depth)
+
+                case (semi_circular)
+                    call llgeo_tabular_hydradius_from_sectionfactor_and_area &
+                        (ap, SSemiCircular, esgr_Semi_Circular_SoverSfull,       &
+                         setting%ZeroValue%Depth, setting%ZeroValue%Area)
+                    perimeter(ap) = llgeo_perimeter_from_hydradius_and_area_pure &
+                                            (ap, hydradius(thisP), area(ap))
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)        
+
+                case (semi_elliptical)
+                    call llgeo_tabular_hydradius_from_sectionfactor_and_area &
+                        (ap, SSemiEllip, esgr_Semi_Elliptical_SoverSfull,       &
+                        setting%ZeroValue%Depth, setting%ZeroValue%Area)
+                    perimeter(ap) = llgeo_perimeter_from_hydradius_and_area_pure &
+                                            (ap, hydradius(thisP), area(ap))
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth) 
+
+                case (vert_ellipse)
+                    call llgeo_tabular_hydradius_from_depth (ap, RVertEllip, setting%ZeroValue%Depth)
+                    perimeter(ap) = llgeo_perimeter_from_hydradius_and_area_pure &
+                                            (ap, hydradius(ap), area(ap))
+                    perimeter(ap) = max(perimeter(ap),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
+
+                case (custom)
+                    print *, 'CUSTOM CROSS-SECTION NOT COMPLETE'
+                    call util_crashpoint(52498767)
+                case default
+                    print *, 'CODE ERROR: Unexpected case default'
+                    call util_crashpoint(7209874)
+            end select
+
+
+
+        end do
+
+    end subroutine geo_perimeter_and_hydradius_from_depth_by_element_CC
+!%
+!%==========================================================================
 !%==========================================================================
 !%
     ! subroutine geo_perimeter_from_depth_by_type &
@@ -3611,15 +3306,14 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_elldepth_from_head_CC (thisColP)
+    subroutine geo_elldepth_from_head_CC (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% computes the value of "ell" -- the modified hydraulic depth
         !% used as a length scale in AC method
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, intent(in) :: thisColP
-            integer, pointer :: thisP(:), Npack
+            integer, intent(in) :: thisP(:)
             real(8), pointer :: ellDepth(:), head(:), area(:), topwidth(:) , depth(:)
             real(8), pointer :: ZbreadthMax(:), breadthMax(:), areaBelowBreadthMax(:)
             real(8), pointer :: zcrown(:)
@@ -3628,13 +3322,10 @@ module geometry
             character(64) :: subroutine_name = 'geo_ell'
         !%------------------------------------------------------------------
         !% Preliminaries:
-            Npack => npack_elemP(thisColP)
-            if (Npack < 1) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% Aliases:
-            thisP               => elemP(1:Npack,thisColP)
             ellDepth            => elemR(:,er_EllDepth)
             head                => elemR(:,er_Head)
             area                => elemR(:,er_Area)
@@ -4469,22 +4160,17 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_ZeroDepth_from_volume (elemPGx, Npack, thisCol)
+    subroutine geo_ZeroDepth_from_volume (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% ensures that if volume <= zeroArea * length the depth will be
         !% zeroDepth
         !%------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:), volume(:), length(:), area(:)
-        !%-------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
         !%------------- -----------------------------------------------------
         !% Aliases
-            thisP       => elemPGx(1:Npack,thisCol)
             depth       => elemR(:,er_Depth)
             volume      => elemR(:,er_Volume)
             length      => elemR(:,er_Length)
@@ -4834,6 +4520,710 @@ module geometry
     ! end subroutine geometry_table_initialize
 !%
 !%=========================================================================
+    !%        
+!% 
+!%==========================================================================
+!%==========================================================================
+!%
+   ! subroutine geometry_toplevel()
+        ! !%------------------------------------------------------------------
+        ! !% Description:
+        ! !% Input whichTM is one of ETM, AC, or ALLtm
+        ! !% This should never be called for diagnostic arrays
+        ! !% Note that the elemPGx arrays contain only time-marched elements so they
+        ! !% will only handle CC and JM elements as the JB elements are not time-marched.
+        ! !%------------------------------------------------------------------
+        ! !% Declarations
+        !     integer, intent(in) :: whichTM
+        !     integer, pointer :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
+        !     !integer, pointer :: thisColP_surcharged, thisColP_NonSurcharged, 
+        !     integer, pointer :: thisColP_all_TM, thisColP_Open_CC
+        !     integer, pointer :: thisColP_JM, thisColP_JB, thisColP_CC
+        !     integer, pointer :: thisColP_Closed_CC, thisColP_Closed_JB
+        !     integer, pointer :: Npack, thisP(:)
+        !     !integer, pointer ::  thisColP_Closed_JM
+        !     logical :: isreset
+        !     real(8), pointer :: depth(:), volume(:), area(:), topwidth(:)
+        !     integer, allocatable :: tempP(:) !% debugging
+        !     character(64) :: subroutine_name = 'geometry_toplevel'
+        ! !%------------------------------------------------------------------
+        ! !% Preliminaries
+        !     !!if (crashYN) return
+        !     if (setting%Debug%File%geometry) &
+        !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        ! !%------------------------------------------------------------------
+        ! !% Aliases
+        !     area   => elemR(:,er_Area)
+        !     depth  => elemR(:,er_Depth)
+        !     topwidth => elemR(:,er_Topwidth)
+        !     volume => elemR(:,er_Volume)
+        ! !% set the packed geometry element array (elemPG) to use and columns of the
+        ! !% packed elemP to use
+        !     select case (whichTM)
+        !         ! case (ALLtm)
+        !         !     elemPGx                => elemPGalltm(:,:) 
+        !         !     npack_elemPGx          => npack_elemPGalltm(:)
+        !         !     col_elemPGx            => col_elemPGalltm(:)
+        !         !     thisColP_CC            => col_elemP(ep_CC_ALLtm)
+        !         !     thisColP_JM            => col_elemP(ep_JM_ALLtm)
+        !         !     thisColP_JB            => col_elemP(ep_JB_ALLtm)
+        !         !     !thisColP_surcharged    => col_elemP(ep_ALLtmSurcharged)
+        !         !     !thisColP_NonSurcharged => col_elemP(ep_ALLtm_NonSurcharged)
+        !         !     thisColP_all           => col_elemP(ep_ALLtm)
+        !         !     thisColP_Open_CC       => col_elemP(ep_CC_Open_Elements)
+        !         !     thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
+        !         !     thisColP_Closed_JB     => col_elemP(ep_JB_Closed_Elements)
+        !         !     !thisColP_Closed_JM     => col_elemP(ep_JM_Closed_Elements)
+        !         case (ETM)
+        !             elemPGx                => elemPGetm(:,:)
+        !             npack_elemPGx          => npack_elemPGetm(:)
+        !             col_elemPGx            => col_elemPGetm(:)
+        !             thisColP_CC            => col_elemP(ep_CC_ETM)
+        !             thisColP_JM            => col_elemP(ep_JM_ETM)
+        !             !thisColP_JB            => col_elemP(ep_JB_ETM)
+        !             !thisColP_surcharged    => col_elemP(ep_PSsurcharged)
+        !             !thisColP_NonSurcharged => col_elemP(ep_ETM_PSnonSurcharged)
+        !             thisColP_all_TM        => col_elemP(ep_ETM)
+        !             thisColP_Open_CC       => col_elemP(ep_CC_Open_Elements)
+        !             thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
+        !             thisColP_Closed_JB     => col_elemP(ep_JB_Closed_Elements)
+        !             !thisColP_Closed_JM     => col_elemP(ep_JM_Closed_Elements)
+        !         ! case (AC)
+        !         !     elemPGx                => elemPGac(:,:)
+        !         !     npack_elemPGx          => npack_elemPGac(:)
+        !         !     col_elemPGx            => col_elemPGac(:)
+        !         !     thisColP_CC            => col_elemP(ep_CC_AC)
+        !         !     thisColP_JM            => col_elemP(ep_JM_AC)
+        !         !     thisColP_JB            => col_elemP(ep_JB_AC)
+        !         !     !thisColP_surcharged    => col_elemP(ep_ACsurcharged)
+        !         !     !thisColP_NonSurcharged => col_elemP(ep_AC_ACnonSurcharged)
+        !         !     thisColP_all           => col_elemP(ep_AC)
+        !         !     thisColP_Open_CC       => col_elemP(ep_CC_Open_Elements)
+        !         !     thisColP_Closed_CC     => col_elemP(ep_CC_Closed_Elements)
+        !         !     thisColP_Closed_JB     => col_elemP(ep_JB_Closed_Elements)
+        !         !     !thisColP_Closed_JM     => col_elemP(ep_JM_Closed_Elements)
+        !         case default
+        !             print *, 'CODE ERROR: time march type unknown for # ', whichTM
+        !             print *, 'which has key ',trim(reverseKey(whichTM))
+        !             call util_crashpoint(7389)
+        !             !return
+        !             !stop 7389
+        !     end select
+        !     call util_crashstop(49872)
+        ! !%--------------------------------------------------------------------
+        !     ! ! call util_utestLprint ('in geometry at top==========================================')  
+
+        ! !% STATUS: at this point we know volume and velocity on all elements
+        ! !% from RK2 solution
+
+        ! !% --- PONDING
+        ! !%     adjust time-march volume for ponding inflow
+        ! !%     This affects JM that have previous ponding but now have volumes
+        ! !%     below the full volume
+        ! if (setting%SWMMinput%AllowPonding) then
+        !     call geo_ponding_inflow (thisColP_JM)   
+        ! end if
+        !     ! ! call util_utestLprint ('in geometry after ponding inflow') 
+           
+        ! !% --- PREISSMAN SLOT    
+        ! !%     also adds to ponded volume or computes overflow volume for JM (only)
+        ! !%     where slot depth + invert height exceeds maximum surcharge height
+        ! !%     The Element Volume in JM is adjusted for any overflow or ponding
+        ! !%     (but not for the slot)
+        ! call slot_toplevel (thisColP_Closed_CC, thisColP_JM)
+
+        !     ! ! call util_utestLprint ('in geometry after slot toplevel') 
+
+        !     !stop 29387488
+
+        ! !% STATUS: The Preissmann Slot values have been assigned for all CC and JM
+        ! !% Overflow and Ponding have been assigned for JM (only). 
+        ! !% JM element volumes have been adjusted for overflow or ponding, but
+        ! !% not for slot volume. So both JM and CC have volume > fullvolume
+        ! !% in surcharged elements.
+
+        ! !% --- assign all geometry for surcharged elements CC, JM
+        ! !%     Note: not used in Preissmann Slot (only AC)
+        ! !%     DO NOT DELETE. HOLD THIS FOR LATER USE 20220909brh
+        ! ! if ((whichTM .eq. ALLtm) .or. (whichTM .eq. AC)) then
+        ! !     call geo_ACsurcharged (thisColP_surcharged)
+        ! ! end if
+
+        ! !% --- ZERO VOLUMES CC JM
+        ! !%     reset all zero or near-zero volumes in all CC, JM
+        ! !call adjust_limit_by_zerovalues (er_Volume, setting%ZeroValue%Volume, thisColP_NonSurcharged, .true.)
+        ! call adjust_limit_by_zerovalues &
+        !     (er_Volume, setting%ZeroValue%Volume, thisColP_all_TM, .true.)
+
+        !     ! ! call util_utestLprint ('in geometry after limit_by_zerovalues (volume)') 
+
+        ! !% --- DEPTH
+        ! !%     compute the depth on all elements of CC JM based on geometry.
+        ! !%     If surcharged, this call returns the full depth of a closed conduit 
+        ! !%     without adding Preissmann Slot depth.
+        ! call geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
+
+        ! ! print *, 'after geo_depth_from_volume '
+        ! ! print *, elemR(50,er_Depth), elemR(51,er_Depth)
+
+        !     ! ! call util_utestLprint ('in geometry after depth_from_volume') 
+
+        ! !% --- ZERO DEPTH CC JM -- now done in geo_depth_from_volume_by_type 20230113
+        ! !%     reset all zero or near-zero depths in aa CC and JM
+        ! !call adjust_limit_by_zerovalues (er_Depth, setting%ZeroValue%Depth, thisColP_NonSurcharged, .false.)
+        ! call adjust_limit_by_zerovalues &
+        !     (er_Depth, setting%ZeroValue%Depth, thisColP_all_TM, .false.)
+
+        !     ! ! call util_utestLprint ('in geometry after limit_by_zerovalues (depth)') 
+
+        ! !% --- PIEZOMETRIC HEAD
+        ! !%     compute the head on all elements of CC and JM
+        ! !%     This sets head consistent with depth computed in geo_depth_from_volume
+        ! !%     Head is strictly limited to the max depth + zbottom so it does not
+        ! !%     include surcharge effects     
+        ! Npack     => npack_elemP(thisColP_all_TM)
+        ! if (Npack > 0) then
+        !     thisP => elemP(1:Npack,thisColP_all_TM)
+        !     elemR(thisP,er_Head) = llgeo_head_from_depth_pure (thisP, depth(thisP))
+        !     !elemR(thisP,er_PressureHead) = llgeo_head_from_depth_pure (thisP)
+        !     !call geo_head_from_depth (thisColP_all_TM)
+        ! end if
+ 
+        ! ! print *, 'after geo_head_from_depth '
+        ! ! print *, elemR(50,er_Head), elemR(51,er_Head)
+        !     ! ! call util_utestLprint ('in geometry after head_from_depth')
+
+        ! !% --- OPEN CHANNEL OVERFLOW
+        ! !%     Compute the overflow lost for CC open channels above
+        ! !%     their maximum volume (no ponding allowed from open CC). 
+        ! !%     Note that overflow or ponding for JM elements is handled 
+        ! !%     in slot_JM_ETM.
+        ! !%     Note, this is NOT standard in EPA-SWMM
+        ! if (setting%Discretization%AllowChannelOverflowTF) then
+        !     call geo_overflow_openchannels (thisColP_Open_CC)
+        ! end if
+
+        !     ! ! call util_utestLprint ('in geometry after overflow_openchannels')
+
+        ! !% --- PREISSMAN SLOT VOLUME LIMIT CLOSED CONDUIT CC JM
+        ! !%     limit the volume in closed element (CC, JM) to the full volume
+        ! !%     Note the excess volume has already been stored in the Preissman Slot
+        ! call geo_volumelimit_closed (thisColP_Closed_CC)
+        ! call geo_volumelimit_closed (thisColP_JM)
+
+        !     ! ! call util_utestLprint ('in geometry after volumelimit_closed')
+
+        ! !% REMOVED 20220909 brh
+        ! !% --- limit volume for incipient surcharge. This is done after depth is computed
+        ! !%     so that the "depth" algorithm can include depths greater than fulldepth
+        ! !%     as a way to handle head for incipient surcharge.
+        ! !call geo_limit_incipient_surcharge (er_Volume, er_FullVolume, thisColP_NonSurcharged,.true.) !% 20220124brh
+        !     ! ! call util_utestLprint ('in geometry before geo_limit_incipient_surcharge (Depth)')  
+        ! !% --- limit depth for surcharged on CC. This is done after head is computed
+        ! !%     so that the depth algorithm can include depths greater than fulldepth where the 
+        ! !%     geometry algorithm does not enforrce full depth
+        ! !call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_NonSurcharged,.false.) 
+        ! !@call geo_limit_incipient_surcharge (er_Depth, er_FullDepth, thisColP_all,.false.) 
+        ! !% END REMOVE 20220909
+
+        ! !% STATUS: At this point, the depths, heads and volumes of all CC, JM elements are
+        ! !% at or below their full value.  For CC closed conduits and all JM the
+        ! !% surcharged volume is stored in the er_SlotVolume and the surcharged extra
+        ! !% depth is stored in the er_SlotDepth 
+
+        ! !% --- PREISSMAN SLOT HEAD ADD IN JM 
+        ! !%     adjust JM head to include Preissmann Slot Depth and ponding
+        ! !%     This is needed before JB are computed
+        ! call slot_JM_head_PSadd (thisColP_JM)
+
+        !     ! ! call util_utestLprint ('in geometry after JM_head_PSadd') 
+           
+        ! !% --- JB VALUES
+        ! !%    assign the non-volume geometry on junction branches JB based on JM head
+        ! !%    Values limited by full volume. Volume assigned is area * length
+        ! call geo_assign_JB (whichTM, thisColP_JM)
+
+        !     ! ! call util_utestLprint ('in geometry after assign_JB') 
+
+        ! !% --- JB CLOSED CONDUIT VOLUME LIMIT
+        ! !%     further limiting the JB volume by full is probably not needed,
+        ! !%     but might be useful if there's a numerical precision issues
+        ! !%     with JB volume assigned by area * length.
+        ! call geo_volumelimit_closed (thisColP_Closed_JB)
+
+        !     ! ! call util_utestLprint ('in geometry after volumelimit_closed') 
+
+        ! !% --- PREISSMANN SLOT HEAD REMOVE IN JM
+        ! !%     we need to remove the PS and ponding from the JM cells so that we can easily
+        ! !%     compute other geometry without full JM causing problems
+        ! call slot_JM_head_PSremove (thisColP_JM)
+
+        !     ! ! call util_utestLprint ('in geometry after JM_head_PSremove')  
+
+        ! !% STATUS: at this point we have all geometry on CC, JM, JB that is
+        ! !% limited by the full volume values. The CC and JM have slot values stored
+        ! !% but no slot values have been computed for JB
+        
+        ! !% --- CROSS-SECTIONAL AREA
+        ! !%    compute area from volume for CC, JM
+        ! !%     For closed conduits this is based on the volume limited by full volume.
+        ! !%     For open channels the volume limit depends on if AllowChanneOverflowTF is false.
+        ! !%     Note that JB areas are already assigned in geo_assign_JB()
+        ! Npack     => npack_elemP(thisColP_all_TM)
+        ! if (Npack > 0) then
+        !     thisP => elemP(1:Npack,thisColP_all_TM)
+        !     elemR(thisP,er_Area) = llgeo_area_from_volume_pure (thisP, volume(thisP))
+        !     elemR(thisP,er_Area) = max(elemR(thisP,er_Area),setting%ZeroValue%Area)
+        !     !call geo_area_from_volume (thisColP_all_TM)
+        ! end if
+
+        !     ! ! call util_utestLprint ('in geometry after area_from_volume') 
+
+        ! ! !% --- ZERO AREA CC JM
+        ! ! !%     reset all zero or near-zero areas in CC and JM
+        ! ! call adjust_limit_by_zerovalues &
+        ! !      (er_Area, setting%ZeroValue%Area, thisColP_all_TM, .false.)
+
+        !     ! ! call util_utestLprint ('in geometry after adjust_limit_by_zeroValues area')   
+
+        ! !% --- TOPWIDTH CC
+        ! !%     compute topwidth from depth for all CC
+        ! !%     Note: Topwidth for JM is undefined in this subroutine
+        ! !%     Note: volume is limited to full depth UNLESS AllowChannelOverflowTF is false
+        ! call geo_topwidth_from_depth_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx)
+
+        !     ! ! call util_utestLprint ('in geometry after topwidth_from_depth') 
+
+        ! ! !% --- ZERO TOPWIDTH CC
+        ! ! !%     reset all zero or near-zero topwidth in CC 
+        ! ! !%     but do not change the eYN(:,eYN_isZeroDepth) mask
+        ! ! call adjust_limit_by_zerovalues &
+        ! !      (er_Topwidth, setting%ZeroValue%Topwidth, thisColP_CC, .false.)
+
+        !     ! ! call util_utestLprint ('in geometry after adjust_limit_by_zerovalues topwidth') 
+
+        ! !% --- PERIMETER AND HYDRAULIC RADIUS CC
+        ! !%     compute hydraulic radius and perimeter
+        ! !%     note these two are done together because for analytical cross-sections
+        ! !%     we have equations for perimeter, whereas lookup cross-sections
+        ! !%     have tables for hydraulic radius.
+        ! call geo_perimeter_and_hydradius_from_depth_by_type_CC (elemPGx, npack_elemPGx, col_elemPGx)  
+
+        ! ! % --- compute perimeter from maximum depth for all CC
+        ! ! %     Note: perimeter for JM is undefined in this subroutine
+        ! !OBSOLETE  call geo_perimeter_from_depth (elemPGx, npack_elemPGx, col_elemPGx)
+
+        !     ! ! call util_utestLprint ('in geometry after perimeter from depth') 
+
+        ! !% --- compute hyddepth
+        ! !call geo_hyddepth_from_depth_or_topwidth (elemPGx, npack_elemPGx, col_elemPGx)
+        ! !% 20220930 replace with unified call
+        ! ! Npack     => npack_elemP(thisColP_CC)
+        ! ! if (Npack > 0) then
+        ! !     thisP => elemP(1:Npack,thisColP_CC)
+        ! !     elemR(thisP,er_HydDepth) = llgeo_hyddepth_from_area_and_topwidth_pure &
+        ! !                                 (thisP, area(thisP), topwidth(thisP))
+        ! ! end if
+        ! ! OBSOLETE call geo_hyddepth_from_area_and_topwidth (thisColP_CC)
+
+        ! !    util_utest_CLprint ('in geometry after hyddepth_from_depth')
+
+        ! !% --- compute hydradius
+        ! !%     Note: cannot be used for JM unless perimeter is defined prior.
+        ! !OBSOLETE call geo_hydradius_from_area_perimeter (thisColP_CC)
+
+        ! !    util_utest_CLprint ('in geometry after hydradius_from_area_perimeter') 
+
+        ! !% --- the modified hydraulic depth "ell" is used for 
+        ! !%     for Froude number computations on all CC elements
+        ! !%     Note: ell for JM is undefined in this subroutine
+
+        ! call geo_elldepth_from_head_CC (thisColP_CC)
+
+        ! !% --- compute pressure head from the modified hydraulic depth
+        ! ! Npack     => npack_elemP(thisColP_CC)
+        ! ! if (Npack > 0) then
+        ! !     thisP => elemP(1:Npack,thisColP_CC)
+        ! !     !elemR(thisP,er_Pressure_Head) = llgeo_pressure_head_from_hyddepth_pure (thisP)
+        ! !     !call geo_pressure_head_from_hyddepth (thisColP_CC)
+        ! ! end if
+
+        !     ! ! call util_utestLprint ('in geometry after ell_from_head') 
+
+        ! !% --- make adjustments for slots on closed elements only
+        ! !%     These add slot values to volume, depth, head
+        ! call slot_CC_adjustments (thisColP_Closed_CC)
+
+        !     ! ! call util_utestLprint ('in geometry after slot_CC_adustments') 
+
+        ! call slot_JM_adjustments (thisColP_JM)
+
+        !     ! ! call util_utestLprint ('in geometry after slot_JM_adjustments') 
+
+        ! !% --- compute the SlotDepth, SlotArea, SlotVolume and update
+        ! !%     elem volume and depth for JB. Note elem head on JB either with or
+        ! !%     without surcharge is assigned in geo_assign_JB
+        ! call slot_JB_computation (thisColP_JM)
+        
+        !     ! ! call util_utestLprint ('in geometry after slot_JB_computation') 
+
+        ! !% Set JM values that are not otherwise defined
+        ! !% HydDepth, ell. Note that topwidth, hydradius, perimeter are undefined.
+        ! call geo_JM_values ()
+
+        !     ! ! call util_utestLprint ('in geometry after JM_values') 
+
+        ! !% HOLD UNTIL AC RE-VISITED
+        ! ! !% compute the dHdA that are only for AC nonsurcharged
+        ! ! if (whichTM .ne. ETM) then
+        ! !     call geo_dHdA (ep_AC_ACnonSurcharged)
+        ! ! end if
+
+        !     ! ! call util_utestLprint ('in geometry at end') 
+
+
+        ! !stop 2397843
+
+        ! !% --- check for crashpoint and stop here
+        ! call util_crashstop(322983)
+
+        ! if (setting%Debug%File%geometry) &
+        ! write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+ !   end subroutine geometry_toplevel
+!%
+!%==========================================================================
+    !%==========================================================================
+!%
+    ! subroutine geo_area_from_volume (thisColP)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% sets area = volume/length which is common to all nonsurcharged elements
+    !     !% Note this assumes volume has been limited by surcharge and zero values
+    !     !%------------------------------------------------------------------
+    !     !% Declarations
+    !         integer, intent(in) :: thisColP
+    !         integer, pointer :: thisP(:), Npack
+    !         real(8), pointer :: area(:), volume(:), length(:)
+
+    !         character(64) :: subroutine_name = 'geo_area_from_volume'
+    !     !%--------------------------------------------------------------------
+    !     !% Preliminaries
+    !         Npack  => npack_elemP(thisColP)
+    !         if (Npack < 1) return
+    !         if (setting%Debug%File%geometry) &
+    !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%--------------------------------------------------------------------
+    !     !% Aliases
+    !         thisP  => elemP(1:Npack,thisColP)
+    !         area   => elemR(:,er_Area)
+    !         volume => elemR(:,er_Volume)
+    !         length => elemR(:,er_Length)
+    !     !%--------------------------------------------------------------------
+     
+    !     !% --- note, this could cause issues if length = 0, which should not happen
+    !     area(thisP) = volume(thisP) / length(thisP)
+
+    !     !%--------------------------------------------------------------------
+    !         if (setting%Debug%File%geometry) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine geo_area_from_volume
+!%
+!%==========================================================================
+    !%==========================================================================
+!%
+    ! subroutine geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
+
+        !% OBSOLETE WITH JUNCTION IMPLICIT. REPLACED BY ..._CC and ..._JM
+
+        !%------------------------------------------------------------------
+        !% Description:
+        !% This solves nonsurcharged CCJMJB elements because of PGx arrays
+        !% The elemPGx determines whether this is ALLtm, ETM or AC elements
+        !%------------------------------------------------------------------
+!         !% Declarations:
+!     integer, target, intent(in) :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
+!     integer, pointer :: Npack, thisCol
+!     character(64) :: subroutine_name = 'geo_depth_from_volume_by_type'
+! !%-------------------------------------------------------------------
+! !% Preliminaries
+!     !!if (crashYN) return
+!     if (setting%Debug%File%geometry) &
+!         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+!%-------------------------------------------------------------------    
+!% cycle through different geometries  
+
+        ! print *, ' '
+        ! print *, 'at start of geo_depth_from_volume_by_type'
+        ! print *, 54, elemR(54,er_Depth), elemR(54,er_Volume)
+        ! print *, ' '
+
+        
+!% --- open channels ------------------------------------------
+
+! !% --- IRREGULAR
+! thisCol => col_elemPGx(epg_CC_irregular)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call irregular_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if    
+        
+! !% -- POWER FUNCTION
+! thisCol => col_elemPGx(epg_CC_power_function)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     print *, 'POWER FUNCTION CROSS-SECTION NOT COMPLETE'
+!     call util_crashpoint(5559872)
+!     !call powerfunction_depth_from_volume (elemPGx, Npack, thisCol)
+!     !call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! !% -- PARABOLIC
+! thisCol => col_elemPGx(epg_CC_parabolic)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call parabolic_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+        
+! !% --- RECTANGULAR CHANNEL
+! thisCol => col_elemPGx(epg_CC_rectangular)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!         ! print *, 'rect here Volume/length',elemR(15,er_Volume)/elemR(15,er_Length)
+!         ! print *,  'zero area           ',setting%ZeroValue%Area
+!     call rectangular_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if    
+
+! !% --- TRAPEZOIDAL CHANNEL
+! thisCol => col_elemPGx(epg_CC_trapezoidal)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! !% --- TRIANGULAR CHANNEL
+! thisCol => col_elemPGx(epg_CC_triangular)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call triangular_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! !% --- CLOSED CONDUITS  ---------------------------------------
+
+! !% --  ARCH CONDUIT
+! thisCol => col_elemPGx(epg_CC_arch)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call llgeo_tabular_depth_from_volume   &
+!         (elemPGx, Npack, thisCol, YArch)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! !% --  BASKET_HANDLE
+! thisCol => col_elemPGx(epg_CC_basket_handle)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call llgeo_tabular_depth_from_volume           &
+!         (elemPGx, Npack, thisCol, YBasketHandle)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)   
+! end if
+
+! !% --  CATENARY
+! thisCol => col_elemPGx(epg_CC_catenary)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call llgeo_tabular_depth_from_volume           &
+!         (elemPGx, Npack, thisCol, YCatenary)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+! end if
+
+! !% --- CIRCULAR CONDUIT
+! thisCol => col_elemPGx(epg_CC_circular)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call circular_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! !% --  EGG_SHAPED
+! thisCol => col_elemPGx(epg_CC_egg_shaped)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call llgeo_tabular_depth_from_volume           &
+!         (elemPGx, Npack, thisCol, YEgg)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! !% --- FILLED CIRCULAR CONDUIT
+! thisCol => col_elemPGx(epg_CC_filled_circular)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call filled_circular_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! !% --  GOTHIC
+! thisCol => col_elemPGx(epg_CC_gothic)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call llgeo_tabular_depth_from_volume           &
+!         (elemPGx, Npack, thisCol, YGothic)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+! end if
+
+! !% --  HORIZONTAL ELLIPSE
+! thisCol => col_elemPGx(epg_CC_horiz_ellipse)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call llgeo_tabular_depth_from_volume           &
+!         (elemPGx, Npack, thisCol, YHorizEllip)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+! end if
+
+! !% --  HORSESHOE
+! thisCol => col_elemPGx(epg_CC_horse_shoe)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call llgeo_tabular_depth_from_volume           &
+!         (elemPGx, Npack, thisCol, YHorseShoe)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+! end if
+
+! !% --  MODIFIED BASKET HANDLE
+! thisCol => col_elemPGx(epg_CC_mod_basket)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call mod_basket_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! !% --- RECTANGULAR CLOSED CONDUIT
+! thisCol => col_elemPGx(epg_CC_rectangular_closed)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call rectangular_closed_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if        
+
+! !% --- RECTANGULAR ROUND CONDUIT
+! thisCol => col_elemPGx(epg_CC_rectangular_round)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call rect_round_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! !% -- RECTANGULAR TRIANGULAR
+! thisCol => col_elemPGx(epg_CC_rectangular_triangular)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call rectangular_triangular_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! ! % --- SEMI-CIRCULAR CONDUIT
+! thisCol => col_elemPGx(epg_CC_semi_circular)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call llgeo_tabular_depth_from_volume           &
+!         (elemPGx, Npack, thisCol, YSemiCircular)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+! end if
+
+! !% --  SEMI ELLIPTICAL
+! thisCol => col_elemPGx(epg_CC_semi_elliptical)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call llgeo_tabular_depth_from_volume           &
+!         (elemPGx, Npack, thisCol, YSemiEllip)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+! end if
+
+! !% --  VERTICAL ELLIPSE
+! thisCol => col_elemPGx(epg_CC_vert_ellipse)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call llgeo_tabular_depth_from_volume           &
+!         (elemPGx, Npack, thisCol, YVertEllip)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)    
+! end if
+
+
+! !% --- JUNCTIONS ---------------------------------------------------- 
+
+! !% JM with functional geometry
+! thisCol => col_elemPGx(epg_JM_functionalStorage)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call storage_functional_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! !% JM with tabular geometry
+! thisCol => col_elemPGx(epg_JM_tabularStorage)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call storage_tabular_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! !% JM with implied storage 
+! thisCol => col_elemPGx(epg_JM_impliedStorage)
+! Npack   => npack_elemPGx(thisCol)
+! if (Npack > 0) then
+!     call storage_implied_depth_from_volume (elemPGx, Npack, thisCol)
+!     call geo_ZeroDepth_from_volume  (elemPGx, Npack, thisCol)
+! end if
+
+! !%-------------------------------------------------------------------
+! !% Closing
+!     if (setting%Debug%File%geometry) &
+        ! write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+! end subroutine geo_depth_from_volume_by_type
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+! subroutine geo_head_from_depth (thisColP)
+!     !%------------------------------------------------------------------
+!     !% Description:
+!     !% Computes head from depth for elements of CC, JM
+!     !%------------------------------------------------------------------
+!         integer, intent(in) :: thisColP
+!         integer, pointer :: Npack, thisP(:)
+!         real(8), pointer :: depth(:), fulldepth(:), head(:), Zbtm(:)
+!         !real(8), pointer :: pressurehead(:)
+
+!         character(64) :: subroutine_name = 'geo_head_from_depth'
+!     !%------------------------------------------------------------------
+!     !% Preliminaries
+!         Npack     => npack_elemP(thisColP)
+!         if (Npack < 1) return
+!     !%------------------------------------------------------------------
+!     !% Aliases    
+!         thisP     => elemP(1:Npack,thisColP)
+!         depth     => elemR(:,er_Depth)
+!         fulldepth => elemR(:,er_FullDepth)
+!         head      => elemR(:,er_Head)
+!         !pressurehead => elemR(:,er_Pressure_Head)
+!         Zbtm      => elemR(:,er_Zbottom)
+!     !%------------------------------------------------------------------
+!     !%
+
+!     head(thisP) = depth(thisP) + Zbtm(thisP)
+!     !% set the pressure head to piezometric head
+!     !% this will be fixed later for CC and JB elements
+!     !pressurehead(thisP) = head(thisP)
+
+!     if (setting%Debug%File%geometry) &
+!     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+! end subroutine geo_head_from_depth
+!%
+!%==========================================================================
 !% END OF MODULE
 !%=========================================================================
 end module geometry

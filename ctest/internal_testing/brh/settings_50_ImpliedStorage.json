@@ -2,13 +2,13 @@
     "JSON_FoundFileYN" : true,
     "JSON_CheckAllInputYN" : false,
     "CaseName" : {
-        "Long"  : "extran1",
-        "Short" : "extran1"
+        "Long"  : "test",
+        "Short" : "test"
     },
     "Discretization" : {
-        "NominalElemLength" : 61.00
+        "NominalElemLength" : 50.00
     },
     "Junction" : {
-        "ForceNodesJM" : true
-    }  
+        "ForceStorage" : true
+    } 
 }

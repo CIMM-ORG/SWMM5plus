@@ -343,12 +343,13 @@ module define_indexes
         enumerator :: er_DepthAtBreadthMax          !% depth below the point of maximum breadth
         enumerator :: er_dHdA                       !% geometric change in elevation with area (used in AC only)
         !enumerator :: er_dQdH
-        enumerator :: er_2B_psiL                    !% intermediate term for elements adjacent to junctions
+        enumerator :: er_DeltaQ                     !% change in flowrate due to junction
+        !enumerator :: er_2B_psiL                    !% intermediate term for elements adjacent to junctions
         enumerator :: er_dSlotArea                  !% change in slot volume
         enumerator :: er_dSlotDepth                 !% change in slot depth
         enumerator :: er_dSlotVolume                !% change in slot volume
         enumerator :: er_EllDepth                        !% the ell (lower case L) modified hydraulic depth
-        enumerator :: er_EnergyHead                 !% total energy head on element
+        !enumerator :: er_EnergyHead                 !% total energy head on element
         enumerator :: er_Flowrate                   !% flowrate (latest)
         enumerator :: er_FlowrateLimit               !% max flowrate from user.inp file (0 is no limit)
         enumerator :: er_Flowrate_N0                !% flowrate (time N)
@@ -515,6 +516,7 @@ module define_indexes
         enumerator :: ep_JM_AC                      !% junction mains using AC method
         enumerator :: ep_JM_ALLtm                   !% Junction mains with any time march (static)
         enumerator :: ep_JM_ETM                     !% junction mains using ETM method
+        enumerator :: ep_JB                         !% any valid JB branch
         !enumerator :: ep_JB_AC                      !% junction branches using AC method
         !enumerator :: ep_JB_ALLtm                   !% Junction branches with any time march (static)
         !enumerator :: ep_JB_ETM                     !% junction branches using ETM method
@@ -528,7 +530,7 @@ module define_indexes
         !enumerator :: ep_SmallDepth_CC_AC
         !enumerator :: ep_SmallDepth_JM_ALLtm  !% 20220122brh
         enumerator :: ep_SmallDepth_JM_ETM    !% 20220122brh
-        enumerator :: ep_SmallDepth_JB_ETM 
+        !enumerator :: ep_SmallDepth_JB_ETM 
         !enumerator :: ep_SmallDepth_JM_AC     !% 20220122brh
         !enumerator :: ep_ZeroDepth_CC_ALLtm         !% zero depth with any time march
         enumerator :: ep_ZeroDepth_CC_ETM
@@ -555,9 +557,10 @@ module define_indexes
         enumerator :: ep_Output_Elements            !% all output elements -- local index   
         enumerator :: ep_CC_NOTsmalldepth           !% all Conduits that have time-marching without small or zero depth
         enumerator :: ep_CC_NOTzerodepth            !% all Conduits that have time-marching and are above zero depth
-        enumerator :: ep_JBJM_NOTsmalldepth         !% all JB JM elements used in CFL computation 
-        enumerator :: ep_CCJBJM_NOTsmalldepth       !% all elements used in CFL computation
+        !enumerator :: ep_JBJM_NOTsmalldepth         !% all JB JM elements used in CFL computation 
+        !enumerator :: ep_CCJBJM_NOTsmalldepth       !% all elements used in CFL computation
         enumerator :: ep_CCJM_NOTsmalldepth         !% alternate elements for CFL computation 
+        enumerator :: ep_CCJM_NOTzerodepth
         enumerator :: ep_CC_Transect                !% all channel elements with irregular transect
         enumerator :: ep_FM_HW_all                  !% all Hazen-Williams Force Main elements
         enumerator :: ep_FM_HW_PSsurcharged      !% all Hazen-Williams Force Main elements Preissmann Slot method that are surcharged
@@ -780,9 +783,10 @@ module define_indexes
         enumerator ::  esr_JunctionMain_OverflowRate
         enumerator ::  esr_JunctionMain_StorageRate
         enumerator ::  esr_JunctionBranch_Kfactor
-        enumerator ::  esr_JunctionBranch_fa 
-        enumerator ::  esr_JunctionBranch_fb
+        enumerator ::  esr_JunctionBranch_fa !% constant factor in dQdH
+        enumerator ::  esr_JunctionBranch_fb !% linear factor in dQdH
         enumerator ::  esr_JunctionBranch_dQdH !% rate of change of Q with H in JM
+        !enumerator ::  esr_JunctionBranch_DeltaQ !% change in Q during junction solution
         enumerator ::  esr_Storage_Constant
         enumerator ::  esr_Storage_Coefficient
         enumerator ::  esr_Storage_Exponent
@@ -1283,8 +1287,9 @@ module define_indexes
     enum, bind(c)
         enumerator ::  ebgr_Area = 1                  !% cross-sectional flow area (latest) boundary/ghost element 
         enumerator ::  ebgr_Depth                     !% Depth of flow boundary/ghost element
-        enumerator ::  ebgr_2B_psiL                   !% 2 * beta * psi * L term for junctions
-        enumerator ::  ebgr_EnergyHead                !% total energy head
+        enumerator ::  ebgr_DeltaQ                    !% flowrate change due to junction
+        !enumerator ::  ebgr_2B_psiL                   !% 2 * beta * psi * L term for junctions
+        !enumerator ::  ebgr_EnergyHead                !% total energy head
         enumerator ::  ebgr_Head                      !% piezometric head (latest) -- water surface elevation in open channel boundary/ghost element
         enumerator ::  ebgr_Flowrate                  !% flowrate (latest) boundary/ghost element
         enumerator ::  ebgr_Preissmann_Number         !% preissmann number boundary/ghost element
@@ -1356,8 +1361,9 @@ module define_indexes
         enumerator :: fr_Area_u                 !% cross-sectional area on upstream side of face
         enumerator :: fr_Depth_d 
         enumerator :: fr_Depth_u
-        enumerator :: fr_EnergyHead             !% total energy head 
-        enumerator :: fr_2B_psiL                !% 2 * beta * psi * L term at junctions
+        enumerator :: fr_DeltaQ                 !% change in flowrate from adjacent JB
+        !enumerator :: fr_EnergyHead             !% total energy head 
+        ! enumerator :: fr_2B_psiL                !% 2 * beta * psi * L term at junctions
         enumerator :: fr_Flowrate               !% flowrate through face (latest)
         enumerator :: fr_Flowrate_N0            !% flowrate through face (time N)    enumerator :: fr_Head_d  !% Piezometric head on downstream side of face
         enumerator :: fr_Flowrate_Conservative  !% the effective flow rate over the time step N to N+1
@@ -1385,9 +1391,10 @@ module define_indexes
         enumerator :: fr_Velocity_d             !% velocity on downstream side of face
         enumerator :: fr_Velocity_u             !% velocity on upstream side of face
         enumerator :: fr_Preissmann_Number      !% preissmann number at face
-
         enumerator :: fr_Temp01    !% only needed for debugging
         enumerator :: fr_Temp02    !% only needed for debugging
+        enumerator :: fr_Zcrown_u
+        enumerator :: fr_Zcrown_d
 
         !% HACK: THE FOLLOWING MAY NEED TO BE RESTORED
         ! enumerator :: fr_Zbottom_u             !% Bottom elevation on upstream side of face

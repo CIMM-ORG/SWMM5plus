@@ -16,11 +16,11 @@ START_TIME           00:00:00
 REPORT_START_DATE    06/14/2021
 REPORT_START_TIME    00:00:00
 END_DATE             06/14/2021
-END_TIME             01:09:00
+END_TIME             02:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:00:10
+REPORT_STEP          00:00:05
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
 ROUTING_STEP         0:00:01 
@@ -58,12 +58,12 @@ J5               10.9475     0          0.0        1000.0         0
 J6               10.758      0          0.0        1000.0         0  
 J7               10.5685     0          0.0        1000.0         0  
 J8               10.379      0          0.0        1000.0         0  
-J9               10.1895     0          0.0        1000.0         0   
+J9               10.1895     0          0.0105        1000.0         0   
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-Out1             10.0          FREE                      NO                   
+Out1             10.0          Fixed         10.2             NO                   
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   

@@ -32,7 +32,7 @@ module preissmann_slot
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine slot_toplevel (whichTM, colP_CC_PS, colP_JM_PS)
+    subroutine slot_toplevel (colP_CC_PS, colP_JM_PS)
         !% THIS MAY BE OBSOLETE WITH IMPLICIT JUNCTION
         !%------------------------------------------------------------------
         !% Description:
@@ -48,28 +48,29 @@ module preissmann_slot
         !% slot is used.
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: whichTM, colP_CC_PS, colP_JM_PS
-            integer, pointer    :: thisPackCol, Npack
+            integer, intent(in) :: colP_CC_PS, colP_JM_PS
+            integer, pointer    :: thisPackCol, Npack, thisP(:)
             character(64)       :: subroutine_name = 'slot_toplevel'
         !%------------------------------------------------------------------
         !% Preliminaries
             !% --- exit if not using PS
             if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
             !% --- compute Preissmann slot for conduits only if ETM solver is used
-            if (.not. ((whichTM .eq. ETM) .or. (whichTM .eq. ALLtm))) return
+            !if (.not. ((whichTM .eq. ETM) .or. (whichTM .eq. ALLtm))) return
         !%------------------------------------------------------------------
 
-            ! call util_utest_CLprint ('======== at start of Slot_toplevel')
+            ! ! call util_utest_CLprint ('======== at start of Slot_toplevel')
         !%    
         !% --- Handle Preissmann Slot for closed CC elements
         !%     with this time march type.
         thisPackCol => col_elemP(colP_CC_PS)
         Npack       => npack_elemP(thisPackCol)
         if (Npack > 0) then
-            call slot_CC_ETM (thisPackCol, Npack)
+            thisP => elemP(1:Npack,thisPackCOl)
+            call slot_CC_ETM (thisP)
         end if
 
-            ! call util_utest_CLprint ('======== after slot_CC_ETM')
+            ! ! call util_utest_CLprint ('======== after slot_CC_ETM')
 
         !% --- Handle Preissmann Slot for all JM elements
         !%    (although SurchargeExtraDepth=0 is effectively open)
@@ -79,7 +80,7 @@ module preissmann_slot
             call slot_JM_ETM (thisPackCol, Npack)
         end if
 
-            ! call util_utest_CLprint ('======== after slot_JM_ETM')
+            ! ! call util_utest_CLprint ('======== after slot_JM_ETM')
 
         !stop 66823
   
@@ -194,13 +195,13 @@ module preissmann_slot
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine slot_CC_adjustments (thisColP_closed_CC)
+    subroutine slot_CC_adjustments (thisP)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% This subroutine adds back the slot geometry in all the closed elements
         !%-----------------------------------------------------------------------------
-        integer, intent(in) :: thisColP_closed_CC
-        integer, pointer    :: thisP(:), Npack, SlotMethod
+        integer, intent(in) :: thisP(:)
+        integer, pointer    :: SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), dSlotDepth(:)
         real(8), pointer    :: volume(:), depth(:), area(:), SlotArea(:) !, ell(:)
         real(8), pointer    :: SlotDepth_N0(:)
@@ -215,13 +216,10 @@ module preissmann_slot
             !% --- exit if not using PS
             if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
 
-            Npack => npack_elemP(thisColP_closed_CC)
-            if (Npack < 1) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% Aliases
-            thisP      => elemP(1:Npack,thisColP_closed_CC)
             area       => elemR(:,er_Area)
             depth      => elemR(:,er_Depth)
             dSlotDepth => elemR(:,er_dSlotDepth)
@@ -500,7 +498,7 @@ module preissmann_slot
 !% PRIVATE
 !%==========================================================================
 !%    
-    subroutine slot_CC_ETM (thisCol, Npack)
+    subroutine slot_CC_ETM (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Compute Preissmann slot for conduits in ETM methods
@@ -509,8 +507,9 @@ module preissmann_slot
         !% is no need to consider the number of barrels.
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: thisCol, Npack
-            integer, pointer    :: thisP(:), SlotMethod, fUp(:), fDn(:)
+            !integer, intent(in) :: thisCol, Npack
+            integer, intent(in) :: thisP(:)
+            integer, pointer    :: SlotMethod, fUp(:), fDn(:)
             real(8), pointer    :: fullarea(:), PNumberOld(:) !, ellMax(:)
             real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:) 
             real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
@@ -524,11 +523,11 @@ module preissmann_slot
             !% --- exit if not using PS
             if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
             !% --- exit if no closed CC elements
-            if (Npack < 1) return
+           ! if (Npack < 1) return
         !%------------------------------------------------------------------
         !% Aliases
         !% HACK -- many of these aliases are unused. Need to clean up 20220913 brh
-            thisP      => elemP(1:Npack,thisCol)
+            !thisP      => elemP(1:Npack,thisCol)
             !% --- elemR data
             dSlotArea  => elemR(:,er_dSlotArea)
             dSlotDepth => elemR(:,er_dSlotDepth)

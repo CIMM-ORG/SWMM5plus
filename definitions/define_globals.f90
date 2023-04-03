@@ -434,7 +434,8 @@ module define_globals
 
     !% dummy index for elements/faces that do not exist
     !% value set in init_network_set_dummy_elem()
-    integer :: dummyIdx
+    integer               :: dummyIdx
+    integer, dimension(1) :: dummyUnitArray
 
 !% ===================================================================================
 !% CONSTANTS

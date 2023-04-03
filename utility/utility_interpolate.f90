@@ -44,7 +44,7 @@ contains
         !% Description:
         !% look up from a curve and returns a interpolated value
         !% Inputs/Outputs:
-        !%      curveID   -- CurveID for this element
+        !%      curveID   -- CurveID for this element (knows elem idx)
         !%      er_inCol  -- column in elemR(:,er_inCol) with curve X data
         !%      er_outCol -- column in elemR(:,er_outCol) for curve Y data (OUTPUT)
         !%      xVal_col  -- x data column in the curve ValueArray

@@ -29,7 +29,7 @@ module powerfunction_channel
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine powerfunction_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine powerfunction_depth_from_volume (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on open channels
@@ -37,14 +37,10 @@ module powerfunction_channel
         !% Assumes that volume > 0 is enforced in volume computations.
         !%--------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:), volume(:)
             real(8), pointer :: fulldepth(:), fullvolume(:)
         !%-------------------------------------------------------------------
-            if (Npack < 1) return
-        !%-------------------------------------------------------------------
-            thisP      => elemPGx(1:Npack,thisCol) 
             depth      => elemR(:,er_Depth)
             volume     => elemR(:,er_Volume)   
             fulldepth  => elemR(:,er_FullDepth)
@@ -77,19 +73,16 @@ module powerfunction_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine powerfunction_topwidth_from_depth (elemPGx, Npack, thisCol)
+    subroutine powerfunction_topwidth_from_depth (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a powerfunction channel
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: topwidth(:), volume(:), fullvolume(:)
             real(8), pointer :: depth(:)
         !%-------------------------------------------------------------------
-            thisP      => elemPGx(1:Npack,thisCol) 
             topwidth   => elemR(:,er_Topwidth)
             depth      => elemR(:,er_Depth)
             volume     => elemR(:,er_Volume)
@@ -113,19 +106,16 @@ module powerfunction_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine powerfunction_perimeter_from_depth (elemPGx, Npack, thisCol)
+    subroutine powerfunction_perimeter_from_depth (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the perimeter from a known depth in a powerfunction channel
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: perimeter(:), volume(:), fullvolume(:)
             real(8), pointer :: depth(:)
         !%-------------------------------------------------------------------
-            thisP      => elemPGx(1:Npack,thisCol) 
             perimeter  => elemR(:,er_Perimeter)
             volume     => elemR(:,er_Volume)
             fullvolume => elemR(:,er_FullVolume)

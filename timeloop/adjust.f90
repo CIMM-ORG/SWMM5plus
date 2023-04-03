@@ -21,6 +21,9 @@ module adjust
 
     private
 
+    public :: adjust_element_toplevel
+    public :: adjust_face_toplevel
+
     public :: adjust_zero_or_small_depth_identify_NEW
 
     public :: adjust_face_for_zero_setting
@@ -49,6 +52,79 @@ module adjust
     contains
 !%==========================================================================
 !% PUBLIC
+!%==========================================================================
+!%
+    subroutine adjust_element_toplevel (elementType)
+        !%------------------------------------------------------------------
+        !% Description
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: elementType !%, CC, JM, JB
+        !%------------------------------------------------------------------
+
+
+    !% --- CC ELEMENT AD HOC ADJUSTMENTS    
+    !% --- identify zero depths (.true. is zero depth)
+    call adjust_zero_or_small_depth_identify_NEW(elementType,.true.)
+
+        ! ! call util_utest_CLprint ('        ADJUST XXX01 after zero depth identify')
+
+    if (setting%SmallDepth%UseSmallDepthYN) then    
+        !% --- identify small depths (.false. is small depth)
+        call adjust_zero_or_small_depth_identify_NEW(elementType,.false.)
+
+        ! ! call util_utest_CLprint ('        ADJUST XXX02 after small depth identify')
+            
+    end if
+
+    !% --- create packed arrays of zero and small depths
+    call pack_small_and_zero_depth_elements (elementType)
+
+            ! ! call util_utest_CLprint ('        ADJUST XXX03 after pack elements')
+
+    !% --- adjust head, flowrate, and auxiliary values at zero depth
+    call adjust_zerodepth_element_values (elementType) 
+
+            ! ! call util_utest_CLprint ('        ADJUST XXX04 after zero depth element values')
+
+    if (elementType == CC) then 
+        if (setting%SmallDepth%UseSmallDepthYN) then
+            !% --- apply limiters to fluxes and velocity
+            !%     (.false. so that smalldepth fluxes are not set to zero)
+            call adjust_smalldepth_element_fluxes_CC (.false.)
+
+                ! ! call util_utest_CLprint ('        ADJUST XXX05 after small depth element fluxes')
+        end if
+
+        call adjust_limit_velocity_max_CC () 
+    end if
+
+    end subroutine adjust_element_toplevel
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
+    subroutine adjust_face_toplevel (facePcol)
+
+        integer, intent(in) :: facePcol
+
+    call pack_zero_depth_interior_faces (facePcol)
+
+    if (facePcol == fp_all) then 
+        if (setting%SmallDepth%UseSmallDepthYN) then
+            !% --- face ad hoc flux adjustments 
+            !%     (.false. so that conservative fluxes are not altered)
+            call adjust_smalldepth_face_fluxes_CC (.false.)
+                    ! ! ! call util_utest_CLprint ('------- HHH01  after face_adjustment')
+        end if
+        
+        call adjust_zerodepth_face_fluxes_CC  (.false.)
+    end if
+
+
+    end subroutine adjust_face_toplevel
+!%
+!%==========================================================================
 !%==========================================================================
 !%
     subroutine adjust_face_for_zero_setting_singular (iFidx)
@@ -106,13 +182,12 @@ module adjust
 !%==========================================================================
 !%==========================================================================  
 !%
-    subroutine adjust_zero_and_small_depth_elem(whichTM, isReset, isZeroFlux)
+    subroutine adjust_zero_and_small_depth_elem(isReset, isZeroFlux)
         !%------------------------------------------------------------------
         !% Description:
         !% Top level adjustment routine for zero and small depth conditions
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, intent(in) :: whichTM
             logical, intent(in) :: isReset !% true means the zero/small packs are reset
             logical, intent(in) :: isZeroFlux !% true means that flowrate and velocities are set to zero
             integer, pointer   :: thisCol_CC, thisCol_JM
@@ -122,37 +197,41 @@ module adjust
         !% Aliases:   
         !%------------------------------------------------------------------
      
-              ! ! call util_utest_CLprint('-------------0000')
+              ! ! ! call util_utest_CLprint('-------------0000')
 
         if (isReset) then
             call adjust_zerodepth_identify_all ()
            
-            call adjust_smalldepth_identify_all ()
+            if (setting%SmallDepth%UseSmallDepthYN) then
+                call adjust_smalldepth_identify_all ()
+            end if
             
-            call pack_small_and_zero_depth_elements (whichTM, CC)
-            call pack_small_and_zero_depth_elements (whichTM, JM)
+            call pack_small_and_zero_depth_elements (CC)
+            call pack_small_and_zero_depth_elements (JM)
 
             call pack_zero_depth_interior_faces (fp_all)
             
         end if
-               ! ! call util_utest_CLprint('-------------1111')
+               ! ! ! call util_utest_CLprint('-------------1111')
 
-        call adjust_zerodepth_element_values (whichTM, CC) 
+        call adjust_zerodepth_element_values (CC) 
 
-             ! ! call util_utest_CLprint('-------------AAAA')
+             ! ! ! call util_utest_CLprint('-------------AAAA')
         
-        call adjust_zerodepth_element_values (whichTM, JM) 
+        call adjust_zerodepth_element_values (JM) 
 
-             ! ! call util_utest_CLprint('-------------BBBB')
+             ! ! ! call util_utest_CLprint('-------------BBBB')
 
 
-        call adjust_smalldepth_element_fluxes_CC (whichTM, isZeroFlux)
+        if (setting%SmallDepth%UseSmallDepthYN) then 
+            call adjust_smalldepth_element_fluxes_CC (isZeroFlux)
+        end if
 
-            ! ! call util_utest_CLprint('-------------CCCC')
+            ! ! ! call util_utest_CLprint('-------------CCCC')
         
-        call adjust_limit_velocity_max_CC (whichTM) 
+        call adjust_limit_velocity_max_CC () 
 
-            ! ! call util_utest_CLprint('-------------DDDD')
+            ! ! ! call util_utest_CLprint('-------------DDDD')
 
 
         !%------------------------------------------------------------------
@@ -163,14 +242,13 @@ module adjust
 !%==========================================================================
 !%==========================================================================  
 !%    
-    subroutine adjust_zero_and_small_depth_face (whichTM, ifixQCons)
+    subroutine adjust_zero_and_small_depth_face (ifixQCons)
         !%------------------------------------------------------------------
         !% Description:
         !% Top level control for face adjustment
         !% ifixQCons = .true. to use results to change the conservative face flux
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, intent(in) :: whichTM
             logical, intent(in) :: ifixQcons
             !integer, pointer :: thisCol_CC, thisCol_JM
         !%------------------------------------------------------------------
@@ -178,24 +256,26 @@ module adjust
         !%------------------------------------------------------------------
         !% Aliases:
         !%------------------------------------------------------------------
-            ! call util_utest_CLprint ('FFF01  before zero/small face step 0-----------------')
+            ! ! call util_utest_CLprint ('FFF01  before zero/small face step 0-----------------')
 
-        call adjust_smalldepth_face_fluxes_CC      (whichTM,ifixQCons)
-        call adjust_smalldepth_face_fluxes_JMJB    (whichTM,ifixQCons)
+        if (setting%SmallDepth%UseSmallDepthYN) then 
+            call adjust_smalldepth_face_fluxes_CC      (ifixQCons)
+            call adjust_smalldepth_face_fluxes_JMJB    (ifixQCons)
+        end if
 
-            ! call util_utest_CLprint ('FFF01  after zero/small face step A-----------------')
+            ! ! call util_utest_CLprint ('FFF01  after zero/small face step A-----------------')
 
-        call adjust_zerodepth_face_fluxes_CC   (whichTM,ifixQCons)
+        call adjust_zerodepth_face_fluxes_CC   (ifixQCons)
 
-            ! call util_utest_CLprint ('FFF02  after zero/small face step B-----------------')
+            ! ! call util_utest_CLprint ('FFF02  after zero/small face step B-----------------')
 
-        call adjust_zerodepth_face_fluxes_JMJB (whichTM,ifixQCons)
+        call adjust_zerodepth_face_fluxes_JMJB (ifixQCons)
 
-            ! call util_utest_CLprint ('FFF03  after zero/small face step C-----------------')
+            ! ! call util_utest_CLprint ('FFF03  after zero/small face step C-----------------')
 
-        call adjust_JB_elem_flux_to_equal_face (whichTM) !% 20220123brh
+        call adjust_JB_elem_flux_to_equal_face () !% 20220123brh
 
-            ! call util_utest_CLprint ('FFF04  after zero/small face step D-----------------')
+            ! ! call util_utest_CLprint ('FFF04  after zero/small face step D-----------------')
        
 
         !%------------------------------------------------------------------
@@ -206,12 +286,11 @@ module adjust
 !%========================================================================== 
 !%==========================================================================
 !%
-    subroutine adjust_Vfilter_CC (whichTM)
+    subroutine adjust_Vfilter_CC ()
         !%------------------------------------------------------------------
         !% Description:
         !% Performs ad-hoc adjustments that may be needed for stability
         !%------------------------------------------------------------------
-            integer, intent(in) :: whichTM  !% indicates which Time marching method
             character(64) :: subroutine_name = 'adjust_Vfilter_CC'
         !%------------------------------------------------------------------
             !if (crashYN) return
@@ -225,7 +304,7 @@ module adjust
             select case (setting%Adjust%Flowrate%Approach)
             case (vshape)
                 !% suppress v-shape over face/element/face
-                call adjust_Vshaped_flowrate (whichTM)
+                call adjust_Vshaped_flowrate ()
             case default
                 print *, 'CODE ERROR: unknown setting.Adjust.Flowrate.Approach #',setting%Adjust%Flowrate%Approach
                 print *, 'which has key ',trim(reverseKey(setting%Adjust%Flowrate%Approach))
@@ -239,7 +318,7 @@ module adjust
         if (setting%Adjust%Head%ApplyYN) then          
             select case (setting%Adjust%Head%Approach)
             case (vshape_surcharge_only)
-                call adjust_Vshaped_head_surcharged (whichTM)
+                call adjust_Vshaped_head_surcharged ()
             case default
                 print *,  'CODE ERROR: unknown setting.Adjust.Head.Approach #',setting%Adjust%Head%Approach
                 print *, 'which has key ',trim(reverseKey(setting%Adjust%Head%Approach))
@@ -256,18 +335,17 @@ module adjust
 !%========================================================================== 
 !%==========================================================================  
 !%        
-    subroutine adjust_limit_by_zerovalues (geocol, geozero, thisCol, isVolume)
+    subroutine adjust_limit_by_zerovalues (geocol, geozero, thisP, isVolume)
         !%-----------------------------------------------------------------------------
         !% Description:
         !% This applies a zero value limiter for a packed array that is not
         !% a priori limited to zero value elements
         !%-----------------------------------------------------------------------------
         !logical, intent(in) :: isreset
-        integer, intent(in) :: geocol, thisCol
+        integer, intent(in) :: geocol, thisP(:)
         real(8), intent(in) :: geozero
         logical, intent(in) :: isVolume
-        integer, pointer :: Npack, thisP(:)
-        real(8), pointer :: geovalue(:), overflow(:)    
+        real(8), pointer    :: geovalue(:), overflow(:)    
         !logical, pointer :: NearZeroDepth(:),   isSmallDepth(:)   
         character(64) :: subroutine_name = 'adjust_limit_by_zerovalues'
         !%-----------------------------------------------------------------------------
@@ -275,15 +353,14 @@ module adjust
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
-        Npack        => npack_elemP(thisCol)  
         geovalue     => elemR(:,geocol)
         overflow     => elemR(:,er_VolumeOverFlow)
         !isZeroDepth  => elemYN(:,eYN_isZeroDepth)
         !isSmallDepth => elemYN(:,eYN_isSmallDepth)
         !%-----------------------------------------------------------------------------
 
-        if (Npack > 0) then
-            thisP    => elemP(1:Npack,thisCol)
+      !  if (Npack > 0) then
+      !      thisP    => elemP(1:Npack,thisCol)
             if (isVolume) then
                 !% --- we are gaining volume by resetting to the geozero (minimum),so
                 !%    count this as a negative overflow
@@ -303,7 +380,7 @@ module adjust
             !         isSmallDepth(thisP) = .false.
             !     end where
             ! end if
-        end if    
+        !end if    
 
         !print *, 'in adjust_limit_by_zerovalues ',overflow(14)
 
@@ -352,13 +429,12 @@ module adjust
 !%==========================================================================  
 !%==========================================================================  
 !%
-    subroutine adjust_limit_velocity_max_CC (whichTM)
+    subroutine adjust_limit_velocity_max_CC ()
         !%------------------------------------------------------------------
         !% Description:
         !% employs velocity limiters and small volume treatments to limit 
         !% destabilizing large velocities.
         !%------------------------------------------------------------------  
-            integer, intent(in) :: whichTM
             integer, pointer :: thisCol_all, Npack, thisP(:)
             real(8), pointer :: vMax, velocity(:)
             character(64) :: subroutine_name = 'adjust_velocity'
@@ -370,20 +446,20 @@ module adjust
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             !% small velocity adjustment should only be done for CC elements
             !% since the velocity is solved there,
-            select case (whichTM)
-                case (ALLtm)
-                    thisCol_all => col_elemP(ep_CC_ALLtm)
-                case (ETM)
+            ! select case (whichTM)
+            !     case (ALLtm)
+            !         thisCol_all => col_elemP(ep_CC_ALLtm)
+            !     case (ETM)
                     thisCol_all => col_elemP(ep_CC_ETM)       
-                case (AC)
-                    thisCol_all => col_elemP(ep_CC_AC)        
-                case default
-                    print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                    print *, 'which has key ',trim(reverseKey(whichTM))
-                    !stop 
-                    call util_crashpoint( 8368)
-                    !return
-            end select
+            !     case (AC)
+            !         thisCol_all => col_elemP(ep_CC_AC)        
+            !     case default
+            !         print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !         print *, 'which has key ',trim(reverseKey(whichTM))
+            !         !stop 
+            !         call util_crashpoint( 8368)
+            !         !return
+            ! end select
         !%-------------------------------------------------------------------
         !% Aliases
             Npack     => npack_elemP(thisCol_all)
@@ -570,6 +646,10 @@ module adjust
             real(8), pointer :: eDepth(:)
         !%------------------------------------------------------------------
         !% Preliminaries
+            if (.not. setting%SmallDepth%UseSmallDepthYN) then 
+                elemYN(:,eYN_isSmallDepth) = .false.
+                return 
+            end if
         !%------------------------------------------------------------------
         !% Aliases
             depth0       => setting%ZeroValue%Depth
@@ -591,68 +671,72 @@ module adjust
 !%==========================================================================   
 !%==========================================================================
 !%
-    subroutine adjust_zerodepth_element_values (whichTM, whichType)
+    subroutine adjust_zerodepth_element_values (whichType)
         !% -----------------------------------------------------------------
         !% Description:
         !% thisCol must be one of the ZeroDepth packed arrays that identifies
         !% all the (near) zero depth locations.
         !% -----------------------------------------------------------------
-            integer, intent(in)  :: whichTM, whichType
+            integer, intent(in)  :: whichType
             integer, pointer :: thisCol, npack, thisP(:)
         !% -----------------------------------------------------------------
         !% Preliminaries
-            select case (whichTM)
-            case (ALLtm)
-                select case (whichType)
-                case (CC)
-                    !thisCol => col_elemP(ep_ZeroDepth_CC_ALLtm)
-                    print *, 'CODE ERROR: AC Not implemented'
-                    call util_crashpoint(329874)
-                case (JM)
-                    !thisCol => col_elemP(ep_ZeroDepth_JM_ALLtm)
-                    print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(6698723)
-                case default
-                    print *, 'CODE ERROR -- unexpected case default'
-                    !stop 
-                    call util_crashpoint( 94733)
-                    !return
-                end select
-            case (ETM)
+           ! select case (whichTM)
+            ! case (ALLtm)
+            !     select case (whichType)
+            !     case (CC)
+            !         !thisCol => col_elemP(ep_ZeroDepth_CC_ALLtm)
+            !         print *, 'CODE ERROR: AC Not implemented'
+            !         call util_crashpoint(329874)
+            !     case (JM)
+            !         !thisCol => col_elemP(ep_ZeroDepth_JM_ALLtm)
+            !         print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(6698723)
+            !     case default
+            !         print *, 'CODE ERROR -- unexpected case default'
+            !         !stop 
+            !         call util_crashpoint( 94733)
+            !         !return
+            !     end select
+            ! case (ETM)
                 select case (whichType)
                 case (CC)
                     thisCol => col_elemP(ep_ZeroDepth_CC_ETM)
                 case (JM)
                     thisCol => col_elemP(ep_ZeroDepth_JM_ETM)
+                case (JB)
+                    thisCol => col_elemP(ep_ZeroDepth_JB_ETM)
                 case default
+                    print *, whichType
+                    print *, trim(reverseKey(whichType))
                     print *, 'CODE ERROR -- unexpected case default'
                     !stop 
                     call util_crashpoint( 93287)
                     !return
                 end select
-            case (AC)
-                select case (whichType)
-                case (CC)
-                    !thisCol => col_elemP(ep_ZeroDepth_CC_AC)
-                    print *, 'CODE ERROR: AC Not implemented'
-                    call util_crashpoint(229843)
-                case (JM)
-                    !thisCol => col_elemP(ep_ZeroDepth_JM_AC)
-                    print *, 'CODE ERROR: AC Not implemented'
-                    call util_crashpoint(6698723)
-                case default
-                    print *, 'CODE ERROR -- unexpected case default'
-                    !stop 
-                    call util_crashpoint( 22733)
-                    !return
-                end select
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                !stop 
-                call util_crashpoint( 55873)
-                !return
-            end select
+            ! case (AC)
+            !     select case (whichType)
+            !     case (CC)
+            !         !thisCol => col_elemP(ep_ZeroDepth_CC_AC)
+            !         print *, 'CODE ERROR: AC Not implemented'
+            !         call util_crashpoint(229843)
+            !     case (JM)
+            !         !thisCol => col_elemP(ep_ZeroDepth_JM_AC)
+            !         print *, 'CODE ERROR: AC Not implemented'
+            !         call util_crashpoint(6698723)
+            !     case default
+            !         print *, 'CODE ERROR -- unexpected case default'
+            !         !stop 
+            !         call util_crashpoint( 22733)
+            !         !return
+            !     end select
+            ! case default
+            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !     print *, 'which has key ',trim(reverseKey(whichTM))
+            !     !stop 
+            !     call util_crashpoint( 55873)
+            !     !return
+            ! end select
         !% -----------------------------------------------------------------
         !% Aliases
             npack   => npack_elemP(thisCol)
@@ -688,14 +772,13 @@ module adjust
 !%==========================================================================   
 !%==========================================================================
 !%
-    subroutine adjust_smalldepth_element_fluxes_CC (whichTM, isZeroFlux)
+    subroutine adjust_smalldepth_element_fluxes_CC (isZeroFlux)
         !% -----------------------------------------------------------------
         !% Description
         !% uses the ep_SmallDepth_CC_ALLtm pack to set the velocity and
         !% flowrate on all small volumes
         !% -----------------------------------------------------------------
         !% Declarations:
-            integer, intent(in) :: whichTM
             logical, intent(in) :: isZeroFlux !% sets small depth fluxes to zero
             integer, pointer :: thisCol
             integer, pointer :: npack, thisP(:), fdn(:), fup(:)
@@ -711,24 +794,25 @@ module adjust
             character(64) :: subroutine_name = 'adjust_smalldepth_element_fluxes_CC'
         !% -----------------------------------------------------------------
         !% Preliminaries:   
-            select case (whichTM)
-            case (ALLtm)
-                !thisCol => col_elemP(ep_SmallDepth_CC_ALLtm)
-                print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(66987253)
-            case (ETM)
+            if (.not. setting%SmallDepth%UseSmallDepthYN) return
+            ! select case (whichTM)
+            ! case (ALLtm)
+            !     !thisCol => col_elemP(ep_SmallDepth_CC_ALLtm)
+            !     print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(66987253)
+            ! case (ETM)
                 thisCol => col_elemP(ep_SmallDepth_CC_ETM)
-            case (AC)
-                !thisCol => col_elemP(ep_SmallDepth_CC_AC)
-                print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(6698723)
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                   print *, 'which has key ',trim(reverseKey(whichTM))
-                !stop 
-                call util_crashpoint( 557345)
-                !return
-            end select
+            ! case (AC)
+            !     !thisCol => col_elemP(ep_SmallDepth_CC_AC)
+            !     print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(6698723)
+            ! case default
+            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !        print *, 'which has key ',trim(reverseKey(whichTM))
+            !     !stop 
+            !     call util_crashpoint( 557345)
+            !     !return
+            ! end select
         !% -----------------------------------------------------------------    
         !% Aliases    
             Area          => elemR(:,er_Area)
@@ -767,8 +851,8 @@ module adjust
         !%     limit to 1.0 needed for intermediate step where SV is being exceeded.
         svRatio(thisP) = min(Volume(thisP) / SmallVolume(thisP), oneR)  !% 20220122brh   
 
-        print *, 'thisP small depth adjust',thisP
-        print *, 'svRatio ', svRatio(thisP)
+        ! print *, 'thisP small depth adjust',thisP
+        ! print *, 'svRatio ', svRatio(thisP)
     
         !% use the larger of available ManningsN values
         ManningsN(thisP) = setting%SmallDepth%ManningsN
@@ -816,7 +900,7 @@ module adjust
                 * sqrt(abs(Head(thisP) - fHead_u(fdn(thisP))) / (onehalfR * Length(thisP)) )           &
                 / ManningsN(thisP)    
 
-        print *, 'CMvelocity2 ',CMvelocity2(thisP)        
+        ! print *, 'CMvelocity2 ',CMvelocity2(thisP)        
 
         !% if opposite signs use the sum, otherwise take the smaller magnitude
         where (CMvelocity(thisP) * CMvelocity(thisP) < zeroR)
@@ -825,18 +909,18 @@ module adjust
             CMvelocity(thisP) = sign(min(abs(CMVelocity(thisP)), abs(CMVelocity2(thisP))),CMvelocity(thisP))
         endwhere
                 
-        print *, 'CMvelocity3 ',CMvelocity(thisP)
+        ! print *, 'CMvelocity3 ',CMvelocity(thisP)
 
         !% --- if svRatio > 1, then blend with existing flowrate
         Flowrate(thisP) = Flowrate(thisP) * (svRatio(thisP) - oneR)         &
                          + svRatio(thisP) * CMvelocity(thisP) * Area(thisP)
 
-        print *, 'Flowrate ',Flowrate(thisP)                 
+        ! print *, 'Flowrate ',Flowrate(thisP)                 
 
         !% new velocity  
         elemR(thisP,er_Velocity) = Flowrate(thisP) / Area(thisP)
 
-        print *, 'Velocity ',elemR(thisP,er_Velocity)
+        ! print *, 'Velocity ',elemR(thisP,er_Velocity)
 
         !% --- If existing flowrate
                 
@@ -888,7 +972,7 @@ module adjust
 !%========================================================================== 
 !%==========================================================================
 !%
-    subroutine adjust_zerodepth_face_fluxes_CC (whichTM,ifixQCons)
+    subroutine adjust_zerodepth_face_fluxes_CC (ifixQCons)
         !% -----------------------------------------------------------------
         !% Description:
         !% thisCol must be one of the ZeroDepth packed arrays that identifies
@@ -896,31 +980,30 @@ module adjust
         !% only applicable to CC,
         !% if ifixQCons = .true. then the conservative fluxes are adjusted
         !% -----------------------------------------------------------------
-            integer, intent(in)  :: whichTM
             logical, intent(in)  :: ifixQCons
             integer, pointer :: npack, thisCol, thisP(:), fdn(:), fup(:)
             real(8), pointer :: fQ(:), fQCons(:), fVel_u(:), fVel_d(:)
             real(8), pointer :: fArea_u(:), fArea_d(:)
         !% -----------------------------------------------------------------
         !% Preliminaries:
-            select case (whichTM)
-            case (ALLtm)
-                !thisCol => col_elemP(ep_ZeroDepth_CC_ALLtm)
-                print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(1048366)
-            case (ETM)
+            ! select case (whichTM)
+            ! case (ALLtm)
+            !     !thisCol => col_elemP(ep_ZeroDepth_CC_ALLtm)
+            !     print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(1048366)
+            ! case (ETM)
                 thisCol => col_elemP(ep_ZeroDepth_CC_ETM)
-            case (AC)
-                !thisCol => col_elemP(ep_ZeroDepth_CC_AC)
-                print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(823453)
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                !stop 
-                call util_crashpoint( 22487)
-                !return
-            end select
+            ! case (AC)
+            !     !thisCol => col_elemP(ep_ZeroDepth_CC_AC)
+            !     print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(823453)
+            ! case default
+            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !     print *, 'which has key ',trim(reverseKey(whichTM))
+            !     !stop 
+            !     call util_crashpoint( 22487)
+            !     !return
+            ! end select
             npack   => npack_elemP(thisCol)
             if (npack < 1) return
         !% -----------------------------------------------------------------
@@ -947,7 +1030,7 @@ module adjust
 
             ! print *, 'AAA   fQ ',fQ(5),fQ(14)
 
-            ! ! ! call util_utest_CLprint ('-------- before adjust-faceflux-for-headgradient in adjust zerodepth')
+            ! ! ! ! call util_utest_CLprint ('-------- before adjust-faceflux-for-headgradient in adjust zerodepth')
 
         !% --- Set inflow from adjacent cell based on head gradient
         call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
@@ -960,7 +1043,7 @@ module adjust
 
             ! print *, 'BBB   fQ ',fQ(5), fQ(14)
 
-            ! ! ! call util_utest_CLprint ('-------- after adjust-faceflux-for-headgradient in adjust zerodepth')
+            ! ! ! ! call util_utest_CLprint ('-------- after adjust-faceflux-for-headgradient in adjust zerodepth')
 
         !% --- reset the conservative fluxes
         if (ifixQCons) then
@@ -1006,7 +1089,7 @@ module adjust
 !%==========================================================================   
 !%==========================================================================
 !%    
-    subroutine adjust_zerodepth_face_fluxes_JMJB (whichTM, ifixQCons)
+    subroutine adjust_zerodepth_face_fluxes_JMJB (ifixQCons)
         !%------------------------------------------------------------------
         !% Description:
         !% Sets zero depth values on branches and JM. Input column must
@@ -1014,31 +1097,30 @@ module adjust
         !% if ifixQCons = .true. then the conservative fluxes are adjusted
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, intent(in)  :: whichTM
             logical, intent(in)  :: ifixQCons
             integer, pointer :: npack, thisCol, thisP(:), fup(:), fdn(:), isBranch(:)
             real(8), pointer :: fQ(:), fQCons(:)
             integer :: ii
         !%------------------------------------------------------------------
         !% Preliminaries:
-            select case (whichTM)
-            case (ALLtm)
-                !thisCol => col_elemP(ep_ZeroDepth_JM_ALLtm)
-                print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(6698723)
-            case (ETM)
+            ! select case (whichTM)
+            ! case (ALLtm)
+            !     !thisCol => col_elemP(ep_ZeroDepth_JM_ALLtm)
+            !     print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(6698723)
+            ! case (ETM)
                 thisCol => col_elemP(ep_ZeroDepth_JM_ETM)
-            case (AC)
-                !thisCol => col_elemP(ep_ZeroDepth_JM_AC)
-                print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(64438723)
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                !stop 
-                call util_crashpoint( 224238)
-                !return
-            end select
+            ! case (AC)
+            !     !thisCol => col_elemP(ep_ZeroDepth_JM_AC)
+            !     print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(64438723)
+            ! case default
+            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !     print *, 'which has key ',trim(reverseKey(whichTM))
+            !     !stop 
+            !     call util_crashpoint( 224238)
+            !     !return
+            ! end select
             npack => npack_elemp(thisCol)
             if (npack < 1) return
         !%------------------------------------------------------------------
@@ -1076,28 +1158,27 @@ module adjust
 !%==========================================================================   
 !%==========================================================================
 !%
-    subroutine adjust_JB_elem_flux_to_equal_face (whichTM)
+    subroutine adjust_JB_elem_flux_to_equal_face ()
         !%------------------------------------------------------------------
         !% Description:
         !% makes the JB flowrate equal to the face flowrate
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: whichTM
             integer :: thisCol, ii
             integer, pointer :: npack, thisP(:), fdn(:), fup(:), isbranch(:)
             real(8), pointer :: eQ(:), fQ(:)
         !%------------------------------------------------------------------
         !% Preliminaries
-            select case (whichTM)
-            case (ETM)
+            ! select case (whichTM)
+            ! case (ETM)
                 thisCol = ep_JM_ETM
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                !stop 
-                call util_crashpoint( 398703)
-                !return
-            end select
+            ! case default
+            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !     print *, 'which has key ',trim(reverseKey(whichTM))
+            !     !stop 
+            !     call util_crashpoint( 398703)
+            !     !return
+            ! end select
             npack => npack_elemP(thisCol)
             if (npack < 1) return
         !%------------------------------------------------------------------
@@ -1147,7 +1228,7 @@ module adjust
 !%==========================================================================   
 !%==========================================================================
 !%   
-    subroutine adjust_smalldepth_face_fluxes_CC (whichTM, ifixQCons)
+    subroutine adjust_smalldepth_face_fluxes_CC (ifixQCons)
         !%------------------------------------------------------------------
         !% Description:
         !% Sets the face values around an element where the ad-hoc
@@ -1157,7 +1238,6 @@ module adjust
         !%------------------------------------------------------------------
         !% Declarations:
             logical, intent(in) ::  ifixQCons
-            integer, intent(in) :: whichTM
             integer, pointer :: fdn(:), fup(:), thisP(:), thisCol, npack
             integer, pointer :: thisColJM, thisJM(:), npackJM, isbranch(:) !% 20220122brh
             real(8), pointer :: faceQ(:), elemQ(:), fQCons(:)
@@ -1169,24 +1249,25 @@ module adjust
             integer :: ii
         !%------------------------------------------------------------------
         !% Preliminaries:
-            select case (whichTM)
-            case (ALLtm)
-                !thisCol   => col_elemP(ep_SmallDepth_CC_ALLtm)
-                print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(6634112)
-            case (ETM)
+            if (.not. setting%SmallDepth%UseSmallDepthYN) return
+            ! select case (whichTM)
+            ! case (ALLtm)
+            !     !thisCol   => col_elemP(ep_SmallDepth_CC_ALLtm)
+            !     print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(6634112)
+            ! case (ETM)
                 thisCol   => col_elemP(ep_SmallDepth_CC_ETM)
-            case (AC)
-                !thisCol   => col_elemP(ep_SmallDepth_CC_AC)
-                print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(6634723)
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                !stop 
-                call util_crashpoint( 447833)
-                !return
-            end select
+            ! case (AC)
+            !     !thisCol   => col_elemP(ep_SmallDepth_CC_AC)
+            !     print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(6634723)
+            ! case default
+            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !     print *, 'which has key ',trim(reverseKey(whichTM))
+            !     !stop 
+            !     call util_crashpoint( 447833)
+            !     !return
+            ! end select
         !%------------------------------------------------------------------
         !% Aliases:
             faceQ     => faceR(:,fr_Flowrate)
@@ -1308,7 +1389,7 @@ module adjust
 !%==========================================================================   
 !%==========================================================================
 !%
-    subroutine adjust_smalldepth_face_fluxes_JMJB (whichTM, ifixQCons)
+    subroutine adjust_smalldepth_face_fluxes_JMJB (ifixQCons)
         !%------------------------------------------------------------------
         !% Description:
         !% Sets the face values around an element where the ad-hoc
@@ -1318,7 +1399,6 @@ module adjust
         !%------------------------------------------------------------------
         !% Declarations:
             logical, intent(in) ::  ifixQCons
-            integer, intent(in) :: whichTM
             integer, pointer :: fdn(:), fup(:), thisP(:), npack
             integer, pointer :: thisColJM, thisJM(:), npackJM, isbranch(:) !% 20220122brh
             real(8), pointer :: faceQ(:), elemQ(:), fQCons(:)
@@ -1330,24 +1410,25 @@ module adjust
             integer :: ii
         !%------------------------------------------------------------------
         !% Preliminaries:
-            select case (whichTM)
-            case (ALLtm)
-                !thisColJM => col_elemP(ep_SmallDepth_JM_ALLtm)
-                print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(6634112)
-            case (ETM)
+            if (.not. setting%SmallDepth%UseSmallDepthYN) return
+            ! select case (whichTM)
+            ! case (ALLtm)
+            !     !thisColJM => col_elemP(ep_SmallDepth_JM_ALLtm)
+            !     print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(6634112)
+            ! case (ETM)
                 thisColJM => col_elemP(ep_SmallDepth_JM_ETM) 
-            case (AC)
-                !thisColJM => col_elemP(ep_SmallDepth_JM_AC)
-                print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(6634723)
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                !stop 
-                call util_crashpoint( 447833)
-                !return
-            end select
+            ! case (AC)
+            !     !thisColJM => col_elemP(ep_SmallDepth_JM_AC)
+            !     print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(6634723)
+            ! case default
+            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !     print *, 'which has key ',trim(reverseKey(whichTM))
+            !     !stop 
+            !     call util_crashpoint( 447833)
+            !     !return
+            ! end select
         !%------------------------------------------------------------------
         !% Aliases:
             faceQ     => faceR(:,fr_Flowrate)
@@ -1444,7 +1525,7 @@ module adjust
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine adjust_smalldepth_face_fluxes (whichTM, ifixQCons)
+    subroutine adjust_smalldepth_face_fluxes (ifixQCons)
         !%------------------------------------------------------------------
         !% Description: THIS WILL EVENTUALLY BE OBSOLETE REPLACED BY _CC and JMJB calls
         !% Sets the face values around an element where the ad-hoc
@@ -1454,7 +1535,6 @@ module adjust
         !%------------------------------------------------------------------
         !% Declarations:
             logical, intent(in) ::  ifixQCons
-            integer, intent(in) :: whichTM
             integer, pointer :: fdn(:), fup(:), thisP(:), thisCol, npack
             integer, pointer :: thisColJM, thisJM(:), npackJM, isbranch(:) !% 20220122brh
             real(8), pointer :: faceQ(:), elemQ(:), fQCons(:)
@@ -1466,27 +1546,28 @@ module adjust
             integer :: ii
         !%------------------------------------------------------------------
         !% Preliminaries:
-            select case (whichTM)
-            case (ALLtm)
-                !thisCol   => col_elemP(ep_SmallDepth_CC_ALLtm)
-                !thisColJM => col_elemP(ep_SmallDepth_JM_ALLtm)
-                print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(6634112)
-            case (ETM)
+            if (.not. setting%SmallDepth%UseSmallDepthYN) return
+            ! select case (whichTM)
+            ! case (ALLtm)
+            !     !thisCol   => col_elemP(ep_SmallDepth_CC_ALLtm)
+            !     !thisColJM => col_elemP(ep_SmallDepth_JM_ALLtm)
+            !     print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(6634112)
+            ! case (ETM)
                 thisCol   => col_elemP(ep_SmallDepth_CC_ETM)
                 thisColJM => col_elemP(ep_SmallDepth_JM_ETM) 
-            case (AC)
-                !thisCol   => col_elemP(ep_SmallDepth_CC_AC)
-                !thisColJM => col_elemP(ep_SmallDepth_JM_AC)
-                print *, 'CODE ERROR: AC Not implemented'
-                call util_crashpoint(6634723)
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                !stop 
-                call util_crashpoint( 447833)
-                !return
-            end select
+            ! case (AC)
+            !     !thisCol   => col_elemP(ep_SmallDepth_CC_AC)
+            !     !thisColJM => col_elemP(ep_SmallDepth_JM_AC)
+            !     print *, 'CODE ERROR: AC Not implemented'
+            !     call util_crashpoint(6634723)
+            ! case default
+            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !     print *, 'which has key ',trim(reverseKey(whichTM))
+            !     !stop 
+            !     call util_crashpoint( 447833)
+            !     !return
+            ! end select
         !%------------------------------------------------------------------
         !% Aliases:
             faceQ     => faceR(:,fr_Flowrate)
@@ -1650,13 +1731,12 @@ module adjust
 !% PRIVATE
 !%==========================================================================   
 !%  
-    subroutine adjust_Vshaped_flowrate (whichTM)
+    subroutine adjust_Vshaped_flowrate ()
         !%------------------------------------------------------------------
         !% Description:
         !% Removes V-shape between faces and element center by averaging
         !% the face fluxes
         !%------------------------------------------------------------------   
-            integer, intent(in) :: whichTM
             integer, pointer :: thisCol, Npack
             integer, pointer :: thisP(:), mapUp(:), mapDn(:)
             real(8), pointer :: coef, vMax, Qlateral(:), Vcoef(:)
@@ -1673,20 +1753,20 @@ module adjust
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
         !% Aliases        
-            select case (whichTM)
-            case (ALLtm)
-                thisCol => col_elemP(ep_CC_ALLtm)
-            case (ETM)
+            ! select case (whichTM)
+            ! case (ALLtm)
+            !     thisCol => col_elemP(ep_CC_ALLtm)
+            ! case (ETM)
                 thisCol => col_elemP(ep_CC_ETM)
-            case (AC)
-                thisCol => col_elemP(ep_CC_AC)
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                !stop 
-                call util_crashpoint( 9239)
-                !return
-            end select
+            ! case (AC)
+            !     thisCol => col_elemP(ep_CC_AC)
+            ! case default
+            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !     print *, 'which has key ',trim(reverseKey(whichTM))
+            !     !stop 
+            !     call util_crashpoint( 9239)
+            !     !return
+            ! end select
 
             coef => setting%Adjust%Flowrate%Coef
             if (coef .le. zeroR) return
@@ -1814,14 +1894,13 @@ module adjust
 !%==========================================================================  
 !%==========================================================================  
 !%
-    subroutine adjust_Vshaped_head_surcharged (whichTM)
+    subroutine adjust_Vshaped_head_surcharged ()
         !%------------------------------------------------------------------
         !% Description:
         !% Applies V-filter to surcharged head 
         !% HACK: ONLY APPLIES FOR PREISSMANN SLOT
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: whichTM
             integer, pointer :: thisCol, Npack
             integer, pointer :: thisP(:), mapUp(:), mapDn(:)
             real(8), pointer :: coef, multiplier, smallDepth
@@ -1836,24 +1915,24 @@ module adjust
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
         !% Aliases:
-            select case (whichTM)
-            case (ALLtm)
-                !thisCol => col_elemP(ep_CC_ALLtm_ACsurcharged)
-                print *, 'ALGORITHM DEVELOPMENT NEEDED FOR ALLtm with AC'
-                call util_crashpoint(9587934)
-            case (ETM)
+            ! select case (whichTM)
+            ! case (ALLtm)
+            !     !thisCol => col_elemP(ep_CC_ALLtm_ACsurcharged)
+            !     print *, 'ALGORITHM DEVELOPMENT NEEDED FOR ALLtm with AC'
+            !     call util_crashpoint(9587934)
+            ! case (ETM)
                 thisCol => col_elemP(ep_CC_Closed_Elements)
-            case (AC)
-                !thisCol => col_elemP(ep_CC_ACsurcharged)
-                print *, 'ALGORITHM DEVLEOPMENT NEEDED FOR AC'
-                call util_crashpoint(558723)
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                !stop 
-                call util_crashpoint( 23943)
-                return
-            end select 
+            ! case (AC)
+            !     !thisCol => col_elemP(ep_CC_ACsurcharged)
+            !     print *, 'ALGORITHM DEVLEOPMENT NEEDED FOR AC'
+            !     call util_crashpoint(558723)
+            ! case default
+            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !     print *, 'which has key ',trim(reverseKey(whichTM))
+            !     !stop 
+            !     call util_crashpoint( 23943)
+            !     return
+            ! end select 
 
             !% coefficient for the blending adjustment (between 0.0 and 1.0)
             !% if coef == 1 then the V-shape element flowrate is replaced by 

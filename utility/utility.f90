@@ -831,25 +831,25 @@ module utility
             eCons(thisP) = eCons(thisP) + tempCons(thisP)
                       
             !% --- check conservation
-            do ii = 1,size(thisP)
-                if (abs(tempCons(thisP(ii))) > 1.0e-4) then
-                    if (elemYN(thisP(ii),eYN_isZeroDepth)) then
-                        !% --- more volume out than exists in small depth cell,
-                        !%     artificial inflow caused by zero depth
-                        VolArtInflow(thisP(ii)) = - tempCons(thisP(ii))
-                    else
-                        print *, 'CONSERVATION ISSUE CC', ii, thisP(ii), this_image()
-                        print *, 'exceeding limit in one time step'
-                        print *, 'Mass gain/loss = ',tempCons(thisP(ii))
-                        print *, 'fluxes  ',fQ(fup(thisP(ii))), fQ(fdn(thisP(ii))), eQlat(thisP(ii))
-                        print *, 'volumes ',VolNew(thisP(ii)), VolOld(thisP(ii))
-                        print *, 'Delta Vol - fluxes', VolNew(thisP(ii)) - VolOld(thisP(ii)) & 
-                                - dt * fQ(fup(thisP(ii))) + dt * fQ(fdn(thisP(ii))) - dt * eQlat(thisP(ii)) 
-                        print *, 'vol overflow ',elemR(thisP(ii),er_VolumeOverFlow)
-                        call util_crashpoint(358783)
-                    end if
-                end if
-            end do  
+            ! do ii = 1,size(thisP)
+            !     if (abs(tempCons(thisP(ii))) > 1.0e-4) then
+            !         if (elemYN(thisP(ii),eYN_isZeroDepth)) then
+            !             !% --- more volume out than exists in small depth cell,
+            !             !%     artificial inflow caused by zero depth
+            !             VolArtInflow(thisP(ii)) = - tempCons(thisP(ii))
+            !         else
+            !             print *, 'CONSERVATION ISSUE CC', ii, thisP(ii), this_image()
+            !             print *, 'exceeding limit in one time step'
+            !             print *, 'Mass gain/loss = ',tempCons(thisP(ii))
+            !             print *, 'fluxes  ',fQ(fup(thisP(ii))), fQ(fdn(thisP(ii))), eQlat(thisP(ii))
+            !             print *, 'volumes ',VolNew(thisP(ii)), VolOld(thisP(ii))
+            !             print *, 'Delta Vol - fluxes', VolNew(thisP(ii)) - VolOld(thisP(ii)) & 
+            !                     - dt * fQ(fup(thisP(ii))) + dt * fQ(fdn(thisP(ii))) - dt * eQlat(thisP(ii)) 
+            !             print *, 'vol overflow ',elemR(thisP(ii),er_VolumeOverFlow)
+            !             call util_crashpoint(358783)
+            !         end if
+            !     end if
+            ! end do  
 
             !% comprehensive error checking
             ! print *, ' '
@@ -872,6 +872,9 @@ module utility
 
             tempCons(thisP) = dt * eQlat(thisP) - VolOver(thisP)
 
+            ! print *, ' '
+            ! print *, 'tempCons 00',tempCons(thisP) 
+
             !% --- volume and lateral flux terms on JM
             where (elemSI(thisP,esi_JunctionMain_Type) .ne. NoStorage)
                 tempCons(thisP) =  tempCons(thisP) - (VolNew(thisP) - VolOld(thisP))
@@ -881,7 +884,7 @@ module utility
             ! print *, 'VolOld ',VolOld(thisP)
             ! print *, 'VolOver',VolOver(thisP)
             ! print *, 'Qlat   ',eQlat(thisP)
-             !print *, 'tempCons 01',tempCons(thisP)        
+            ! print *, 'tempCons 01',tempCons(thisP)        
 
             !% --- get fluxes on branches for JM
             do ii=1,max_branch_per_node,2
@@ -910,21 +913,23 @@ module utility
                         ! print *, 'VolArtInflow', VolArtInflow(thisP(ii)) 
                         ! print *, ' '
                     else
-                        print *, ' '
-                        print *, 'CONSERVATION ISSUE JM', ii, thisP(ii), this_image()
-                        print *, 'is zerodepth =',elemYN(thisP(ii),eYN_isZeroDepth), ';   is smalldepth = ',elemYN(thisP(ii),eYN_isSmallDepth)
-                        print *,  'volume overflow ', VolOver(thisP(ii))
-                        print *,  'mass gain/loss ',tempCons(thisP(ii))
-                        print *,  'node # ',elemI(thisP(ii),ei_node_Gidx_SWMM)
-                        print *,  'node name ',trim(node%Names(elemI(thisP(ii),ei_node_Gidx_SWMM))%str)
-                        do kk = 1,max_branch_per_node,2
-                            if (fup(thisP(ii)+kk) /= nullvalueI) then
-                                print *, 'branch Q Fup',fup(thisP(ii)+kk),   fQ(fup(thisP(ii)+kk  )) * real(BranchExists(thisP(ii)+kk  ),8)  * real(fBarrels(fup(thisP(ii)+kk  )),8)
-                            end if
-                            if (fdn(thisP(ii)+kk+1) /= nullvalueI) then
-                                print *, 'branch Q Fdn',fdn(thisP(ii)+kk+1), fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8)  * real(fBarrels(fdn(thisP(ii)+kk+1)),8)
-                            endif
-                        end do
+                       ! print *, ' '
+                        ! print *, 'CONSERVATION ISSUE JM', ii, thisP(ii), this_image()
+                        ! print *, 'is zerodepth =',elemYN(thisP(ii),eYN_isZeroDepth), ';   is smalldepth = ',elemYN(thisP(ii),eYN_isSmallDepth)
+                        ! print *,  'volume overflow ', VolOver(thisP(ii))
+                        ! print *,  'mass gain/loss ',tempCons(thisP(ii))
+                        ! print *,  'node # ',elemI(thisP(ii),ei_node_Gidx_SWMM)
+                        ! print *,  'node name ',trim(node%Names(elemI(thisP(ii),ei_node_Gidx_SWMM))%str)
+                        ! do kk = 1,max_branch_per_node,2
+                        !     if (elemSI(thisP(ii)+kk),esi_JunctionBranch_Exists) then
+                        !         if (fup(thisP(ii)+kk) /= nullvalueI) then
+                        !             print *, 'branch Q Fup',fup(thisP(ii)+kk),   fQ(fup(thisP(ii)+kk  )) * real(BranchExists(thisP(ii)+kk  ),8)  * real(fBarrels(fup(thisP(ii)+kk  )),8)
+                        !         end if
+                        !         if (fdn(thisP(ii)+kk+1) /= nullvalueI) then
+                        !             print *, 'branch Q Fdn',fdn(thisP(ii)+kk+1), fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8)  * real(fBarrels(fdn(thisP(ii)+kk+1)),8)
+                        !         endif
+                        !     end if
+                        ! end do
                         !call util_crashpoint(3587832)
 
                     end if    

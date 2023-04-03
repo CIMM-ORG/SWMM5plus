@@ -66,10 +66,10 @@ contains
         
         call pack_dynamic_shared_faces()
 
-        call pack_small_and_zero_depth_elements(ALLtm, CC)
-        call pack_small_and_zero_depth_elements(ALLtm, JM)
-        call pack_small_and_zero_depth_elements(ETM, CC)
-        call pack_small_and_zero_depth_elements(ETM, JM)
+        !call pack_small_and_zero_depth_elements(ALLtm, CC)
+        !call pack_small_and_zero_depth_elements(ALLtm, JM)
+        call pack_small_and_zero_depth_elements(CC)
+        call pack_small_and_zero_depth_elements(JM)
         call pack_zero_depth_interior_faces (fp_all)
         ! call pack_zero_depth_shared_faces ()
 
@@ -2741,6 +2741,7 @@ contains
         !
         !--------------------------------------------------------------------------
         integer, pointer :: ptype, npack, eIDx(:), fUp(:), fDn(:)
+        integer :: ii
         character(64) :: subroutine_name = 'pack_nongeometry_static_elements'
         !--------------------------------------------------------------------------
         !if (crashYN) return
@@ -2911,7 +2912,7 @@ contains
                 (elemI(:,ei_elementType) == JM))
         end if
 
-        !% ep_JM_ALLtm
+    !% ep_JM_ALLtm
         !% - all junction main elements that are time march
         ptype => col_elemP(ep_JM_ALLtm)
         npack => npack_elemP(ptype)
@@ -2936,7 +2937,7 @@ contains
                 )
         end if
 
-        !% ep_JB_ALLtm
+    !% ep_JB_ALLtm
         !% - all junction main elements that are time march
         ! ptype => col_elemP(ep_JB_ALLtm)
         ! npack => npack_elemP(ptype)
@@ -2961,7 +2962,7 @@ contains
         !         )
         ! end if
 
-        !% ep_JB_Downstream
+    !% ep_JB_Downstream
         !% - all downstream JB elements
         ptype => col_elemP(ep_JB_Downstream)
         npack => npack_elemP(ptype)
@@ -2980,7 +2981,7 @@ contains
                 ))
         endif
 
-        !% ep_CC_DownstreamOfJunction
+    !% ep_CC_DownstreamOfJunction
         !% - all CC element downstream of a JB
         ptype => col_elemP(ep_CC_DownstreamOfJunction)
         npack => npack_elemP(ptype)
@@ -2999,7 +3000,7 @@ contains
                 ))
         endif
 
-        !% ep_CC_UpstreamOfJunction
+    !% ep_CC_UpstreamOfJunction
         !% - all CC element upstream of a JB
         ptype => col_elemP(ep_CC_UpstreamOfJunction)
         npack => npack_elemP(ptype)
@@ -3017,9 +3018,19 @@ contains
                 (elemYN(:,eYN_isElementUpstreamOfJB)) &
                 ))
         endif
-        
 
-        !% ep_CC_Open_Elements
+        ! print *, ' '
+        ! do ii=1,size(elemYN,1)
+        !     print *, ii, elemI(ii,ei_elementType), elemYN(ii,eYN_isElementUpstreamOfJB), eIdx(ii)
+
+        ! ! end do
+        ! do ii=1,npack 
+        !     print *, ii, elemP(ii,ep_CC_UpstreamOfJunction)
+        ! end do
+        ! stop 6669873
+    
+
+    !% ep_CC_Open_Elements
         !% --- all the open channel time-marching elements
         ptype => col_elemP(ep_CC_Open_Elements)
         npack => npack_elemP(ptype)
@@ -3084,7 +3095,7 @@ contains
             )
         end if
 
-        !% ep_JB_Open_Elements
+    !% ep_JB_Open_Elements
         !% --- all the open channel junction branch
         ptype => col_elemP(ep_JB_Open_Elements)
         npack => npack_elemP(ptype)
@@ -3137,7 +3148,7 @@ contains
             )
         end if
 
-        !% ep_CC_Closed_Elements
+    !% ep_CC_Closed_Elements
         !% - all the closed time-marching elements
         ptype => col_elemP(ep_CC_Closed_Elements)
         npack => npack_elemP(ptype)
@@ -3225,7 +3236,7 @@ contains
                 ) )
         end if
 
-        ! !% ep_JM_Closed_Elements
+    ! !% ep_JM_Closed_Elements
         ! !% - all the closed JM elements
         ! ptype => col_elemP(ep_JM_Closed_Elements)
         ! npack => npack_elemP(ptype)
@@ -3264,7 +3275,7 @@ contains
         !print *, npack ,' here packed elements'
         !stop 498734
 
-        !% ep_JB_Closed_Elements
+    !% ep_JB_Closed_Elements
         !% - all the closed time-marching elements
         ptype => col_elemP(ep_JB_Closed_Elements)
         npack => npack_elemP(ptype)
@@ -3348,7 +3359,7 @@ contains
                 ) )
         end if
 
-        !% ep_FM_HW_all
+    !% ep_FM_HW_all
         !% --- all force main (CC) elements that HW roughness method
         if (setting%Solver%ForceMain%AllowForceMainTF) then
             !% print *, 'ForceMain Hazen-Williams ALL elements
@@ -3373,7 +3384,7 @@ contains
             end if
         end if
 
-        !% ep_culvert_inlet
+    !% ep_culvert_inlet
         ptype => col_elemP(ep_Culvert_Inlet)
         npack => npack_elemP(Ptype)
         if (setting%Culvert%UseCulvertsTF) then
@@ -3401,7 +3412,7 @@ contains
             npack = 0
         end if
 
-        ! !% ep_culvert_outlet
+    ! !% ep_culvert_outlet
         ! ptype => col_elemP(ep_culvert_outlet)
         ! npack => npack_elemP(Ptype)
         ! if (setting%Culvert%UseCulvertsTF) then
@@ -3969,23 +3980,23 @@ contains
                 (elemI(:,ei_tmType) == ETM))
         end if
 
-        !print *, 'JB_ETM'
-        !% ep_JB_ETM ================================================
-        !% - all elements that are junction mains and ETM
-        ! ptype => col_elemP(ep_JB_ETM)
-        ! npack => npack_elemP(ptype)
+        !print *, 'JB'
+    !% ep_JB ================================================
+        !% - all elements that are junction branches
+        ptype => col_elemP(ep_JB)
+        npack => npack_elemP(ptype)
 
-        ! npack = count( &
-        !         (elemI(:,ei_elementType) == JB ) &
-        !         .and. &
-        !         (elemI(:,ei_tmType) == ETM))
+        npack = count( &
+                (elemI(:,ei_elementType) == JB ) &
+                .and. &
+                (elemSI(:,esi_JunctionBranch_Exists) == oneI))
 
-        ! if (npack > 0) then
-        !     elemP(1:npack,ptype) = pack(eIdx,  &
-        !         (elemI(:,ei_elementType) == JB ) &
-        !         .and. &
-        !         (elemI(:,ei_tmType) == ETM))
-        ! end if
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack(eIdx,  &
+                (elemI(:,ei_elementType) == JB ) &
+                .and. &
+                (elemSI(:,esi_JunctionBranch_Exists) == oneI))
+        end if
 
         !print *, 'NonSurcharged_AC'
         !% ep_AC_ACnonSurcharged ================================================
@@ -4232,159 +4243,44 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine pack_small_and_zero_depth_elements (whichTM, eType)
+    subroutine pack_small_and_zero_depth_elements (eType)
         !%-----------------------------------------------------------------
         !% dynamic packing of elements with small and zero depths
         !%-----------------------------------------------------------------
-        integer, intent(in)  :: whichTM, eType
+        integer, intent(in)  :: eType
         integer, pointer :: ptype, npack, eIdx(:)
         !%-----------------------------------------------------------------
         !%-----------------------------------------------------------------
         
         eIdx => elemI(:,ei_Lidx)
 
-        select case (whichTM)
-        case (ALLtm)
-            !% ep_SmallDepth_CC_ALLtm ====================================
-            !% - all Small depth that are CC and any time march
-            ! ptype => col_elemP(ep_SmallDepth_CC_ALLtm)
-            ! npack => npack_elemP(ptype)
-
-            ! npack = count( &
-            !         (elemYN(:,eYN_isSmallDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == CC) &
-            !         .and. &
-            !         ( &
-            !             (elemI(:,ei_tmType) == ETM) &
-            !             .or. &
-            !             (elemI(:,ei_tmType) == AC) &
-            !         ) )
-
-            ! if (npack > 0) then
-            !     elemP(1:npack,ptype) = pack(eIdx,  &
-            !         (elemYN(:,eYN_isSmallDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == CC) &
-            !         .and. &
-            !         ( &
-            !             (elemI(:,ei_tmType) == ETM) &
-            !             .or. &
-            !             (elemI(:,ei_tmType) == AC) &
-            !         ) )
-            ! end if
-            !% ep_SmallDepth_JM_ALLtm ====================================
-            !% - all Small depth that are JM and any time march
-            ! ptype => col_elemP(ep_SmallDepth_JM_ALLtm)
-            ! npack => npack_elemP(ptype)
-
-            ! npack = count( &
-            !         (elemYN(:,eYN_isSmallDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == JM) &
-            !         .and. &
-            !         ( &
-            !             (elemI(:,ei_tmType) == ETM) &
-            !             .or. &
-            !             (elemI(:,ei_tmType) == AC) &
-            !         ) )
-
-            ! if (npack > 0) then
-            !     elemP(1:npack,ptype) = pack(eIdx,  &
-            !         (elemYN(:,eYN_isSmallDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == JM) &
-            !         .and. &
-            !         ( &
-            !             (elemI(:,ei_tmType) == ETM) &
-            !             .or. &
-            !             (elemI(:,ei_tmType) == AC) &
-            !         ) )
-            ! end if
-            
-            !% ep_ZeroDepth_CC_ALLtm ====================================
-            !% - all zero depth that are CC and any time march
-            ! ptype => col_elemP(ep_ZeroDepth_CC_ALLtm)
-            ! npack => npack_elemP(ptype)
-
-            ! npack = count( &
-            !         (elemYN(:,eYN_isZeroDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == CC) &
-            !         .and. &
-            !         ( &
-            !             (elemI(:,ei_tmType) == ETM) &
-            !             .or. &
-            !             (elemI(:,ei_tmType) == AC) &
-            !         ) )
-
-            ! if (npack > 0) then
-            !     elemP(1:npack,ptype) = pack(eIdx,  &
-            !         (elemYN(:,eYN_isZeroDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == CC) &
-            !         .and. &
-            !         ( &
-            !             (elemI(:,ei_tmType) == ETM) &
-            !             .or. &
-            !             (elemI(:,ei_tmType) == AC) &
-            !         ) )
-            ! end if
-
-            !% ep_ZeroDepth_JM_ALLtm ====================================
-            !% - all Zero depth that are JM for any TM
-            ! ptype => col_elemP(ep_ZeroDepth_JM_ALLtm)
-            ! npack => npack_elemP(ptype)
-
-            ! npack = count( &
-            !         (elemYN(:,eYN_isZeroDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == JM) &
-            !         .and. &
-            !         ( &
-            !             (elemI(:,ei_tmType) == ETM) &
-            !             .or. &
-            !             (elemI(:,ei_tmType) == AC) &
-            !         ) )
-
-            ! if (npack > 0) then
-            !     elemP(1:npack,ptype) = pack(eIdx,  &
-            !         (elemYN(:,eYN_isZeroDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == JM) &
-            !         .and. &
-            !         ( &
-            !             (elemI(:,ei_tmType) == ETM) &
-            !             .or. &
-            !             (elemI(:,ei_tmType) == AC) &
-            !         ) )
-            ! end if
-
-        case (ETM)
-            select case (eType)
+        select case (eType)
             case (CC)
                 !% ep_SmallDepth_CC_ETM ====================================
                 !% - all Small depth that are CC and ETM time march
                 ptype => col_elemP(ep_SmallDepth_CC_ETM)
                 npack => npack_elemP(ptype)
+                if (setting%SmallDepth%UseSmallDepthYN) then
+                    npack = count( &
+                            (elemYN(:,eYN_isSmallDepth)) &
+                            .and. &
+                            (elemI(:,ei_elementType) == CC) &
+                            .and. &
+                            (elemI(:,ei_tmType) == ETM) )
 
-                npack = count( &
-                        (elemYN(:,eYN_isSmallDepth)) &
-                        .and. &
-                        (elemI(:,ei_elementType) == CC) &
-                        .and. &
-                        (elemI(:,ei_tmType) == ETM) )
-
-                if (npack > 0) then
-                    elemP(1:npack,ptype) = pack(eIdx,  &
-                        (elemYN(:,eYN_isSmallDepth)) &
-                        .and. &
-                        (elemI(:,ei_elementType) == CC) &
-                        .and. &
-                        (elemI(:,ei_tmType) == ETM))
+                    if (npack > 0) then
+                        elemP(1:npack,ptype) = pack(eIdx,  &
+                            (elemYN(:,eYN_isSmallDepth)) &
+                            .and. &
+                            (elemI(:,ei_elementType) == CC) &
+                            .and. &
+                            (elemI(:,ei_tmType) == ETM))
+                    end if
+                else 
+                    npack = zeroI
                 end if
 
-                 !% ep_ZeroDepth_CC_ETM ====================================
+                !% ep_ZeroDepth_CC_ETM ====================================
                 !% - all zero depth that are CC and ETM time march
                 ptype => col_elemP(ep_ZeroDepth_CC_ETM)
                 npack => npack_elemP(ptype)
@@ -4412,20 +4308,24 @@ contains
                 ptype => col_elemP(ep_SmallDepth_JM_ETM)
                 npack => npack_elemP(ptype)
 
-                npack = count( &
-                        (elemYN(:,eYN_isSmallDepth)) &
-                        .and. &
-                        (elemI(:,ei_elementType) == JM) &
-                        .and. &
-                        (elemI(:,ei_tmType) == ETM) )
+                if (setting%SmallDepth%UseSmallDepthYN) then
+                    npack = count( &
+                            (elemYN(:,eYN_isSmallDepth)) &
+                            .and. &
+                            (elemI(:,ei_elementType) == JM) &
+                            .and. &
+                            (elemI(:,ei_tmType) == ETM) )
 
-                if (npack > 0) then
-                    elemP(1:npack,ptype) = pack(eIdx,  &
-                        (elemYN(:,eYN_isSmallDepth)) &
-                        .and. &
-                        (elemI(:,ei_elementType) == JM) &
-                        .and. &
-                        (elemI(:,ei_tmType) == ETM))
+                    if (npack > 0) then
+                        elemP(1:npack,ptype) = pack(eIdx,  &
+                            (elemYN(:,eYN_isSmallDepth)) &
+                            .and. &
+                            (elemI(:,ei_elementType) == JM) &
+                            .and. &
+                            (elemI(:,ei_tmType) == ETM))
+                    end if
+                else 
+                    npack = zeroI
                 end if
 
                 !% ep_ZeroDepth_JM_ETM ====================================
@@ -4450,26 +4350,30 @@ contains
                 end if
 
             case (JB)
-                !% ep_SmallDepth_JB_ETM ====================================
-                !% - all Small depth that are JB and ETM time march
-                ptype => col_elemP(ep_SmallDepth_JB_ETM)
-                npack => npack_elemP(ptype)
+                ! !% ep_SmallDepth_JB_ETM ====================================
+                ! !% - all Small depth that are JB and ETM time march
+                ! ptype => col_elemP(ep_SmallDepth_JB_ETM)
+                ! npack => npack_elemP(ptype)
 
-                npack = count( &
-                        (elemYN(:,eYN_isSmallDepth)) &
-                        .and. &
-                        (elemI(:,ei_elementType) == JB) &
-                        .and. &
-                        (elemI(:,ei_tmType) == ETM) )
+                ! if (setting%SmallDepth%UseSmallDepthYN) then
+                !     npack = count( &
+                !             (elemYN(:,eYN_isSmallDepth)) &
+                !             .and. &
+                !             (elemI(:,ei_elementType) == JB) &
+                !             .and. &
+                !             (elemI(:,ei_tmType) == ETM) )
 
-                if (npack > 0) then
-                    elemP(1:npack,ptype) = pack(eIdx,  &
-                        (elemYN(:,eYN_isSmallDepth)) &
-                        .and. &
-                        (elemI(:,ei_elementType) == JB) &
-                        .and. &
-                        (elemI(:,ei_tmType) == ETM))
-                end if
+                !     if (npack > 0) then
+                !         elemP(1:npack,ptype) = pack(eIdx,  &
+                !             (elemYN(:,eYN_isSmallDepth)) &
+                !             .and. &
+                !             (elemI(:,ei_elementType) == JB) &
+                !             .and. &
+                !             (elemI(:,ei_tmType) == ETM))
+                !     end if
+                ! else 
+                !     npack = zeroI
+                ! end if
 
                 !% ep_ZeroDepth_JB_ETM ====================================
                 !% - all Zero depth that are JB for ETM
@@ -4495,104 +4399,7 @@ contains
             case default 
                 print *, 'unexpected case default'
                 call util_crashpoint(5598723)
-            end select
-            !% EndNew 20220122brh
-
-        case (AC)
-            !     !% BeginNew 20220122brh
-            ! !% ep_SmallDepth_CC_AC ====================================
-            ! !% - all Small depth that are CC and AC time march
-            ! ptype => col_elemP(ep_SmallDepth_CC_AC)
-            ! npack => npack_elemP(ptype)
-
-            ! npack = count( &
-            !         (elemYN(:,eYN_isSmallDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == CC) &
-            !         .and. &
-            !         (elemI(:,ei_tmType) == AC) )
-
-            ! if (npack > 0) then
-            !     elemP(1:npack,ptype) = pack(eIdx,  &
-            !         (elemYN(:,eYN_isSmallDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == CC) &
-            !         .and. &
-            !         (elemI(:,ei_tmType) == AC))
-            ! end if
-
-            !% ep_SmallDepth_JM_AC ====================================
-            !% - all Small depth that are JM and AC time march
-            ! ptype => col_elemP(ep_SmallDepth_JM_AC)
-            ! npack => npack_elemP(ptype)
-
-            ! npack = count( &
-            !         (elemYN(:,eYN_isSmallDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == JM) &
-            !         .and. &
-            !         (elemI(:,ei_tmType) == AC) )
-
-            ! if (npack > 0) then
-            !     elemP(1:npack,ptype) = pack(eIdx,  &
-            !         (elemYN(:,eYN_isSmallDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == JM) &
-            !         .and. &
-            !         (elemI(:,ei_tmType) == AC))
-            ! end if
-            
-            !% ep_ZeroDepth_CC_AC ====================================
-            !% - all zero depth that are CC and AC time march
-            ! ptype => col_elemP(ep_ZeroDepth_CC_AC)
-            ! npack => npack_elemP(ptype)
-
-            ! npack = count( &
-            !         (elemYN(:,eYN_isZeroDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == CC) &
-            !         .and. &
-            !         (elemI(:,ei_tmType) == AC) )
-
-            ! if (npack > 0) then
-            !     elemP(1:npack,ptype) = pack(eIdx,  &
-            !         (elemYN(:,eYN_isZeroDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == CC) &
-            !         .and. &
-            !         (elemI(:,ei_tmType) == AC) )
-            ! end if
-
-            !% ep_ZeroDepth_JM_AC ====================================
-            !% - all Zero depth that are JM for AC
-            ! ptype => col_elemP(ep_ZeroDepth_JM_AC)
-            ! npack => npack_elemP(ptype)
-
-            ! npack = count( &
-            !         (elemYN(:,eYN_isZeroDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == JM) &
-            !         .and. &
-            !         (elemI(:,ei_tmType) == AC))
-
-            ! if (npack > 0) then
-            !     elemP(1:npack,ptype) = pack(eIdx,  &
-            !         (elemYN(:,eYN_isZeroDepth)) &
-            !         .and. &
-            !         (elemI(:,ei_elementType) == JM) &
-            !         .and. &
-            !         (elemI(:,ei_tmType) == AC))
-            ! end if
-
-            !% EndNew 20220122brh
-        case default
-            print *, 'CODE ERROR: time march type unknown for # ', whichTM
-            print *, 'which has key ',trim(reverseKey(whichTM))
-            !stop 
-            call util_crashpoint(3987053)
-            !return
         end select
-        
 
         !print *, 'CC_NOTsmalldepth'
         !% ep_CC_NOTsmalldepth  ====================================
@@ -4600,23 +4407,27 @@ contains
         !% -- needed to limit where CFL is computed and volume conservation
         ptype => col_elemP(ep_CC_NOTsmalldepth)
         npack => npack_elemP(ptype)
-        npack = count( &
-                (elemI(:,ei_elementType) == CC) &
-                .and. &
-                (elemI(:,ei_QeqType) == time_march) &
-                .and. &
-                (.not. elemYN(:,eYN_isSmallDepth)) &
-                .and. &
-                (.not. elemYN(:,eYN_isZeroDepth))     )
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemI(:,ei_elementType) == CC) &
-                .and. &
-                (elemI(:,ei_QeqType) == time_march) &
-                .and. &
-                (.not. elemYN(:,eYN_isSmallDepth))   &
-                .and. &
-                (.not. elemYN(:,eYN_isZeroDepth))     )
+        if (setting%SmallDepth%UseSmallDepthYN) then 
+            npack = count( &
+                    (elemI(:,ei_elementType) == CC) &
+                    .and. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                    .and. &
+                    (.not. elemYN(:,eYN_isSmallDepth)) &
+                    .and. &
+                    (.not. elemYN(:,eYN_isZeroDepth))     )
+            if (npack > 0) then
+                elemP(1:npack,ptype) = pack(eIdx,  &
+                    (elemI(:,ei_elementType) == CC) &
+                    .and. &
+                    (elemI(:,ei_QeqType) == time_march) &
+                    .and. &
+                    (.not. elemYN(:,eYN_isSmallDepth))   &
+                    .and. &
+                    (.not. elemYN(:,eYN_isZeroDepth))     )
+            end if
+        else 
+            npack = zeroI
         end if
 
         !print *, 'CC_NOTzerodepth'
@@ -4645,60 +4456,68 @@ contains
         !% ep_JBJM_NOTsmalldepth  ====================================
         !% Flow solution that are NOT small volume or zero depth
         !% -- needed to limit where CFL is computed
-        ptype => col_elemP(ep_JBJM_NOTsmalldepth)
-        npack => npack_elemP(ptype)
-        npack = count( &
-                (      &
-                      ( elemI(:,ei_elementType) == JM) &
-                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneI) ) &   
-                ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSmallDepth)) &
-                .and. &
-                (.not. elemYN(:,eYN_isZeroDepth))     )
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-                (      &
-                      ( elemI(:,ei_elementType) == JM) &
-                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneI) ) &   
-                ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSmallDepth)) &
-                .and. &
-                (.not. elemYN(:,eYN_isZeroDepth))     ) 
-        end if
+        ! ptype => col_elemP(ep_JBJM_NOTsmalldepth)
+        ! npack => npack_elemP(ptype)
+        ! if (setting%SmallDepth%UseSmallDepthYN) then 
+        !     npack = count( &
+        !             (      &
+        !                 ( elemI(:,ei_elementType) == JM) &
+        !             .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneI) ) &   
+        !             ) &
+        !             .and. &
+        !             (.not. elemYN(:,eYN_isSmallDepth)) &
+        !             .and. &
+        !             (.not. elemYN(:,eYN_isZeroDepth))     )
+        !     if (npack > 0) then
+        !         elemP(1:npack,ptype) = pack(eIdx,  &
+        !             (      &
+        !                 ( elemI(:,ei_elementType) == JM) &
+        !             .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneI) ) &   
+        !             ) &
+        !             .and. &
+        !             (.not. elemYN(:,eYN_isSmallDepth)) &
+        !             .and. &
+        !             (.not. elemYN(:,eYN_isZeroDepth))     ) 
+        !     end if
+        ! else 
+        !     npack = zeroI
+        ! end if
 
         !print *, 'CCJBJM_NOTsmalldepth'
         !% ep_CCJBJM_NOTsmalldepth  ====================================
         !% Flow solution that are NOT small volume or zero depth
         !% -- needed to limit where CFL is computed
-        ptype => col_elemP(ep_CCJBJM_NOTsmalldepth)
-        npack => npack_elemP(ptype)
-        npack = count( &
-                (      &
-                      ( elemI(:,ei_elementType) == CC) &
-                 .or. ( elemI(:,ei_elementType) == JM) &
-                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneI) ) &   
-                ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSmallDepth)) &
-                .and. &
-                (.not. elemYN(:,eYN_isZeroDepth))     )
-        ! print *, ' '
-        ! print *, ' in pack_mask_arrays checking CCJBJM_NOTsmalldepth'
-        ! print *, 'npack ',npack        
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-                (      &
-                      ( elemI(:,ei_elementType) == CC) &
-                 .or. ( elemI(:,ei_elementType) == JM) &
-                 .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneI) ) &   
-                ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSmallDepth)) &
-                .and. &
-                (.not. elemYN(:,eYN_isZeroDepth))     ) 
-        end if
+        ! ptype => col_elemP(ep_CCJBJM_NOTsmalldepth)
+        ! npack => npack_elemP(ptype)
+        ! if (setting%SmallDepth%UseSmallDepthYN) then 
+        !     npack = count( &
+        !             (      &
+        !                 ( elemI(:,ei_elementType) == CC) &
+        !             .or. ( elemI(:,ei_elementType) == JM) &
+        !             .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneI) ) &   
+        !             ) &
+        !             .and. &
+        !             (.not. elemYN(:,eYN_isSmallDepth)) &
+        !             .and. &
+        !             (.not. elemYN(:,eYN_isZeroDepth))     )
+        !     ! print *, ' '
+        !     ! print *, ' in pack_mask_arrays checking CCJBJM_NOTsmalldepth'
+        !     ! print *, 'npack ',npack        
+        !     if (npack > 0) then
+        !         elemP(1:npack,ptype) = pack(eIdx,  &
+        !             (      &
+        !                 ( elemI(:,ei_elementType) == CC) &
+        !             .or. ( elemI(:,ei_elementType) == JM) &
+        !             .or. ((elemI(:,ei_elementType) == JB) .and. (elemSI(:,esi_JunctionBranch_Exists) == oneI) ) &   
+        !             ) &
+        !             .and. &
+        !             (.not. elemYN(:,eYN_isSmallDepth)) &
+        !             .and. &
+        !             (.not. elemYN(:,eYN_isZeroDepth))     ) 
+        !     end if
+        ! else 
+        !     npack = zeroI
+        ! end if
 
         !print *, 'CCJM_NOTsmalldepth'
         !% ep_CCJM_NOTsmalldepth  ====================================
@@ -4706,26 +4525,50 @@ contains
         !% -- alternate needed to limit where CFL is computed
         ptype => col_elemP(ep_CCJM_NOTsmalldepth)
         npack => npack_elemP(ptype)
+        if (setting%SmallDepth%UseSmallDepthYN) then 
+            npack = count( &
+                    (      &
+                        ( elemI(:,ei_elementType) == CC) &
+                    .or. ( elemI(:,ei_elementType) == JM) &   
+                    ) &
+                    .and. &
+                    (.not. elemYN(:,eYN_isSmallDepth)) &
+                    .and. &
+                    (.not. elemYN(:,eYN_isZeroDepth))     )
+            ! print *, ' '
+            ! print *, ' in pack_mask_arrays checking CCJM_NOTsmalldepth'
+            ! print *, 'npack ',npack        
+            if (npack > 0) then
+                elemP(1:npack,ptype) = pack(eIdx,  &
+                    (      &
+                        ( elemI(:,ei_elementType) == CC) &
+                    .or. ( elemI(:,ei_elementType) == JM) &   
+                    ) &
+                    .and. &
+                    (.not. elemYN(:,eYN_isSmallDepth)) &
+                    .and. &
+                    (.not. elemYN(:,eYN_isZeroDepth))     ) 
+            end if
+        else
+            npack = zeroI 
+        end if
+
+
+        ptype => col_elemP(ep_CCJM_NOTzerodepth)
+        npack => npack_elemP(ptype)
         npack = count( &
                 (      &
-                      ( elemI(:,ei_elementType) == CC) &
-                 .or. ( elemI(:,ei_elementType) == JM) &   
+                    ( elemI(:,ei_elementType) == CC) &
+                .or. ( elemI(:,ei_elementType) == JM) &   
                 ) &
                 .and. &
-                (.not. elemYN(:,eYN_isSmallDepth)) &
-                .and. &
-                (.not. elemYN(:,eYN_isZeroDepth))     )
-        ! print *, ' '
-        ! print *, ' in pack_mask_arrays checking CCJM_NOTsmalldepth'
-        ! print *, 'npack ',npack        
+                (.not. elemYN(:,eYN_isZeroDepth))     )     
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (      &
-                      ( elemI(:,ei_elementType) == CC) &
-                 .or. ( elemI(:,ei_elementType) == JM) &   
+                    ( elemI(:,ei_elementType) == CC) &
+                .or. ( elemI(:,ei_elementType) == JM) &   
                 ) &
-                .and. &
-                (.not. elemYN(:,eYN_isSmallDepth)) &
                 .and. &
                 (.not. elemYN(:,eYN_isZeroDepth))     ) 
         end if
@@ -4800,6 +4643,11 @@ contains
         end if  
 
         !% ---- fp_elem_bothsides_are_zero
+        ! print *, ' '
+        ! print *, 'PACKING '
+        ! print *, 'adjacent elements: ',eUp(2),eDn(2)
+        ! print *, 'is Zero            ',elemYN(eUp(2),eYN_isZeroDepth), elemYN(eDn(2),eYN_isZeroDepth)
+        ! print *, ' '
         ptype => col_faceP(fp_elem_bothsides_are_zero)
         npack => npack_faceP(ptype)
         npack = count(                                                 &

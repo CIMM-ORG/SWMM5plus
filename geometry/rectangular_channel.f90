@@ -34,23 +34,18 @@ module rectangular_channel
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine rectangular_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine rectangular_depth_from_volume (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on open channels 
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
         !% Assumes that volume > 0 is previously enforced in volume computations.
         !%------------------------------------------------------------------
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:), volume(:)
             real(8), pointer :: fulldepth(:), fullvolume(:)
-        !%------------------------------------------------------------------
-        !% Preliminaries:
-            if (Npack < 1) return
         !%------------------------------------------------------------------  
         !% Aliases:  
-            thisP      => elemPGx(1:Npack,thisCol) 
             depth      => elemR(:,er_Depth)
             volume     => elemR(:,er_Volume)
             fulldepth  => elemR(:,er_FullDepth)
@@ -78,22 +73,16 @@ module rectangular_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine rectangular_topwidth_from_depth (elemPGx, Npack, thisCol)
+    subroutine rectangular_topwidth_from_depth (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a rectangular channel
         !%------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer ::  topwidth(:), depth(:)
         !%------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
         !% Aliases
-            thisP     => elemPGx(1:Npack,thisCol) 
             topwidth  => elemR(:,er_Topwidth)
             depth     => elemR(:,er_Depth)
         !%-----------------------------------------------------------------
@@ -105,22 +94,16 @@ module rectangular_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine rectangular_perimeter_from_depth (elemPGx, Npack, thisCol)
+    subroutine rectangular_perimeter_from_depth (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the perimeter from a known depth in a rectangular channel
         !%------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: perimeter(:), depth(:)
         !%-------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%-------------------------------------------------------------------
         !% Aliases:
-            thisP     => elemPGx(1:Npack,thisCol) 
             perimeter => elemR(:,er_Perimeter)
             depth     => elemR(:,er_Depth)
         !%-------------------------------------------------------------------

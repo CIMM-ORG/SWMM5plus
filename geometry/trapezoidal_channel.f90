@@ -34,7 +34,7 @@ module trapezoidal_channel
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine trapezoidal_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine trapezoidal_depth_from_volume (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on open channels 
@@ -42,15 +42,11 @@ module trapezoidal_channel
         !% Assumes that volume > 0 is previuosly enforced in volume computations.
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:), volume(:)
             real(8), pointer :: fullvolume(:), fulldepth(:)
         !%-------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%-------------------------------------------------------------------
-            thisP      => elemPGx(1:Npack,thisCol) 
+        !% Aliases
             depth      => elemR(:,er_Depth)
             volume     => elemR(:,er_Volume)
             fullvolume => elemR(:,er_FullVolume)
@@ -83,22 +79,16 @@ module trapezoidal_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine trapezoidal_topwidth_from_depth (elemPGx, Npack, thisCol)
+    subroutine trapezoidal_topwidth_from_depth (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a trapezoidal channel
         !%------------------------------------------------------------------
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: topwidth(:), volume(:), fullvolume(:)
             real(8), pointer :: depth(:)
         !%------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
         !% Aliases    
-            thisP       => elemPGx(1:Npack,thisCol) 
             topwidth    => elemR(:,er_Topwidth)
             volume      => elemR(:,er_Volume)
             fullvolume  => elemR(:,er_FullVolume)
@@ -124,23 +114,17 @@ module trapezoidal_channel
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine trapezoidal_perimeter_from_depth (elemPGx, Npack, thisCol)
+    subroutine trapezoidal_perimeter_from_depth (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the perimeter from a known depth in a trapezoidal channel
         !%------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: perimeter(:), volume(:), fullvolume(:)
             real(8), pointer :: depth(:)
         !%------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
         !% Aliases
-            thisP      => elemPGx(1:Npack,thisCol) 
             perimeter  => elemR(:,er_Perimeter)
             volume     => elemR(:,er_Volume)
             fullvolume => elemR(:,er_FullVolume)

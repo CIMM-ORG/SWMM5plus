@@ -643,6 +643,7 @@ module define_settings
 
     ! setting%SmallDepth
     type SmallDepthType
+        logical :: UseSmallDepthYN = .false.
         real(8) :: DepthCutoff = 0.005d0 ! m  !% prior to 20230327 using 0.03
         real(8) :: ManningsN = 0.1d0
         real(8) :: PumpVolumeFactor = 0.5d0  !% 

@@ -66,21 +66,21 @@ module diagnostic_elements
 
         ! if (Npack > 0) then
 
-            ! call util_utest_CLprint ('in diagnostic_toplevel  AAAA')
+            ! ! call util_utest_CLprint ('in diagnostic_toplevel  AAAA')
 
         call diagnostic_by_type (elemPCol, istep)
 
-            ! call util_utest_CLprint ('in diagnostic_toplevel  BBB')
+            ! ! call util_utest_CLprint ('in diagnostic_toplevel  BBB')
 
         !% reset any face values affected
         call face_interpolation (facePCol,.true.,.true.,.true.,.true.,.true.)
 
-            ! call util_utest_CLprint ('in diagnostic_toplevel  CCC')
+            ! ! call util_utest_CLprint ('in diagnostic_toplevel  CCC')
 
         !% --- reset the zero and small depth fluxes
-        call adjust_zero_and_small_depth_face (ETM, .false.)
+        call adjust_zero_and_small_depth_face (.false.)
 
-            ! call util_utest_CLprint ('in diagnostic_toplevel  DDD')
+            ! ! call util_utest_CLprint ('in diagnostic_toplevel  DDD')
 
         ! end if
        

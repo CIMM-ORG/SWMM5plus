@@ -91,8 +91,13 @@ contains
                 whichTM = ETM
             case (AC)
                 whichTM = AC
+                print *, 'CONFIGURATION ERROR: AC solver is not functional'
+                print *, 'use setting.Solver.Select = ETM'
+                call util_crashpoint(7298744)
             case (ETM_AC)
-                whichTM = ALLtm
+                print *, 'CONFIGURATION ERROR: AC solver is not functional'
+                print *, 'use setting.Solver.Select = ETM'
+                call util_crashpoint(7298744)
             case default
                 print *, 'CODE ERROR: solver type unknown for # ', whichSolver
                 print *, 'which has key ',trim(reverseKey(whichSolver))
@@ -128,13 +133,13 @@ contains
         !%     this corresponds to the "yBot" of the Filled Circular cross-section in EPA-SWMM
         elemR(:,er_SedimentDepth) = zeroR
 
-            ! call util_utest_CLprint ('initial_condition near start')
+            ! ! call util_utest_CLprint ('initial_condition near start')
 
         !% --- get data that can be extracted from links
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
         call init_IC_from_linkdata ()
 
-            ! call util_utest_CLprint ('initial_condition after IC_from_linkdata')
+            ! ! call util_utest_CLprint ('initial_condition after IC_from_linkdata')
 
         !print *, 'TEST 98743987 ', elemR()
 
@@ -146,7 +151,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
         call init_IC_diagnostic_geometry_from_adjacent (.true.)
 
-            ! call util_utest_CLprint ('initial_condition after diagnostic_geometry_from_adjacent')
+            ! ! call util_utest_CLprint ('initial_condition after diagnostic_geometry_from_adjacent')
 
         !% --- sync after all the link data has been extracted
         !%     the junction branch data is read in from the elemR arrays which
@@ -157,7 +162,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_for_nJM_from_nodedata'
         call init_IC_for_nJm_from_nodedata ()
 
-            ! call util_utest_CLprint ('initial_condition afer IC_from_nodedata')
+            ! ! call util_utest_CLprint ('initial_condition afer IC_from_nodedata')
 
         !% --- second call for diagnostic that was next to JM/JB
         sync all
@@ -194,53 +199,58 @@ contains
         call init_IC_elem_transect_arrays ()
         call init_IC_elem_transect_geometry ()
 
-            ! call util_utest_CLprint ('initial_condition after transect_arrays and _geometry')
+            ! ! call util_utest_CLprint ('initial_condition after transect_arrays and _geometry')
 
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_error_check'
         call init_IC_error_check ()
        
         !% --- identify the small and zero depths (must be done before pack)
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth'
-        call adjust_smalldepth_identify_all ()
+        if (setting%SmallDepth%UseSmallDepthYN) then
+            call adjust_smalldepth_identify_all ()
+        else
+            !% --- if not using small depth algorithm, then cuttoff is the same as zero depth
+            setting%SmallDepth%DepthCutoff = setting%ZeroValue%Depth
+        end if
         call adjust_zerodepth_identify_all ()
 
-            ! call util_utest_CLprint ('initial_condition after adjust_smalldepth and _zerodepth')
+            ! ! call util_utest_CLprint ('initial_condition after adjust_smalldepth and _zerodepth')
 
         !% ---zero out the lateral inflow column
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_set_zero_lateral_inflow'
         call init_IC_set_zero_lateral_inflow ()
 
-            ! call util_utest_CLprint ('initial_condition after IC_set_zero_lateral_inflow')
+            ! ! call util_utest_CLprint ('initial_condition after IC_set_zero_lateral_inflow')
 
         !% --- update time marching type
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_solver_select '
         call init_IC_solver_select (whichSolver)
 
-            ! call util_utest_CLprint ('initial_condition after IC_solver_select')
+            ! ! call util_utest_CLprint ('initial_condition after IC_solver_select')
        
         !% --- set up all the static packs and masks
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
   
-            ! call util_utest_CLprint ('initial_condition after pack_mask_arrays_all')
+            ! ! call util_utest_CLprint ('initial_condition after pack_mask_arrays_all')
 
         !% --- initialize zerovalues for other than depth (must be done after pack)
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC_Zerovalues'
-        call init_IC_ZeroValues_nondepth (whichTM)
+        call init_IC_ZeroValues_nondepth ()
 
-            ! call util_utest_CLprint ('initial_condition after IC_ZeroValues_nondepth')
+            ! ! call util_utest_CLprint ('initial_condition after IC_ZeroValues_nondepth')
 
         !% --- set all the zero and small volumes
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 2'
-        call adjust_zero_and_small_depth_elem (ETM, .true., .true.)
+        call adjust_zero_and_small_depth_elem (.true., .true.)
 
-            ! call util_utest_CLprint ('initial_condition after adjust_zero_and_small_depth_elem')
+            ! ! call util_utest_CLprint ('initial_condition after adjust_zero_and_small_depth_elem')
 
         !% --- get the bottom slope
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC bottom slope'
         call init_IC_bottom_slope ()
 
-            ! call util_utest_CLprint ('initial_condition after IC_bottom_slope')
+            ! ! call util_utest_CLprint ('initial_condition after IC_bottom_slope')
 
         !     !% --- get beta (S0/n, used for section factor)
         !    ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC beta'
@@ -250,20 +260,20 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_set_SmallVolumes'
         call init_IC_set_SmallVolumes ()
 
-            ! call util_utest_CLprint ('initial_condition after IC_set_SmallVolumes')
+            ! ! call util_utest_CLprint ('initial_condition after IC_set_SmallVolumes')
 
         !% --- initialize Preissmann slots
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_slot'
         call init_IC_slot ()
 
-            ! call util_utest_CLprint ('initial_condition after IC_slot')
+            ! ! call util_utest_CLprint ('initial_condition after IC_slot')
 
         !% --- get the velocity and any other derived data
         !%     These are data needed before bc and aux variables are updated
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_derived_data'
         call init_IC_derived_data()
 
-            ! call util_utest_CLprint ('initial_condition after IC_derived_data')
+            ! ! call util_utest_CLprint ('initial_condition after IC_derived_data')
 
         ! !% --- need geometry defined before BC processing  --- 20221024 brh
         ! call geometry_toplevel (whichTM)
@@ -278,7 +288,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_subtract_reference_head'
         call init_subtract_reference_head()
 
-            ! call util_utest_CLprint ('initial_condition after reference_head')
+            ! ! call util_utest_CLprint ('initial_condition after reference_head')
 
         !% --- create the packed set of nodes for BC
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_nodes'
@@ -292,7 +302,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
         call init_bc()
 
-            ! call util_utest_CLprint ('initial_condition after init_bc')
+            ! ! call util_utest_CLprint ('initial_condition after init_bc')
 
         !% --- setup the sectionfactor arrays needed for normal depth computation on outfall BC
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_uniformtable_array"
@@ -303,7 +313,7 @@ contains
         call bc_update()
         if (crashI==1) return
 
-            ! call util_utest_CLprint ('initial_condition after bc_update')
+            ! ! call util_utest_CLprint ('initial_condition after bc_update')
 
         !% --- storing dummy values for branches that are invalid
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch dummy values'
@@ -313,7 +323,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch zero values'
         call init_IC_branch_zero_values ()
 
-            ! call util_utest_CLprint ('initial_condition after IC_branch_dummy_values')
+            ! ! call util_utest_CLprint ('initial_condition after IC_branch_dummy_values')
 
         ! print *, 'TEST20230327 AAA'
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
@@ -321,20 +331,22 @@ contains
 
         !% --- set all the auxiliary (dependent) variables
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables CC'
-        call update_auxiliary_variables_CC (whichTM)
+        call update_auxiliary_variables_CC (&
+            ep_CC_ETM, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
+            .true., .false., dummyIdx)
 
         ! print *, 'TEST20230327 BBBB'
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
         ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
 
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables JM'
-        call update_auxiliary_variables_JMJB (whichTM, .false.)
+        call update_auxiliary_variables_JMJB (.false.)
 
         ! print *, 'TEST20230327 CCCC'
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
         ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
 
-            ! call util_utest_CLprint ('initial_condition after update_auxiliary_variables')
+            ! ! call util_utest_CLprint ('initial_condition after update_auxiliary_variables')
 
             !stop 5509873
 
@@ -355,7 +367,7 @@ contains
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
         ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
 
-            ! call util_utest_CLprint ('initial_condition after IC_diagnostic_interpolation_weights')
+            ! ! call util_utest_CLprint ('initial_condition after IC_diagnostic_interpolation_weights')
 
         !% --- set small values to diagnostic element interpolation sets
         !%     Needed so that junk values does not mess up the first interpolation
@@ -366,7 +378,7 @@ contains
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
         ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
 
-            ! call util_utest_CLprint ('initial_condition after IC_small_values_diagnostic')
+            ! ! call util_utest_CLprint ('initial_condition after IC_small_values_diagnostic')
 
         !% --- update faces
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
@@ -376,7 +388,7 @@ contains
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
         ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
 
-            ! call util_utest_CLprint ('initial_condition after face_interpolation')
+            ! ! call util_utest_CLprint ('initial_condition after face_interpolation')
 
             !stop 5590873
 
@@ -384,25 +396,25 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
         call control_init_monitoring_and_action_from_EPASWMM()
 
-            ! call util_utest_CLprint ('initial_condition after control_init_monitoring...')
+            ! ! call util_utest_CLprint ('initial_condition after control_init_monitoring...')
 
         !% --- update the initial condition in all diagnostic elements
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
         call diagnostic_toplevel (ep_Diag, fp_Diag, 2)
 
-           ! call util_utest_CLprint ('initial_condition after diagnostic_toplevel')
+           ! ! call util_utest_CLprint ('initial_condition after diagnostic_toplevel')
 
         !% --- ensure that small and zero depth faces are correct
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 3'
-        call adjust_zero_and_small_depth_face (ETM, .false.)
+        call adjust_zero_and_small_depth_face (.false.)
 
-           ! call util_utest_CLprint ('initial_condition after adjust_zero_and_small_depth_face')
+           ! ! call util_utest_CLprint ('initial_condition after adjust_zero_and_small_depth_face')
 
         !% ---populate er_ones columns with ones
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
 
-        ! call util_utest_CLprint ('initial_condition at end')
+        ! ! call util_utest_CLprint ('initial_condition at end')
 
            !stop 666987
 
@@ -1489,6 +1501,7 @@ contains
         !% Declarations
             integer, intent(in) :: thisLink
             integer, pointer    :: geometryType, link_tidx, eIdx(:), thisP(:)
+            integer, pointer    :: fUp(:), fDn(:)
 
             integer :: Npack, ii, mm
 
@@ -1516,6 +1529,10 @@ contains
             !% --- pointer to element indexes
             eIdx         => elemI(:,ei_Lidx)
 
+            !% --- pointer to face indexes
+            fUp          => elemI(:,ei_Mface_uL)
+            fDn          => elemI(:,ei_Mface_dL)
+
             !% --- pack the elements for this link in temporary array
             Npack = count(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
             if (Npack < 1) return 
@@ -1539,8 +1556,7 @@ contains
         
 
         ! print *, 'in ',trim(subroutine_name)
-        ! print *, 'geometrytype ',geometryType,trim(reverseKey(geometryType))
-        
+        ! print *, 'geometrytype ',geometryType,trim(reverseKey(geometryType))      
         select case (geometryType)
 
         case (lIrregular)
@@ -1899,7 +1915,10 @@ contains
         !%     Note, real must be first as int is used for thisP
         elemR(thisP,er_Temp01) = zeroR
         elemI(thisP,ei_Temp01) = nullvalueI
-       
+
+        !% -- set the face values for the crown (full depth)
+        faceR(fUp(thisP),fr_Zcrown_d) = faceR(fUp(thisP),fr_Zbottom) + elemR(thisP,er_FullDepth)
+        faceR(fDn(thisP),fr_Zcrown_u) = faceR(fDn(thisP),fr_Zbottom) + elemR(thisP,er_FullDepth)
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1927,6 +1946,7 @@ contains
             integer :: ii, mm, Npack
             integer, intent(in) :: thisLink
             integer, pointer    :: geometryType, eIdx(:), thisP(:)
+            integer, pointer    :: fUp(:), fDn(:)
             real(8), pointer    :: fullDepth(:), breadthMax(:), fullArea(:)
             real(8), pointer    :: depth(:), fullHydRadius(:)
             real(8), pointer    :: pi, topwidthDepth
@@ -1949,6 +1969,10 @@ contains
             !% --- pointer to element indexes
             eIdx         => elemI(:,ei_Lidx)
 
+            !% --- pointer to face indexes
+            fUp         => elemI(:,ei_Mface_uL)
+            fDn         => elemI(:,ei_Mface_dL)
+
             !% --- pointer to full depth
             depth         => elemR(:,er_Depth)
             fullDepth     => elemR(:,er_FullDepth)
@@ -1964,6 +1988,10 @@ contains
         elemR(thisP,er_FullDepth)     = link%R(thisLink,lr_FullDepth)
         elemR(thisP,er_FullArea)      = link%R(thisLink,lr_FullArea)
         elemR(thisP,er_FullHydRadius) = link%R(thisLink,lr_FullHydRadius)
+
+        !% -- set the face values for the crown
+        faceR(fUp(thisP),fr_Zcrown_d) = faceR(fUp(thisP),fr_Zbottom) + elemR(thisP,er_FullDepth)
+        faceR(fDn(thisP),fr_Zcrown_u) = faceR(fDn(thisP),fr_Zbottom) + elemR(thisP,er_FullDepth)
 
         ! print *, ' '
         ! print *, 'in ',trim(subroutine_name)
@@ -3921,12 +3949,16 @@ contains
             end if
 
             !% Common geometry that do not depend on cross-section
+            elemR(JBidx,er_Length)       = setting%Discretization%NominalElemLength
             elemR(JBidx,er_Area_N0)      = elemR(JBidx,er_Area)
             elemR(JBidx,er_Area_N1)      = elemR(JBidx,er_Area)
             elemR(JBidx,er_FullVolume)   = elemR(JBidx,er_FullArea)  * elemR(JBidx,er_Length)
             elemR(JBidx,er_Volume)       = elemR(JBidx,er_Area) * elemR(JBidx,er_Length)
             elemR(JBidx,er_Volume_N0)    = elemR(JBidx,er_Volume)
             elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
+            
+
+            !print *, 'in initial', JBidx, elemR(JBidx,er_Length)
 
         end do
         
@@ -4575,7 +4607,11 @@ contains
         !% Preliminaries
         !%------------------------------------------------------------------
         !% Aliases
-            thisCol    = ep_CC_NOTsmalldepth
+            if (setting%SmallDepth%UseSmallDepthYN) then
+                thisCol    = ep_CC_NOTsmalldepth
+            else
+                thisCol    = ep_CC_NOTzerodepth
+            end if
             npack      => npack_elemP(thisCol)
             thisP      => elemP(1:npack,thisCol)
             area       => elemR(:,er_Area)
@@ -4812,10 +4848,10 @@ contains
             if (npack < 1) return
             thisP     => elemP(1:npack,ep_JM)
         !%------------------------------------------------------------------
-        do kk = 1,max_branch_per_node
-            elemR(thisP+kk,er_2B_psiL)    = zeroR
-            elemR(thisP+kk,er_EnergyHead) = zeroR
-        end do
+        ! do kk = 1,max_branch_per_node
+        !     elemR(thisP+kk,er_2B_psiL)    = zeroR
+        !     elemR(thisP+kk,er_EnergyHead) = zeroR
+        ! end do
 
     end subroutine init_IC_branch_zero_values
 !%
@@ -6119,14 +6155,13 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine init_IC_ZeroValues_nondepth (whichTM)
+    subroutine init_IC_ZeroValues_nondepth ()
         !%------------------------------------------------------------------
         !% Description:
         !% ensures consistent initialization of zero values. 
         !% The ZeroValue%Depth must already be set
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: whichTM
             real(8), pointer :: area0, topwidth0, volume0, depth0, slope0, lengthNominal
             integer, pointer :: Npack, thisP, allP(:)
             integer, pointer :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
@@ -6142,14 +6177,14 @@ contains
             lengthNominal => setting%Discretization%NominalElemLength
 
             !% --- used for computing depth by type
-            select case (whichTM)
-            case (ETM)
+            ! select case (whichTM)
+            ! case (ETM)
                 elemPGx                => elemPGetm(:,:)
                 npack_elemPGx          => npack_elemPGetm(:)
                 col_elemPGx            => col_elemPGetm(:)
-            case default 
-                print *, 'CODE ERROR, additional TM methods needed'
-            end select
+            ! case default 
+            !     print *, 'CODE ERROR, additional TM methods needed'
+            ! end select
         !%------------------------------------------------------------------
         if (.not. setting%ZeroValue%UseZeroValues) return
 
@@ -6263,7 +6298,7 @@ contains
             !% --- store the base level volume0
             volume0a = volume0
             !% --- get the depth predicted from volume0 -- output stored in elemR(:,er_Depth)    
-            call geo_depth_from_volume_by_type (elemPGx, npack_elemPGx, col_elemPGx)
+            call geo_depth_from_volume_by_type_allCC (elemPGetm, npack_elemPGetm, col_elemPGetm)
 
             !% --- cycle through elements to ensure that depth0 obtained from volume0
             !%     is smaller than the volume obtained by from depth0

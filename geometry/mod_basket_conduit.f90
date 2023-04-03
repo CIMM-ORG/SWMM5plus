@@ -39,7 +39,7 @@ module mod_basket_conduit
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine mod_basket_depth_from_volume (elemPGx, Npack, thisCol)
+    subroutine mod_basket_depth_from_volume (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on open channels 
@@ -47,8 +47,8 @@ module mod_basket_conduit
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
         !% Declarations
-            integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-            integer, pointer :: thisP(:), thisP_analytical(:), thisP_lookup(:)
+            integer, target, intent(in) :: thisP(:)
+            integer, pointer :: thisP_analytical(:), thisP_lookup(:)
             integer, pointer :: thisPA(:), thisPL(:)
             real(8), pointer :: depth(:), fullArea(:), fullDepth(:), topArea(:), rTop(:)
             real(8), pointer :: length(:), breadth(:), AoverAfull(:), YoverYfull(:)
@@ -56,10 +56,6 @@ module mod_basket_conduit
             logical, pointer :: topSection(:)
             integer, target              :: Npack_analytical, Npack_lookup
         !%---------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%---------------------------------------------------------------------
-            thisP       => elemPGx(1:Npack,thisCol) 
             depth       => elemR(:,er_Depth)
             fullDepth   => elemR(:,er_FullDepth)
             fullArea    => elemR(:,er_FullArea) 
@@ -135,23 +131,17 @@ module mod_basket_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine mod_basket_topwidth_from_depth (elemPGx, Npack, thisCol)
+    subroutine mod_basket_topwidth_from_depth (thisP)
         !%  
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a mod_basket channel
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: breadth(:), topwidth(:), fullDepth(:), depth(:)
             real(8), pointer :: yBreadthMax(:), rTop(:), emptyDepth(:)
         !%-------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%-------------------------------------------------------------------
-            thisP       => elemPGx(1:Npack,thisCol) 
             topwidth    => elemR(:,er_Topwidth)
             depth       => elemR(:,er_Depth)
             fullDepth   => elemR(:,er_FullDepth)
@@ -177,24 +167,18 @@ module mod_basket_conduit
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine mod_basket_perimeter_from_depth (elemPGx, Npack, thisCol) 
+    subroutine mod_basket_perimeter_from_depth (thisP) 
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the perimeter from a known depth in a mod_basket channel
         !%------------------------------------------------------------------
         !% Declarastions
-            integer, target, intent(in) :: elemPGx(:,:)
-            integer, intent(in) ::  Npack, thisCol
-            integer, pointer :: thisP(:)
+            integer, target, intent(in) :: thisP(:)
             real(8), pointer :: depth(:),fullDepth(:), perimeter(:)
             real(8), pointer :: breadth(:), yBreadthMax(:), rTop(:), thetaTop(:)
             real(8), pointer :: emptyDepth(:), emptyTheta(:)
         !%------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
         !% Aliases:
-            thisP       => elemPGx(1:Npack,thisCol)  
             perimeter   => elemR(:,er_Perimeter)
             depth       => elemR(:,er_Depth)
             fullDepth   => elemR(:,er_FullDepth)
