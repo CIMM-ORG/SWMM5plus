@@ -40,6 +40,7 @@
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 10.00,
+        "MinElementPerLink" : 1,
         "FullConduitTopwidthDepthFraction" : 0.95
     },
     "Eps" : {
