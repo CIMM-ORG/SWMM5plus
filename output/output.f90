@@ -53,6 +53,7 @@ module output
 
     public :: outputML_HD5F_create_dset
     public :: outputML_HD5F_write_file
+    public :: outputML_HD5F_write_profiles
     public :: outputML_HD5F_extend_write_file
     
     public :: outputML_combine_static_elem_data
@@ -1850,6 +1851,9 @@ contains
 
         if(setting%Output%Report%useHD5F) then 
                 call outputML_HD5F_create_file(H5_file_id)
+                if( allocated(output_profile_ids)) then
+                    call outputML_HD5F_write_profiles(H5_file_id)
+                end if 
         end if
 
         lasttimeread = 0
@@ -3659,6 +3663,7 @@ contains
         !% --- ROW 12 --- 4th HEADER ROW -- Profiles Data
         !% Profiles are always written with node IDs being on odd indexs while links being on Evens
         !% This goes through and writes the profiles, if they are being used. 
+        write(funitIn,fmt='(a,i8)') 'Profiles::'
         if(allocated(output_profile_ids)) then
 
             do ii = 1, max_profiles_N
@@ -6177,6 +6182,103 @@ contains
     
     end subroutine outputML_HD5F_write_file
 
+
+    subroutine outputML_HD5F_write_profiles(file_id)
+
+        !%Function for writing the output to the correct dataset and dataspace with the 
+        !character(len=*), intent(in)    :: h5_dset_name ! name of dset to be written to  
+        integer(HID_T), intent(in)      :: file_id      ! File ID of the .h5 file
+        !integer, intent(in) :: nLevel  !% Time levels     
+        !integer, intent(in) :: idx1    !% the link being output (kk)
+        !integer, intent(in) :: nIdx2   !% N items in columns (nType or SWMMlink_num_elements)
+        !integer, intent(in) :: idx3    !% the single data type being processed (FV only)
+        !real(8), intent(in) :: Out_ProcessedDataR(:,:,:)
+        !real(8), intent(in) :: Out_ElemDataR(:,:,:,:)    !% (link/node,element,type,timelevel)
+        !logical, intent(in) :: isFV   !% is finite volume output
+
+        CHARACTER(LEN=8 ), PARAMETER :: profiles_name = "profiles"  ! Profiles name
+        CHARACTER(LEN=150), DIMENSION(:,:), allocatable  ::  profile_data !Stores the data from the profile array 
+        INTEGER(HSIZE_T), DIMENSION(1:2) :: profile_dims !dimensions of the profile data 
+
+        INTEGER(HID_T) :: dset_id       !% Dataset identifier
+        INTEGER(HSIZE_T), DIMENSION(1:2)  :: updated_size_data !% Dimensions of the data to be written to the dataset
+        REAL, DIMENSION(:,:), allocatable :: dset_data         !% Array to hold the output of the data to be written to the dataset
+                   
+        INTEGER     ::   HD_error !% For HDF5 errors
+        INTEGER     ::   ii, jj 
+        INTEGER(HID_T) :: atype_id  
+        INTEGER(HID_T) :: aspace_id
+        INTEGER(HID_T) :: group_id
+        INTEGER(HID_T) :: attr_id
+        INTEGER(HSIZE_T), DIMENSION(2) :: data_dims
+        INTEGER     ::   rank = 2
+        INTEGER(SIZE_T) :: attrlen
+ 
+        character(len=99)   :: emsg
+        character(64)       :: subroutine_name = 'outputML_HD5F_write_profiles'
+
+
+        if (setting%Debug%File%output) &
+             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        if( allocated(output_profile_ids)) then
+            allocate(profile_data(max_links_profile_N,max_profiles_N))
+        end if
+             
+        profile_dims(1:2) = (/max_links_profile_N,max_profiles_N/)
+        !max_dims = (/H5S_UNLIMITED_F, H5S_UNLIMITED_F/)
+
+        !% Converting the profile IDs back to the Link and Node names.
+        !% Nodes are always on odd IDs and links are always on even IDS
+        if( allocated(output_profile_ids)) then
+            do ii = 1, max_profiles_N
+                do jj = 1, max_links_profile_N
+                    if(mod(jj,2) > 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
+                        profile_data(jj,ii) = trim(node%names(output_profile_ids(ii,jj))%str)
+                    else if (mod(jj,2) == 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
+                        profile_data(jj,ii) = trim(link%names(output_profile_ids(ii,jj))%str)
+                    else 
+                        profile_data(jj,ii) = "NULL"
+                    end if
+                end do
+            end do 
+        end if
+
+        !% the dataset is opened
+        !CALL h5dopen_f(file_id, trim(profiles_name), dset_id, HD_error)
+
+        !CALL h5gcreate_f(file_id, "test_1", group_id, HD_error)
+
+        
+
+        !% create dataspace for profile attribute
+        !% write attirbute data to dataspace attribute 
+        attrlen = 150 
+        CALL h5screate_simple_f(rank, profile_dims, aspace_id, HD_error)
+        CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
+        CALL h5tset_size_f(atype_id, attrlen, HD_error)
+        CALL h5acreate_f(file_id, profiles_name, atype_id, aspace_id, attr_id, HD_error)
+        data_dims(1) = max_links_profile_N
+        data_dims(2) = max_profiles_N
+        CALL h5awrite_f(attr_id, atype_id, profile_data,data_dims, HD_error)
+        CALL h5aclose_f(attr_id, HD_error)
+        CALL h5tclose_f(atype_id, HD_error)
+        CALL h5sclose_f(aspace_id, HD_error)
+
+        
+
+        
+
+        !% the dataset is closed
+        !CALL h5dclose_f(dset_id, HD_error)
+        
+        !% deallocation of dset_data
+        deallocate(profile_data)
+        
+        
+    
+    end subroutine outputML_HD5F_write_profiles
+
     subroutine outputML_HD5F_write_static_file(h5_dset_name, file_id, idx1, isFV, FeatureType)
 
         !%Function for writing the static output to the correct dataset and dataspace with HDF5
@@ -6197,11 +6299,13 @@ contains
         
 
         character(len=99)   :: emsg
-        character(64)       :: subroutine_name = 'outputML_HD5F_write_file'
+        character(64)       :: subroutine_name = 'outputML_HD5F_write_static_file'
 
 
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+        
              
         !% Dataset_data is allocated and filled with correct data, updated_size_data is stored with the inverted size of the array
         !% This is because of the need to transpose the data before writing to hdf5 dataspace because of the difference between column and array bases in fortran vs hdf5 
