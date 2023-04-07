@@ -1792,7 +1792,7 @@ contains
         !% Description:
         !%------------------------------------------------------------------
         !% Declarations:
-            character(50) :: line, name, link_names, num_links
+            character(50) :: line, name, link_names, num_links, profile_name, profile_name_temp
             character(50) :: choosen_name
             integer       :: index_of_start, delimitator_loc, profile_pos, end_of_file
             integer       :: read_status, debt, line_number = 1
@@ -1864,15 +1864,25 @@ contains
                     if (line .eq. "" .or. read_status /= 0 ) then
                         exit
                     end if
-                    delimitator_loc = 2
-                    ii = -1
-                    max_profiles_N = max_profiles_N+1
                     name = line 
+                    delimitator_loc = 2
 
-                    ! print *, 'name ',name
-
+                    
+                    !storing profile name and link names 
                     index_of_start = index(name,"""",.true.)
                     link_names = trim(ADJUSTL(name(index_of_start+1:len(name))))
+                    profile_name = trim(ADJUSTL(name(1:index_of_start+1)))
+
+                    !checking if the profile is finished being output or is split amongust multiple lines 
+                    if(profile_name .eq. profile_name_temp) then
+                        ii = ii - 1  
+                    else
+                        ii = -1
+                        max_profiles_N = max_profiles_N+1
+                    end if 
+
+                    
+
                     do while (delimitator_loc > 1)
                         delimitator_loc = index(link_names," ")
                         link_names = trim(ADJUSTL(link_names(delimitator_loc+1:)))
@@ -1880,15 +1890,19 @@ contains
                     end do 
                     if(max_links_profile_N < ii) then
                         max_links_profile_N = ii
-                        !  print *, "new max:", max_links_profile_N
+
+                        
                     end if
+
+                    profile_name_temp = profile_name
 
                 end do
             endif
         end do
 
-        max_links_profile_N = max_links_profile_N + max_links_profile_N + 1 
-        
+        max_links_profile_N = (max_links_profile_N*2) + 1 
+
+
         if(max_links_profile_N .eq. 1) then
             print *, "...no profiles found"
             return
@@ -1909,6 +1923,8 @@ contains
         !% Each column alternates node, link, node, link, node, etc
 
         ii = 0  
+        profile_name_temp = "NULL"
+
         do  
             !% reading in the first profile  
             read(thisUnit, "(A)", iostat = read_status) line
@@ -1922,11 +1938,21 @@ contains
             name = line 
             index_of_start = index(name,"""",.true.)
             link_names = trim(ADJUSTL(name(index_of_start+1:len(name))))
+            profile_name = trim(ADJUSTL(name(1:index_of_start+1)))
             
-            ii = ii+1
-            jj = 0
+            !checking if the profile is finished being output or is split amongust multiple lines 
+            if(profile_name .eq. profile_name_temp) then 
+                ii = ii 
+                jj = jj 
+            else 
+                jj = 0
+                ii = ii+1
+                if(ii .LE. max_profiles_N) then 
+                    output_profile_names(ii) = trim(profile_name(2:index(profile_name,'"',.true.)-1))
+                end if 
 
-            
+            end if 
+
             do 
                 !% storing list of profiles and the name of the Link being added to the output_profile_ids array
 
@@ -1940,11 +1966,13 @@ contains
                 !% link_names is the rest of link names in the profile
                 choosen_name = trim(ADJUSTL(link_names(1:delimitator_loc)))
                 link_names   = trim(ADJUSTL(link_names(delimitator_loc+1:)))
+
                 
                 !% Now we need to check that the user wrote the profile correctly
                 !% This means checking if the link name exists and the profile is correctly written upstream -> downstream
                 do kk = 1 , N_Link
                     if(link%names(kk)%str == choosen_name) then
+
 
                         if(jj > 2) then
 
@@ -1978,7 +2006,12 @@ contains
 
             end do
 
+            profile_name_temp = profile_name   
+            
+
         end do
+        
+        !print *, output_profile_names
 
         close (thisUnit)
 

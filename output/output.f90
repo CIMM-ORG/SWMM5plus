@@ -6196,8 +6196,8 @@ contains
         !real(8), intent(in) :: Out_ElemDataR(:,:,:,:)    !% (link/node,element,type,timelevel)
         !logical, intent(in) :: isFV   !% is finite volume output
 
-        CHARACTER(LEN=8 ), PARAMETER :: profiles_name = "profiles"  ! Profiles name
         CHARACTER(LEN=150), DIMENSION(:,:), allocatable  ::  profile_data !Stores the data from the profile array 
+        INTEGER, DIMENSION(:), allocatable :: profile_length
         INTEGER(HSIZE_T), DIMENSION(1:2) :: profile_dims !dimensions of the profile data 
 
         INTEGER(HID_T) :: dset_id       !% Dataset identifier
@@ -6213,6 +6213,7 @@ contains
         INTEGER(HSIZE_T), DIMENSION(2) :: data_dims
         INTEGER     ::   rank = 2
         INTEGER(SIZE_T) :: attrlen
+        LOGICAL     :: first_null
  
         character(len=99)   :: emsg
         character(64)       :: subroutine_name = 'outputML_HD5F_write_profiles'
@@ -6221,23 +6222,30 @@ contains
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if( allocated(output_profile_ids)) then
-            allocate(profile_data(max_links_profile_N,max_profiles_N))
-        end if
-             
-        profile_dims(1:2) = (/max_links_profile_N,max_profiles_N/)
-        !max_dims = (/H5S_UNLIMITED_F, H5S_UNLIMITED_F/)
+
+        allocate(profile_data(max_links_profile_N,max_profiles_N))
+        allocate(profile_length(max_profiles_N))
+
 
         !% Converting the profile IDs back to the Link and Node names.
         !% Nodes are always on odd IDs and links are always on even IDS
         if( allocated(output_profile_ids)) then
             do ii = 1, max_profiles_N
+                first_null = .true.
                 do jj = 1, max_links_profile_N
                     if(mod(jj,2) > 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
                         profile_data(jj,ii) = trim(node%names(output_profile_ids(ii,jj))%str)
+                        if(jj .eq. max_links_profile_N ) then
+                            profile_length(ii) = jj
+                        end if 
+
                     else if (mod(jj,2) == 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
                         profile_data(jj,ii) = trim(link%names(output_profile_ids(ii,jj))%str)
                     else 
+                        if(first_null) then 
+                            profile_length(ii) = jj - 1 
+                            first_null = .false.
+                        end if 
                         profile_data(jj,ii) = "NULL"
                     end if
                 end do
@@ -6253,20 +6261,26 @@ contains
 
         !% create dataspace for profile attribute
         !% write attirbute data to dataspace attribute 
-        attrlen = 150 
-        CALL h5screate_simple_f(rank, profile_dims, aspace_id, HD_error)
-        CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
-        CALL h5tset_size_f(atype_id, attrlen, HD_error)
-        CALL h5acreate_f(file_id, profiles_name, atype_id, aspace_id, attr_id, HD_error)
-        data_dims(1) = max_links_profile_N
-        data_dims(2) = max_profiles_N
-        CALL h5awrite_f(attr_id, atype_id, profile_data,data_dims, HD_error)
-        CALL h5aclose_f(attr_id, HD_error)
-        CALL h5tclose_f(atype_id, HD_error)
-        CALL h5sclose_f(aspace_id, HD_error)
+
+        attrlen = 150
+        do ii = 1, max_profiles_N
+
+            profile_dims(1:2) = (/profile_length(ii),1/)  
+            data_dims(1) = profile_length(ii)
+            data_dims(2) = 1  
+
+
+            CALL h5screate_simple_f(rank, profile_dims, aspace_id, HD_error)
+            CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
+            CALL h5tset_size_f(atype_id, attrlen, HD_error)
+            CALL h5acreate_f(file_id, output_profile_names(ii), atype_id, aspace_id, attr_id, HD_error)
+            CALL h5awrite_f(attr_id, atype_id, profile_data(:,ii),data_dims, HD_error)
+            CALL h5aclose_f(attr_id, HD_error)
+            CALL h5tclose_f(atype_id, HD_error)
+            CALL h5sclose_f(aspace_id, HD_error)
 
         
-
+        end do
         
 
         !% the dataset is closed
@@ -6274,6 +6288,7 @@ contains
         
         !% deallocation of dset_data
         deallocate(profile_data)
+        deallocate(profile_length)
         
         
     
