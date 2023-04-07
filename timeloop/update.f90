@@ -647,6 +647,7 @@ module update
         !% apply limiters to timescales
         where (w_uQ(thisP) < zeroR)
             w_uQ(thisP) = setting%Limiter%InterpWeight%Maximum
+            !w_uQ(thisP) = setting%Limiter%InterpWeight%Minimum  ! 20230407 brh test
         endwhere
         where (w_uQ(thisP) < setting%Limiter%InterpWeight%Minimum)
             w_uQ(thisP) = setting%Limiter%InterpWeight%Minimum
@@ -657,6 +658,7 @@ module update
 
         where (w_dQ(thisP) < zeroR)
             w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
+            !w_dQ(thisP) = setting%Limiter%InterpWeight%Minimum ! 20230407 brh test
         endwhere
         where (w_dQ(thisP) < setting%Limiter%InterpWeight%Minimum)
             w_dQ(thisP) = setting%Limiter%InterpWeight%Minimum

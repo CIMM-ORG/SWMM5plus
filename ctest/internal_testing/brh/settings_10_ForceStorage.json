@@ -9,7 +9,7 @@
         "NominalElemLength" : 10.00
     },
     "Junction" : {
-        "ForceNodesJM" : false,
+        "ForceNodesJM" : true,
         "ForceStorage" : true
     } 
 }

@@ -69,7 +69,7 @@ module adjust
 
         ! ! call util_utest_CLprint ('        ADJUST XXX01 after zero depth identify')
 
-    if (setting%SmallDepth%UseSmallDepthYN) then    
+    if (setting%SmallDepth%useMomentumCutoffYN) then    
         !% --- identify small depths (.false. is small depth)
         call adjust_zero_or_small_depth_identify_NEW(elementType,.false.)
 
@@ -88,7 +88,7 @@ module adjust
             ! ! call util_utest_CLprint ('        ADJUST XXX04 after zero depth element values')
 
     if (elementType == CC) then 
-        if (setting%SmallDepth%UseSmallDepthYN) then
+        if (setting%SmallDepth%useMomentumCutoffYN) then
             !% --- apply limiters to fluxes and velocity
             !%     (.false. so that smalldepth fluxes are not set to zero)
             call adjust_smalldepth_element_fluxes_CC (.false.)
@@ -111,7 +111,7 @@ module adjust
     call pack_zero_depth_interior_faces (facePcol)
 
     if (facePcol == fp_all) then 
-        if (setting%SmallDepth%UseSmallDepthYN) then
+        if (setting%SmallDepth%useMomentumCutoffYN) then
             !% --- face ad hoc flux adjustments 
             !%     (.false. so that conservative fluxes are not altered)
             call adjust_smalldepth_face_fluxes_CC (.false.)
@@ -202,7 +202,7 @@ module adjust
         if (isReset) then
             call adjust_zerodepth_identify_all ()
            
-            if (setting%SmallDepth%UseSmallDepthYN) then
+            if (setting%SmallDepth%useMomentumCutoffYN) then
                 call adjust_smalldepth_identify_all ()
             end if
             
@@ -223,7 +223,7 @@ module adjust
              ! ! ! call util_utest_CLprint('-------------BBBB')
 
 
-        if (setting%SmallDepth%UseSmallDepthYN) then 
+        if (setting%SmallDepth%useMomentumCutoffYN) then 
             call adjust_smalldepth_element_fluxes_CC (isZeroFlux)
         end if
 
@@ -258,7 +258,7 @@ module adjust
         !%------------------------------------------------------------------
             ! ! call util_utest_CLprint ('FFF01  before zero/small face step 0-----------------')
 
-        if (setting%SmallDepth%UseSmallDepthYN) then 
+        if (setting%SmallDepth%useMomentumCutoffYN) then 
             call adjust_smalldepth_face_fluxes_CC      (ifixQCons)
             call adjust_smalldepth_face_fluxes_JMJB    (ifixQCons)
         end if
@@ -611,7 +611,7 @@ module adjust
                 thisDepth  => elemYN(:,eYN_isZeroDepth)                
             else
                 !% --- small depth logical
-                depth0     => setting%SmallDepth%DepthCutoff
+                depth0     => setting%SmallDepth%MomentumDepthCutoff
                 lowcutoff  = setting%ZeroValue%Depth
                 thisDepth  => elemYN(:,eYN_isSmallDepth)
             endif
@@ -646,14 +646,14 @@ module adjust
             real(8), pointer :: eDepth(:)
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (.not. setting%SmallDepth%UseSmallDepthYN) then 
+            if (.not. setting%SmallDepth%useMomentumCutoffYN) then 
                 elemYN(:,eYN_isSmallDepth) = .false.
                 return 
             end if
         !%------------------------------------------------------------------
         !% Aliases
             depth0       => setting%ZeroValue%Depth
-            depthS       => setting%SmallDepth%DepthCutoff
+            depthS       => setting%SmallDepth%MomentumDepthCutoff
             eDepth       => elemR(:,er_Depth)
             isSmallDepth => elemYN(:,eYN_isSmallDepth)
         !%------------------------------------------------------------------
@@ -794,7 +794,7 @@ module adjust
             character(64) :: subroutine_name = 'adjust_smalldepth_element_fluxes_CC'
         !% -----------------------------------------------------------------
         !% Preliminaries:   
-            if (.not. setting%SmallDepth%UseSmallDepthYN) return
+            if (.not. setting%SmallDepth%useMomentumCutoffYN) return
             ! select case (whichTM)
             ! case (ALLtm)
             !     !thisCol => col_elemP(ep_SmallDepth_CC_ALLtm)
@@ -1033,7 +1033,7 @@ module adjust
             ! ! ! ! call util_utest_CLprint ('-------- before adjust-faceflux-for-headgradient in adjust zerodepth')
 
         !% --- Set inflow from adjacent cell based on head gradient
-        call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
+        call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%MomentumDepthCutoff)
 
         ! print *, ' '
         ! print *, 'thisP ',thisP
@@ -1135,9 +1135,13 @@ module adjust
             ! print *, 'in adjust_zerodepth_face_fluxes_JMJB'
             ! print *, thisP
         do ii=1,max_branch_per_node,2
-            !print *, 'above ', fup(thisP+ii  ), fQ(fup(thisP+ii  ))
-            fQ(fup(thisP+ii  )) = max(fQ(fup(thisP+ii  )),zeroR) * real(isbranch(thisP+ii  ),8)
-            fQ(fdn(thisP+ii+1)) = min(fQ(fdn(thisP+ii+1)),zeroR) * real(isbranch(thisP+ii+1),8)    
+            where (isbranch(thisP+ii) .eq. oneI) 
+                !print *, 'above ', fup(thisP+ii  ), fQ(fup(thisP+ii  ))
+                fQ(fup(thisP+ii  )) = max(fQ(fup(thisP+ii  )),zeroR)
+            endwhere
+            where (isbranch(thisP+ii+1) .eq. oneI) 
+                fQ(fdn(thisP+ii+1)) = min(fQ(fdn(thisP+ii+1)),zeroR)
+            endwhere 
             !print *, 'below ',fup(thisP+ii  ), fQ(fup(thisP+ii  ))
         end do
 
@@ -1145,8 +1149,12 @@ module adjust
         
         if (ifixQCons) then
             do ii=1,max_branch_per_node,2
-                fQCons(fup(thisP+ii  )) = fQ(fup(thisP+ii  ))
-                fQCons(fdn(thisP+ii+1)) = fQ(fdn(thisP+ii+1))
+                where (isbranch(thisP+ii) .eq. oneI) 
+                    fQCons(fup(thisP+ii  )) = fQ(fup(thisP+ii  ))
+                endwhere
+                where (isbranch(thisP+ii+1) .eq. oneI)
+                    fQCons(fdn(thisP+ii+1)) = fQ(fdn(thisP+ii+1))
+                endwhere
             end do
         end if
     
@@ -1195,31 +1203,29 @@ module adjust
         !%     note that JB and face must have consistent fluxes or we
         !%     get conservation errors
         do ii=1,max_branch_per_node,2
-            where (fQ(fup(thisP+ii)) > zeroR)  !% 20221230brh
-               eQ(thisP + ii) = fQ(fup(thisP+ii)) * real(isbranch(thisP+ii),8)
-            elsewhere
-               fQ(fup(thisP+ii)) = eQ(thisP + ii) * real(isbranch(thisP+ii),8)
+            !% --- inflows to JB
+            where ((fQ(fup(thisP+ii)) > zeroR) .and. (isbranch(thisP+ii) .eq. oneI))
+               eQ(thisP + ii) = fQ(fup(thisP+ii))
             endwhere
-
-            !eQ(thisP + ii) = fQ(fup(thisP+ii)) * real(isbranch(thisP+ii),8)
-            !% TEST 2023013 USING AVERAGING
-            ! eQ(thisP + ii) = onehalfR * (fQ(fup(thisP+ii)) + eQ(thisP + ii)) * real(isbranch(thisP+ii),8)
-            ! fQ(fup(thisP+ii)) = eQ(thisP + ii)
+            !% --- outflows from JB (or zero on face)
+            where ((fQ(fup(thisP+ii)) .le. zeroR) .and. (isbranch(thisP+ii) .eq. oneI))
+               fQ(fup(thisP+ii)) = eQ(thisP + ii)
+            endwhere
+            
+               
         end do
 
         !% assign the downstream face flux to the JB 
         do ii=2,max_branch_per_node,2
-            where (fQ(fdn(thisP+ii)) < zeroR )  !% 20221230brh
-                eQ(thisP + ii) = fQ(fdn(thisP+ii)) * real(isbranch(thisP+ii),8)
-            elsewhere
-                fQ(fdn(thisP+ii)) =  eQ(thisP + ii) * real(isbranch(thisP+ii),8)
+            !% --- inflows to JB
+            where ((fQ(fdn(thisP+ii))  <   zeroR ) .and. (isbranch(thisP+ii) .eq. oneI))
+                eQ(thisP + ii) = fQ(fdn(thisP+ii))
+            endwhere
+            !% --- outflows from JB
+            where ((fQ(fdn(thisP+ii)) .ge. zeroR ) .and.  (isbranch(thisP+ii) .eq. oneI))
+                fQ(fdn(thisP+ii)) =  eQ(thisP + ii)
             endwhere
 
-            !eQ(thisP + ii) = fQ(fdn(thisP+ii)) * real(isbranch(thisP+ii),8)
-
-            !% TEST 2023013 USING AVERAGING
-            ! eQ(thisP + ii) = onehalfR*(fQ(fdn(thisP+ii)) +eQ(thisP + ii)) * real(isbranch(thisP+ii),8)
-            ! fQ(fdn(thisP+ii)) = eq(thisP + ii)
         end do
         
 
@@ -1249,7 +1255,7 @@ module adjust
             integer :: ii
         !%------------------------------------------------------------------
         !% Preliminaries:
-            if (.not. setting%SmallDepth%UseSmallDepthYN) return
+            if (.not. setting%SmallDepth%useMomentumCutoffYN) return
             ! select case (whichTM)
             ! case (ALLtm)
             !     !thisCol   => col_elemP(ep_SmallDepth_CC_ALLtm)
@@ -1329,7 +1335,7 @@ module adjust
             !% 20220531brh -- 20230322 brh THIS CAUSES PROBLEMS WITH DRAINING JUNCTION
             !% --- provide inflow rate from large head differences with small volume cells
             !%     Derived from the SVE momentum neglecting all terms except dQ/dt and gA dH/dx
-            ! call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
+            ! call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%MomentumDepthCutoff)
 
                 ! print *, 'after second step'
                 ! print *, faceQ(fup(42)), faceQ(fdn(42))
@@ -1410,7 +1416,7 @@ module adjust
             integer :: ii
         !%------------------------------------------------------------------
         !% Preliminaries:
-            if (.not. setting%SmallDepth%UseSmallDepthYN) return
+            if (.not. setting%SmallDepth%useMomentumCutoffYN) return
             ! select case (whichTM)
             ! case (ALLtm)
             !     !thisColJM => col_elemP(ep_SmallDepth_JM_ALLtm)
@@ -1459,26 +1465,28 @@ module adjust
             thisJM => elemP(1:npackJM,thisColJM)
 
             do ii = 1,max_branch_per_node,2
-                where (elemQ(thisJM+ii) .ge. zeroR)
+                where ((elemQ(thisJM+ii) .ge. zeroR) .and. (isbranch(thisJM+ii) .eq. oneI))
                     !% --- flow in downstream direction in upstream branch
                     !%     upstream face value is either the inflow from face or zero if face is outflow
-                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), zeroR) * (real(isbranch(thisJM+ii),8))
-                elsewhere
+                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), zeroR)
+                endwhere
+                where ((elemQ(thisJM+ii)   <  zeroR) .and. (isbranch(thisJM+ii) .eq. oneI))
                     !% --- flow in upstream direction in upstream branch is the inflow (faceQ >0) or
                     !%     the larger (closer to zero of the negative flowrate at face or element)
-                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), elemQ(thisJM+ii)) * (real(isbranch(thisJM+ii),8))
+                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), elemQ(thisJM+ii)) 
                     !% --- outflow (-faceQ) is limited to 1/3 volume in junction
                     faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), -elemVol(thisJM+ii) / (threeR * dt) )
                 endwhere
 
 
-                where (elemQ(thisJM+1+ii) .ge. zeroR)
+                where ((elemQ(thisJM+1+ii) .ge. zeroR) .and. (isbranch(thisJM+1+ii) .eq. oneI))
                     !% --- flow downstream direction in downstream branch 
                     !%     downstream face value is the smaller of the face or branch values
-                    faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)), elemQ(thisJM+1+ii))  * (real(isbranch(thisJM+1+ii),8))
+                    faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)), elemQ(thisJM+1+ii)) 
                     !% --- outflow (+faceQ) is limited to 1/3 volume in junction
                     faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)), elemVol(thisJM+1+ii) / (threeR * dt) )
-                elsewhere
+                endwhere
+                where ((elemQ(thisJM+1+ii)  <   zeroR) .and. (isbranch(thisJM+1+ii) .eq. oneI))
                     !% --- flow upstream direction in downstream branch
                     !%     face flow is the inflow (negative direction) from downstream or zero.
                     faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)),zeroR) * (real(isbranch(thisJM+1+ii),8))
@@ -1486,32 +1494,41 @@ module adjust
 
                 if (ifixQCons) then
                     !% update the conservative face Q
-                    fQCons(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii))
-                    fQCons(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii))
+                    where (isbranch(thisJM+ii) .eq. oneI) 
+                        fQCons(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii))
+                    endwhere
+                    where (isbranch(thisJM+1+ii) .eq. oneI)
+                        fQCons(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii))
+                    endwhere
                 end if
 
                 !% --- reset velocities
-                where (faceAd(fup(thisJM+ii)) > setting%ZeroValue%Area)
+                where ((faceAd(fup(thisJM+ii)) > setting%ZeroValue%Area) .and. (isbranch(thisJM+ii) .eq. oneI))
                     fVel_d(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii  )) /  faceAd(fup(thisJM+ii  )) 
-                elsewhere 
+                endwhere
+                where ((faceAd(fup(thisJM+ii)) .le. setting%ZeroValue%Area) .and. (isbranch(thisJM+ii) .eq. oneI))
                     fVel_d(fup(thisJM+ii  )) = zeroR
                 endwhere
 
-                where (faceAu(fup(thisJM+ii)) > setting%ZeroValue%Area)
+                where ((faceAu(fup(thisJM+ii)) > setting%ZeroValue%Area) .and. (isbranch(thisJM+ii) .eq. oneI))
                     fVel_u(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii  )) /  faceAu(fup(thisJM+ii  ))
-                elsewhere
+                endwhere
+                where ((faceAu(fup(thisJM+ii)) .le. setting%ZeroValue%Area) .and. (isbranch(thisJM+ii) .eq. oneI))
                     fVel_u(fup(thisJM+ii  )) = zeroR
                 endwhere
 
-                where ( faceAd(fdn(thisJM+1+ii))> setting%ZeroValue%Area)
+
+                where ((faceAd(fdn(thisJM+1+ii))  >   setting%ZeroValue%Area)  .and. (isbranch(thisJM+1+ii) .eq. oneI))
                     fVel_d(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii)) /  faceAd(fdn(thisJM+1+ii))
-                elsewhere
+                endwhere
+                where ((faceAd(fdn(thisJM+1+ii)) .le. setting%ZeroValue%Area)  .and. (isbranch(thisJM+1+ii) .eq. oneI))
                     fVel_d(fdn(thisJM+1+ii)) = zeroR
                 endwhere
 
-                where (faceAu(fdn(thisJM+1+ii)) > setting%ZeroValue%Area)
+                where ((faceAu(fdn(thisJM+1+ii))  >   setting%ZeroValue%Area) .and. (isbranch(thisJM+1+ii) .eq. oneI))
                     fVel_u(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii)) /  faceAu(fdn(thisJM+1+ii))
-                elsewhere
+                endwhere
+                where ((faceAu(fdn(thisJM+1+ii)) .le. setting%ZeroValue%Area) .and. (isbranch(thisJM+1+ii) .eq. oneI))
                     fVel_u(fdn(thisJM+1+ii)) = zeroR
                 endwhere
             end do
@@ -1546,7 +1563,7 @@ module adjust
             integer :: ii
         !%------------------------------------------------------------------
         !% Preliminaries:
-            if (.not. setting%SmallDepth%UseSmallDepthYN) return
+            if (.not. setting%SmallDepth%useMomentumCutoffYN) return
             ! select case (whichTM)
             ! case (ALLtm)
             !     !thisCol   => col_elemP(ep_SmallDepth_CC_ALLtm)
@@ -1619,7 +1636,7 @@ module adjust
             !% 20220531brh
             !% --- provide inflow rate from large head differences with small volume cells
             !%     Derived from the SVE momentum neglecting all terms except dQ/dt and gA dH/dx
-            call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%DepthCutoff)
+            call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%MomentumDepthCutoff)
 
             ! print *, 'face Q after second step'
             ! print *, faceQ(fdn(thisP))
@@ -1664,35 +1681,41 @@ module adjust
             thisJM => elemP(1:npackJM,thisColJM)
 
             do ii = 1,max_branch_per_node,2
-                where (elemQ(thisJM+ii) .ge. zeroR)
+                where ((elemQ(thisJM+ii) .ge. zeroR) .and. (isbranch(thisJM+ii) .eq. oneI))
                     !% --- flow in downstream direction in upstream branch
                     !%     upstream face value is either the inflow from face or zero if face is outflow
-                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), zeroR) * (real(isbranch(thisJM+ii),8))
-                elsewhere
+                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), zeroR)
+                endwhere
+                where ((elemQ(thisJM+ii)  <   zeroR) .and. (isbranch(thisJM+ii) .eq. oneI))
                     !% --- flow in upstream direction in upstream branch is the inflow (faceQ >0) or
                     !%     the larger (closer to zero of the negative flowrate at face or element)
-                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), elemQ(thisJM+ii)) * (real(isbranch(thisJM+ii),8))
+                    faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), elemQ(thisJM+ii)) 
                     !% --- outflow (-faceQ) is limited to 1/3 volume in junction
                     faceQ(fup(thisJM+ii)) = max(faceQ(fup(thisJM+ii)), -elemVol(thisJM+ii) / (threeR * dt) )
                 endwhere
 
 
-                where (elemQ(thisJM+1+ii) .ge. zeroR)
+                where ((elemQ(thisJM+1+ii) .ge. zeroR) .and. (isbranch(thisJM+1+ii) .eq. oneI))
                     !% --- flow downstream direction in downstream branch 
                     !%     downstream face value is the smaller of the face or branch values
-                    faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)), elemQ(thisJM+1+ii))  * (real(isbranch(thisJM+1+ii),8))
+                    faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)), elemQ(thisJM+1+ii))
                     !% --- outflow (+faceQ) is limited to 1/3 volume in junction
                     faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)), elemVol(thisJM+1+ii) / (threeR * dt) )
-                elsewhere
+                endwhere
+                where ((elemQ(thisJM+1+ii)   <  zeroR) .and. (isbranch(thisJM+1+ii) .eq. oneI))
                     !% --- flow upstream direction in downstream branch
                     !%     face flow is the inflow (negative direction) from downstream or zero.
-                    faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)),zeroR) * (real(isbranch(thisJM+1+ii),8))
+                    faceQ(fdn(thisJM+1+ii)) = min(faceQ(fdn(thisJM+1+ii)),zeroR)
                 endwhere
 
                 if (ifixQCons) then
                     !% update the conservative face Q
-                    fQCons(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii))
-                    fQCons(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii))
+                    where (isbranch(thisJM+ii) .eq. oneI)
+                        fQCons(fup(thisJM+ii  )) = faceQ(fup(thisJM+ii))
+                    endwhere
+                    where (isbranch(thisJM+1+ii) .eq. oneI)
+                        fQCons(fdn(thisJM+1+ii)) = faceQ(fdn(thisJM+1+ii))
+                    endwhere
                 end if
 
                 !% --- reset velocities
@@ -1791,7 +1814,7 @@ module adjust
             !isNearZeroDepth => elemYN(:,eYN_isZeroDepth)
             
             multiplier => setting%Adjust%Flowrate%SmallDepthMultiplier
-            smallDepth => setting%SmallDepth%DepthCutoff
+            smallDepth => setting%SmallDepth%MomentumDepthCutoff
             vMax       => setting%Limiter%Velocity%Maximum
         !%-----------------------------------------------------------------
         !% setting%coef is the blending adjustment (between 0.0 and 1.0)
@@ -2019,11 +2042,11 @@ module adjust
 !%==========================================================================  
 !%==========================================================================  
 !%
-    subroutine adjust_faceflux_for_headgradient (thisP, thisDepthCutoff)
+    subroutine adjust_faceflux_for_headgradient (thisP, thisMomentumDepthCutoff)
         !%------------------------------------------------------------------
         !% Description
         !% Adjusts the face flux for a head gradient when the depth of the
-        !% face is more than twice the input thisDepthCutoff
+        !% face is more than twice the input thisMomentumDepthCutoff
         !% Should only be applied to faces of zero depth or small depth cells  
         !% thisP should be a packed set of element indexes that are either
         !% small depth or zero depth elements.
@@ -2032,7 +2055,7 @@ module adjust
         !%------------------------------------------------------------------
         !% Declarations
             integer,  intent(in) :: thisP(:)
-            real(8),  intent(in) :: thisDepthCutoff
+            real(8),  intent(in) :: thisMomentumDepthCutoff
             !logical, intent(in) ::  ifixQCons
             !integer, intent(in) :: whichTM
             integer, pointer :: fdn(:), fup(:)
@@ -2072,12 +2095,12 @@ module adjust
 
         ! print *, 'first where '
         ! print *, elemH(178), faceHu(fdn(178))   
-        ! print *, faceDu(fdn(178)), twoR * thisDepthCutoff
+        ! print *, faceDu(fdn(178)), twoR * thisMomentumDepthCutoff
         ! print *, ' '
 
         where ( (elemH(thisP) < faceHu(fdn(thisP)) ) &
                 .and. &
-                (faceDu(fdn(thisP)) > twoR * thisDepthCutoff) )
+                (faceDu(fdn(thisP)) > twoR * thisMomentumDepthCutoff) )
 
             !% --- value based on head gradient
             faceQ(fdn(thisP)) = min(                                                 &
@@ -2101,7 +2124,7 @@ module adjust
 
         ! print *, 'second where '
         ! print *, elemH(178), faceHd(fup(178))   
-        ! print *, faceDd(fup(178)), twoR * thisDepthCutoff
+        ! print *, faceDd(fup(178)), twoR * thisMomentumDepthCutoff
         ! print *, ' '
 
         !% --- for the upstream face dH/dx > 0 leads to a positive Q
@@ -2109,7 +2132,7 @@ module adjust
         !%     depth on the face is twice the small depth cutoff
         where ( (elemH(thisP) < faceHd(fup(thisP)) ) &
                 .and. &
-                (faceDd(fup(thisP)) > twoR * thisDepthCutoff) )
+                (faceDd(fup(thisP)) > twoR * thisMomentumDepthCutoff) )
 
             !% --- value based on head gradient
             faceQ(fup(thisP)) = max(                                                 &

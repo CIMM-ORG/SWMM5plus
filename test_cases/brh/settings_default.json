@@ -6,46 +6,6 @@
         "Short" : "default"
     },
     "Discretization" : {
-        "NominalElemLength" : 30.00
-    },
-    "Limiter" : {
-        "Dt" : {
-            "Minimum"     : 1e-4
-        }
-    },    
-    "Output" : {
-        "StoredLevels" : 4000,
-        "CommandLine" : {
-            "interval" : 500
-        },
-        "DataOut" :{
-            "isAreaOut"         : true,
-            "isDepthOut"        : true,
-            "isFlowrateOut"     : true,
-            "isHeadOut"         : true,
-            "isManningsNout"    : true,
-            "isVelocityOut"     : true,
-            "isVolumeOut"       : true,
-            "isWaveSpeedOut"    : true,
-            "isPreissmannCelerityOut"   : true
-        },
-        "Report" : {
-            "useSWMMinpYN" : true,
-            "provideYN" : true,
-            "useHD5F"   : true,
-            "useCSV"    : true,
-            "suppress_MultiLevel_Output" : false,
-            "StartTime" : 0.0,
-            "TimeInterval" : 500.0,
-            "TimeUnits" : "Hours"
-        }
-    },
-    "Simulation" : {
-        "useHydrology" : true
-    },
-    "Solver" : {
-        "PreissmannSlot" : {
-            "Method" : "DynamicSlot"
-        }
+        "NominalElemLength" : 10.00
     }
 }

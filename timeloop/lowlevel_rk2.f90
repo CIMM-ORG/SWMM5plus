@@ -52,6 +52,7 @@ module lowlevel_rk2
     ! public :: ll_CC_slot_computation_ETM
     ! public :: ll_JM_slot_computation_ETM
     public :: ll_get_dynamic_ManningsN
+    public :: ll_enforce_zerodepth_velocity
 
     contains
 !%==========================================================================
@@ -137,9 +138,14 @@ module lowlevel_rk2
         !% --- using face Q up/dn of branch (mass conservative)
         !%     multiply Q by number of barrels of branch
         do ii = 1,max_branch_per_node,2
-            elemR(thisP,outCol) = elemR(thisP,outCol) &
-                + real(isbranch(thisP+ii  ),8) * fQ(fup(thisP+ii  )) * real(nBarrel(thisP+ii  ),8)  &
-                - real(isbranch(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) * real(nBarrel(thisP+ii+1),8) 
+            where (isbranch(thisP+ii) .eq. oneI) 
+                elemR(thisP,outCol) = elemR(thisP,outCol) &
+                    +  fQ(fup(thisP+ii  )) * real(nBarrel(thisP+ii  ),8)
+            endwhere
+            where (isbranch(thisP+ii+1) .eq. oneI)
+                elemR(thisP,outCol) = elemR(thisP,outCol) &
+                    -  fQ(fdn(thisP+ii+1)) * real(nBarrel(thisP+ii+1),8) 
+            endwhere
         end do
 
         ! do ii=1,size(thisP)
@@ -2340,6 +2346,36 @@ module lowlevel_rk2
         !% Closing:
 
     end subroutine ll_alternate_JB
+
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_enforce_zerodepth_velocity (VelCol, thisCol, Npack)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Enforces zero velocity on any element that is zerodepth, which
+        !% prevents artificially-large thin-layer velocities from affecting
+        !% face interpolation during filling of zerodepth
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: VelCol, thisCol, Npack
+            integer, pointer    :: thisP(:)
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases:
+            thisP => elemP(1:Npack,thisCol)
+        !%------------------------------------------------------------------
+        
+        where (elemYN(thisP,eYN_isZeroDepth))
+            elemR(thisP,VelCol) = zeroR
+        endwhere
+    
+        !%------------------------------------------------------------------
+        !% Closing:
+
+    end subroutine ll_enforce_zerodepth_velocity
 
 !%==========================================================================
 !%==========================================================================

@@ -9,7 +9,7 @@ module junction_elements
     use face, only: face_interpolation, face_force_JBadjacent_values
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements, pack_zero_depth_interior_faces
     use update
-    ! use utility_unit_testing, only: util_utest_CLprint
+    use utility_unit_testing, only: util_utest_CLprint
     use utility_crash, only: util_crashpoint
 
 !%----------------------------------------------------------------------------- 
@@ -26,6 +26,7 @@ module junction_elements
     public :: junction_force_Qinterpweights
     public :: junction_face_terms
     public :: junction_mass_conservation
+    public :: junction_conservation_residual !% for debugging
 
     real(8), parameter :: Cbc = 0.46295d0  !% HACK dimensionless 1.45/sqrt(g) from Brater and King broad-crested weir coefficient
     real(8), parameter :: Horifice = 0.15d0  !% HACK fixed orifice height
@@ -33,7 +34,7 @@ module junction_elements
 
     real(8) :: coef1, coef2, coef3, coef4
 
-    integer :: printJM = 11 !% testing
+    integer :: printJM = 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
 
     contains
 !%==========================================================================
@@ -68,14 +69,22 @@ module junction_elements
         thisP => elemP(1:Npack,ep_JB)
         call update_interpweights_JB (thisP, Npack, .false.)
 
-            ! ! call util_utest_CLprint ('------- DDD08 after update_interpweights_JB')        
+            ! call util_utest_CLprint ('------- DDD08 after update_interpweights_JB')  
+        
+        ! print *, ' '
+        ! print *,  'resid ',junction_conservation_residual(printJM)
+        ! print *, ' '
 
         !% --- interpolate latest flowrate (only) to face around JB
         !%     Qyn only, skipJump and skipZeroAdjust
         sync all
         call face_interpolation(fp_JB, .false., .false., .true., .true., .true.) 
 
-            ! ! call util_utest_CLprint ('------- DDD09 after face_interpolation for JB') 
+            ! call util_utest_CLprint ('------- DDD09 after face_interpolation for JB') 
+
+            ! print *, ' '
+            ! print *,  'resid ',junction_conservation_residual(printJM)
+            ! print *, ' '
 
         !% --- computes JM values for head, VolumeOverflow, Volume, 
         !      and JB values  for head, dQdH, DeltaQ, flowrate, StorageRate, OverflowRate
@@ -83,7 +92,11 @@ module junction_elements
         thisP => elemP(1:Npack,ep_JM)
         call junction_calculation_3 (thisP, Npack, istep)
 
-            ! ! call util_utest_CLprint ('------- DDD10 after junction_calculation') 
+            ! call util_utest_CLprint ('------- DDD10 after junction_calculation') 
+
+            ! print *, ' '
+            ! print *,  'resid ',junction_conservation_residual(printJM)
+            ! print *, ' '
 
         !% --- Update the JM and JB auxiliary variables 
         !%     For JB this is geometry, Fr, C, interpwieghts
@@ -91,16 +104,26 @@ module junction_elements
         !%     .true. = force interp weights for Q to favor JB
         call update_auxiliary_variables_JMJB ( .true.)
 
-            ! ! call util_utest_CLprint ('------- DDD11 after update_auxiliary_variables_JMJB') 
+            ! call util_utest_CLprint ('------- DDD11 after update_auxiliary_variables_JMJB') 
+            ! print *, ' '
+            ! print *,  'resid ',junction_conservation_residual(printJM)
+            ! print *, ' '
 
         call adjust_element_toplevel (JB)
         call adjust_element_toplevel (JM)
        
+            ! call util_utest_CLprint ('------- DDD12 after adjust element toplevel') 
+            ! print *, ' '
+            ! print *,  'resid ',junction_conservation_residual(printJM)
+            ! print *, ' '
 
         call face_force_JBadjacent_values (ep_JM, .true.)
         call face_force_JBadjacent_values (ep_JM, .false.)
 
-        ! ! call util_utest_CLprint ('------- FFF07  after face_force_JB... in junction')
+            ! call util_utest_CLprint ('------- DDD13  after face_force_JB... in junction')
+            ! print *, ' '
+            ! print *, 'resid ',junction_conservation_residual(printJM)
+            ! print *, ' '
 
         if (num_images() > oneI) then 
             print *, 'CODE ERROR: NEED UPDATE FOR FACE CHANGES DURING JB'
@@ -112,9 +135,17 @@ module junction_elements
         call junction_CC_for_JBadjacent (ep_CC_UpstreamOfJunction,   istep, .true.)
         call junction_CC_for_JBadjacent (ep_CC_DownstreamOfJunction, istep, .false.)
 
-            ! ! call util_utest_CLprint ('------- FFF08  after junction_CC_forJBadjacent')
+            ! call util_utest_CLprint ('------- DDD14  after junction_CC_forJBadjacent')
+            ! print *, ' '
+            ! print *, 'resid ',junction_conservation_residual(printJM)
+            ! print *, ' '
 
         call adjust_face_toplevel(fp_JB)
+
+            ! call util_utest_CLprint ('------- DDD15  after junction_face toplevel')
+            ! print *, ' ', printJM
+            ! print *, 'resid ',junction_conservation_residual(printJM)
+            ! print *, ' '
 
     end subroutine junction_toplevel_3
 !%
@@ -125,11 +156,15 @@ module junction_elements
         !%------------------------------------------------------------------
         !% Description:
         !% computes the fa and fb terms from time n data for junction solution
+        !%
+        !% HACK
+        !% 20230407 removed the crk weighting -- this makes the solutions
+        !% between predictor and corrector more consistent. Not sure why. (brh)
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: thisColP   !% packed column of junction faces
             integer, intent(in) :: istep      !% rk2 substep
-            integer, pointer    :: Npack, fidx, eUp, eDn
+            integer, pointer    :: Npack, fidx, eUp, eDn, JMidx
 
             real(8), pointer    :: crk, dt, grav
             real(8), pointer    :: fLengthAdj(:), fTopAdj(:), fHeadAdj(:)
@@ -190,41 +225,54 @@ module junction_elements
                 call util_crashpoint(639874)
             end if
 
-            !% --- handle upstream branch (downstream JB element )
+            !% --- handle JB upstream of JM (downstream JB element = eDn, upstream of JM )
             if (elemI(eDn,ei_elementType) == JB) then
+
+                !% --- get the JM index
+                JMidx => elemSI(eDn,esi_JunctionBranch_Main_Index)
+
                 !% --- for different upstream element types
                 select case (elemI(eUp,ei_elementType))
                     case (CC)
-                            !print *, 'is CC'
-                        !% --- upstream conduit/channel, downstream JB
-                        !% --- fa term
-                        elemSR(eDn,esr_JunctionBranch_fa)                                    &
-                            = - (crk * dt / fLengthAdj(fidx))                                &
-                            * (                                                              &
-                                + (fVelU(fidx)**twoI) * fTopAdj(fidx)                        &
-                                + grav * (fAreaU(fidx)                                       &
-                                            + fTopAdj(fidx) * (fHeadU(fidx) - fHeadAdj(fidx))) &
-                                ) 
+                        !% --- dQ/dH only exists if junction head is above Zbottom
+                        !%     of adjacent element, and if Fr adjacent is not supercritical
+                        if ((elemR(JMidx,er_Head) > elemR(eUp,er_Zbottom)) .and. &
+                            (elemR(eUp,er_FroudeNumber) < oneR)) then
+                                !print *, 'is CC'
+                            !% --- upstream conduit/channel, downstream JB
+                            !% --- fa term
+                            elemSR(eDn,esr_JunctionBranch_fa)                                    &
+                                = - ( dt / fLengthAdj(fidx))                                &
+                                * (                                                              &
+                                    + (fVelU(fidx)**twoI) * fTopAdj(fidx)                        &
+                                    + grav * (fAreaU(fidx)                                       &
+                                                + fTopAdj(fidx) * (fHeadU(fidx) - fHeadAdj(fidx))) &
+                                    ) 
 
-                            !print *, ' fa dn ',  elemSR(eDn,esr_JunctionBranch_fb)
+                                ! if (JMidx==printJM) print *, ' fa upstream JB ', eDn, elemSR(eDn,esr_JunctionBranch_fb)
 
-                        !% --- fb term    
-                        elemSR(eDn,esr_JunctionBranch_fb)                                     &
-                            =  -crk * dt * grav * fTopAdj(fidx) / fLengthAdj(fidx)  
+                            !% --- fb term    
+                            elemSR(eDn,esr_JunctionBranch_fb)                                     &
+                                =  - dt * grav * fTopAdj(fidx) / fLengthAdj(fidx)  
 
-                            !print *, ' fb dn ',  elemSR(eDn,esr_JunctionBranch_fb) 
+                                ! if (JMidx==printJM) print *, ' fb upstream JB ', eDn, elemSR(eDn,esr_JunctionBranch_fb) 
 
-                        if (elemYN(eDn,eYN_isCulvert)) then 
-                            print *, 'CODE ERROR: culvert adjacent to junction not handled'
-                            call util_crashpoint(2209873)
-                        end if
+                            if (elemYN(eDn,eYN_isCulvert)) then 
+                                print *, 'CODE ERROR: culvert adjacent to junction not handled'
+                                call util_crashpoint(2209873)
+                            end if
 
-                         !% --- ensure high Fr inflows have dQ/dH for junction
-                        if ((elemR(eDn,er_FroudeNumber) .ge. +oneR) .or. &
-                            (elemR(eUp,er_FroudeNumber) .ge. +oneR)       ) then  
-                            !print *, 'High Froude into JB from upstream ',elemR(eUp,er_FroudeNumber)   
+                            ! !% --- ensure high Fr inflows have dQ/dH for junction
+                            ! if ((elemR(eDn,er_FroudeNumber) .ge. +oneR) .or. &
+                            !     (elemR(eUp,er_FroudeNumber) .ge. +oneR)       ) then  
+                            !     !print *, 'High Froude into JB from upstream ',elemR(eUp,er_FroudeNumber)   
+                            !     elemSR(eDn,esr_JunctionBranch_fa) = zeroR
+                            !     elemSR(eDn,esr_JunctionBranch_fb) = zeroR 
+                            ! end if
+                        else 
+                            !% --- dH cannot affect flowrate in branch
                             elemSR(eDn,esr_JunctionBranch_fa) = zeroR
-                            elemSR(eDn,esr_JunctionBranch_fb) = zeroR 
+                            elemSR(eDn,esr_JunctionBranch_fb) = zeroR
                         end if
 
                     case (weir)
@@ -277,39 +325,53 @@ module junction_elements
 
             !% --- handle downstream branch (upstream JB element)
             if (elemI(eUp,ei_elementType) == JB) then
+
+                !% --- get the JM index for usptream JM
+                JMidx => elemSI(eUp,esi_JunctionBranch_Main_Index)
+
                 !% --- for different downstream element types
                 select case (elemI(eDn,ei_elementType))
                     case (CC)
-                        !% --- downstream conduit/channel, upstream JB
-                        !% --- fa term
-                        elemSR(eUp,esr_JunctionBranch_fa)                                     &
-                            = + (crk * dt / fLengthAdj(fidx))                                &
-                            * (                                                              &
-                                + (fVelD(fidx)**twoI) * fTopAdj(fidx)                        &
-                                + grav * (fAreaD(fidx)                                       &
-                                        + fTopAdj(fidx) * (fHeadD(fidx) - fHeadAdj(fidx)))   &
-                            ) 
+                        !% --- dQ/dH only exists if junction head is above Zbottom
+                        !%     of adjacent element, and if Fr adjacent is not supercritical
+                        if ((elemR(JMidx,er_Head) > elemR(eDn,er_Zbottom)) .and. &
+                            (elemR(eDn,er_FroudeNumber) > -oneR)) then
+                            !% --- downstream conduit/channel, upstream JB = eUp
+                            !% --- fa term
+                            elemSR(eUp,esr_JunctionBranch_fa)                                     &
+                                = + ( dt / fLengthAdj(fidx))                                &
+                                * (                                                              &
+                                    + (fVelD(fidx)**twoI) * fTopAdj(fidx)                        &
+                                    + grav * (fAreaD(fidx)                                       &
+                                            + fTopAdj(fidx) * (fHeadD(fidx) - fHeadAdj(fidx)))   &
+                                ) 
 
-                            ! print *, ' fa up ',  elemSR(eUp,esr_JunctionBranch_fa) 
+                                ! if (JMidx==printJM)  print *, ' fa downstream JB ', eUp, elemSR(eUp,esr_JunctionBranch_fa) 
 
-                        !% --- fb term    
-                        elemSR(eUp,esr_JunctionBranch_fb)                                     &
-                            =  +crk * dt * grav * fTopAdj(fidx) / fLengthAdj(fidx) 
+                            !% --- fb term    
+                            elemSR(eUp,esr_JunctionBranch_fb)                                     &
+                                =  + dt * grav * fTopAdj(fidx) / fLengthAdj(fidx) 
 
-                            ! print *, ' fb up ',  elemSR(eUp,esr_JunctionBranch_fb) 
+                                ! if (JMidx==printJM) print *, ' fb downstream JB ', eUp, elemSR(eUp,esr_JunctionBranch_fb) 
 
-                        !% --- ensure high Fr inflows have dQ/dH for junction
-                        if ((elemR(eDn,er_FroudeNumber) .le. -oneR) .or. &
-                            (elemR(eUp,er_FroudeNumber) .le. -oneR)         ) then  
-                            !print *, 'High Froude into JB from downstream ',elemR(eDn,er_FroudeNumber)   
+                            !% --- ensure high Fr inflows have dQ/dH for junction
+                            ! if ((elemR(eDn,er_FroudeNumber) .le. -oneR) .or. &
+                            !     (elemR(eUp,er_FroudeNumber) .le. -oneR)         ) then  
+                            !     !print *, 'High Froude into JB from downstream ',elemR(eDn,er_FroudeNumber)   
+                            !     elemSR(eUp,esr_JunctionBranch_fa) = zeroR
+                            !     elemSR(eUp,esr_JunctionBranch_fb) = zeroR 
+                            ! end if
+
+                            if (elemYN(eUp,eYN_isCulvert)) then 
+                                print *, 'CODE ERROR: culvert adjacent to junction not handled'
+                                call util_crashpoint(3209873)
+                            end if 
+                        else 
+                            !% --- dH cannot affect flowrate in branch
                             elemSR(eUp,esr_JunctionBranch_fa) = zeroR
-                            elemSR(eUp,esr_JunctionBranch_fb) = zeroR 
-                        end if
+                            elemSR(eUp,esr_JunctionBranch_fb) = zeroR
+                        end if  
 
-                        if (elemYN(eUp,eYN_isCulvert)) then 
-                            print *, 'CODE ERROR: culvert adjacent to junction not handled'
-                            call util_crashpoint(3209873)
-                        end if    
 
                     case (weir)
                         !print *, 'is Weir'
@@ -419,10 +481,10 @@ module junction_elements
             Qlateral  => elemR (:,er_FlowrateLateral)
         !%-----------------------------------------------------------------
 
-            if (istep == 2) then
-                print *, 'skipping junction mass conservation '
-                return
-            end if
+            ! if (istep == 2) then
+            !     print *, 'skipping junction mass conservation '
+            !     return
+            ! end if
 
         do mm=1,Npack
             JMidx => thisJM(mm)
@@ -430,17 +492,19 @@ module junction_elements
             resid = junction_conservation_residual (thisJM(mm)) 
                     ! if (JMidx == printJM) 
 
-            ! print *, '    resid at 4     ',resid, JMidx 
+            ! if (JMidx == printJM) print *, '    resid at 4     ',resid, JMidx 
 
             if (abs(resid) > local_epsilon) then 
                 !% --- note that QnetIn > 0 and QnetOut < 0
                 QnetIn  = junction_branch_Qnet (thisJM(mm),+oneI)
                 QnetOut = junction_branch_Qnet (thisJM(mm),-oneI) + Qoverflow(thisJM(mm))
+
                     ! if (JMidx == printJM) print *, 'starting conservation resid flows '
                     ! if (JMidx == printJM) print *, QnetIn, QnetOut, elemR(thisJM(mm),er_FlowrateLateral)
 
                 !% --- ad hoc adjustment of elemR(:,er_Flowrate) of JB and Qoverflow of JM
                 call junction_fix_conservation(thisJM(mm),resid, QnetIn, QnetOut)
+
                         ! if (JMidx == printJM) then 
                         !     print *, 'Q update 2'
                         !     do ii=1,max_branch_per_node
@@ -450,12 +514,13 @@ module junction_elements
                
                 !% --- update net Q branches for residual changes
                 QnetBranches = junction_main_sumBranches (thisJM(mm),er_Flowrate,elemR)
+
                         ! if (JMidx == printJM) print *, 'QnetBranches (end)', QnetBranches
 
                 !% --- volume conservative storage rate (not based on dH)
                 Qstorage(thisJM(mm)) = QnetBranches + Qoverflow(thisJM(mm)) + Qlateral(thisJM(mm))
 
-                        ! if (JMidx == printJM) print *, 'QStorage (end)', Qstorage
+                        ! if (JMidx == printJM) print *, 'QStorage (end)', Qstorage(thisJM(mm))
 
                 !% --- update Volume, VolumeOverflow and JB face values
                 call junction_update_Qdependent_values (thisJM(mm), istep)
@@ -498,11 +563,15 @@ module junction_elements
 
         do mm=1,Npack
             JMidx = thisJM(mm)
-            ! if (JMidx==printJM) then
-            !     print *, ' '
-            !     print *, '-----------------------------------------------'
-            !     print *, 'mm, JM ',mm, JMidx
-            ! end if
+
+                ! if (JMidx==printJM) then
+                !     print *, ' '
+                !     print *, '-----------------------------------------------'
+                !     print *, 'mm, JM ',mm, JMidx
+                !     print *, 'Aplan ',elemSR(JMidx,esr_Storage_Plan_Area)
+                !     print *, 'dt    ',setting%Time%Hydraulics%Dt
+                !     print *, 'Qlat  ',elemR(JMidx,er_FlowrateLateral)
+                ! end if
 
             !% --- get the max and min heads allowable for the JM
             call junction_main_head_bounds (JMidx, Hbound)
@@ -510,6 +579,7 @@ module junction_elements
                 ! if (JMidx==printJM) print *, ' '
                 ! if (JMidx==printJM) print *,  'HBound'
                 ! if (JMidx==printJM) print *, Hbound(1), Hbound(2), Hbound(3)
+                ! if (JMidx==printJM) print *, elemR(JMidx+1,er_Zbottom), elemR(JMidx,er_Zbottom), elemR(JMidx+2,er_Zbottom)
 
             !% --- set the allowable change in junction main head
             call junction_main_dHlimits (JMidx, dHlo, dHhi, Hbound)
@@ -522,6 +592,7 @@ module junction_elements
 
                 ! if (JMidx==printJM) then 
                 !     do ii=1,max_branch_per_node
+                !     if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
                 !     print *, 'Qbranch ',ii, elemR(JMidx+ii,er_Flowrate)
                 !     end do
                 ! end if
@@ -541,6 +612,18 @@ module junction_elements
 
                 ! if (JMidx==printJM) print *, '   Qnet        ',Qnet
 
+                !% --- if no net flowrate then there is nothing to be done.
+                if (Qnet == zeroR) then 
+                    do ii=1,max_branch_per_node
+                        if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
+                        elemR(JMidx+ii,er_DeltaQ) = zeroR
+                        Qstorage(JMidx) = zeroR
+                        elemR(JMidx,er_Volume) = elemR(JMidx,er_Volume_N0)
+                        !elemSR(JMidx+ii,esr_JunctionBranch_dQdH) = zeroR
+                    end do
+                    cycle !% to next junction
+                end if
+
             !% --- compute storage rate of change with head
             dQdHstorage = junction_main_dQdHstorage (JMidx,iStep)
 
@@ -549,7 +632,15 @@ module junction_elements
             !% --- compute overflow rate with change in head
             dQdHoverflow = junction_main_dQdHoverflow (JMidx)
 
-                !if (JMidx==printJM) print *, '   dQdHoverflow',dQdHoverflow
+                ! if (JMidx==printJM) print *, '   dQdHoverflow',dQdHoverflow
+
+                ! if (JMidx == printJM) then 
+                !     print *, 'JB fa'
+                !     do ii=1,max_branch_per_node
+                !         if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
+                !         print *, ii, elemSR(JMidx+ii,esr_JunctionBranch_fa)
+                !     end do
+                ! end if
 
             !% --- compute the net fa from branches (both CC and Diag) which is part of the 'B' quadratic coefficient
             bQuad = junction_main_sumBranches(JMidx,esr_JunctionBranch_fa, elemSR)
@@ -564,7 +655,7 @@ module junction_elements
             !% --- compute the net fb from branches (both CC and Diag) which is the 'A' quadratic coefficient
             aQuad = junction_main_sumBranches(JMidx,esr_JunctionBranch_fb, elemSR)
 
-                ! if (JMidx==printJM) print *, '   aQuad       ',aQuad
+                ! if (JMidx==printJM) print *, '   aQuad      ',aQuad
 
             !% --- compute the junction continuity source term whichis the 'C' of the quadratic equation
             cQuad = Qlateral(JMidx) + Qoverflow(JMidx) + QnetBranches
@@ -610,15 +701,19 @@ module junction_elements
 
 
                 ! if (JMidx==printJM) then 
+                    
                 !     print *, 'dQdH pieces'
-                !     do ii=1,2 !max_branch_per_node
+                !     do ii=1,max_branch_per_node
+                !         if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
                 !         print *, elemSR(JMidx+ii,esr_JunctionBranch_fa), elemSR(JMidx+ii,esr_JunctionBranch_fb)
                 !     end do
                 ! end if
 
                 ! if (JMidx==printJM) then 
+                !     print *, 'dQdH storage ',dQdHstorage
                 !     print *, 'dQdH update'
-                !     do ii=1,2 !max_branch_per_node
+                !     do ii=1,max_branch_per_node
+                !         if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
                 !         print *, elemSI(JMidx+ii,esi_JunctionBranch_Exists), ii, elemSR(JMidx+ii,esr_JunctionBranch_dQdH)
                 !     end do
                 ! end if
@@ -627,6 +722,7 @@ module junction_elements
                 ! if (JMidx==printJM) then
                 !     print *, 'Q update 1'
                 !     do ii=1,max_branch_per_node
+                !         if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
                 !         print *, ii, elemR(JMidx+ii,er_Flowrate)
                 !     end do
                 ! end if
@@ -668,6 +764,8 @@ module junction_elements
             !     end if
             ! end if
 
+            ! if (JMidx==printJM) print *, 'CONS residual ',junction_conservation_residual (JMidx)
+
         end do
 
         !stop 5509873
@@ -704,13 +802,15 @@ module junction_elements
         !% Preliminaries
         !%----------------------------------------------------------------- 
             
-        !% --- pointer to the JB face
+        
         if (isUpstreamYN) then 
+            !% --- pointer to the downstream JB face for CC upstream of JB
             ! print *, ' '
             ! print *, 'UPSTREAM ================================='
             fIdx => elemI(:,ei_Mface_dL)
             bsign = +oneR
         else
+            !% --- pointer to the upstrea JB face for CC downstream of JB
             ! print *, ' '
             ! print *, 'DOWNSTREAM ============================'
             fIdx => elemI(:,ei_Mface_uL)
@@ -742,6 +842,8 @@ module junction_elements
         ! end if
         ! print *, ' '
 
+            ! print *, ' '
+            ! print *, '01 Velocity, flowrate  ',elemR(12,er_Velocity), elemR(12,er_Flowrate)
 
         !% --- changing the face flowrate changes the element velocity
         where (elemR(thisCC,er_Volume) > setting%ZeroValue%Volume)   
@@ -753,6 +855,9 @@ module junction_elements
             elemR(thisCC,er_Velocity) = zeroR 
         endwhere
 
+        ! print *, ' '
+        !     print *, '02 Velocity, flowrate  ',elemR(12,er_Velocity), elemR(12,er_Flowrate)
+
         !% --- update the auxiliary variables
         !%     as we do not have separate packed open and closed for JB adjacent
         !%     we do this through the call with isSingularYN = .true. and the JM
@@ -762,6 +867,8 @@ module junction_elements
                 .false., .true., thisCC(mm))
         end do
 
+        ! print *, ' '
+        !     print *, '03 Velocity, flowrate  ',elemR(12,er_Velocity), elemR(12,er_Flowrate)
 
     end subroutine junction_CC_for_JBadjacent
 !%
@@ -781,7 +888,7 @@ module junction_elements
         !%-----------------------------------------------------------------
             integer,               intent(in)    :: JMidx
             real(8), dimension(3), intent(inout) :: Hbound
-            integer :: ii, bcount, fadj
+            integer :: ii, bcount, fadjMax, fadjMin
         !%-----------------------------------------------------------------
 
         !%-----------------------------------------------------------------
@@ -794,23 +901,65 @@ module junction_elements
             !% --- cycle through branches (cannot be concurrent)
             do ii=1,max_branch_per_node
                 if (elemSI(JMidx+ii,esi_JunctionBranch_Exists)==oneI) then 
-                    bcount = bcount+oneI
                     if (mod(ii,2)== 0) then 
                         !% --- downstream branch
-                        fadj  = elemI(JMidx+ii,ei_Mface_dL)
+                        if (elemR(JMidx+ii,er_Flowrate) > zeroR) then
+                            fadjMin  = elemI(JMidx+ii,ei_Mface_dL)
+                            fadjMax  = zeroI
+                            bcount = bcount+oneI
+                        elseif (elemR(JMidx+ii,er_Flowrate) < zeroR) then
+                            fadjMax  = elemI(JMidx+ii,ei_Mface_dL)
+                            fadjMin  = zeroI
+                            bcount = bcount+oneI
+                        else
+                            fadjMax = zeroI
+                            fadjMin = zeroI
+                        end if
                     else
                         !% --- upstream branch
-                        fadj  = elemI(JMidx+ii,ei_Mface_uL)
+                        if (elemR(JMidx+ii,er_Flowrate) > zeroR) then
+                            fadjMax  = elemI(JMidx+ii,ei_Mface_uL)
+                            fadjMin  = zeroI
+                            bcount = bcount+oneI
+                        elseif (elemR(JMidx+ii,er_Flowrate) < zeroR) then
+                            fadjMin  = elemI(JMidx+ii,ei_Mface_uL)
+                            fadjMax  = zeroI
+                            bcount = bcount+oneI
+                        else
+                            fadjMax = zeroI
+                            fadjMin = zeroI
+                        end if
                     end if
-                    Hbound(1) = min(Hbound(1),faceR(fadj,fr_Head_Adjacent))
-                    Hbound(2) = Hbound(2)   + faceR(fadj,fr_Head_Adjacent)
-                    Hbound(3) = max(Hbound(3),faceR(fadj,fr_Head_Adjacent))
+                    if (fadjMin > zeroI) then 
+                        Hbound(1) = min(Hbound(1),faceR(fadjMin,fr_Head_Adjacent))
+                        Hbound(2) = Hbound(2)   + faceR(fadjMin,fr_Head_Adjacent)
+                    end if
+                    if (fadjMax > zeroI) then 
+                        Hbound(3) = max(Hbound(3),faceR(fadjMax,fr_Head_Adjacent))
+                        Hbound(2) = Hbound(2)   + faceR(fadjMax,fr_Head_Adjacent)
+                    end if
                 end if
             end do
 
-            Hbound(1) = max(Hbound(1),elemR(JMidx,er_Zbottom))
+            if (Hbound(1) == +huge(oneR)) then 
+                !% --- if no lower limits due to no outflow, then use zbottom as limit
+                Hbound(1) = elemR(JMidx,er_Zbottom)
+            else
+                !% --- outflow is limited to prevent head gradient revsersal
+                Hbound(1) = max(Hbound(1),elemR(JMidx,er_Zbottom))
+            end if
 
-            Hbound(2) = Hbound(2) / real(bcount,8)
+            if (Hbound(3) == -huge(oneR)) then 
+                !% --- if no upper limit due to no inflow, then don't limit the dH
+                Hbound(3) = +huge(oneR)
+            end if
+
+            !% --- average of surrounding heads for branches with flow
+            if (bcount > 0) then
+                Hbound(2) = Hbound(2) / real(bcount,8)
+            else
+                Hbound(2) = elemR(JMidx,er_Head)
+            end if
 
 
     end subroutine junction_main_head_bounds    
@@ -858,8 +1007,9 @@ module junction_elements
         k2 = JMidx + max_branch_per_node
 
         !do concurrent (kk=kstart:max_branch_per_node:2)
-            outdata(k1:k2:2) = faceR(elemI(k1:k2:2,fiIdx),frCol)            &
-                             * real(elemSI(k1:k2:2,esi_JunctionBranch_Exists),8)
+        where (elemSI(k1:k2:2,esi_JunctionBranch_Exists) .eq. oneI)
+              outdata(k1:k2:2) = faceR(elemI(k1:k2:2,fiIdx),frCol) 
+        endwhere
         !end do
 
         !print *, 'in get face', outdata(k1:k2:2)
@@ -879,10 +1029,13 @@ module junction_elements
         !% Declarations
             integer, intent(in) :: JMidx, thisCol
             real(8), intent(in) :: thisArray(:,:)
-            integer :: k1, k2
+            real(8) :: thissum
+            integer :: k1, k2,kk
         !%------------------------------------------------------------------
-        k1 = JMidx + 1
-        k2 = JMidx + max_branch_per_node
+        !k1 = JMidx + 1
+        !k2 = JMidx + max_branch_per_node
+
+        thissum = zeroR
 
         ! print *, ' '
         ! print *, 'junction_main_sumBranches ', JMidx
@@ -892,9 +1045,16 @@ module junction_elements
         ! print *, ' '
 
         !junction_main_sumBranches = sum(branchsign * thisArray(k1:k2,thisCol)) 
-        junction_main_sumBranches = sum( branchsign                                       &
-                                        * real(elemSI(k1:k2,esi_JunctionBranch_Exists),8) &
-                                        * thisArray(k1:k2,thisCol) )
+        !junction_main_sumBranches = sum( branchsign                                       &
+        !                                * real(elemSI(k1:k2,esi_JunctionBranch_Exists),8) &
+        !                                * thisArray(k1:k2,thisCol) )
+
+        do kk = 1,max_branch_per_node 
+            if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) .ne. oneI) cycle
+            thissum = thissum + branchsign(kk) * thisArray(JMidx+kk,thisCol)
+        end do
+
+        junction_main_sumBranches = thissum
 
     end function junction_main_sumBranches   
 !%    
@@ -1045,88 +1205,139 @@ module junction_elements
             integer :: kk
             real(8), dimension(2) :: deltaH, testVal
             real(8), dimension(max_branch_per_node) :: dQtrial1, dQtrial2
-            real(8) :: loDelta, hiDelta
+            real(8) :: loDelta, hiDelta, aTest, bTest, cTest
 
             real(8), parameter  :: localEpsilon = 1.0d-6
+            real(8), parameter  :: mfac = 1.d0
         !%------------------------------------------------------------------
 
         dQtrial1 = zeroR
         dQtrial2 = zeroR
 
-        !% --- check for small 'a' coefficent of quadratic
-        if (abs(aQuad) < localEpsilon) then 
-            !% --- small 'a' coefficient
-            if (abs(bQuad) < +localEpsilon) then 
-                !% --- small 'b' coefficient
-                !% --- with small 'a' this implies zero value
-                print *, 'SMALL bquad'
-                stop 239874
-                junction_head_change = zeroR
-                return
-            else
-                !% --- small 'a' implies linear solution
-                print *, 'Small aquad', JMidx
-                print *,  'alternate -c/b ',-cQuad / bQuad
-                !stop 669874
-                junction_head_change = -cQuad / bQuad
-                return
-            end if
-        else 
-            !% --- quadratic solution
-            if (rQuad < zeroR) then 
-                !% --- quadratic solution fails
-                !%     use linear
-                if (aQuad .ne. zeroR) then 
-                    print *, 'small Rquad '
-                    stop 6698734
-                    junction_head_change = -cQuad / aQuad 
-                    !% -- set the fb terms to zero
-                    do kk=1,max_branch_per_node
-                        elemSR(JMidx+kk,esr_JunctionBranch_fb) = zeroR 
-                    end do
-                    return
-                else 
-                    print *, 'unexpected else condition'
-                    call util_crashpoint(77098723)
-                end if
-            else
-                !% --- two roots of quadratic
-                rQuad = sqrt(rQuad) 
-                deltaH(1) = (-bQuad  + rQuad) / (twoR * aQuad)
-                deltaH(2) = (-bQuad  - rQuad) / (twoR * aQuad)
 
-                    ! if (JMidx==printJM) print *, '  JMhead      ',elemR(JMidx,er_Head)
-                    ! if (JMidx==printJM) print *, '    dlo, dhi  ', dHlo, dHhi
-                    ! if (JMidx==printJM) print *, '    deltaH(:) ', deltaH(1), deltaH(2)
-                    ! if (JMidx==printJM) print *, '         Qnet ',Qnet
+        if ((rQuad < zeroR) .or. (aQuad == zeroR) .or. (bQuad == zeroR) .or. (cQuad == zeroR)) then
 
-                loDelta = minval(deltaH)
-                hiDelta = maxval(deltaH)    
-         
-                !% --- compute JB element dQdH from fa, fb and dH
-                call junction_update_branch_dQdH (JMidx,deltaH(1))
-                !% --- possible branch flowrate
-                do kk=1,max_branch_per_node
-                    if (elemSI(JMidx+kk,esi_JunctionBranch_Exists)==oneI) then 
-                        dQtrial1(kk) = elemSR(JMidx+kk,esr_JunctionBranch_dQdH) * deltaH(1)
-                    end if
-                end do
+            aTest = abs(aQuad)
+            bTest = abs(bQuad)
+            cTest = abs(cQuad)
 
-                do kk=1,max_branch_per_node
-                    if (elemSI(JMidx+kk,esi_JunctionBranch_Exists)==oneI) then 
-                        dQtrial2(kk) = elemSR(JMidx+kk,esr_JunctionBranch_dQdH) * deltaH(2)
-                    end if
-                end do
-
-                    ! if (JMidx==printJM) print *, 'dQ trial ',sum(dQtrial1), sum(dQtrial2)
-
-                if (abs(sum(dQtrial1)) < abs(sum(dQtrial2))) then
-                    junction_head_change = deltaH(1)
+            if ((aTest == zeroR) .or. ((bTest > mfac*aTest) .and. (cTest > mfac*aTest))) then 
+                !% ---  bx + c = 0
+                if (bTest .eq. zeroR) then 
+                    junction_head_change = zeroR
                     return
                 else
-                    junction_head_change = deltaH(2)
+                    junction_head_change = -cQuad / bQuad 
+                    return
+                endif
+            elseif ((bTest == zeroR) .or. ((aTest > mfac*bTest) .and. (cTest > mfac*bTest))) then 
+                !% ---  ax^2 + c = 0
+                if (cTest .eq. zeroR) then 
+                    junction_head_change = zeroR 
+                    return
+                elseif (-cQuad / aQuad > zeroR) then 
+                    junction_head_change = sqrt(-cQuad / aQuad)
+                    return
+                else 
+                    junction_head_change = zeroR
                     return 
+                end if 
+            elseif ((cTest == zeroR) .or. ((aTest > mfac*cTest) .and. (bTest > mfac*cTest))) then 
+                !% --- ax^2 + bx = 0
+                junction_head_change = -bQuad / aQuad
+                return 
+            else 
+                print *, 'aQuad ', aQuad 
+                print *, 'bQuad ', bQuad 
+                print *, 'cQuad ', cQuad 
+                print *, 'rQuad ', rQuad
+                print *, 'unresolvable rQuad < 0 case for JMidx ',JMidx
+                call util_crashpoint(7298734)
+            end if
+        else
+                
+                ! !% --- check for small 'a' coefficent of quadratic
+                ! if (abs(aQuad) < localEpsilon) then 
+                !     !% --- small 'a' coefficient
+                !     if (abs(bQuad) < +localEpsilon) then 
+                !         !% --- small 'b' coefficient
+                !         !% --- with small 'a' this implies zero value
+                !         print *, 'SMALL bquad for JMidx',JMidx
+                !         stop 239874
+                !         junction_head_change = zeroR
+                !         return
+                !     else
+                !         !% --- small 'a' implies linear solution
+                !         print *, 'Small aquad for JMidx',JMidx
+                !         print *,  'alternate -c/b ',-cQuad / bQuad
+                !         !stop 669874
+                !         junction_head_change = -cQuad / bQuad
+                !         return
+                !     end if
+                ! else 
+                    ! !% --- quadratic solution
+                    ! if (rQuad < zeroR) then 
+                    !     !% --- quadratic solution fails
+                    !     !%     use linear
+                    !     if (aQuad .ne. zeroR) then 
+                    !         print *, 'negative Rquad for JMidx',JMidx
+                    !         stop 6698734
+                    !         junction_head_change = -cQuad / aQuad 
+                    !         !% -- set the fb terms to zero
+                    !         do kk=1,max_branch_per_node
+                    !             elemSR(JMidx+kk,esr_JunctionBranch_fb) = zeroR 
+                    !         end do
+                            
+
+
+                    !         if ((abs(bQuad) > abs(cQuad)) .and. (abs(aQuad) > abs(cQquad))) then
+                    !             !% --- devolves to ax^2 + b^x = 0
+                    !             junction_head_change = - bAqad / aQuad
+
+                    !         return
+                    !     else 
+                    !         print *, 'unexpected else condition'
+                    !         call util_crashpoint(77098723)
+                    !     end if
+                    ! else
+
+            !% --- two roots of quadratic
+            rQuad = sqrt(rQuad) 
+            deltaH(1) = (-bQuad  + rQuad) / (twoR * aQuad)
+            deltaH(2) = (-bQuad  - rQuad) / (twoR * aQuad)
+
+                ! if (JMidx==printJM) print *, '  JMhead      ',elemR(JMidx,er_Head)
+                ! if (JMidx==printJM) print *, '    dlo, dhi  ', dHlo, dHhi
+                ! if (JMidx==printJM) print *, '    deltaH(:) ', deltaH(1), deltaH(2)
+                ! if (JMidx==printJM) print *, '         Qnet ',Qnet
+
+            loDelta = minval(deltaH)
+            hiDelta = maxval(deltaH)    
+        
+            !% --- compute JB element dQdH from fa, fb and dH
+            call junction_update_branch_dQdH (JMidx,deltaH(1))
+            !% --- possible branch flowrate
+            do kk=1,max_branch_per_node
+                if (elemSI(JMidx+kk,esi_JunctionBranch_Exists)==oneI) then 
+                    dQtrial1(kk) = elemSR(JMidx+kk,esr_JunctionBranch_dQdH) * deltaH(1)
                 end if
+            end do
+
+            do kk=1,max_branch_per_node
+                if (elemSI(JMidx+kk,esi_JunctionBranch_Exists)==oneI) then 
+                    dQtrial2(kk) = elemSR(JMidx+kk,esr_JunctionBranch_dQdH) * deltaH(2)
+                end if
+            end do
+
+                ! if (JMidx==printJM) print *, 'dQ trial ',sum(dQtrial1), sum(dQtrial2)
+
+            if (abs(sum(dQtrial1)) < abs(sum(dQtrial2))) then
+                junction_head_change = deltaH(1)
+                return
+            else
+                junction_head_change = deltaH(2)
+                return 
+            end if
 
                 ! if ((loDelta < dHlo) .and. (hiDelta > dHhi)) then 
 
@@ -1271,7 +1482,7 @@ module junction_elements
                 !     return
                 ! end if
 
-            end if
+            ! end if
         end if
 
     end function junction_head_change
@@ -1379,10 +1590,10 @@ module junction_elements
         !%------------------------------------------------------------------
 
         do ii=1,max_branch_per_node
+            if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
             elemSR(JMidx+ii,esr_JunctionBranch_dQdH)                  &
-                 = real(elemSI(JMidx+ii,esi_JunctionBranch_Exists),8) &
-                   * (  elemSR(JMidx+ii,esr_JunctionBranch_fa)        &
-                      + elemSR(JMidx+ii,esr_JunctionBranch_fb) * dH)      
+                 =  (  elemSR(JMidx+ii,esr_JunctionBranch_fa)         &
+                     + elemSR(JMidx+ii,esr_JunctionBranch_fb) * dH)      
         end do
     
     end subroutine junction_update_branch_dQdH
@@ -1600,7 +1811,9 @@ module junction_elements
         k1 = JMidx + kstart
         k2 = JMidx + max_branch_per_node
 
-        faceR(elemI(k1:k2:2,fiIdx),frCol) = elemR(k1:k2:2,erCol)
+        where (elemSI(k1:k2:2,esi_JunctionBranch_Exists) .eq. oneI)
+            faceR(elemI(k1:k2:2,fiIdx),frCol) = elemR(k1:k2:2,erCol)
+        endwhere
     
     end subroutine junction_branchface_forceJBvalue
 !%    
@@ -1714,6 +1927,7 @@ module junction_elements
         repeatYN = .true.
 
         ! print *, ' '
+        ! print *, '============FIX CONSERVATION'
         ! print *, 'JUNCTION ',JMidx
         ! print *, 'starting resid ',resid 
 
@@ -1741,317 +1955,162 @@ module junction_elements
                 !% -- continue with residual processing
             end if
         endif
+
+        ! print *, '0001  Resid',resid
             
         do while (repeatYN)
-        ! select case (elemSI(JMidx,esi_JunctionMain_Type))
-        !     case (TabularStorage,FunctionalStorage,ImpliedStorage)
-        !         !% Conservation should NOT be an issue
-        !         print *, 'RESIDUAL ',resid
-        !         repeatYN = .false.
-        !     case (NoStorage)
-                ! print *, 'IN NO STORAGE'
-                ! print *, 'QnetIn, QnetOut ',QnetIn, QnetOut
-                ! !% --- check for a degenerate condition with no branch flows
-                ! if ((QnetIn .le. zeroR) .and. (QnetOut .ge. zeroR)) then
-                !     !% --- positive residual implies flow that must exit
-                !     !%     Zero (or slightly negative) QnetIn implies no inflows
-                !     !%     Zero (or slightly positive) QnetOut implies no outflows
-                !     !%     typically occurs when lateral inflow exists but
-                !     !%     there are no other inflows or outflows    
-                !     if (resid > zeroR) then
-                !         !% --- find the lowest channel(s) connected to junction
-                !         !%     neglect all diagnostic adjacent
-                !         zbottom = huge(oneR)
-                !         zcount  = zeroI
-                !         do kk=1,max_branch_per_node
-                !             if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)        == oneI)  .and. &
-                !                 (elemSI(JMidx+kk,esi_JunctionBranch_Diag_adjacent) == zeroI) .and. &
-                !                 (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ)    == oneI)          ) then
-                !                 zcount = zcount + oneI
-                !                 zbottom = min(zbottom,elemR(JMidx+kk,er_Zbottom))
-                !             end if
-                !         end do
-                !         if (zcount .ge. oneI) then 
-                !             !% --- spread the residual as outflows over lowest channels
-                !             do kk=1,max_branch_per_node
-                !                 if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)        == oneI)  .and. &
-                !                     (elemSI(JMidx+kk,esi_JunctionBranch_Diag_adjacent) == zeroI) .and. &
-                !                     (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ)    == oneI)  .and. &
-                !                     (zbottom == elemR(JMidx+kk,er_Zbottom))                              ) then
-                !                     !% --- new outflow
-                !                     dQ(kk) = - branchsign(kk) * resid / real(zcount,8)
-                !                 end if
-                !             end do
-                !         else 
-                !             !% --- cannot find a non-diagnostic element to fix residual, so it is lost
-                !             print *, 'WARNING 928732: junction residual inflow that is ignored'
-                !             print *, 'as there are no non-diagnostic branches'
-                !             print *, 'Junction index in elemR array is',JMidx
-                !         end if
-                !     else !% (resid <= 0)
-                !         !% --- residual < 0 implies too much outflow so a reduced outflow is needed (which 
-                !         !%     is not possible) or an increased inflow is needed (also not possible)
-                !         !%     since there are no viable branches.
-                !         !%     Typically occurs when there is a negative lateral inflow and there is
-                !         !%     inflow or outflow to the junction.
-                !             print *, 'WARNING 928734: junction residual outflow that is ignored'
-                !             print *, 'as there are no non-diagnostic branches'
-                !             print *, 'Junction index in elemR array is',JMidx
-                !     end if
 
-                ! else !% --- for cases with some inflows and/or outflows
+            !% --- distribute change in in/outflows based on contributing area
+            bFixYN = .false.
+            Aout = zeroR
+            Ain  = zeroR
+            areaQ = zeroR
+            bcount = zeroI
+            do kk=1,max_branch_per_node
+                !% --- cycle if this branch cannot contribute to flow
+                if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)        .ne. oneI) .or.  &
+                    (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ)    .ne. oneI)        ) cycle
 
-                    !% --- distribute change in in/outflows based on contributing area
-                    bFixYN = .false.
-                    Aout = zeroR
-                    Ain  = zeroR
-                    areaQ = zeroR
-                    bcount = zeroI
-                    do kk=1,max_branch_per_node
-                        !% --- cycle if this branch cannot contribute to flow
-                        if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)        .ne. oneI) .or.  &
-                            (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ)    .ne. oneI)        ) cycle
+                if (elemSI(JMidx+kk,esi_JunctionBranch_IsUpstream) == oneI) then 
+                    !% --- upstream branch
+                    !%     cycle if low junction head or high Fr in branch cannot be adjusted for Q
+                    if ((elemR(JMidx   ,er_Head) .le. faceR(fup(JMidx+kk),fr_Zbottom)) .or. &
+                        (elemR(JMidx+kk,er_FroudeNumber) .ge. oneR)) cycle
+                    !% --- otherwise set bFix to modify this branch
+                    bFixYN(kk) = .true.  
+                    bcount = bcount + oneI
+                    areaQ(kk) = max(faceR(fup(JMidx+kk),fr_Area_d),elemR(JMidx+kk,er_Area))
 
-                        if (elemSI(JMidx+kk,esi_JunctionBranch_IsUpstream) == oneI) then 
-                            !% --- upstream branch
-                            !%     cycle if low junction head or high Fr in branch cannot be adjusted for Q
-                            if ((elemR(JMidx   ,er_Head) .le. faceR(fup(JMidx+kk),fr_Zbottom)) .or. &
-                                (elemR(JMidx+kk,er_FroudeNumber) .ge. oneR)) cycle
-                            !% --- otherwise set bFix to modify this branch
-                            bFixYN(kk) = .true.  
-                            bcount = bcount + oneI
-                            areaQ(kk) = max(faceR(fup(JMidx+kk),fr_Area_d),elemR(JMidx+kk,er_Area))
-                        else
-                            !% --- downstream branch
-                            !%     low junction head or high -Fr in branch cannot be adjusted for Q
-                            if ((elemR(JMidx  ,er_Head) .le. faceR(fdn(JMidx+kk),fr_Zbottom)) .or. &
-                                (elemR(JMidx+kk,er_FroudeNumber) .le. -oneR)) cycle
-                            !% --- otherwise set bFix to modify this branch
-                            bFixYN(kk) = .true.
-                            bcount = bcount + oneI
-                            areaQ(kk) = max(faceR(fdn(JMidx+kk),fr_Area_u),elemR(JMidx+kk,er_Area))
-                        end if
-                        !% --- note, should not reach here unles bFix == .true.
+                    ! print *, 'ff 01 AREA for Flow ',kk, areaQ(kk)
 
-                        if (bcount < 1) then 
-                            print *, 'CODE ERROR: bcount = 0; should not have reached this point '
-                            call util_crashpoint(6209873)
-                        end if
+                else
+                    !% --- downstream branch
+                    !%     low junction head or high -Fr in branch cannot be adjusted for Q
+                    if ((elemR(JMidx  ,er_Head) .le. faceR(fdn(JMidx+kk),fr_Zbottom)) .or. &
+                        (elemR(JMidx+kk,er_FroudeNumber) .le. -oneR)) cycle
+                    !% --- otherwise set bFix to modify this branch
+                    bFixYN(kk) = .true.
+                    bcount = bcount + oneI
+                    areaQ(kk) = max(faceR(fdn(JMidx+kk),fr_Area_u),elemR(JMidx+kk,er_Area))
 
-                            ! print *, 'QVAL ',(real(branchsign(kk),8) * elemR(JMidx+kk,er_Flowrate))
+                    ! print *, 'ff 02 Area for Flow',kk, areaQ(kk)
+                end if
+                !% --- note, should not reach here unles bFix == .true.
+
+                if (bcount < 1) then 
+                    print *, 'CODE ERROR: bcount = 0; should not have reached this point '
+                    call util_crashpoint(6209873)
+                end if
+
+                    ! print *, 'QVAL ',(real(branchsign(kk),8) * elemR(JMidx+kk,er_Flowrate))
 
 
-                    end do
+            end do
 
-                    if (bcount < 1) then 
-                        !% --- occurs during wetting drying, use all real branches for adjustment
-                        do kk=1,max_branch_per_node
-                            if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)        .ne. oneI) .or.  &
-                                (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ)    .ne. oneI)        ) cycle
+            if (bcount < 1) then 
+                !% --- occurs during wetting drying, use all real branches for adjustment
+                do kk=1,max_branch_per_node
+                    if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)        .ne. oneI) .or.  &
+                        (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ)    .ne. oneI)        ) cycle
 
-                            if (elemSI(JMidx+kk,esi_JunctionBranch_IsUpstream) == oneI) then
-                                !% --- upstream branch
-                                bFixYN(kk) = .true.  
-                                bcount = bcount + oneI
-                                areaQ(kk) = max(faceR(fup(JMidx+kk),fr_Area_d),elemR(JMidx+kk,er_Area))
+                    if (elemSI(JMidx+kk,esi_JunctionBranch_IsUpstream) == oneI) then
+                        !% --- upstream branch
+                        bFixYN(kk) = .true.  
+                        bcount = bcount + oneI
+                        areaQ(kk) = max(faceR(fup(JMidx+kk),fr_Area_d),elemR(JMidx+kk,er_Area))
 
-                            else
-                                !% --- downstream branch
-                                bFixYN(kk) = .true.
-                                bcount = bcount + oneI
-                                areaQ(kk) = max(faceR(fdn(JMidx+kk),fr_Area_u),elemR(JMidx+kk,er_Area))
-                            end if
-                        end do
+                        ! print *, 'ff 03 ',kk, areaQ(kk)
 
-                        if (bcount < 1) then 
-                            print *, 'CODE ERROR: Mass residual in an unexpected condition'
-                            call util_crashpoint(2298522)
-                        endif
+                    else
+                        !% --- downstream branch
+                        bFixYN(kk) = .true.
+                        bcount = bcount + oneI
+                        areaQ(kk) = max(faceR(fdn(JMidx+kk),fr_Area_u),elemR(JMidx+kk,er_Area))
+
+                        ! print *, 'ff 04 ',kk, areaQ(kk)
+
                     end if
+                end do
 
-                    do kk=1,max_branch_per_node
-                        !% --- accumulate the in and outflow areas
-                        if ((real(branchsign(kk),8) * elemR(JMidx+kk,er_Flowrate)) > zeroR) then 
-                            Ain  = Ain  + areaQ(kk)
-                                ! print *, 'Ain ',Ain
-                        else
-                            Aout = Aout + areaQ(kk)
-                                ! print *, 'Aout ',Aout
-                        end if
-                       
-                        if (Qoverflow < zeroR) then 
-                            Aout = Aout + elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) &
-                                        * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Height)
-                        end if
-                    end do
+                if (bcount < 1) then 
+                    print *, 'CODE ERROR: Mass residual in an unexpected condition'
+                    call util_crashpoint(2298522)
+                endif
+            end if
 
-                !     print *, ' '
-                !    ! print *, 'bfix ',bFixYN
-                !     print *, 'Ain, Aout ',Ain, Aout
-                !     print *, ' '
-                    
+            do kk=1,max_branch_per_node
+                if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)        .ne. oneI) .or.  &
+                    (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ)    .ne. oneI)        ) cycle
+                !% --- accumulate the in and outflow areas for modifiable flows
+                if ((real(branchsign(kk),8) * elemR(JMidx+kk,er_Flowrate)) > zeroR) then 
+                    Ain  = Ain  + areaQ(kk)
+                            ! print *, 'Ain ',kk, Ain
+                else
+                    Aout = Aout + areaQ(kk)
+                            ! print *, 'Aout ',kk, Aout
+                end if
+                
+                if (Qoverflow < zeroR) then 
+                    Aout = Aout + elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) &
+                                * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Height)
 
-                    if ((Ain < setting%ZeroValue%Area) .and. (Aout < setting%ZeroValue%Area)) then 
-                        !% degenerate condition 
-                        print *, 'CODE ERROR: unexpected junction are condition '
-                        print *, 'JMidx ',JMidx
-                        print *, Ain, Aout, setting%ZeroValue%Area
-                        call util_crashpoint(629784)
+                    ! print *, 'Aout with overflow ',Aout    
+
+                end if
+            end do
+
+        !     print *, ' '
+        ! !    ! print *, 'bfix ',bFixYN
+        !     print *, 'Ain, Aout ',Ain, Aout
+        !     print *, ' '
+            
+
+            if ((Ain < setting%ZeroValue%Area) .and. (Aout < setting%ZeroValue%Area)) then 
+                !% degenerate condition 
+                print *, 'CODE ERROR: unexpected junction are condition '
+                print *, 'JMidx ',JMidx
+                print *, Ain, Aout, setting%ZeroValue%Area
+                call util_crashpoint(629784)
+            else 
+                !% --- distribute residual in proportion to area
+                do kk=1,max_branch_per_node
+                    if (.not. bFixYN(kk)) cycle 
+                    dQ(kk) = - resid * real(branchsign(kk),8) * areaQ(kk) / (Ain + Aout) 
+                end do
+                !% --- overflow rate adjustment
+                if (Qoverflow < zeroR) then 
+                    dQoverflow = -resid * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) &
+                                        * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Height) &
+                                        / (Ain + Aout)
+
+                    !% --- check to see if too much overflow was removed
+                    if (Qoverflow + dQoverflow > zeroR) then 
+                        resid = resid - Qoverflow
+                        Qoverflow = zeroR
+                        repeatYN = .true.
                     else 
-                        !% --- distribute residual in proportion to area
-                        do kk=1,max_branch_per_node
-                            if (.not. bFixYN(kk)) cycle 
-                            dQ(kk) = - resid * real(branchsign(kk),8) * areaQ(kk) / (Ain + Aout) 
-                        end do
-                        !% --- overflow rate adjustment
-                        if (Qoverflow < zeroR) then 
-                            dQoverflow = -resid * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) &
-                                                * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Height) &
-                                                / (Ain + Aout)
+                        repeatYN = .false.
+                    endif
+                else
+                    dQoverflow = zeroR
+                    repeatYN = .false.
+                end if
+            end if
 
-                            !% --- check to see if too much overflow was removed
-                            if (Qoverflow + dQoverflow > zeroR) then 
-                                resid = resid - Qoverflow
-                                Qoverflow = zeroR
-                                repeatYN = .true.
-                            else 
-                                repeatYN = .false.
-                            endif
-                        else
-                            dQoverflow = zeroR
-                            repeatYN = .false.
-                        end if
-                    end if
+            !print *, 'dQ : ', dQ
 
-                    ! print *, 'dQ : ', dQ
-
-                    ! if ((QnetOut .ge. zeroR) .and. (QnetIn > zeroR)) then 
-                    !     !% --- only inflows to modify (no outflow)
-                    !     !%     includes diagnostic except for those frozen
-                    !     do kk=1,max_branch_per_node
-                    !         !% --- select inflows to adjust
-                    !         !%     signs based on QnetIn > 0
-                    !         if (((branchsign(kk) * elemR(JMidx+kk,er_Flowrate)) > zeroR) .and. &
-                    !             (elemSI(JMidx+kk,esi_JunctionBranch_Exists)     == oneI) .and. &
-                    !             (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ) == oneI)         ) then
-                    !             !% --- adjust by proportion of total inflow
-                    !             dQ(kk) = - resid * elemR(JMidx+kk,er_Flowrate) / QnetIn
-                    !         end if
-                    !     end do
-                    !     !% --- no adjustment to overflow
-                    !     dQoverflow = zeroR
-            
-                    ! elseif ((QnetOut < zeroR) .and. (QnetIn .le. zeroR)) then 
-                    !     !% --- only outflows to modify (no inflow)
-                    !     !%     note that signs based on QnetOut < 0
-                    !     !%     includes diagnostic except for those frozen
-                    !     do kk=1,max_branch_per_node
-                    !         !% -- select outflows to adjust
-                    !         if (((branchsign(kk) * elemR(JMidx+kk,er_Flowrate)) < zeroR) .and. & 
-                    !             (elemSI(JMidx+kk,esi_JunctionBranch_Exists)     == oneI) .and. &            
-                    !             (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ) == oneI)         ) then
-                    !             !% --- adjust by proportion of tototal outflow
-                    !             dQ(kk) = - resid * elemR(JMidx+kk,er_Flowrate) / QnetOut
-                    !         end if
-                    !     end do
-                    !     !% --- adjust overflow for proportional residual
-                    !     dQoverflow = - resid * Qoverflow / QnetOut
-            
-                    ! else 
-                    !     !% --- adjusting both inflows and outflows
-                    !     QratioIn =  QnetIn  / (QnetIn - QnetOut)
-                    !     QratioOut= -QnetOut / (QnetIn - QnetOut)
-            
-                    !     if (JMidx == printJM) print *, ' '
-                    !     if (JMidx == printJM) print *, 'fixing conservation both inflow/outflow'
-                    !     if (JMidx == printJM) print *, 'Qratio ',QratioIn, QratioOut
-                    !     if (JMidx == printJM) print *, 'resid  ',resid
-            
-                    !     Qcount = zeroI
-                    !     do kk=1,max_branch_per_node
-
-                    !            if (JMidx == printJM) print *, 'kk, dQdH ',kk, dQdH(JMidx+kk)
-
-                    !         if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)     == oneI) .and. &
-                    !             (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ) == oneI)         ) then 
-
-                    !             if     ((branchsign(kk) * elemR(JMidx+kk,er_Flowrate)) > zeroR) then
-                    !                 !% --- inflows affected in proportion
-                    !                 dQ(kk) = - resid * QratioIn * elemR(JMidx+kk,er_Flowrate) / QnetIn
-                    !             elseif ((branchsign(kk) * elemR(JMidx+kk,er_Flowrate)) < zeroR)  then
-                    !                 !% --- outflows affected in proportion
-                    !                 dQ(kk) = - resid * QratioOut * elemR(JMidx+kk,er_Flowrate) / QnetOut
-                    !             elseif (branchsign(kk) * elemR(JMidx+kk,er_Flowrate) == zeroR) then
-                    !                 dQ(kk) = zeroR
-                    !             else 
-                    !                 print *, 'CODE ERROR: unexpected else'
-                    !                 call util_crashpoint(739874)
-                    !                 return 
-                    !             end if
-                    !             !% --- associated change in head
-                    !             if ((abs(dQdH(JMidx+kk)) > localEpsilon) .and. &
-                    !                 (.not. elemYN(JMidx+kk,eYN_isZeroDepth))) then
-                    !                 dH(kk) = dQ(kk) / dQdH(JMidx+kk)
-                    !                 Qcount = Qcount + 1
-                    !             else
-                    !                 dH(kk) = zeroR
-                    !             end if
-
-                    !             ! if (JMidx == 31) print *, 'dQdH', elemSR(JMidx+kk,esr_JunctionBranch_dQdH)
-                    !             ! if (JMidx == 31) print *, 'kk, dQ, dH ', dQ(kk), dH(kk)
-
-                    !         else
-                    !             !% no branch, no action
-                    !         end if
-                    !     end do
-            
-                        !% --- overflow rate adjustment
-                        !dQoverflow = - resid * QratioOut * Qoverflow / QnetOut
-
-                        ! if (JMidx == 31) then 
-                        !     if (Qcount > 0) then
-                        !     print *, 'Qcount ',Qcount
-                        !     print *, 'sum(dH), sum(dH)/Qcount ' , sum(dH), sum(dH)/real(Qcount,8)
-                        !     end if
-                        ! end if
-
-                        !% --- Junction head change implied by flowrate change
-                        !%     head change is average of dH(kk) for branches with valid dQ/dH
-                        ! if (Qcount > 0) then
-                        !     Hinc = sum(dH) / real(Qcount,8)
-
-                        !     ! if (JMidx == 31) then
-                        !     !     print *, ' '
-                        !     !     print *, 'JMidx, conservation DH ',JMidx, Hinc
-                        !     ! end if
-                            
-                        !     ! do kk=1,max_branch_per_node
-                        !     !    if (elemR(JMidx,er_Head)    > elemR(JMidx+kk,er_Zbottom)) then 
-                        !     !         !% --- adjust branch head where junction head is above branch bottom
-                        !     !        elemR(JMidx+kk,er_Head) = elemR(JMidx+kk,er_Head) + Hinc
-                        !     !    end if
-                        !     ! end do
-                        !     ! elemR(JMidx,er_Head) = elemR(JMidx,er_Head) + Hinc
-                        ! end if
-                    
-
-                ! end if
-
-        !     case default
-        !         print *, 'CODE ERROR: need to setup storage residual adjustment'
-        !         call util_crashpoint(669873)
-        !         return
-        ! end select
         end do
 
             ! print *, ' '
             ! print *, 'dQ '
             ! do  kk=1,max_branch_per_node
+            !     if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) .ne. oneI) cycle
             !     print *, dQ(kk), elemR(JMidx+kk,er_Flowrate)
             ! end do
 
         !% --- update flowrates
         do kk=1,max_branch_per_node
+            if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) .ne. oneI) cycle
             ! if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)     == oneI) .and. &
             !     (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ) == oneI)         ) then
             !     elemR(JMidx+kk,er_Flowrate) = elemR(JMidx+kk,er_Flowrate) + dQ(kk)
@@ -2067,12 +2126,12 @@ module junction_elements
         !% --- recompute the residual
         resid = junction_conservation_residual (JMidx)
 
-            !  print *, 'NEW RESIDUAL ',resid 
+            ! print *, 'NEW RESIDUAL ',resid 
 
             ! print *, abs(resid), localEpsilon
 
         if (abs(resid) > localEpsilon) then 
-            print *, 'resid ',resid
+            print *, 'resid ',resid, ' at junction element ',JMidx
             print *, 'CODE ERROR: unexpected flowrate residual'
             call util_crashpoint(6109873)
             return 

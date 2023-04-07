@@ -6,9 +6,6 @@
         "Short" : "extran1"
     },
     "Discretization" : {
-        "NominalElemLength" : 61.00
-    },
-    "Junction" : {
-        "ForceNodesJM" : true
+        "NominalElemLength" : 10.00
     }  
 }

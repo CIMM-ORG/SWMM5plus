@@ -10,7 +10,7 @@ module face
     use utility_profiler
     use utility, only: util_sign_with_ones, util_CLprint, util_syncwrite
     use utility_crash, only: util_crashpoint
-    ! use utility_unit_testing, only: util_utest_CLprint
+    use utility_unit_testing, only: util_utest_CLprint
 
 
     implicit none
@@ -91,6 +91,7 @@ module face
 
             ! call util_utest_CLprint ('    XXX01 face after face_interpolation_interior')
 
+
         !% --- force zero fluxes on closed element downstream faces
         !%     note this does not require a "faceCol" argument as we
         !%     will execute this for both fp_all and fp_Diag calls
@@ -131,7 +132,6 @@ module face
         call face_interpolate_bc (isBConly)
 
             ! call util_utest_CLprint ('    XXX07 face after face_interpolate_BC')
-
 
         !%-------------------------------------------------------------------
         !% Closing

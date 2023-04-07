@@ -1,5 +1,6 @@
 [TITLE]
 ;;Project Title/Notes
+;; T004a -- add extra length to first link
 
 [OPTIONS]
 ;;Option             Value
@@ -20,7 +21,7 @@ END_TIME             02:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:00:10
+REPORT_STEP          00:01:00
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
 ROUTING_STEP         0:00:01 
@@ -68,7 +69,7 @@ Out1             10.0          FREE                      NO
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-C1               J0               J1                100           0.015      0          0          0.0      0      
+C1               J0               J1                200           0.015      0          0          0.0      0      
 C2               J1               J2                100           0.015      0          0          0.0      0   
 C3               J2               J3                100           0.015      0          0          0.0      0   
 C4               J3               J4                100           0.015      0          0          0.0      0   

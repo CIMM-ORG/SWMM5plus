@@ -888,11 +888,11 @@ module utility
 
             !% --- get fluxes on branches for JM
             do ii=1,max_branch_per_node,2
-                where (fup(thisP+ii) /= nullvalueI) 
+                where ((fup(thisP+ii) /= nullvalueI) .and. (elemSI(thisP+ii,esi_JunctionBranch_Exists) .eq. oneI))
                     tempCons(thisP) = tempCons(thisP)                                                                                &
                         + dt * real(BranchExists(thisP+ii  ),8) * fQ(fup(thisP+ii  )) * real(fBarrels(fup(thisP+ii  )),8)  
                 endwhere
-                where (fdn((thisP+ii+1)) /= nullvalueI) 
+                where ((fdn((thisP+ii+1)) /= nullvalueI)  .and. (elemSI(thisP+ii+1,esi_JunctionBranch_Exists) .eq. oneI))
                     tempCons(thisP) = tempCons(thisP)                                                                                  &
                         - dt * real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) * real(fBarrels(fdn(thisP+ii+1)),8)    
                 endwhere                         
@@ -1210,7 +1210,7 @@ module utility
 
         nUpBranch = 0
         do ii=1,max_branch_per_node,2
-            if (elemSI(eIdx+ii,esi_JunctionBranch_Exists) > 0) then
+            if (elemSI(eIdx+ii,esi_JunctionBranch_Exists) .eq. oneI) then
                 nUpBranch = nUpBranch + 1
                 eIdx_BranchUp(nUpBranch) = eIdx + ii
                 ifaceUp(nUpBranch) = elemI(eIdx_BranchUp(nUpBranch),ei_Mface_uL)
@@ -1220,7 +1220,7 @@ module utility
 
         nDnBranch = 0
         do ii=2,max_branch_per_node,2
-            if (elemSI(eIdx+ii,esi_JunctionBranch_Exists) > 0) then
+            if (elemSI(eIdx+ii,esi_JunctionBranch_Exists) .eq. oneI) then
                 nDnBranch = nDnBranch + 1
                 eIdx_BranchDn(nDnBranch) = eIdx + ii
                 ifaceDn(nDnBranch) = elemI(eIdx_BranchDn(nDnBranch),ei_Mface_dL)

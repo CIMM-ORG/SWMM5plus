@@ -4260,7 +4260,7 @@ contains
                 !% - all Small depth that are CC and ETM time march
                 ptype => col_elemP(ep_SmallDepth_CC_ETM)
                 npack => npack_elemP(ptype)
-                if (setting%SmallDepth%UseSmallDepthYN) then
+                if (setting%SmallDepth%useMomentumCutoffYN) then
                     npack = count( &
                             (elemYN(:,eYN_isSmallDepth)) &
                             .and. &
@@ -4308,7 +4308,7 @@ contains
                 ptype => col_elemP(ep_SmallDepth_JM_ETM)
                 npack => npack_elemP(ptype)
 
-                if (setting%SmallDepth%UseSmallDepthYN) then
+                if (setting%SmallDepth%useMomentumCutoffYN) then
                     npack = count( &
                             (elemYN(:,eYN_isSmallDepth)) &
                             .and. &
@@ -4355,7 +4355,7 @@ contains
                 ! ptype => col_elemP(ep_SmallDepth_JB_ETM)
                 ! npack => npack_elemP(ptype)
 
-                ! if (setting%SmallDepth%UseSmallDepthYN) then
+                ! if (setting%SmallDepth%useMomentumCutoffYN) then
                 !     npack = count( &
                 !             (elemYN(:,eYN_isSmallDepth)) &
                 !             .and. &
@@ -4407,7 +4407,7 @@ contains
         !% -- needed to limit where CFL is computed and volume conservation
         ptype => col_elemP(ep_CC_NOTsmalldepth)
         npack => npack_elemP(ptype)
-        if (setting%SmallDepth%UseSmallDepthYN) then 
+        if (setting%SmallDepth%useMomentumCutoffYN) then 
             npack = count( &
                     (elemI(:,ei_elementType) == CC) &
                     .and. &
@@ -4458,7 +4458,7 @@ contains
         !% -- needed to limit where CFL is computed
         ! ptype => col_elemP(ep_JBJM_NOTsmalldepth)
         ! npack => npack_elemP(ptype)
-        ! if (setting%SmallDepth%UseSmallDepthYN) then 
+        ! if (setting%SmallDepth%useMomentumCutoffYN) then 
         !     npack = count( &
         !             (      &
         !                 ( elemI(:,ei_elementType) == JM) &
@@ -4489,7 +4489,7 @@ contains
         !% -- needed to limit where CFL is computed
         ! ptype => col_elemP(ep_CCJBJM_NOTsmalldepth)
         ! npack => npack_elemP(ptype)
-        ! if (setting%SmallDepth%UseSmallDepthYN) then 
+        ! if (setting%SmallDepth%useMomentumCutoffYN) then 
         !     npack = count( &
         !             (      &
         !                 ( elemI(:,ei_elementType) == CC) &
@@ -4525,7 +4525,7 @@ contains
         !% -- alternate needed to limit where CFL is computed
         ptype => col_elemP(ep_CCJM_NOTsmalldepth)
         npack => npack_elemP(ptype)
-        if (setting%SmallDepth%UseSmallDepthYN) then 
+        if (setting%SmallDepth%useMomentumCutoffYN) then 
             npack = count( &
                     (      &
                         ( elemI(:,ei_elementType) == CC) &

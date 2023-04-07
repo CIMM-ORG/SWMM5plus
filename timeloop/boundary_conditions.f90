@@ -743,18 +743,18 @@ contains
                 call bc_interpolate_timeseries ( &
                     headValue(ii), BC%headTimeSeries, tnow, ii, lower_idx, upper_idx(ii), thisBCtype )
 
-                thisDepth = max(headValue(ii) - zbottom, setting%SmallDepth%DepthCutoff)
+                thisDepth = max(headValue(ii) - zbottom, setting%SmallDepth%MomentumDepthCutoff)
 
                 ! !% --- the time series are elevation (not depth)
                 ! headValue(ii) = headValue(ii) - setting%Solver%ReferenceHead
 
                 ! !% --- error check
-                ! if (depth.le. zbottom + setting%SmallDepth%DepthCutoff) then
+                ! if (depth.le. zbottom + setting%SmallDepth%MomentumDepthCutoff) then
                 !     print *, ' '
                 !     print *, '*** WARNING ***'
                 !     print *, '*** time series outfall stage is near the bottom at OUTFALL ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
                 !     print *, '*** value is reset to smaller of normal or critical depth or'
-                !     print *, '*** to the setting%SmallDepth%DepthCutoff'
+                !     print *, '*** to the setting%SmallDepth%MomentumDepthCutoff'
                 !     print *, ' '
                 !     print *, 'head before fixing ',headValue(ii)
                 !     print *, ' '
@@ -763,7 +763,7 @@ contains
 
                 !     !% --- BC head is the depth + Zbottom - referencehead
                 !     headValue(ii) = zbottom        &
-                !                   + max( min(critDepth,normDepth), setting%SmallDepth%DepthCutoff)      &
+                !                   + max( min(critDepth,normDepth), setting%SmallDepth%MomentumDepthCutoff)      &
                 !                   - setting%Solver%ReferenceHead
 
                 !     !% -- note that time series head value is allowed to be larger than the
@@ -777,14 +777,14 @@ contains
                 !% --- Note that SWMM.inp for FIXED BC is the elevation (not depth)
                 headValue(ii) = interface_get_headBC(ii, setting%Time%Start)
 
-                thisDepth = max(headValue(ii) - zbottom,setting%SmallDepth%DepthCutoff)
+                thisDepth = max(headValue(ii) - zbottom,setting%SmallDepth%MomentumDepthCutoff)
 
                 ! !% --- BC head is the depth + Zbottom - referencehead
                 ! headValue(ii) = zbottom  + thisDepth - setting%Solver%ReferenceHead                
                    
                 ! !% --- error check
                 ! if ((headValue(ii) + setting%Solver%ReferenceHead) .le. &
-                !     (faceR(fIdx,fr_Zbottom) + setting%SmallDepth%DepthCutoff)) then
+                !     (faceR(fIdx,fr_Zbottom) + setting%SmallDepth%MomentumDepthCutoff)) then
                 !     print *, 'CONFIGURATION ERROR: a FIXED OUTFALL must have...'
                 !     print *, '... a STAGE elevation greater than '
                 !     print *, ' Zbottom + setting.SmallDepth.DepthCutff of the outfall'
@@ -817,7 +817,7 @@ contains
                 !     end if
 
                 !     !% --- depth is the larger of the normal depth or the small depth cutoff
-                !     thisDepth = max(normDepth, setting%SmallDepth%DepthCutoff)
+                !     thisDepth = max(normDepth, setting%SmallDepth%MomentumDepthCutoff)
 
                 !     ! !% --- BC head is the normal depth + Zbottom - referencehead
                 !     ! headValue(ii) = faceR(fIdx,fr_Zbottom)                   &
@@ -876,7 +876,7 @@ contains
                 !     !% --- Use the smaller of critical depth or normal depth,
                 !     !%     but always use the depth cutoff as the smallest
                 !     !%     value allowed to prevent absurdly small depths
-                !     !thisDepth = max(min(critDepth,normDepth), setting%SmallDepth%DepthCutoff)
+                !     !thisDepth = max(min(critDepth,normDepth), setting%SmallDepth%MomentumDepthCutoff)
                 !     !% 20230226 CHANGING TO ZERODEPTH VALUE
                 !     thisDepth = max(min(critDepth,normDepth), setting%ZeroValue%Depth * 1.1d0)
 

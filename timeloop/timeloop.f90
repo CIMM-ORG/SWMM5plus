@@ -25,7 +25,7 @@ module timeloop
               interface_get_groundwater_inflow
     use utility_crash
     use control_hydraulics, only: control_update
-    !use utility_unit_testing, only: util_utest_CLprint
+    use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -274,7 +274,7 @@ contains
                 ! print * , '==========================================================================='
                 !print *, 'top of tl_outerloop loop at time ',setting%Time%Now
                 ! print *, ' '
-                    ! ! call util_utest_CLprint ('top of tl_outerloop')
+                    ! ! ! call util_utest_CLprint ('top of tl_outerloop')
 
                 !% --- set the controls for using spin-up time
                 if ((inSpinUpYN) .and. (thisStep > 1)) then
@@ -288,8 +288,7 @@ contains
                 !%     e.g. Flowrate to Flowrate_N0  and Flowrate_N0 to Flowrate_N1
                 call tl_save_previous_values()
 
-                
-                    ! ! call util_utest_CLprint ('AAAAA before hydrology step in timeloop---------------------------')
+                    ! ! ! call util_utest_CLprint ('AAAAA before hydrology step in timeloop---------------------------')
     
                 !% --- store the runoff from hydrology on a hydrology step
                 if ((.not. inSpinUpYN) .or. (inSpinUpYN .and. BCupdateYN) ) then
@@ -315,7 +314,7 @@ contains
                     end if
                 end if
 
-                    ! ! call util_utest_CLprint ('BBBBB of tl_outerloop')
+                    ! ! ! call util_utest_CLprint ('BBBBB of tl_outerloop')
 
                 !% --- main hydraulics time step
                 if (doHydraulicsStepYN) then    
@@ -327,21 +326,21 @@ contains
                         setting%Time%WallClock%HydraulicsStart = cval
                     end if 
 
-                        ! ! call util_utest_CLprint ('CCCCC of tl_outerloop')
+                        ! ! ! call util_utest_CLprint ('CCCCC of tl_outerloop')
 
                     !% --- get updated boundary conditions
                     if (BCupdateYN) then
-                        ! ! call util_utest_CLprint ('CCCCC_00 of tl_outerloop')
+                        ! ! ! call util_utest_CLprint ('CCCCC_00 of tl_outerloop')
 
                         call bc_update() 
 
-                        ! ! call util_utest_CLprint ('CCCCC_01 of tl_outerloop ')
+                        ! ! ! call util_utest_CLprint ('CCCCC_01 of tl_outerloop ')
 
                         call tl_lateral_inflow()
                         call tl_smallestBC_timeInterval ()
                     end if
 
-                        ! ! call util_utest_CLprint ('DDDDD of tl_outerloop')
+                        ! call util_utest_CLprint ('DDDDD of tl_outerloop')
 
                     !% --- perform control rules
                     if ((.not. inSpinUpYN) .and. (setting%SWMMinput%N_control > 0)) then
@@ -356,7 +355,7 @@ contains
                         end if
                     end if
 
-                        ! ! call util_utest_CLprint ('EEEEE of tl_outerloop')
+                        ! call util_utest_CLprint ('EEEEE of tl_outerloop')
 
                     !% --- add subcatchment inflows
                     !%     note, this has "useHydrology" and not "doHydrologyStepYN" because the
@@ -366,7 +365,7 @@ contains
                         call tl_subcatchment_lateral_inflow () 
                     end if
 
-                        ! ! call util_utest_CLprint ('FFFFF of tl_outerloop')
+                        ! call util_utest_CLprint ('FFFFF of tl_outerloop')
 
                     !% --- add RDII inflows
                     if (.not. setting%SWMMinput%IgnoreRDII) then 
@@ -378,11 +377,15 @@ contains
                         call interface_get_groundwater_inflow ()
                     end if 
     
-                        ! ! call util_utest_CLprint ('GGGGG of tl_outerloop')
+                        ! call util_utest_CLprint ('GGGGG of tl_outerloop')
 
                     !% --- perform hydraulic routing
                     !  print *, '3A nextHydrologyTime ', setting%Time%Hydrology%NextTime
                     !  print *, 'calling tl_hydraulics'
+
+                    
+                    !% --- set hydraulics time step to handle inflow
+                    call tl_update_hydraulics_timestep(.false.)
 
 
                     call tl_hydraulics()
@@ -395,7 +398,7 @@ contains
                     !     stop 4
                     ! end if
 
-                        ! ! call util_utest_CLprint ('HHHHH in time_loop after tl_hydraulics')
+                        ! ! ! call util_utest_CLprint ('HHHHH in time_loop after tl_hydraulics')
 
                     !% --- accumulate RunOn from hydraulic elements to subcatchments
                     if ((setting%Simulation%useHydrology) .and. (any(subcatchYN(:,sYN_hasRunOn)))) then 
@@ -408,7 +411,7 @@ contains
                     !     stop 5
                     ! end if
 
-                        ! ! call util_utest_CLprint ('IIIII in time_loop after subcatchment_accumulate_runon')
+                        ! ! ! call util_utest_CLprint ('IIIII in time_loop after subcatchment_accumulate_runon')
     
                     !% --- close the clock tick for hydraulic loop evaluation
                     if ((this_image()==1) .and. (.not. inSpinUpYN)) then
@@ -491,7 +494,7 @@ contains
                 !     stop 9
                 ! end if
     
-                !! call util_utest_CLprint('before time step change')
+                !! ! call util_utest_CLprint('before time step change')
         
                 sync all
                 !% ---increment the time step and counters for the next time loop
@@ -637,7 +640,7 @@ contains
                 ! call util_CLprint ('top of tl_hydraulics')
 
         !% ---check for where solver needs to switch in dual-solver model
-        if (setting%Solver%SolverSelect == ETM_AC) call tl_solver_select()
+        !if (setting%Solver%SolverSelect == ETM_AC) call tl_solver_select()
 
         !% --- repack all the dynamic arrays
         call pack_dynamic_arrays()
@@ -647,11 +650,11 @@ contains
         faceR(:,fr_Flowrate_Conservative) = zeroR  
 
         !% call the RK2 time-march, depending on the type of solver
-        select case (setting%Solver%SolverSelect)
-        case (ETM_AC)
-            !% dual-method, ETM for open channel, AC for surcharge
-            call rk2_toplevel_ETMAC() 
-        case (ETM)
+        ! select case (setting%Solver%SolverSelect)
+        ! case (ETM_AC)
+        !     !% dual-method, ETM for open channel, AC for surcharge
+        !     call rk2_toplevel_ETMAC() 
+        ! case (ETM)
             ! print *, ' '
             ! print *, ' '
             ! print *, 'here calling rk2 toplevel------------------------------------------',this_image()
@@ -671,14 +674,14 @@ contains
                 !call util_syncwrite
 
             !call util_CLprint ()
-        case (AC)
-            !% AC for both open-channel and surcharge
-            call rk2_toplevel_AC()
-        case DEFAULT
-            print *, 'CODE ERROR setting.Solver.SolverSelect type unknown for # ', setting%Solver%SolverSelect
-            print *, 'which has key ',trim(reverseKey(setting%Solver%SolverSelect))
-            stop 497895
-        end select    
+        ! case (AC)
+        !     !% AC for both open-channel and surcharge
+        !     call rk2_toplevel_AC()
+        ! case DEFAULT
+        !     print *, 'CODE ERROR setting.Solver.SolverSelect type unknown for # ', setting%Solver%SolverSelect
+        !     print *, 'which has key ',trim(reverseKey(setting%Solver%SolverSelect))
+        !     stop 497895
+        ! end select    
 
             ! call util_CLprint ('before accumulate volume conservation')
 
@@ -1156,33 +1159,41 @@ contains
 
         if ((matchHydrologyStep) .and. (useHydrology) .and. (.not. inSpinUpYN)) then 
 
-        !    print *, 'in matching hydrology step'
+            ! print *, 'in matching hydrology step'
 
             !% --- for combined hydrology and hydraulics compute the CFL if we take a single
             !%     step to match the next hydrology time
             timeLeft = nextHydrologyTime - lastHydraulicsTime
+
+            ! print *, 'time left in Hydrology timestep',timeleft
+
             if (timeLeft .le. dtTol) timeLeft = oldDT
-            !% --- get the CFL if a single step is taken
-            if (setting%SmallDepth%UseSmallDepthYN) then
-                thisCFL = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,timeleft)  
+
+            !% --- get the CFL if a single step is taken using only CC elements
+            if (setting%SmallDepth%useMomentumCutoffYN) then
+                thisCFL = tl_get_max_CFL_CC(ep_CC_NOTsmalldepth,timeleft)  
             else
-                thisCFL = tl_get_max_cfl(ep_CCJM_NOTzerodepth,timeleft)
+                thisCFL = tl_get_max_CFL_CC(ep_CC_NOTzerodepth,timeleft)
             end if
+
             ! print *, 'thisCFL to reach hydrology step ',thisCFL
 
             !% --- check to see if a single time step to match the hydrology time is possible
             if (thisCFL .le. maxCFL) then
                 neededSteps = 1 !% only 1 hydraulic step to match hydrology step
-                !% --- check to be sure there is significant time left
-                    ! print *, 'timeleft, oldDT ',timeLeft, oldDT
+
+                
+                    ! print *, 'one time step timeleft, oldDT ',timeLeft, oldDT
+
                 if (timeLeft > dtTol) then
-                    
-                    ! print *, 'timeleft /oldDT, increasefactor ',timeleft /oldDT , increaseFactor
+                    !% --- check to be sure there is significant time left
+                    ! print *, 'timeleft /oldDT, increasefactor ',timeLeft /oldDT , increaseFactor
+
                     !% --- check increase that is implied with a single time step to the next hydrology
                     if (timeleft / oldDT < increaseFactor) then
                         !% --- use a single hydraulics step for the remaining hydrology time
                         newDT = timeleft
-                            ! print *, 'time left, newDT ',timeleft, newDT
+                            ! print *, 'time left, newDT ',timeLeft, newDT
                     else
                         !% --- increase the oldDT by the maximum allowed
                         newDT = increaseFactor * oldDT
@@ -1191,14 +1202,17 @@ contains
                             ! print *, 'needed steps HERE ',neededSteps
                     end if
                 else
+                    !% --- not significant time left
+
+                    ! print *, 'in ELSE section AAA timeleft ',timeleft 
+                        
                     !% --- negligible time left, don't bother with it, go back to the old dt
                     newDT = oldDT
-                    !% --- check that resetting to oldDT didn't cause a problem
-                    !thisCFL = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,newDT)
-                    if (setting%SmallDepth%UseSmallDepthYN) then
-                        thisCFL = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,newDT)
+                    !% --- check that resetting to oldDT didn't cause a problem with CC elements
+                    if (setting%SmallDepth%useMomentumCutoffYN) then
+                        thisCFL = tl_get_max_CFL_CC(ep_CC_NOTsmalldepth,newDT)
                     else 
-                        thisCFL = tl_get_max_cfl(ep_CCJM_NOTzerodepth,newDT)
+                        thisCFL = tl_get_max_CFL_CC(ep_CC_NOTzerodepth,newDT)
                     end if
                     if (thisCFL > maxCFL) then 
                         !% --- if CFL too large, set the time step based on the target CFL
@@ -1206,28 +1220,35 @@ contains
                         neededSteps = ceiling(timeLeft/newDT)
                     end if
 
+                    ! print *, 'CFL, DT ',thisCFL, newDT
+
                 end if
             else
-            
-                !print *, 'for required CFL > max CFL'
+                ! print *, 'in ELSE section BBB'
+                ! print *, 'for required CFL > max CFL'
 
                 !% --- if more than one time step is needed, compute the needed steps 
                 !%     to break up the large CFL and time step size.
                 if (thisCFL/targetCFL .ge. huge(neededSteps)) then
                     !% --- check to see if the implied time step is too small for the integer size
                     !%     this is likely a blow-up condition
-                    write(*,*) 'warning -- really high velocity, setting dt to minimum to prevent overflow'
                     newDT = setting%Limiter%Dt%Minimum + setting%Time%DtTol
                     neededSteps = 1000
+                    write(*,*) 'warning -- really high velocity, setting dt to minimum to prevent overflow'
+                    write(*,*), 'DT = ', newDT
                 else
                     !% ---  for a moderate case where multiple hydraulic steps are needed for a hydrology step
                     if (thisCFL > minCFL) then
+                        ! print *, 'thisCFL > minCFL'
+
                         !% --- note that neededSteps will be 2 or larger else thisCFL < maxCFL
                         neededSteps = ceiling( thisCFL / targetCFL )
                         !% --- the provisional time step that would get exactly to the hydrology time (if CFL didn't change)
                         newDT = timeleft / real(neededSteps,8)
                         
-                        !print *, 'increaseFactor ',increaseFactor
+                        ! print *, 'timeleft, steps ',timeleft, neededSteps
+                        ! print *, 'newDT', newDT
+                        ! print *, 'increaseFactor ',increaseFactor
 
                         !% --- limit the change in the dt by the increase factor
                         if (newDT / oldDT > increaseFactor) then 
@@ -1235,30 +1256,37 @@ contains
                         else
                             !% --- accept the provisional newDT
                         end if
+
+                        ! print *, 'newDT after limiting by increaseFactor',newDT
+
                         !% --- check that the newDT didn't cause a CFL violation
-                        if (setting%SmallDepth%UseSmallDepthYN) then
-                            thisCFL = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,newDT)
+                        if (setting%SmallDepth%useMomentumCutoffYN) then
+                            thisCFL = tl_get_max_CFL_CC(ep_CC_NOTsmalldepth,newDT)
                         else
-                            thisCFL = tl_get_max_cfl(ep_CCJM_NOTzerodepth,newDT)
+                            thisCFL = tl_get_max_CFL_CC(ep_CC_NOTzerodepth,newDT)
                         end if
                         if (thisCFL > maxCFL) then 
                             !% --- if CFL to large, set the time step based on the target CFL
                             newDT = newDT * targetCFL / thisCFL
                         end if
+
+                        ! print *, 'newDT after CC check', newDT
                     else
                         !% --- Miniscule CFL is typically due to small volumes in the start-up condition
                         !%    we can use a larger time step based on volumes to fill
                         call tl_dt_vanishingCFL(newDT)
+
+                        ! print *, 'Vanishing dt ',newDT
                     end if
 
                 end if
             end if
 
-            !print *, 'newDT', newDT
+            ! print *, 'newDT based on Hydrology step', newDT
 
         else
  
-            ! print *, 'no hydrology '
+            ! print *, 'CFL with no hydrology '
 
             if (useHydrology) then 
                 print *, 'USER CONFIGURATION ERROR: At this time, useHydrology requires '
@@ -1271,13 +1299,12 @@ contains
             neededSteps = 3 !% forces rounding check
 
             !% --- allowing hydrology and hydraulics to occur at different times
-            if (setting%SmallDepth%UseSmallDepthYN) then
-                thisCFL = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,oldDT)
+            if (setting%SmallDepth%useMomentumCutoffYN) then
+                thisCFL = tl_get_max_CFL_CC(ep_CC_NOTsmalldepth,oldDT)
             else 
-                thisCFL = tl_get_max_cfl(ep_CCJM_NOTzerodepth,oldDT)
+                thisCFL = tl_get_max_CFL_CC(ep_CC_NOTzerodepth,oldDT)
             end if
-            
-
+        
                 ! print *, ' '
                 ! print *, 'baseline CFL, minCFL, this step: '
                 ! print *, thisCFL, minCFL, stepNow
@@ -1307,11 +1334,11 @@ contains
                         !% --- increase the time step and reset the checkStep Counter
                             !    print *, 'lowCFL'
                         newDT = OldDT * targetCFL / thisCFL 
+                        thisCFL = tl_get_max_CFL_CC(ep_CC_NOTzerodepth,newDT)
                     else
                         !% -- for maxCFLlow < thisCFL < maxCFL do nothing
                     end if
                     lastCheckStep = stepNow
-
                 end if
             end if
         end if
@@ -1320,8 +1347,8 @@ contains
         newDT = min(newDT,OldDT * increaseFactor)
 
         !% saz 20230328
-        !% --- HACK: limit the newDT to be greater than the reportDT
-        !% this ensures we get consistant output at every reporting stepa
+        !% --- HACK: limit the newDT to be equal or smaller than the reportDT
+        !% this ensures we get consistant output at every reporting steps
         !% however, this will slow down the timeloop if reportDT causes
         !% lower cfl values. Needs to revisit later. 
         newDT = min(newDT,reportDt)
@@ -1329,13 +1356,13 @@ contains
 
         !% 20220328brh time step limiter for inflows into small or zero volumes
         call tl_limit_BCinflow_dt (newDT)
-            ! print *, 'dt BC flow limit     ',newDT
+            !  print *, 'dt BC flow limit     ',newDT
 
         call tl_limit_BChead_inflow_dt (newDT)
-            ! print *, 'dt BC head limit     ',newDT
+            !  print *, 'dt BC head limit     ',newDT
 
         call tl_limit_LatInflow_dt (newDT)
-        !    print *, 'dt Qlat limit   ',newDt
+            !  print *, 'dt Qlat limit   ',newDt
 
         if ((matchHydrologyStep) .and. (useHydrology)) then
             neededSteps = ceiling(timeLeft/newDT)
@@ -1356,6 +1383,7 @@ contains
                 do_roundoff = .false.
             case(2,3)
                 do_roundoff = .true.
+                !% -- set the smaller value to round off
                 newDT = min(newDT, timeleft/real(neededSteps,8))
             case default
                 do_roundoff = .true.
@@ -1363,14 +1391,15 @@ contains
 
         if (do_roundoff) then 
             if (newDT > fiveR) then
-                !% --- round larger dt to counting numbers
+                !% --- round down larger dt to counting numbers
                 newDT = real(floor(newDT),8)
                     ! print *, 'rounding large    ',newDT
             elseif ((newDT > oneR) .and. (newDT .le. fiveR)) then
-                !% --- round smaller dt to two decimal places
+                !% --- round down smaller dt to two decimal places
                 newDT = real(floor(newDT * tenR),8) / tenR
                     ! print *, 'rounding small    ',newDT   
             elseif ((newDT > onetenthR) .and. (newDT .le. oneR)) then
+                !% --- round down smaller dt to three decimal places
                 newDT = real(floor(newDT * onehundredR),) / onehundredR
                     ! print *, 'rounding smaller  ',newDT
             else 
@@ -1413,11 +1442,11 @@ contains
         nextHydraulicsTime = lastHydraulicsTime + newDT
         
         !% find the cfl for reporting
-       ! cfl_max = tl_get_max_cfl(ep_CCJBJM_NOTsmalldepth,newDT)
-        if (setting%SmallDepth%UseSmallDepthYN) then 
-            cfl_max = tl_get_max_cfl(ep_CCJM_NOTsmalldepth,newDT)
+       ! cfl_max = tl_get_max_CFL_CC(ep_CCJBJM_NOTsmalldepth,newDT)
+        if (setting%SmallDepth%useMomentumCutoffYN) then 
+            cfl_max = tl_get_max_CFL_CC(ep_CCJM_NOTsmalldepth,newDT)
         else 
-            cfl_max = tl_get_max_cfl(ep_CCJM_NOTzerodepth,newDT)
+            cfl_max = tl_get_max_CFL_CC(ep_CCJM_NOTzerodepth,newDT)
         end if
         call co_max(cfl_max)
 
@@ -1429,7 +1458,7 @@ contains
             if ((setting%Limiter%Dt%UseLimitMinYN) .and. (newDT .le. setting%Limiter%Dt%Minimum)) then
                 print*, 'timeNow = ', timeNow
                 print*, 'dt = ', newDT, 'minDt = ',  setting%Limiter%Dt%Minimum
-                if (setting%SmallDepth%UseSmallDepthYN) then
+                if (setting%SmallDepth%useMomentumCutoffYN) then
                     print*, 'max velocity  ', maxval( &
                         elemR(elemP(1:npack_elemP(ep_CC_NOTsmalldepth),ep_CC_NOTsmalldepth),er_Velocity) )
                     print*, 'max wavespeed ', maxval( &
@@ -1746,7 +1775,7 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    real(8) function tl_get_max_cfl(thisCol,dt) result (outvalue)
+    real(8) function tl_get_max_CFL_CC(thisCol,dt) result (outvalue)
         !%-------------------------------------------------------------------
         !% Description:
         !% computes the maximum CFL for the cells masked by "thisCol" in
@@ -1758,6 +1787,8 @@ contains
             integer, pointer :: Npack, thisP(:)
             real(8), pointer :: velocity(:), wavespeed(:), length(:), PCelerity(:)
             integer :: itemp(1), ip, fup, fdn, eup, edn, ii
+
+            real(8), parameter :: smallDepth = 0.0001
         !%-------------------------------------------------------------------
             Npack              => npack_elemP(thisCol)
             thisP              => elemP(1:Npack,thisCol)
@@ -1773,7 +1804,7 @@ contains
         end if
 
             ! print *, ' '
-            ! print *, 'in tl_get_max_cfl, Npack = ', Npack
+            ! print *, 'in tl_get_max_CFL_CC, Npack = ', Npack
 
             ! print *, ' element type '
             ! print *, elemI(thisP,ei_elementType)
@@ -1834,17 +1865,25 @@ contains
             else 
                 outvalue = maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP))
             end if
-            !print *, 'max vel, wave ', maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))        
+            ! print *, 'max vel, wave ', maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))        
         else
             outvalue = zeroR
         end if
 
+        ! if (Npack == zeroI) then 
+        !     !% --- no nonzero depths, so control time step by inflows
+        !     outvalue = maxval(elemR(:,er_FlowrateLateral) * thisDT / (elemR(:,er_Length) * elemR(:,er_Breadthmax) * smallDepth))
+        ! end if
 
-            ! print *, 'outvalue CFL in tl_get_max_cfl',outvalue
-            ! print *, ' '
+        !     print *, 'max Q lateral ',maxval(elemR(:,er_FlowrateLateral) * thisDT / (elemR(:,er_Length) * elemR(:,er_Breadthmax) * smallDepth))
 
             ! print *, ' '
-            ! print *, 'in tl_get_max_cfl'
+            ! print *, 'ThisDT ',thisDT
+            ! print *, 'outvalue CFL in tl_get_max_CFL_CC',outvalue
+        !     print *, ' '
+
+            ! print *, ' '
+            ! print *, 'in tl_get_max_CFL_CC'
             ! print *, length(thisP)
             ! print *, abs(wavespeed(iet(1))) * thisDT / length(iet(1))
             ! print *, outvalue
@@ -1852,7 +1891,7 @@ contains
 
             !stop 298734
 
-    end function tl_get_max_cfl    
+    end function tl_get_max_CFL_CC   
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1891,7 +1930,7 @@ contains
 
             alpha      => setting%VariableDT%CFL_inflow_max
             gravity    => setting%Constant%gravity
-            smallDepth => setting%SmallDepth%DepthCutoff
+            smallDepth => setting%SmallDepth%MomentumDepthCutoff
         !%------------------------------------------------------------------
         
         !% set the timestep limiter for upstream inflow boundary conditions (BCup)
@@ -1978,7 +2017,7 @@ contains
         !% Aliases    
             alpha      => setting%VariableDT%CFL_inflow_max
             gravity    => setting%Constant%gravity
-            smallDepth => setting%SmallDepth%DepthCutoff
+            smallDepth => setting%SmallDepth%MomentumDepthCutoff
         !%------------------------------------------------------------------    
 
         do ii=1, N_headBC
@@ -2047,9 +2086,9 @@ contains
         !%------------------------------------------------------------------
         !% Declarations:
             real(8), intent(inout) :: thisDT
-            real(8), pointer :: Qlat(:), depthScale(:), depthLimit(:)
-            real(8), pointer :: DTlimit(:), topwidth(:), length(:), depth(:)
-            real(8), pointer :: alpha, gravity, smallDepth
+            real(8), pointer :: Qlat(:), PlanArea(:), HeightRise(:) !, depthScale(:), depthLimit(:)
+            real(8), pointer :: DTlimit(:) !, topwidth(:), length(:), depth(:)
+            !real(8), pointer :: alpha, gravity, smallDepth
             real(8) :: newDTlimit
 
             integer, pointer :: thisP(:), Npack
@@ -2060,56 +2099,105 @@ contains
         !%------------------------------------------------------------------
         !% Aliases:
             Qlat       => elemR(:,er_Temp01)
-            depthScale => elemR(:,er_Temp02)
-            depthLimit => elemR(:,er_Temp03)
+            PlanArea   => elemR(:,er_Temp02)
+            HeightRise => elemR(:,er_Temp03)
             DTLimit    => elemR(:,er_Temp04)
 
-            !% --- use the largest scale of topwidth
-            !%     otherwise, as D => 0 and T => 0 we have issues
-            topwidth   => elemR(:,er_BreadthMax)
-            length     => elemR(:,er_Length)
-            depth      => elemR(:,er_Depth)
+            ! !% --- use the largest scale of topwidth
+            ! !%     otherwise, as D => 0 and T => 0 we have issues
+            ! topwidth   => elemR(:,er_BreadthMax)
+            ! length     => elemR(:,er_Length)
+            ! depth      => elemR(:,er_Depth)
 
-            alpha      => setting%VariableDT%CFL_inflow_max
-            gravity    => setting%Constant%gravity
-            smallDepth => setting%SmallDepth%DepthCutoff
+            ! alpha      => setting%VariableDT%CFL_inflow_max
+            ! gravity    => setting%Constant%gravity
+            !smallDepth => setting%SmallDepth%MomentumDepthCutoff
+
         !%------------------------------------------------------------------
         !% ---- use the pack for CC and JM with H time march 
         !%      (no lateral flows into JB or diagnostic)
+
+
         thisCol = ep_CCJM_H_ETM
         Npack => npack_elemP(thisCol)   
+
+        !print *, 'Npack here ',Npack
+
         if (Npack < 1) return
         thisP => elemP(1:Npack,thisCol)
-        
-        !% ensure flowrate used for limiter is  positive
+
+        !% --- initialize temporary arrays
+        PlanArea   = zeroR
+        HeightRise = zeroR
+        Qlat       = zeroR
+        DTLimit    = huge(zeroR)
+
+        !% --- store positive flowrate for limiter
         Qlat(thisP) = abs( elemR(thisP,er_FlowrateLateral)) 
 
         ! print *, 'Qlat ',Qlat(thisP)
-       ! print *, 'here Qlat', Qlat(2060), Qlat(2071)
 
+        !% --- get the geometry associated with a simple inflow
+        where (Qlat > zeroR) 
+            PlanArea   = elemR(:,er_Length) * elemR(:,er_BreadthMax)
+            HeightRise = Qlat * thisDT / PlanArea
+        endwhere
+
+        ! print *, ' '
+        ! print *, 'PlanArea ',PlanArea(thisP)
+        ! print *, ' '
+        ! print *, 'HeightRise ',HeightRise(thisP)
+
+        !% --- if th depth is small and the heighrise is large, then limit the time step
+        !%     to a height rise of twice the local small depth value
+        where ((HeightRise > setting%SmallDepth%LateralInflowSmallDepth)  &
+                .and.                                                     &
+                (elemR(:,er_Depth) < fourR * setting%SmallDepth%LateralInflowSmallDepth))
+
+            DTlimit = twoR * setting%SmallDepth%LateralInflowSmallDepth * PlanArea / Qlat
+        endwhere
+
+        ! print *, ' '
+        ! print *, 'DTlimit ',DTlimit(thisP)
+
+        newDTlimit = minval(DTlimit)
+
+        ! print *, 'new dt limit ', newDTlimit
+
+        thisDT = min(thisDT, newDTlimit)
+
+        ! print *, ' '
+        ! print *, 'limited DT ', thisDT
+
+        ! if (newDTlimit < 10000.0) then 
+        !     stop 6098723
+        ! end if
+
+
+        !% OBSOLETE BELOW 20230406 brh
         ! print *
         ! print *, 'topwidth ',topwidth(thisP)
 
-        !% store the scaling depth limit defined by when the induced velocity
-        !% from an inflow is similar to the gravity wave speed of the BC inflow
-        depthScale(thisP) = ( (alpha**4) * (Qlat(thisP)**2) / (gravity * (topwidth(thisP)**2) ) )**onethirdR
+        ! !% store the scaling depth limit defined by when the induced velocity
+        ! !% from an inflow is similar to the gravity wave speed of the BC inflow
+        ! depthScale(thisP) = ( (alpha**4) * (Qlat(thisP)**2) / (gravity * (topwidth(thisP)**2) ) )**onethirdR
 
         ! print *
         ! print *, 'depthScale ',depthScale(thisP)
 
-        !% get the depth limit for maximum depth that the time step will be limited as 
-        !% either the depth scale or the specified smallDepth limit
-        depthLimit(thisP) = max(smallDepth, depthScale(thisP))
+        ! !% get the depth limit for maximum depth that the time step will be limited as 
+        ! !% either the depth scale or the specified smallDepth limit
+        ! depthLimit(thisP) = max(smallDepth, depthScale(thisP))
 
         ! print *
         ! print *, 'depthLimit ',depthLimit(thisP)
         
-        !% time step limit based on inflow flux
-        where (Qlat(thisP) > setting%Eps%Velocity)
-            DTlimit(thisP) = length(thisP) * ( ( alpha * topwidth(thisP) / (gravity * Qlat(thisP)) )**onethirdR) 
-        elsewhere
-            DTlimit(thisP) = nullvalueR
-        endwhere
+        ! !% time step limit based on inflow flux
+        ! where (Qlat(thisP) > setting%Eps%Velocity)
+        !     DTlimit(thisP) = length(thisP) * ( ( alpha * topwidth(thisP) / (gravity * Qlat(thisP)) )**onethirdR) 
+        ! elsewhere
+        !     DTlimit(thisP) = nullvalueR
+        ! endwhere
 
         ! print *
         ! print *, 'DTlimit ',DTlimit(thisP)

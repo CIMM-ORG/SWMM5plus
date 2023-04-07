@@ -206,11 +206,11 @@ contains
        
         !% --- identify the small and zero depths (must be done before pack)
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth'
-        if (setting%SmallDepth%UseSmallDepthYN) then
+        if (setting%SmallDepth%useMomentumCutoffYN) then
             call adjust_smalldepth_identify_all ()
         else
             !% --- if not using small depth algorithm, then cuttoff is the same as zero depth
-            setting%SmallDepth%DepthCutoff = setting%ZeroValue%Depth
+            setting%SmallDepth%MomentumDepthCutoff = setting%ZeroValue%Depth
         end if
         call adjust_zerodepth_identify_all ()
 
@@ -3984,7 +3984,8 @@ contains
                 elemSR(JMidx,esr_Storage_Plan_Area) = setting%Junction%SurfaceArea_Minimum
                 elemR (JMidx,er_FullVolume)         = elemSR(JMidx,esr_Storage_Plan_Area) * elemR(JMidx, er_FullDepth)
                 elemR (JMidx,er_FullArea)           = elemSR(JMidx,esr_Storage_Plan_Area)
-                elemR (JMidx,er_BreadthMax)         = elemSGR(JMidx,esgr_Rectangular_Breadth)
+                elemR (JMidx,er_BreadthMax)         = sqrt(elemSR(JMidx,esr_Storage_Plan_Area) )
+                elemR (JMidx,er_Length)             = sqrt(elemSR(JMidx,esr_Storage_Plan_Area) )
 
             case (NoStorage)
                 elemSR(JMidx,esr_Storage_Plan_Area)      = zeroR
@@ -4159,6 +4160,8 @@ contains
                 !% --- max breadth approximated as sqrt of max planar area
                 elemR(JMidx,er_BreadthMax) = sqrt(maxval(curve(CurveID)%ValueArray(:,curve_storage_area)))
 
+                elemR(JMidx,er_Length) = sqrt(elemR(JMidx,er_FullArea))
+
             case (TabularStorage)
                 CurveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
                 !% --- set the element index for the curve
@@ -4174,6 +4177,8 @@ contains
                 elemR(JMidx,er_FullArea)   = sqrt( elemR(JMidx,er_FullVolume) * elemR(JMidx,er_FullDepth) )
                 !% --- max breadth approximated as sqrt of max planar area
                 elemR(JMidx,er_BreadthMax) = sqrt(maxval(curve(CurveID)%ValueArray(:,curve_storage_area)))
+
+                elemR(JMidx,er_Length) = sqrt(elemR(JMidx,er_FullArea))
 
             case default
                 !% IMPORTANT -- if any other new type is defined, make sure that
@@ -4607,7 +4612,7 @@ contains
         !% Preliminaries
         !%------------------------------------------------------------------
         !% Aliases
-            if (setting%SmallDepth%UseSmallDepthYN) then
+            if (setting%SmallDepth%useMomentumCutoffYN) then
                 thisCol    = ep_CC_NOTsmalldepth
             else
                 thisCol    = ep_CC_NOTzerodepth
@@ -4821,13 +4826,12 @@ contains
         !%------------------------------------------------------------------
 
         do ii=1,max_branch_per_node
-            where (BranchExists(thisP+ii) == 0)
-                elemR(thisP+ii,er_Area) = 0.33333
-                elemR(thisP+ii,er_Depth) = 0.33333
-                elemR(thisP+ii,er_Flowrate) = 0.33333
-                elemR(thisP+ii,er_Head) = 0.33333
-                elemR(thisP+ii,er_Velocity) = 0.33333
-                elemR(thisP+ii,er_Volume) = 0.33333 
+            where (BranchExists(thisP+ii) .ne. oneI)
+                elemR(thisP+ii,er_Area) = zeroR
+                elemR(thisP+ii,er_Depth) = zeroR
+                elemR(thisP+ii,er_Head) = zeroR
+                elemR(thisP+ii,er_Velocity) = zeroR
+                elemR(thisP+ii,er_Volume) = zeroR
             end where
         end do
 
@@ -4872,7 +4876,7 @@ contains
         !% Declarations:
             character(64)       :: subroutine_name = 'init_IC_set_SmallVolumes'
             !logical, pointer    :: useSmallVolumes
-            real(8), pointer    :: depthCutoff, smallVolume(:), length(:)
+            real(8), pointer    :: MomentumDepthCutoff, smallVolume(:), length(:)
             real(8), pointer    :: theta(:), radius(:),  area(:)
             !real(8), pointer    :: trapB(:), trapL(:), trapR(:),rectB(:)
             real(8), pointer    :: depth(:)
@@ -4888,7 +4892,7 @@ contains
         !%------------------------------------------------------------------
         !% Aliases
             !useSmallVolumes  => setting%SmallDepth%UseSmallVolumesYN
-            depthCutoff      => setting%SmallDepth%DepthCutoff
+            MomentumDepthCutoff      => setting%SmallDepth%MomentumDepthCutoff
             geoType          => elemI(:,ei_geometryType)
             !% --- note, tPack is 2D, but 2nd column is dummy
             tPack            => elemI(:,ei_Temp01:ei_Temp02)
@@ -4912,11 +4916,11 @@ contains
             !% error checking for circular pipes
             theta = zeroR ! temporary use of theta space for comparison, this isn't theta!
             where (geoType == circular)
-                theta = radius - depthCutoff
+                theta = radius - MomentumDepthCutoff
             end where
             if (any(theta < zeroR)) then
                 print *, 'FATAL ERROR'
-                print *, 'Small Volume depth cutoff ',depthCutoff
+                print *, 'Small Volume depth cutoff ',MomentumDepthCutoff
                 print *, 'is larger or equal to radius of the smallest pipe '
                 print *, 'Small Volume depth cutoff must be smaller than the radius.'
                 !stop 
@@ -4934,7 +4938,7 @@ contains
         !%     Area is overwritten in tabular_are_from_depth needed for conduits.
         !%     These must be reversed at end of subroutine
         tempDepth = depth
-        depth     = depthCutoff
+        depth     = MomentumDepthCutoff
         tempArea  = area
 
         !% --- cycle through tabulated cross-sections

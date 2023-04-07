@@ -375,19 +375,6 @@ module define_settings
         logical :: weir_elements       = .false.
     end type DebugFileYNType
 
-    ! setting%Debug%FileGroup
-    ! type DebugFileGroupYNType
-    !     logical :: all              = .false.
-    !     logical :: definitions      = .false.
-    !     logical :: finalization     = .false.
-    !     logical :: geometry         = .false.
-    !     logical :: initialization   = .false.
-    !     logical :: interface        = .false.
-    !     logical :: output           = .false.
-    !     logical :: timeloop         = .false.
-    !     logical :: utility          = .false.
-    ! end type DebugFileGroupYNType
-
     !%===================================================================
     ! Second Level Types
     !%===================================================================
@@ -483,12 +470,13 @@ module define_settings
 
     !% setting%Discretization
     type DiscretizationType
-        logical :: AllowChannelOverflowTF = .false. !% if true, then open channels (CC) can overflow (lose water)
-        logical :: AdjustLinkLengthForJunctionBranchYN = .false.          !% DO NOT USE TRUE if true then JB (junction branch) length is subtracted from link length
+        logical :: StopOnLengthAdjustTF = .false.  !% Can be used to force code to stop if link lengths are adjusted.
+        logical :: AllowChannelOverflowTF = .false. !% if true, then open channels (CC) can overflow (lose water) NOT IN EPA SWMM
+        logical :: AdjustLinkLengthForJunctionBranchYN = .false.          !% OBSOLETE DO NOT USE TRUE -- if true then JB (junction branch) length is subtracted from link length
         real(8) :: JunctionBranchLengthFactor  = 1.d0    !% MUST USE 1.0   !% fraction of NominalElemLength used for JB
-        real(8) :: MinElemLengthFactor = 0.5d0
+        real(8) :: MinElemLengthFactor = 0.5d0  
         integer :: MinElemLengthMethod = ElemLengthAdjust
-        real(8) :: NominalElemLength   = 10.0d0
+        real(8) :: NominalElemLength   = 10.0d0  ! COMMON ADJUSTMENT
         real(8) :: FullConduitTopwidthDepthFraction = 0.95d0  !% fraction of full depth used for full topwidth
     end type DiscretizationType
 
@@ -550,9 +538,10 @@ module define_settings
     ! setting%Junction
     type JunctionType
         integer :: Method = Implicit0 !% keywords Explicit1, Explicit2, Implicit0
-        logical :: ForceNodesJM = .true.  !% forces CC nodes between two conduits to be JM rather than faces
-        !%                                 !% note CC nodes will only be faces if SurchargeDepth = InfinitExtraDepthValue
-        logical :: ForceStorage = .false.  !% forces junctions without explicit storage to have implied storage
+        !% 20230405 brh  Default is FALSE to force JM, and TRUE to Force Storage 
+        logical :: ForceNodesJM = .false.  !% forces CC nodes between two conduits to be nJM rather than nJ2 faces
+        !%                                 !% note CC nodes will only be nJ2 faces if SurchargeDepth = InfinitExtraDepthValue
+        logical :: ForceStorage = .true.   !% forces nJM junctions without explicit storage to have implied storage
         !rm 20220207brh logical :: isDynamicYN    = .false.
         !rm 20220207brh real(8) :: CFLlimit     = 0.5d0   !% limiter on CFL to control dynamic junction
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
@@ -643,10 +632,11 @@ module define_settings
 
     ! setting%SmallDepth
     type SmallDepthType
-        logical :: UseSmallDepthYN = .false.
-        real(8) :: DepthCutoff = 0.005d0 ! m  !% prior to 20230327 using 0.03
+        logical :: useMomentumCutoffYN = .true.
+        real(8) :: MomentumDepthCutoff = 0.001d0 ! m  !% prior to 20230327 using 0.03
         real(8) :: ManningsN = 0.1d0
         real(8) :: PumpVolumeFactor = 0.5d0  !% 
+        real(8) :: LateralInflowSmallDepth = 0.05d0
     end type SmallDepthType
 
     ! setting%Solver
@@ -1253,6 +1243,12 @@ contains
 
         
     !% Discretization. =====================================================================
+
+        !% -- stop on length adjustment
+        !%                      Discretization.StopOnLengthAdjustTF
+        call json%get('Discretization.StopOnLengthAdjustTF', logical_value, found)
+        if (found) setting%Discretization%StopOnLengthAdjustTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.StopOnLengthAdjustTF not found'
 
         !% -- Channel overflow
         !%                      Discretization.AllowChannelOverflowTF
@@ -1929,16 +1925,31 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.SpinUpDays not found'
   
     !% SmallDepth. =====================================================================    
-        !%                       DepthCutoff
-        call json%get('SmallDepth.DepthCutoff', real_value, found)
-        if (found) setting%SmallDepth%DepthCutoff = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallDepth.DepthCutoff not found'
+
+                !%                       useMomentumCutoffYN
+        call json%get('SmallDepth.useMomentumCutoffYN', logical_value, found)
+        if (found) setting%SmallDepth%useMomentumCutoffYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallDepth.useMomentumCutoffYN not found'
+        
+        !%                       MomentumDepthCutoff
+        call json%get('SmallDepth.MomentumDepthCutoff', real_value, found)
+        if (found) setting%SmallDepth%MomentumDepthCutoff = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallDepth.MomentumDepthCutoff not found'
         
         !%                       ManningsN
         call json%get('SmallDepth.ManningsN', real_value, found)
         if (found) setting%SmallDepth%ManningsN = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallDepth.ManningsN not found'
         
+        !%                       PumpVolumeFactor
+        call json%get('SmallDepth.PumpVolumeFactor', real_value, found)
+        if (found) setting%SmallDepth%PumpVolumeFactor = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallDepth.PumpVolumeFactor not found'
+
+        !%                       LateralInflowSmallDepth
+        call json%get('SmallDepth.LateralInflowSmallDepth', real_value, found)
+        if (found) setting%SmallDepth%LateralInflowSmallDepth = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallDepth.LateralInflowSmallDepth not found'
 
     !% Solver. =====================================================================
        
