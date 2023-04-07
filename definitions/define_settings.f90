@@ -477,7 +477,7 @@ module define_settings
         real(8) :: MinElemLengthFactor = 0.5d0           !% define the minimum allowable fraction of an element size to help with the cfl
         integer :: MinElemLengthMethod = ElemLengthAdjust
         real(8) :: NominalElemLength   = 10.0d0
-        integer :: MinElementPerLink   = 1               !% force a minimum number of elements per link
+        integer :: MinElementPerLink   = 3               !% force a minimum number of elements per link
         real(8) :: FullConduitTopwidthDepthFraction = 0.95d0  !% fraction of full depth used for full topwidth
     end type DiscretizationType
 

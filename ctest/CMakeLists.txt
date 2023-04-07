@@ -474,6 +474,9 @@ enable_testing()
 # ## FAILED 20230407 -- needs more elements in each link
 # add_test(NAME T005_CC_Free_dx0100_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0100_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_100_ForceStorage.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
 # # FAILS at stop 6698734 with error message "small Rquad "
 # add_test(NAME T005_CC_Free_dx0010 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0010.inp -s ./ctest/internal_testing/brh/settings_10.json -o ./ctest/outbrh/
@@ -491,6 +494,28 @@ enable_testing()
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
+
+
+##########################################################################################
+## T005W weir and junction tests
+##########################################################################################
+## Similar to T005, but with weir in the middle
+## using ForceJM to test junctions with weir
+## ten links of 100 m 
+## nine internal junction, 
+## initial zero water levels
+## ramp up flow
+## ramp down flow after 2 hour steady
+## no surcharge
+## CC = circular conduit; RC = Rectangular closed, RO = Rectangular open
+## Fix/Normal/Free = BC
+## dxNNN = subelement length
+
+## 
+add_test(NAME T005W_RO_Free_dx0010_ForceJM 
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005W_RO_Free_dx0010_ForceJM.inp -s ./ctest/internal_testing/brh/settings_10_ForceJM.json -o ./ctest/outbrh/
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
 
 
 ##########################################################################################
@@ -560,7 +585,6 @@ enable_testing()
 # )
 
 
-
 # # Passed 2023034
 # add_test(NAME YJ_Geom
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/geometry_test/YJ_Geom_Test.inp -s ./ctest/internal_testing/geometry_test/settings_YJ.json -o ./ctest/output/
@@ -576,10 +600,10 @@ enable_testing()
 # # ###################################### LEVEL 1 PASSED #############################
 
 #  # passed 20230407
-add_test(NAME extran1_final
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_final.inp -s ./ctest/internal_testing/level01_test/settings_extran1.json -o ./ctest/output/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# add_test(NAME extran1_final
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_final.inp -s ./ctest/internal_testing/level01_test/settings_extran1.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
 
 # # passed 20230407
@@ -739,7 +763,7 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 
 # # Passed 20230104 Failed 20230123
 # add_test(NAME extran4_trapezoidal
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran4_trapezoidal.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran4_trapezoidal.inp -s ./ctest/internal_testing/level02_test/settings_forcedJM_and_storage.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 

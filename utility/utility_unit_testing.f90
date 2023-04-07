@@ -273,56 +273,56 @@ contains
          !% branches and elements   
 
          ! print *, 'branches and elements'
-         !    do ii=1,N_elem(1)
-         !       if (elemI(ii,ei_elementType) == CC) then
-         !          if (faceI(fup(ii),fi_BCType) == BCup) then 
-         !             write(*,"(A, i5, A)"), 'fbcU', fup(ii),       '             '//trim(reverseKey(faceI(fup(ii),fi_BCType))) 
-         !          end if
-         !             write(*,"(A, i5, A)"), 'fup ', fup(ii),       '             '//trim(reverseKey(faceI(fup(ii),fi_BCType)))         
-         !             write(*,"(A, i5,A)"), 'e   ', ii,            '             '//trim(reverseKey(elemI(    ii ,ei_elementType)))//'      '//trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
-         !             write(*,"(A, i5,A)"), 'fdn ', fdn(ii),       '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
-         !          if (faceI(fup(ii),fi_BCType) == BCdn) then
-         !             write(*,"(A, i5, A)"), 'fbcD', fdn(ii),       '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
-         !          end if 
-         !       elseif (elemI(ii,ei_elementType) == JM) then
-         !          !% upstream branches
-         !          do jj=1,max_branch_per_node,2
-         !             if  (elemSI(ii+jj,esi_JunctionBranch_Exists) == oneI) then
-         !                write(*,"(A, i5,  A)"),     'fup ', fup(ii+jj),  '             '//trim(reverseKey(faceI(fup(ii+jj),fi_BCType)))
-         !                write(*,"(A, i5, A, i5)"), 'eJB ', ii+jj,      '             JB ',   elemSI(ii+jj,esi_JunctionBranch_IsUpstream)
-         !             end if
-         !          end do
-         !          !%  JM
-         !                write(*,"(A, i5, A)"),      'eJM ', ii,  ' '//trim(reverseKey(elemI(ii,ei_elementType)))//'      '//trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
-         !          !% downstream branches
-         !          do jj=2,max_branch_per_node,2
-         !             if  (elemSI(ii+jj,esi_JunctionBranch_Exists) == oneI) then
-         !                write(*,"(A, i5,  A, i5)"), 'eJB ', ii+jj     ,  '            JB ', elemSI(ii+jj,esi_JunctionBranch_IsUpstream)
-         !                write(*,"(A, i5, A)"),     'fdn ', fdn(ii+jj),  '               '//trim(reverseKey(faceI(fdn(ii+jj),fi_BCType)))
-         !             end if
-         !          end do
-         !       elseif ((elemI(ii,ei_elementType) == JB) ) then
-         !          ! skip
-         !       else 
-         !          print *, 'unexpected element type '
-         !          print *, trim(reverseKey(elemI(ii,ei_elementType)))
-         !          stop 77873
-         !       end if
-         !     end do
-         !       !   stop 239874
-         !       !   return
+            do ii=1,N_elem(1)
+               if (elemI(ii,ei_elementType) == CC) then
+                  if (faceI(fup(ii),fi_BCType) == BCup) then 
+                     write(*,"(A, i5, A)"), 'fbcU', fup(ii),       '             '//trim(reverseKey(faceI(fup(ii),fi_BCType))) 
+                  end if
+                     write(*,"(A, i5, A)"), 'fup ', fup(ii),       '             '//trim(reverseKey(faceI(fup(ii),fi_BCType)))         
+                     write(*,"(A, i5,A)"), 'e   ', ii,            '             '//trim(reverseKey(elemI(    ii ,ei_elementType)))//'      '//trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
+                     write(*,"(A, i5,A)"), 'fdn ', fdn(ii),       '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
+                  if (faceI(fup(ii),fi_BCType) == BCdn) then
+                     write(*,"(A, i5, A)"), 'fbcD', fdn(ii),       '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
+                  end if 
+               elseif (elemI(ii,ei_elementType) == JM) then
+                  !% upstream branches
+                  do jj=1,max_branch_per_node,2
+                     if  (elemSI(ii+jj,esi_JunctionBranch_Exists) == oneI) then
+                        write(*,"(A, i5,  A)"),     'fup ', fup(ii+jj),  '             '//trim(reverseKey(faceI(fup(ii+jj),fi_BCType)))
+                        write(*,"(A, i5, A, i5)"), 'eJB ', ii+jj,      '             JB ',   elemSI(ii+jj,esi_JunctionBranch_IsUpstream)
+                     end if
+                  end do
+                  !%  JM
+                        write(*,"(A, i5, A)"),      'eJM ', ii,  ' '//trim(reverseKey(elemI(ii,ei_elementType)))//'      '//trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
+                  !% downstream branches
+                  do jj=2,max_branch_per_node,2
+                     if  (elemSI(ii+jj,esi_JunctionBranch_Exists) == oneI) then
+                        write(*,"(A, i5,  A, i5)"), 'eJB ', ii+jj     ,  '            JB ', elemSI(ii+jj,esi_JunctionBranch_IsUpstream)
+                        write(*,"(A, i5, A)"),     'fdn ', fdn(ii+jj),  '               '//trim(reverseKey(faceI(fdn(ii+jj),fi_BCType)))
+                     end if
+                  end do
+               elseif ((elemI(ii,ei_elementType) == JB) ) then
+                  ! skip
+               else 
+                  print *, 'unexpected element type '
+                  print *, trim(reverseKey(elemI(ii,ei_elementType)))
+                  stop 77873
+               end if
+             end do
+               !   stop 239874
+               !   return
 
-         !    print *, ' '
-         !    print *, 'link,node names'
-         !    do ii=1,N_elem(1)
-         !       if (elemI(ii,ei_link_Gidx_SWMM) < nullvalueI) then 
-         !          print *, ii, elemI(ii,ei_link_Gidx_SWMM), trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str), ' islink'
-         !       elseif (elemI(ii,ei_node_Gidx_SWMM) < nullvalueI) then
-         !          print *, ii, elemI(ii,ei_node_Gidx_SWMM), trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str), ' isnode'
-         !       end if
-         !    end do
+            print *, ' '
+            print *, 'link,node names'
+            do ii=1,N_elem(1)
+               if (elemI(ii,ei_link_Gidx_SWMM) < nullvalueI) then 
+                  print *, ii, elemI(ii,ei_link_Gidx_SWMM), trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str), ' islink'
+               elseif (elemI(ii,ei_node_Gidx_SWMM) < nullvalueI) then
+                  print *, ii, elemI(ii,ei_node_Gidx_SWMM), trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str), ' isnode'
+               end if
+            end do
 
-         !    stop 2398746
+            stop 2398746
 
 
             !    do ii=1,size(iet)

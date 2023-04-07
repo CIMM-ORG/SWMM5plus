@@ -61,7 +61,7 @@ module runge_kutta2
         istep = oneI
 
             !print *, ' '
-            ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
+            !call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
             !print *, 'TEST20230327   GGG',elemR(22,er_Head), elemR(22,er_Zbottom)
             !stop 709873
 

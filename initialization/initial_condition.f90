@@ -548,50 +548,50 @@ contains
 
         !% cycle through the links in an image
         do ii = 1,pLink
-            !  print *, ' '
-            !  print *, 'link ',ii
-            !  print *, ' '
+             print *, ' '
+             print *, 'link ',ii
+             print *, ' '
 
             ! % necessary pointers
             thisLink    => packed_link_idx(ii)
 
-        !    print *, 'calling get barrels'
+                print *, 'calling get barrels'
             call init_IC_get_barrels_from_linkdata(thisLink)
 
-            !    print *, 'calling get depth'
+                print *, 'calling get depth'
             !% --- note that this does NOT adjust depth for closed conduit crown height
             call init_IC_get_head_and_depth (thisLink)
 
-            ! print *, 'aaa ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
+                ! print *, 'aaa ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
-            !    print *, 'calling get flow and roughness'
+                print *, 'calling get flow and roughness'
             call init_IC_get_flow_and_roughness_from_linkdata (thisLink)
 
-            ! print *, 'bbb ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
+                ! print *, 'bbb ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
-            !    print *, 'calling get elemtype'
+               print *, 'calling get elemtype'
             call init_IC_get_elemtype_from_linkdata (thisLink)
             !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
             ! print *, 'ccc',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
-            ! print *, 'calling get geometry'
+                print *, 'calling get geometry'
             !% --- note this adjusts depth for closed conduit crown height and sets surcharge
             call init_IC_get_geometry_from_linkdata (thisLink)
 
             ! print *, 'ddd ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
-            !    print *, 'calling get flapgate'
+               print *, 'calling get flapgate'
             call init_IC_get_flapgate_from_linkdata (thisLink)
 
             ! print *, 'eee ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
-            !    print *, 'calling get forcemain'
+               print *, 'calling get forcemain'
             call init_IC_get_ForceMain_from_linkdata (thisLink)     
 
             ! print *, 'fff ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
-            !    print *, 'calling get culvert'
+               print *, 'calling get culvert'
             call init_IC_get_culvert_from_linkdata(thisLink)
             !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
@@ -1435,9 +1435,9 @@ contains
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
 
-        ! print *, 'in ',trim(subroutine_name)
-        ! print *, thisLink, linkType
-        ! print *, trim(reverseKey(linkType))
+        print *, 'in ',trim(subroutine_name)
+        print *, thisLink, linkType
+        print *, trim(reverseKey(linkType))
 
         select case (linkType)
 
@@ -1480,7 +1480,7 @@ contains
 
         end select
 
-        
+        print *, 'at exit'         
 
         !call geometry_table_initialize ()
 
@@ -1556,7 +1556,8 @@ contains
         
 
         ! print *, 'in ',trim(subroutine_name)
-        ! print *, 'geometrytype ',geometryType,trim(reverseKey(geometryType))      
+        ! print *, 'geometrytype ',geometryType,trim(reverseKey(geometryType))    
+
         select case (geometryType)
 
         case (lIrregular)
@@ -1673,6 +1674,7 @@ contains
 
         case (lRectangular)
             ! print *, 'lRectangular'
+            ! print *, 'thisP',thisP
 
             elemI(thisP,ei_geometryType) = rectangular
 
@@ -1727,8 +1729,7 @@ contains
             elemR(thisP,er_AreaBelowBreadthMax)     = elemR(thisP,er_FullArea)
             elemR(thisP,er_ZbreadthMax)             = elemR(thisP,er_FullDepth) + elemR(thisP,er_Zbottom)
             elemR(thisP,er_Zcrown)                  = elemR(thisP,er_Zbottom)   + elemR(thisP,er_FullDepth)
-            elemR(thisP,er_FullVolume)              = elemR(thisP,er_FullArea)  * elemR(thisP,er_Length)
-           
+            elemR(thisP,er_FullVolume)              = elemR(thisP,er_FullArea)  * elemR(thisP,er_Length)       
 
             !% --- store IC data
             elemR(thisP,er_Perimeter)     = llgeo_rectangular_perimeter_from_depth_pure (thisP, depth(thisP))
@@ -1910,15 +1911,16 @@ contains
             call util_crashpoint(98734)
 
         end select
-        
-        !% --- reset the temporary space
-        !%     Note, real must be first as int is used for thisP
-        elemR(thisP,er_Temp01) = zeroR
-        elemI(thisP,ei_Temp01) = nullvalueI
+    
 
         !% -- set the face values for the crown (full depth)
         faceR(fUp(thisP),fr_Zcrown_d) = faceR(fUp(thisP),fr_Zbottom) + elemR(thisP,er_FullDepth)
         faceR(fDn(thisP),fr_Zcrown_u) = faceR(fDn(thisP),fr_Zbottom) + elemR(thisP,er_FullDepth)
+
+        !% --- reset the temporary space
+        !%     Note, real must be first as int is used for thisP
+        elemR(thisP,er_Temp01) = zeroR
+        elemI(thisP,ei_Temp01) = nullvalueI
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

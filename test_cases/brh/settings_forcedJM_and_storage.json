@@ -7,5 +7,9 @@
     },
     "Discretization" : {
         "NominalElemLength" : 10.00
-    }
+    },
+    "Junction" : {
+        "ForceNodesJM" : true,
+        "ForceStorage" : true
+    } 
 }
