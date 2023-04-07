@@ -384,6 +384,7 @@ module define_globals
 
     !% Profile_Outputs
     integer, allocatable, target :: output_profile_ids(:,:)
+    character(len=256), allocatable, target :: output_profile_names(:)
     ! filenames for output binaries
     character(len=256), allocatable, target :: output_binary_filenames(:)
     character(len=256), allocatable, target :: output_binary_filenames_all(:)

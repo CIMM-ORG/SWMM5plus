@@ -2401,6 +2401,9 @@ contains
         allocate(output_profile_ids(max_profiles_N,max_links_profile_N),stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg, 'output_profile_ids')
 
+        allocate(output_profile_names(max_profiles_N),stat=allocation_status, errmsg = emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_profile_names')
+
 
     end subroutine util_allocate_output_profiles
 
