@@ -1855,7 +1855,7 @@ contains
 
                 read(thisUnit, "(A)", iostat = read_status) line
                 read(thisUnit, "(A)", iostat = read_status) line
-                offset_profile = FTELL(10)
+                offset_profile = FTELL(thisUnit)
                 ! print *, "offset_profile set:", offset_profile
                 max_profiles_N = 0
 
@@ -1900,19 +1900,24 @@ contains
         ! print *, "offset_profile:", offset_profile
 
         rewind(thisUnit)
-        error = fseek(10,offset_profile,0)
+        error = fseek(thisUnit,offset_profile,0)
         output_profile_ids(:,:) = nullValueI
         read(thisUnit, "(A)", iostat = read_status) line
 
-        !Loop through this time storing the profiles
+        !% Loop through profile again this time storing the profiles
+        !% They are store in 2D array each row is a different profile
+        !% Each column alternates node, link, node, link, node, etc
+
         ii = 0  
         do  
+            !% reading in the first profile  
             read(thisUnit, "(A)", iostat = read_status) line
-            
             
             if (read_status /= 0 ) then
                 exit
             end if
+
+            !% finding where the actual profile starts
             delimitator_loc = 2
             name = line 
             index_of_start = index(name,"""",.true.)
@@ -1920,24 +1925,30 @@ contains
             
             ii = ii+1
             jj = 0
+
+            
             do 
+                !% storing list of profiles and the name of the Link being added to the output_profile_ids array
 
                 delimitator_loc = index(link_names," ")
                 if(delimitator_loc <= 1)then 
                     exit
                 end if
                 jj = jj + 1
+
+                !% choosen name is the selected link name
+                !% link_names is the rest of link names in the profile
                 choosen_name = trim(ADJUSTL(link_names(1:delimitator_loc)))
                 link_names   = trim(ADJUSTL(link_names(delimitator_loc+1:)))
+                
+                !% Now we need to check that the user wrote the profile correctly
+                !% This means checking if the link name exists and the profile is correctly written upstream -> downstream
                 do kk = 1 , N_Link
                     if(link%names(kk)%str == choosen_name) then
 
                         if(jj > 2) then
 
-                            ! print *,"link%I(kk,li_Mnode_u):",link%I(kk,li_Mnode_u)
-                            ! print *,"link%I(output_profile_ids(ii,jj-1),li_Mnode_d):", link%I(output_profile_ids(ii,jj-1),li_Mnode_d)
-
-                            if(link%I(kk,li_Mnode_u) .neqv. link%I(output_profile_ids(ii,jj-1),li_Mnode_d)) then
+                            if(link%I(kk,li_Mnode_u) .neqv. output_profile_ids(ii,(jj*2)-1)) then
                                 print *, "Error with provides profiles not being continous"
                                 print *, "Link:", kk, "is not connected to Link:", output_profile_ids(ii,jj-1)
                                 stop 558704
@@ -1945,12 +1956,15 @@ contains
 
                         end if
 
+                        !% Once again links are stored in even idxs
+                        !% and nodes are stored in odd idxs
                         output_profile_ids(ii,(jj*2)+1) = link%I(kk,li_Mnode_d)
                         output_profile_ids(ii,jj*2) = kk 
 
                         if(jj .eq. 1) then
                             output_profile_ids(ii,1) = link%I(kk,li_Mnode_u)
                             end if  
+
                         exit
 
                     end if
@@ -1962,23 +1976,11 @@ contains
 
                 end do
 
-                !name_loc = findloc(link%names(:),choosen_name%str)
-                !call the the function that converts link_names to the global index and then store them
-                !this can then be added to the output hdf5 file and or headers of the csv files during the output            
-            
             end do
 
         end do
 
-        ! print *, "------------output_profile_ids---------"
-        ! print *, output_profile_ids(1,:)
-        ! print *, output_profile_ids(2,:)
-        ! print *, output_profile_ids
-
         close (thisUnit)
-
-        !% ALLOCATE THE ARRAYS AND THEN fill them with the correct indexs
-
 
     end subroutine init_profiles
 !%

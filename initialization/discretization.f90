@@ -23,6 +23,7 @@ contains
         integer, intent(in) :: link_idx
         real(8) :: remainder
         real(8), pointer :: elem_nominal_length
+        integer, pointer :: min_elem_per_link
         character(64) :: subroutine_name = 'init_discretization_nominal'
 
     !-----------------------------------------------------------------------------
@@ -31,6 +32,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         elem_nominal_length => setting%Discretization%NominalElemLength
+        min_elem_per_link   => setting%Discretization%MinElementPerLink
 
         !% Adjusts the number of elements in a link based on the length
         remainder = mod(link%R(link_idx,lr_Length), elem_nominal_length)
@@ -55,6 +57,17 @@ contains
         if ( link%R(link_idx, lr_Length) .le. elem_nominal_length ) then
             link%I(link_idx, li_N_element) = oneI
             link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
+        end if
+
+        !% only force a minimum number of elements per link if the minimum
+        !% number of elements per link settings is set to greater than one
+        if (min_elem_per_link > oneI) then
+            !% check for links that has less elements than 
+            !% the specified minimum number of elements
+            if (link%I(link_idx, li_N_element) < min_elem_per_link) then
+                link%I(link_idx, li_N_element) = min_elem_per_link
+                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
+            end if 
         end if
 
         !% treatment of for special links

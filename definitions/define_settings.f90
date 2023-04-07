@@ -474,9 +474,10 @@ module define_settings
         logical :: AllowChannelOverflowTF = .false. !% if true, then open channels (CC) can overflow (lose water) NOT IN EPA SWMM
         logical :: AdjustLinkLengthForJunctionBranchYN = .false.          !% OBSOLETE DO NOT USE TRUE -- if true then JB (junction branch) length is subtracted from link length
         real(8) :: JunctionBranchLengthFactor  = 1.d0    !% MUST USE 1.0   !% fraction of NominalElemLength used for JB
-        real(8) :: MinElemLengthFactor = 0.5d0  
+        real(8) :: MinElemLengthFactor = 0.5d0           !% define the minimum allowable fraction of an element size to help with the cfl
         integer :: MinElemLengthMethod = ElemLengthAdjust
-        real(8) :: NominalElemLength   = 10.0d0  ! COMMON ADJUSTMENT
+        real(8) :: NominalElemLength   = 10.0d0
+        integer :: MinElementPerLink   = 1               !% force a minimum number of elements per link
         real(8) :: FullConduitTopwidthDepthFraction = 0.95d0  !% fraction of full depth used for full topwidth
     end type DiscretizationType
 
@@ -1294,6 +1295,11 @@ contains
         call json%get('Discretization.NominalElemLength', real_value, found)
         if (found) setting%Discretization%NominalElemLength = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.NominalElemLength not found'
+
+        !%                       Discretization.MinElementPerLink
+        call json%get('Discretization.MinElementPerLink', integer_value, found)
+        if (found) setting%Discretization%MinElementPerLink = integer_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.MinElementPerLink not found'
 
     !% Eps. =====================================================================
         !% --- Eps Settings
