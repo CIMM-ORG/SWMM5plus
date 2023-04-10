@@ -599,6 +599,7 @@ module define_settings
         integer :: ElemHeadIndex = 0                         !% NOT A USER SETTING
         integer :: FaceUpHeadIndex = 0                       !% NOT A USER SETTING
         integer :: faceDnHeadIndex = 0                       !% NOT A USER SETTING
+        integer :: ElemFlowIndex   = 0                       !% NOT A USER SETTING 
         integer (kind=8) :: MemoryStorageMax = 29000000  
         type(CommandLineType) :: CommandLine
         type(DataOutType) :: DataOut
