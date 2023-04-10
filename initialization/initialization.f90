@@ -169,6 +169,8 @@ contains
         call init_linknode_arrays ()
         call util_crashstop(31973)
 
+
+
         !print *, 'TEST20230327   AAA',elemR(22,er_Head), elemR(22,er_Zbottom)
 
         !% --- initialize ForceMain settings (determines if FM is used)
@@ -927,9 +929,9 @@ contains
         !% --- NODE DATA
         !% -----------------------
         do ii = 1, N_node
-            ! print *, ' '
-            ! write(*,*) '==============================starting node ',ii
-            ! write(*,*) 'name ',trim(node%Names(ii)%str)
+            print *, ' '
+            write(*,*) '==============================starting node ',ii
+            write(*,*) 'name ',trim(node%Names(ii)%str)
 
             total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
             node%I(ii, ni_idx) = ii
@@ -1028,7 +1030,8 @@ contains
             ! write(*,*)
           
             !%
-            !% --- Assign node types nJm, nJ1, nJ2, nBCdn,
+            !% --- Assign required node types nJm, nJ1, nJ2, nBCdn,
+            !%     Note that defined storage is ALWAYS nJM
             if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
                     ! write(*,*) '... is outfall type '
                 node%I(ii, ni_node_type) = nBCdn
@@ -1076,7 +1079,7 @@ contains
                         ! write(*,*) '... is 1 junction is an upstream BC nJ1'
                     node%I(ii, ni_node_type) = nJ1
                 case (twoI)
-                        ! write(*,*) '... is 2 junction type nJ2'        
+                        write(*,*) '... is 2 junction type nJ2'        
                     node%I(ii, ni_node_type) = nJ2
                 case default 
                         ! write(*,*) '... is 3+ junction type nJm'
@@ -1095,7 +1098,7 @@ contains
                  (node%I(ii,ni_routeFrom) .ne. nullvalueI) &
                 )) then
                     !% ... switching to a 2 link nJm junction type'
-                        ! write(*,*) '... switching to a 2 link nJm junction type because of 2 up or 2 down links'
+                        write(*,*) '... switching to a 2 link nJm junction type because of 2 up or 2 down links'
                     node%I(ii, ni_node_type) = nJm
             end if
 
@@ -1135,6 +1138,16 @@ contains
                 linkDn => node%I(ii,ni_Mlink_d1)
 
                     ! write(*,*) '... is nJ2'
+                    ! print *, 'linkUp ',linkUp
+                    ! if (linkUp < nullvalueI) then
+                    !      print *, 'linkUp ',trim( link%Names(linkUp)%str)
+                    !      print *, 'type   ',
+                    
+                    ! print *, ' '
+                    ! print *, 'linkDn ',linkDn
+                    ! if (linkDn < nullvalueI) print *, 'linkDn ',trim( link%Names(linkDn)%str)
+                    ! print *, ' '
+                    
 
                 !% --- special channels and conduits that allow nJ2
                 if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)          &
@@ -1156,7 +1169,7 @@ contains
                     !%     overflow above the Surcharge Extra Depth
 
                     !% --- no action: retain nJ2
-                        ! write(*,*) 'retain nJ2 as open channel face'
+                        write(*,*) 'retain nJ2 as open channel face'
 
                 elseif ( (link%I(linkUp,li_link_type) .ne. lChannel)         &
                          .and.                                               &
@@ -1177,10 +1190,40 @@ contains
                         !%  
                         
                         !% --- no action: retain nJ2
-                        ! write(*,*) 'retain nJ2 as closed conduit face'
+                        write(*,*) 'retain nJ2 as closed conduit face'
+
+                elseif  (( (link%I(linkUp,li_link_type) .eq. lWeir)         &
+                          .or.                                              &
+                           (link%I(linkDn,li_link_type) .eq. lWeir)         &
+                         )                                                  &
+                        .and. (.not. setting%Weir%ForceWeirNodesToJM)       &
+                        ) then          
+                        !% nJ2 Weir face 
+                        !% --- an nJ2 weir face is retained without as long as
+                        !%     the force is not in place. Note that nodes with
+                        !%     storage already have nJM, so this does not affect
+                        !%     them 
+                        
+                        !% no action: retain nJ2
+                        write(*,*) 'retain nJ2 on weir face'
+
+                elseif  (( (link%I(linkUp,li_link_type) .eq. lOrifice)         &
+                            .or.                                               &
+                           (link%I(linkDn,li_link_type) .eq. lOrifice)         &
+                           )                                                   &
+                          .and. (.not. setting%Orifice%ForceOrificeNodesToJM)  &
+                         ) then    
+                        !% nJ2 Orifice face 
+                        !% --- an nJ2 orifice face is retained without as long as
+                        !%     the force is not in place. Note that nodes with
+                        !%     storage already have nJM, so this does not affect
+                        !%     them 
+                        
+                        !% no action: retain nJ2
+                        write(*,*) 'retain nJ2 on orifice face '   
                 else
                     !% --- switch to nJm
-                    !write(*,*) '... switching nJ2 to nJm due to closed conduit with less than InfiniteExtraDepthValue for surcharge'
+                    write(*,*) '... switching nJ2 to nJm '
                     !print *, 'infinite depth value ',setting%Junction%InfiniteExtraDepthValue, node%R(ii,nr_SurchargeExtraDepth)
 
                     node%I(ii, ni_node_type) = nJm
@@ -1260,15 +1303,41 @@ contains
                         ! write(*,*) '.. switching to nJM because of offsets downstream'
                     node%I(ii, ni_node_type) = nJm
                 end if
-            end if
+            end if 
 
-            !% --- force all the nJ2 to nJm if the user 
-            !%     setting%Junction%ForceNodesJM setting is true
-            if ((node%I(ii, ni_node_type) == nJ2)          .and.  &
-                setting%Junction%ForceNodesJM ) then
-                !% --- switch to nJm
-                    ! write(*,*) 'Forced switch to nJM based on setting%Junction%ForceNodesJM'
-                node%I(ii, ni_node_type) = nJm
+            !% --- force some or all of the nJ2 to nJm (used for debugging)
+            if (node%I(ii, ni_node_type) == nJ2) then
+                !% --- global forcing of all nodes
+                if (setting%Junction%ForceNodesJM ) then
+                    !% --- switch to nJm
+                        ! write(*,*) 'Forced switch nJ2 to nJM based on setting%Junction%ForceNodesJM'    
+                    node%I(ii, ni_node_type) = nJm
+                else
+                    !% -- forcing of weir-adjacent nodes, only
+                    if ( ((link%I(linkDn,li_link_type) .eq. lWeir) &
+                          .or.                                     &
+                          (link%I(linkUp,li_link_type) .eq. lWeir) &
+                         ) .and.                                   &
+                         (setting%Weir%ForceWeirNodesToJM)         &
+                        ) then 
+                        node%I(ii,ni_node_type) = nJm
+                    end if
+
+                    ! print *, 'DEBUGGING TEST HERE TO BE DELETED 7609873'
+                    ! if (ii == 6) then 
+                    !     node%I(ii,ni_node_type) = nJM
+                    ! end if
+
+                    !% -- forcing of orifice-adjacent nodes, only
+                    if ( ((link%I(linkDn,li_link_type) .eq. lOrifice)  &
+                          .or.                                         &
+                          (link%I(linkUp,li_link_type) .eq. lOrifice)  &
+                         ) .and.                                       &
+                         (setting%Orifice%ForceOrificeNodesToJM)      &
+                        ) then 
+                        node%I(ii,ni_node_type) = nJm
+                    end if
+                end if
             end if
 
             !% ==========================================================================

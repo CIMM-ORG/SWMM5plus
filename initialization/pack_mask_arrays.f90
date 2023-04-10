@@ -81,9 +81,9 @@ contains
                    print*, '----------------------------------------------------'
                    print*, 'image = ', ii
                    print*, '..........packed local element indexes of...........'
-                   print*, elemP(:,ep_ALLtm)[ii], 'all ETM, AC elements'
-                   print*, elemP(:,ep_ETM)[ii], 'all ETM elements'
-                   print*, elemP(:,ep_CC_ETM)[ii], 'all CC elements that are ETM'
+                  ! print*, elemP(:,ep_ALLtm)[ii], 'all ETM, AC elements'
+                  ! print*, elemP(:,ep_ETM)[ii], 'all ETM elements'
+                   print*, elemP(:,ep_CC)[ii], 'all CC elements'
                    print*, elemP(:,ep_Diag)[ii], 'all diagnostic elements'
                    print*, '.................face logicals......................'
                    print*, faceP(:,fp_all)[ii], 'all the interior faces'
@@ -2770,30 +2770,38 @@ contains
                 )
         end if
 
-    !% ep_CC_ALLtm
-        !% - all time march elements that are CC
-        ptype => col_elemP(ep_CC_ALLtm)
+    !% ep_CC
+        !% - all CC elements
+        ptype => col_elemP(ep_CC)
         npack => npack_elemP(ptype)
-        npack = count( &
-                ( &
-                    (elemI(:,ei_QeqType) == time_march ) &
-                    .or. &
-                    (elemI(:,ei_HeqType) == time_march ) &
-                ) &
-                .and. &
-                (elemI(:,ei_elementType) == CC) &
-                )
+        npack = count(elemI(:,ei_elementType) == CC) 
         if (npack > 0) then
             elemP(1:npack,ptype) = pack( eIdx, &
-                ( &
-                    (elemI(:,ei_QeqType) == time_march ) &
-                    .or. &
-                    (elemI(:,ei_HeqType) == time_march ) &
-                ) &
-                .and. &
-                (elemI(:,ei_elementType) == CC) &
-                )
+                (elemI(:,ei_elementType) == CC) )
         end if
+  
+        ! ptype => col_elemP(ep_CC_ALLtm)
+        ! npack => npack_elemP(ptype)
+        ! npack = count( &
+        !         ( &
+        !             (elemI(:,ei_QeqType) == time_march ) &
+        !             .or. &
+        !             (elemI(:,ei_HeqType) == time_march ) &
+        !         ) &
+        !         .and. &
+        !         (elemI(:,ei_elementType) == CC) &
+        !         )
+        ! if (npack > 0) then
+        !     elemP(1:npack,ptype) = pack( eIdx, &
+        !         ( &
+        !             (elemI(:,ei_QeqType) == time_march ) &
+        !             .or. &
+        !             (elemI(:,ei_HeqType) == time_march ) &
+        !         ) &
+        !         .and. &
+        !         (elemI(:,ei_elementType) == CC) &
+        !         )
+        ! end if
 
     !% ep_CCJB_ALLtm
         !% - all time march elements that are CC or JB
@@ -2912,30 +2920,32 @@ contains
                 (elemI(:,ei_elementType) == JM))
         end if
 
+        print *, elemI(elemP(1:npack,ep_JM),ei_Lidx)
+
     !% ep_JM_ALLtm
-        !% - all junction main elements that are time march
-        ptype => col_elemP(ep_JM_ALLtm)
-        npack => npack_elemP(ptype)
-        npack = count( &
-                ( &
-                    (elemI(:,ei_QeqType) == time_march ) &
-                    .or. &
-                    (elemI(:,ei_HeqType) == time_march ) &
-                ) &
-                .and. &
-                (elemI(:,ei_elementType) == JM) &
-                )
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack( eIdx, &
-                ( &
-                    (elemI(:,ei_QeqType) == time_march ) &
-                    .or. &
-                    (elemI(:,ei_HeqType) == time_march ) &
-                ) &
-                .and. &
-                (elemI(:,ei_elementType) == JM) &
-                )
-        end if
+        ! !% - all junction main elements that are time march
+        ! ptype => col_elemP(ep_JM_ALLtm)
+        ! npack => npack_elemP(ptype)
+        ! npack = count( &
+        !         ( &
+        !             (elemI(:,ei_QeqType) == time_march ) &
+        !             .or. &
+        !             (elemI(:,ei_HeqType) == time_march ) &
+        !         ) &
+        !         .and. &
+        !         (elemI(:,ei_elementType) == JM) &
+        !         )
+        ! if (npack > 0) then
+        !     elemP(1:npack,ptype) = pack( eIdx, &
+        !         ( &
+        !             (elemI(:,ei_QeqType) == time_march ) &
+        !             .or. &
+        !             (elemI(:,ei_HeqType) == time_march ) &
+        !         ) &
+        !         .and. &
+        !         (elemI(:,ei_elementType) == JM) &
+        !         )
+        ! end if
 
     !% ep_JB_ALLtm
         !% - all junction main elements that are time march
@@ -3477,108 +3487,100 @@ contains
 
         eIdx => elemI(:,ei_Lidx)
 
-        !% ep_AC ================================================
-        !% - all elements that use AC
-        ptype => col_elemP(ep_AC)
-        npack => npack_elemP(ptype)
-        npack = count( &
-                (elemI(:,ei_tmType) == AC))
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemI(:,ei_tmType) == AC))
-        end if
+        ! !% ep_AC ================================================
+        ! !% - all elements that use AC
+        ! ptype => col_elemP(ep_AC)
+        ! npack => npack_elemP(ptype)
+        ! npack = count( &
+        !         (elemI(:,ei_tmType) == AC))
+        ! if (npack > 0) then
+        !     elemP(1:npack,ptype) = pack(eIdx,  &
+        !         (elemI(:,ei_tmType) == AC))
+        ! end if
 
-        !print *, 'CC_AC'
-        !% ep_CC_AC ================================================
-        !% - all channel conduit elements that use AC
-        ptype => col_elemP(ep_CC_AC)
-        npack => npack_elemP(ptype)
-        npack = count( &
-                (elemI(:,ei_elementType) == CC) &
-                .and. &
-                (elemI(:,ei_tmType) == AC)     )
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemI(:,ei_elementType) == CC) &
-                .and. &
-                (elemI(:,ei_tmType) == AC)     )
-        end if
+        ! !print *, 'CC_AC'
+        ! !% ep_CC_AC ================================================
+        ! !% - all channel conduit elements that use AC
+        ! ptype => col_elemP(ep_CC_AC)
+        ! npack => npack_elemP(ptype)
+        ! npack = count( &
+        !         (elemI(:,ei_elementType) == CC) &
+        !         .and. &
+        !         (elemI(:,ei_tmType) == AC)     )
+        ! if (npack > 0) then
+        !     elemP(1:npack,ptype) = pack(eIdx,  &
+        !         (elemI(:,ei_elementType) == CC) &
+        !         .and. &
+        !         (elemI(:,ei_tmType) == AC)     )
+        ! end if
 
-        !print *, 'CC_ETM'
-        !% ep_CC_ETM ================================================
-        !% - all channel conduit elements that use ETM
-        ptype => col_elemP(ep_CC_ETM)
-        npack => npack_elemP(ptype)
-        npack = count( &
-                (elemI(:,ei_elementType) == CC) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM)     )
+        ! !print *, 'CC_ETM'
+        ! !% ep_CC_ETM ================================================
+        ! !% - all channel conduit elements that use ETM
+        ! ptype => col_elemP(ep_CC_ETM)
+        ! npack => npack_elemP(ptype)
+        ! npack = count( &
+        !         (elemI(:,ei_elementType) == CC) &
+        !         .and. &
+        !         (elemI(:,ei_tmType) == ETM)     )
 
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemI(:,ei_elementType) == CC) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM)     )
-        end if
+        ! if (npack > 0) then
+        !     elemP(1:npack,ptype) = pack(eIdx,  &
+        !         (elemI(:,ei_elementType) == CC) &
+        !         .and. &
+        !         (elemI(:,ei_tmType) == ETM)     )
+        ! end if
 
-        !print *, 'CC_H_ETM'
-        !% ep_CC_H_ETM ================================================
+        !print *, 'CC_H'
+        !% ep_CC_H ================================================
         !% - all channel conduit elements that have head time march using ETM
-        ptype => col_elemP(ep_CC_H_ETM)
+        ptype => col_elemP(ep_CC_H)
         npack => npack_elemP(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
-                (elemI(:,ei_HeqType) == time_march) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM)     )
+                (elemI(:,ei_HeqType) == time_march))
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                (elemI(:,ei_elementType) == CC) &
                 .and. &
-                (elemI(:,ei_HeqType) == time_march) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM)     )
+                (elemI(:,ei_HeqType) == time_march))
         end if
 
-        !print *, 'CC_Q_AC'
-        !% ep_CC_Q_AC ================================================
-        !% - all channel conduit elements that have flow time march using AC
-        ptype => col_elemP(ep_CC_Q_AC)
-        npack => npack_elemP(ptype)
-        npack = count( &
-                (elemI(:,ei_elementType) == CC) &
-                .and. &
-                (elemI(:,ei_QeqType) == time_march) &
-                .and. &
-                (elemI(:,ei_tmType) == AC)     )
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-               (elemI(:,ei_elementType) == CC) &
-                .and. &
-                (elemI(:,ei_QeqType) == time_march) &
-                .and. &
-                (elemI(:,ei_tmType) == AC)     )
-        end if
+        ! !print *, 'CC_Q_AC'
+        ! !% ep_CC_Q_AC ================================================
+        ! !% - all channel conduit elements that have flow time march using AC
+        ! ptype => col_elemP(ep_CC_Q_AC)
+        ! npack => npack_elemP(ptype)
+        ! npack = count( &
+        !         (elemI(:,ei_elementType) == CC) &
+        !         .and. &
+        !         (elemI(:,ei_QeqType) == time_march) &
+        !         .and. &
+        !         (elemI(:,ei_tmType) == AC)     )
+        ! if (npack > 0) then
+        !     elemP(1:npack,ptype) = pack(eIdx,  &
+        !        (elemI(:,ei_elementType) == CC) &
+        !         .and. &
+        !         (elemI(:,ei_QeqType) == time_march) &
+        !         .and. &
+        !         (elemI(:,ei_tmType) == AC)     )
+        ! end if
 
-        !print *, 'CC_Q_ETM'
-        !% ep_CC_Q_ETM ================================================
-        !% - all channel conduit elements elements that have flow time march using ETM
-        ptype => col_elemP(ep_CC_Q_ETM)
+        !print *, 'CC_Q'
+        !% ep_CC_Q ================================================
+        !% - all channel conduit elements elements that have flow time march
+        ptype => col_elemP(ep_CC_Q)
         npack => npack_elemP(ptype)
         npack = count( &
                 (elemI(:,ei_elementType) == CC) &
                 .and. &
-                (elemI(:,ei_QeqType) == time_march) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM)     )
+                (elemI(:,ei_QeqType) == time_march) )
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                (elemI(:,ei_elementType) == CC) &
                 .and. &
-                (elemI(:,ei_QeqType) == time_march) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM)     )
+                (elemI(:,ei_QeqType) == time_march) )
         end if
 
         !print *, 'CCJB_AC'
@@ -3739,31 +3741,31 @@ contains
         !         (elemYN(:,eYN_isACsurcharged)))
         ! end if
 
-        !% ep_CCJB_eETM_i_fAC ================================================
-        !% conduits, channels, and junction branches that are ETM and have
-        !% an adjacent face that is AC
-        ptype => col_elemP(ep_CCJB_eETM_i_fAC)
-        npack => npack_elemP(ptype)
+        ! !% ep_CCJB_eETM_i_fAC ================================================
+        ! !% conduits, channels, and junction branches that are ETM and have
+        ! !% an adjacent face that is AC
+        ! ptype => col_elemP(ep_CCJB_eETM_i_fAC)
+        ! npack => npack_elemP(ptype)
 
-        !% HACK: due to elements having u/s or d/s null faces, the code below
-        !% is written in do loop untill other fix is figured out
+        ! !% HACK: due to elements having u/s or d/s null faces, the code below
+        ! !% is written in do loop untill other fix is figured out
 
-        npack = zeroI
-        do ii = 1,N_elem(this_image())
-            fup => elemI(ii,ei_Mface_uL)
-            fdn => elemI(ii,ei_Mface_dL)
-            if ((fup /= nullvalueI) .and. (fdn /= nullValueI)) then
-                if (((elemI(ii,ei_elementType) == CC) .or. (elemI(ii,ei_elementType) == JB)) &
-                    .and. &
-                    (elemI(ii,ei_tmType) == ETM) &
-                    .and. &
-                    ((faceYN(fup,fYN_isAC_adjacent)) .or. (faceYN(fdn,fYN_isAC_adjacent)))) then
+        ! npack = zeroI
+        ! do ii = 1,N_elem(this_image())
+        !     fup => elemI(ii,ei_Mface_uL)
+        !     fdn => elemI(ii,ei_Mface_dL)
+        !     if ((fup /= nullvalueI) .and. (fdn /= nullValueI)) then
+        !         if (((elemI(ii,ei_elementType) == CC) .or. (elemI(ii,ei_elementType) == JB)) &
+        !             .and. &
+        !             (elemI(ii,ei_tmType) == ETM) &
+        !             .and. &
+        !             ((faceYN(fup,fYN_isAC_adjacent)) .or. (faceYN(fdn,fYN_isAC_adjacent)))) then
                     
-                    npack = npack + oneI
-                    elemP(npack,ptype) = ii
-                end if
-            end if
-        end do
+        !             npack = npack + oneI
+        !             elemP(npack,ptype) = ii
+        !         end if
+        !     end if
+        ! end do
 
         !% ep_CCJB_ETM ================================================
         !% - all channel conduit or junction branch that are ETM
@@ -3884,10 +3886,10 @@ contains
         !         )
         ! end if
 
-        !print *, 'CCJM_H_ETM'
-        !% ep_CCJM_H_ETM ================================================
+        !print *, 'CCJM_H'
+        !% ep_CCJM_H ================================================
         !% - all channel conduit or junction main that use head solution with ETM
-        ptype => col_elemP(ep_CCJM_H_ETM)
+        ptype => col_elemP(ep_CCJM_H)
         npack => npack_elemP(ptype)
 
         npack = count( &
@@ -3898,8 +3900,6 @@ contains
                  ) &
                 .and. &
                 (elemI(:,ei_HeqType) == time_march) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM) &
                 )
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx, &
@@ -3910,40 +3910,38 @@ contains
                  ) &
                 .and. &
                 (elemI(:,ei_HeqType) == time_march) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM) &
                 )
         end if
 
-        !print *, 'ETM'
-        !% ep_ETM ================================================
-        !% - all elements that use ETM
-        ptype => col_elemP(ep_ETM)
-        npack => npack_elemP(ptype)
+        ! !print *, 'ETM'
+        ! !% ep_ETM ================================================
+        ! !% - all elements that use ETM
+        ! ptype => col_elemP(ep_ETM)
+        ! npack => npack_elemP(ptype)
 
-        npack = count( &
-                (elemI(:,ei_tmType) == ETM))
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx, &
-                (elemI(:,ei_tmType) == ETM))
-        end if
+        ! npack = count( &
+        !         (elemI(:,ei_tmType) == ETM))
+        ! if (npack > 0) then
+        !     elemP(1:npack,ptype) = pack(eIdx, &
+        !         (elemI(:,ei_tmType) == ETM))
+        ! end if
 
-        !print *, 'JM_AC'
-        !% ep_JM_AC ================================================
-        !% - all elements that are junction mains and use AC
-        ptype => col_elemP(ep_JM_AC)
-        npack => npack_elemP(ptype)
+        ! !print *, 'JM_AC'
+        ! !% ep_JM_AC ================================================
+        ! !% - all elements that are junction mains and use AC
+        ! ptype => col_elemP(ep_JM_AC)
+        ! npack => npack_elemP(ptype)
 
-        npack = count( &
-                (elemI(:,ei_elementType) == JM ) &
-                .and. &
-                (elemI(:,ei_tmType) == AC))
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemI(:,ei_elementType) == JM ) &
-                .and. &
-                (elemI(:,ei_tmType) == AC))
-        end if
+        ! npack = count( &
+        !         (elemI(:,ei_elementType) == JM ) &
+        !         .and. &
+        !         (elemI(:,ei_tmType) == AC))
+        ! if (npack > 0) then
+        !     elemP(1:npack,ptype) = pack(eIdx,  &
+        !         (elemI(:,ei_elementType) == JM ) &
+        !         .and. &
+        !         (elemI(:,ei_tmType) == AC))
+        ! end if
 
         !print *, 'JB_AC'
         !% ep_JB_AC ================================================
@@ -3965,20 +3963,20 @@ contains
         !print *, 'JM_ETM'
         !% ep_JM_ETM ================================================
         !% - all elements that are junction mains and ETM
-        ptype => col_elemP(ep_JM_ETM)
-        npack => npack_elemP(ptype)
+        ! ptype => col_elemP(ep_JM_ETM)
+        ! npack => npack_elemP(ptype)
 
-        npack = count( &
-                (elemI(:,ei_elementType) == JM ) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM))
+        ! npack = count( &
+        !         (elemI(:,ei_elementType) == JM ) &
+        !         .and. &
+        !         (elemI(:,ei_tmType) == ETM))
 
-        if (npack > 0) then
-            elemP(1:npack,ptype) = pack(eIdx,  &
-                (elemI(:,ei_elementType) == JM ) &
-                .and. &
-                (elemI(:,ei_tmType) == ETM))
-        end if
+        ! if (npack > 0) then
+        !     elemP(1:npack,ptype) = pack(eIdx,  &
+        !         (elemI(:,ei_elementType) == JM ) &
+        !         .and. &
+        !         (elemI(:,ei_tmType) == ETM))
+        ! end if
 
         !print *, 'JB'
     !% ep_JB ================================================
@@ -4256,97 +4254,81 @@ contains
 
         select case (eType)
             case (CC)
-                !% ep_SmallDepth_CC_ETM ====================================
-                !% - all Small depth that are CC and ETM time march
-                ptype => col_elemP(ep_SmallDepth_CC_ETM)
+                !% ep_SmallDepth_CC ====================================
+                !% - all Small depth that are CC 
+                ptype => col_elemP(ep_SmallDepth_CC)
                 npack => npack_elemP(ptype)
                 if (setting%SmallDepth%useMomentumCutoffYN) then
                     npack = count( &
                             (elemYN(:,eYN_isSmallDepth)) &
                             .and. &
-                            (elemI(:,ei_elementType) == CC) &
-                            .and. &
-                            (elemI(:,ei_tmType) == ETM) )
+                            (elemI(:,ei_elementType) == CC))
 
                     if (npack > 0) then
                         elemP(1:npack,ptype) = pack(eIdx,  &
                             (elemYN(:,eYN_isSmallDepth)) &
                             .and. &
-                            (elemI(:,ei_elementType) == CC) &
-                            .and. &
-                            (elemI(:,ei_tmType) == ETM))
+                            (elemI(:,ei_elementType) == CC) )
                     end if
                 else 
                     npack = zeroI
                 end if
 
-                !% ep_ZeroDepth_CC_ETM ====================================
-                !% - all zero depth that are CC and ETM time march
-                ptype => col_elemP(ep_ZeroDepth_CC_ETM)
+                !% ep_ZeroDepth_CC ====================================
+                !% - all zero depth that are CC
+                ptype => col_elemP(ep_ZeroDepth_CC)
                 npack => npack_elemP(ptype)
 
                 npack = count( &
                         (elemYN(:,eYN_isZeroDepth)) &
                         .and. &
-                        (elemI(:,ei_elementType) == CC) &
-                        .and. &
-                        (elemI(:,ei_tmType) == ETM) )
+                        (elemI(:,ei_elementType) == CC) )
 
                 if (npack > 0) then
                     elemP(1:npack,ptype) = pack(eIdx,  &
                         (elemYN(:,eYN_isZeroDepth)) &
                         .and. &
-                        (elemI(:,ei_elementType) == CC) &
-                        .and. &
-                        (elemI(:,ei_tmType) == ETM) )
+                        (elemI(:,ei_elementType) == CC) )
                 end if
            
             case (JM)
                 !% BeginNew 20220122brh
-                !% ep_SmallDepth_JM_ETM ====================================
-                !% - all Small depth that are JM and ETM time march
-                ptype => col_elemP(ep_SmallDepth_JM_ETM)
+                !% ep_SmallDepth_JM_ ====================================
+                !% - all Small depth that are JM 
+                ptype => col_elemP(ep_SmallDepth_JM)
                 npack => npack_elemP(ptype)
 
                 if (setting%SmallDepth%useMomentumCutoffYN) then
                     npack = count( &
                             (elemYN(:,eYN_isSmallDepth)) &
                             .and. &
-                            (elemI(:,ei_elementType) == JM) &
-                            .and. &
-                            (elemI(:,ei_tmType) == ETM) )
+                            (elemI(:,ei_elementType) == JM))
 
                     if (npack > 0) then
                         elemP(1:npack,ptype) = pack(eIdx,  &
                             (elemYN(:,eYN_isSmallDepth)) &
                             .and. &
-                            (elemI(:,ei_elementType) == JM) &
-                            .and. &
-                            (elemI(:,ei_tmType) == ETM))
+                            (elemI(:,ei_elementType) == JM))
                     end if
                 else 
                     npack = zeroI
                 end if
 
                 !% ep_ZeroDepth_JM_ETM ====================================
-                !% - all Zero depth that are JM for ETM
-                ptype => col_elemP(ep_ZeroDepth_JM_ETM)
+                !% - all Zero depth that are JM 
+                ptype => col_elemP(ep_ZeroDepth_JM)
                 npack => npack_elemP(ptype)
 
                 npack = count( &
                         (elemYN(:,eYN_isZeroDepth)) &
                         .and. &
-                        (elemI(:,ei_elementType) == JM) &
-                        .and. &
-                        (elemI(:,ei_tmType) == ETM))
+                        (elemI(:,ei_elementType) == JM))
 
                 if (npack > 0) then
                     elemP(1:npack,ptype) = pack(eIdx,  &
                         (elemYN(:,eYN_isZeroDepth)) &
                         .and. &
-                        (elemI(:,ei_elementType) == JM) &
-                        .and. &
-                        (elemI(:,ei_tmType) == ETM))
+                        (elemI(:,ei_elementType) == JM) )
                 end if
 
             case (JB)
@@ -4375,25 +4357,21 @@ contains
                 !     npack = zeroI
                 ! end if
 
-                !% ep_ZeroDepth_JB_ETM ====================================
-                !% - all Zero depth that are JB for ETM
-                ptype => col_elemP(ep_ZeroDepth_JB_ETM)
+                !% ep_ZeroDepth_JB ====================================
+                !% - all Zero depth that are JB
+                ptype => col_elemP(ep_ZeroDepth_JB)
                 npack => npack_elemP(ptype)
 
                 npack = count( &
                         (elemYN(:,eYN_isZeroDepth)) &
                         .and. &
-                        (elemI(:,ei_elementType) == JB) &
-                        .and. &
-                        (elemI(:,ei_tmType) == ETM))
+                        (elemI(:,ei_elementType) == JB))
 
                 if (npack > 0) then
                     elemP(1:npack,ptype) = pack(eIdx,  &
                         (elemYN(:,eYN_isZeroDepth)) &
                         .and. &
-                        (elemI(:,ei_elementType) == JB) &
-                        .and. &
-                        (elemI(:,ei_tmType) == ETM))
+                        (elemI(:,ei_elementType) == JB) )
                 end if
                 
             case default 

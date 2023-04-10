@@ -20,7 +20,7 @@ END_TIME             03:30:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:01:00
+REPORT_STEP          00:00:30
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
 ROUTING_STEP         0:00:01 
@@ -104,17 +104,17 @@ J0                FLOW             "630016810"               FLOW
 [WEIRS]
 ;;Name           From Node        To Node          Type         CrestHt    Qcoeff     Gated    EndCon   EndCoeff   Surcharge  RoadWidth  RoadSurf   Coeff. Curve
 ;;-------------- ---------------- ---------------- ------------ ---------- ---------- -------- -------- ---------- ---------- ---------- ---------- ----------------
-W1               J4w               J5w            TRAPEZOIDAL    1.6        1.84        NO       2        0          YES        
+W1               J4w               J5w            TRAPEZOIDAL    1.0        1.84        NO       2        0          YES        
 
 [TIMESERIES]
 ;;Name           Date       Time       Value     
 ;;-------------- ---------- ---------- ----------
 630016810                   0.0        0.0  ; / 4.353e-01 
 630016810                   0.01       0.0
-630016810                   0.05       0.1
-630016810                   2.0        0.1
-630016810                   2.10       0.0
-630016810                   12.5       0.0
+630016810                   0.05       0.2
+630016810                   1.0        0.2
+630016810                   1.10       0.0
+630016810                   23.9       0.0
 
 [REPORT]
 ;;Reporting Options

@@ -484,26 +484,26 @@ module define_indexes
     !% These are the for the packed arrays general elements
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: ep_AC = 1                     !% all AC elements
-        enumerator :: ep_ALLtm                      !% all ETM, AC elements 
-        enumerator :: ep_CC_AC                      !% all CC elements that are AC
+        !enumerator :: ep_AC = 1                     !% all AC elements
+        enumerator :: ep_ALLtm = 1                      !% all time-marching elements
+        !enumerator :: ep_CC_AC                      !% all CC elements that are AC
         !enumerator :: ep_CC_ACsurcharged            !% all CC elements that are AC
-        enumerator :: ep_CC_ALLtm                   !% all CC elements that are ETM or AC
+        enumerator :: ep_CC                   !% all CC elements that are ETM or AC
         !enumerator :: ep_CC_ALLtm_ACsurcharged      !% all CC elements that are AC and surcharged
-        enumerator :: ep_CC_ETM                     !% all CC elements that are ETM
+        !enumerator :: ep_CC_ETM                     !% all CC elements that are ETM
         !enumerator :: ep_CC_ETM_PSsurcharged        !% CC elements that are ETM and surcharged
-        enumerator :: ep_CC_H_ETM                   !% all CC elements that are ETM for H
-        enumerator :: ep_CC_Q_AC                    !% all CC elements that are AC for Q
-        enumerator :: ep_CC_Q_ETM                   !% all CC elements that are ETM for Q
+        enumerator :: ep_CC_H                   !% all CC elements that are time-marched for H
+        !enumerator :: ep_CC_Q_AC                    !% all CC elements that are AC for Q
+        enumerator :: ep_CC_Q                   !% all CC elements that are time-marched for Q
         !enumerator :: ep_CCJB_ACsurcharged          !% all CC and JB elements that are AC
         !enumerator :: ep_CCJB_ALLtm                 !% all CC and JB elements that ar any TM
         !enumerator :: ep_CCJB_AC                    !% all CC and JB elements that are AC
         !enumerator :: ep_CCJB_ALLtm_ACsurcharged      !% all CC and JB elements that are AC and surcharged
-        enumerator :: ep_CCJB_eETM_i_fAC            !% Any CC or JB element that is ETM and has an AC face.
+        !enumerator :: ep_CCJB_eETM_i_fAC            !% Any CC or JB element that is ETM and has an AC face.
         !enumerator :: ep_CCJB_ETM                   !% CC and JB elements that are ETM
         !enumerator :: ep_CCJB_ETM_PSsurcharged        !% CC and JB elements that are ETM and surcharged
         !enumerator :: ep_CCJM_H_AC_open             !% CC and JM elements that are AC for H and open channel
-        enumerator :: ep_CCJM_H_ETM                 !% CC and JM elements that are ETM for H
+        enumerator :: ep_CCJM_H                 !% CC and JM elements that are time-marching for H
         enumerator :: ep_CC_isClosedSetting          !% CC elements that have er_Setting = 0.0 indicating closed off
         enumerator :: ep_Culvert_Inlet              !% all CC elements that are also culvert inlets
         !enumerator :: ep_culvert_outlet             !% all CC elements that are also culvert outlets
@@ -511,11 +511,11 @@ module define_indexes
         enumerator :: ep_Diag                       !% diagnostic elements (static)
         enumerator :: ep_Diag_notJB                 !% diagnostic elements not adjacent to JB (static)
         enumerator :: ep_Diag_JBadjacent            !% diagnostic elements adjacent to JB element (static)
-        enumerator :: ep_ETM                        !% all ETM elements
+        !enumerator :: ep_ETM                        !% all ETM elements
         enumerator :: ep_JM                         !% all JM elements
-        enumerator :: ep_JM_AC                      !% junction mains using AC method
-        enumerator :: ep_JM_ALLtm                   !% Junction mains with any time march (static)
-        enumerator :: ep_JM_ETM                     !% junction mains using ETM method
+        !enumerator :: ep_JM_AC                      !% junction mains using AC method
+        !enumerator :: ep_JM_ALLtm                   !% Junction mains with any time march (static)
+        !enumerator :: ep_JM_ETM                     !% junction mains using ETM method
         enumerator :: ep_JB                         !% any valid JB branch
         !enumerator :: ep_JB_AC                      !% junction branches using AC method
         !enumerator :: ep_JB_ALLtm                   !% Junction branches with any time march (static)
@@ -526,18 +526,18 @@ module define_indexes
         !enumerator :: ep_SmallDepth_CC_ALLtm_posSlope !% small depth conduit cells with any time march and positive bottom slope
         !enumerator :: ep_SmallDepth_CC_ALLtm_negSlope !% small depth conduit cells with any time march and negative (adverse) bottom slope
         !enumerator :: ep_SmallDepth_CC_ALLtm
-        enumerator :: ep_SmallDepth_CC_ETM
+        enumerator :: ep_SmallDepth_CC
         !enumerator :: ep_SmallDepth_CC_AC
         !enumerator :: ep_SmallDepth_JM_ALLtm  !% 20220122brh
-        enumerator :: ep_SmallDepth_JM_ETM    !% 20220122brh
+        enumerator :: ep_SmallDepth_JM    !% 20220122brh
         !enumerator :: ep_SmallDepth_JB_ETM 
         !enumerator :: ep_SmallDepth_JM_AC     !% 20220122brh
         !enumerator :: ep_ZeroDepth_CC_ALLtm         !% zero depth with any time march
-        enumerator :: ep_ZeroDepth_CC_ETM
-        enumerator :: ep_ZeroDepth_JB_ETM
+        enumerator :: ep_ZeroDepth_CC
+        enumerator :: ep_ZeroDepth_JB
         !enumerator :: ep_ZeroDepth_CC_AC
         !enumerator :: ep_ZeroDepth_JM_ALLtm         !% zero depth JM
-        enumerator :: ep_ZeroDepth_JM_ETM
+        enumerator :: ep_ZeroDepth_JM
         !enumerator :: ep_ZeroDepth_JM_AC
         !enumerator :: ep_ACsurcharged              !% all surcharged with AC
         !enumerator :: ep_ALLtmSurcharged           !% all time march surcharged
@@ -1391,7 +1391,7 @@ module define_indexes
         enumerator :: fr_Velocity_d             !% velocity on downstream side of face
         enumerator :: fr_Velocity_u             !% velocity on upstream side of face
         enumerator :: fr_Preissmann_Number      !% preissmann number at face
-        enumerator :: fr_Temp01    !% only needed for debugging
+        enumerator :: fr_Temp01    !% 
         enumerator :: fr_Temp02    !% only needed for debugging
         enumerator :: fr_Zcrown_u
         enumerator :: fr_Zcrown_d

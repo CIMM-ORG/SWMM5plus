@@ -795,8 +795,8 @@ module utility
         !% Preliminaries:
         !%------------------------------------------------------------------
         !% Aliases:
-            thisColCC => col_elemP(ep_CC_ALLtm)
-            thisColJM => col_elemP(ep_JM_ALLtm)
+            thisColCC => col_elemP(ep_CC)
+            thisColJM => col_elemP(ep_JM)
             fQ      => faceR(:,fr_Flowrate_Conservative)
             fBarrels=> faceI(:,fi_barrels)
             eCons   => elemR(:,er_VolumeConservation)
@@ -846,7 +846,7 @@ module utility
             !             print *, 'Delta Vol - fluxes', VolNew(thisP(ii)) - VolOld(thisP(ii)) & 
             !                     - dt * fQ(fup(thisP(ii))) + dt * fQ(fdn(thisP(ii))) - dt * eQlat(thisP(ii)) 
             !             print *, 'vol overflow ',elemR(thisP(ii),er_VolumeOverFlow)
-            !             call util_crashpoint(358783)
+            !             ! call util_crashpoint(358783)
             !         end if
             !     end if
             ! end do  
@@ -902,39 +902,39 @@ module utility
 
             eCons(thisP) = eCons(thisP) + tempCons(thisP)
 
-            do ii = 1,size(thisP)
-                if (abs(tempCons(thisP(ii))) > 1.0e-4) then
+            ! do ii = 1,size(thisP)
+            !     if (abs(tempCons(thisP(ii))) > 1.0e-4) then
 
-                    if (elemYN(thisP(ii),eYN_isZeroDepth)) then
-                        !% --- more volume out than exists in small depth cell,
-                        !%     artificial inflow caused by zero depth
-                        VolArtInflow(thisP(ii)) = -tempCons(thisP(ii))
-                        ! print *, ' '
-                        ! print *, 'VolArtInflow', VolArtInflow(thisP(ii)) 
-                        ! print *, ' '
-                    else
-                       ! print *, ' '
-                        ! print *, 'CONSERVATION ISSUE JM', ii, thisP(ii), this_image()
-                        ! print *, 'is zerodepth =',elemYN(thisP(ii),eYN_isZeroDepth), ';   is smalldepth = ',elemYN(thisP(ii),eYN_isSmallDepth)
-                        ! print *,  'volume overflow ', VolOver(thisP(ii))
-                        ! print *,  'mass gain/loss ',tempCons(thisP(ii))
-                        ! print *,  'node # ',elemI(thisP(ii),ei_node_Gidx_SWMM)
-                        ! print *,  'node name ',trim(node%Names(elemI(thisP(ii),ei_node_Gidx_SWMM))%str)
-                        ! do kk = 1,max_branch_per_node,2
-                        !     if (elemSI(thisP(ii)+kk),esi_JunctionBranch_Exists) then
-                        !         if (fup(thisP(ii)+kk) /= nullvalueI) then
-                        !             print *, 'branch Q Fup',fup(thisP(ii)+kk),   fQ(fup(thisP(ii)+kk  )) * real(BranchExists(thisP(ii)+kk  ),8)  * real(fBarrels(fup(thisP(ii)+kk  )),8)
-                        !         end if
-                        !         if (fdn(thisP(ii)+kk+1) /= nullvalueI) then
-                        !             print *, 'branch Q Fdn',fdn(thisP(ii)+kk+1), fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8)  * real(fBarrels(fdn(thisP(ii)+kk+1)),8)
-                        !         endif
-                        !     end if
-                        ! end do
-                        !call util_crashpoint(3587832)
+            !         if (elemYN(thisP(ii),eYN_isZeroDepth)) then
+            !             !% --- more volume out than exists in small depth cell,
+            !             !%     artificial inflow caused by zero depth
+            !             VolArtInflow(thisP(ii)) = -tempCons(thisP(ii))
+            !             ! print *, ' '
+            !             ! print *, 'VolArtInflow', VolArtInflow(thisP(ii)) 
+            !             ! print *, ' '
+            !         else
+            !            print *, ' '
+            !             print *, 'CONSERVATION ISSUE JM', ii, thisP(ii), this_image()
+            !             print *, 'is zerodepth =',elemYN(thisP(ii),eYN_isZeroDepth), ';   is smalldepth = ',elemYN(thisP(ii),eYN_isSmallDepth)
+            !             print *,  'volume overflow ', VolOver(thisP(ii))
+            !             print *,  'mass gain/loss ',tempCons(thisP(ii))
+            !             print *,  'node # ',elemI(thisP(ii),ei_node_Gidx_SWMM)
+            !             print *,  'node name ',trim(node%Names(elemI(thisP(ii),ei_node_Gidx_SWMM))%str)
+            !             do kk = 1,max_branch_per_node,2
+            !                 if (elemSI(thisP(ii)+kk,esi_JunctionBranch_Exists)) then
+            !                     if (fup(thisP(ii)+kk) /= nullvalueI) then
+            !                         print *, 'branch Q Fup',fup(thisP(ii)+kk),   fQ(fup(thisP(ii)+kk  )) * real(BranchExists(thisP(ii)+kk  ),8)  * real(fBarrels(fup(thisP(ii)+kk  )),8)
+            !                     end if
+            !                     if (fdn(thisP(ii)+kk+1) /= nullvalueI) then
+            !                         print *, 'branch Q Fdn',fdn(thisP(ii)+kk+1), fQ(fdn(thisP(ii)+kk+1)) * real(BranchExists(thisP(ii)+kk+1),8)  * real(fBarrels(fdn(thisP(ii)+kk+1)),8)
+            !                     endif
+            !                 end if
+            !             end do
+            !             ! call util_crashpoint(3587832)
 
-                    end if    
-                end if
-            end do   
+            !         end if    
+            !     end if
+            ! end do   
 
        
 
@@ -977,7 +977,7 @@ module utility
     
         !% for CC elements of any TM
         vstore = zeroR
-        thisCol => col_elemP(ep_CC_ALLtm)
+        thisCol => col_elemP(ep_CC)
         npack   => npack_elemP(thisCol)
         if (npack > 0) then
             thisP => elemP(1:npack,thisCol)
@@ -991,7 +991,7 @@ module utility
        ! print *, 'in util total_volume conservation ',vstore, this_image()
 
         !% for JM ETM elements
-        thisCol =>col_elemP(ep_JM_ALLtm) 
+        thisCol =>col_elemP(ep_JM) 
         npack   => npack_elemP(thisCol)
         if (npack > 0) then
             thisP => elemP(1:npack,thisCol)

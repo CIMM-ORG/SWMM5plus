@@ -988,6 +988,10 @@ contains
             !% Handle junction nodes with more than 2 branches (multi branch junction node).
             case (nJm)
 
+                print *, ' '
+                print *, 'node here is nJM ',thisNode
+                print *, ' '
+
                 !% Check 2: If the node has already been assigned
                 if (nAssignStatus == nUnassigned) then
 

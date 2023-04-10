@@ -9,7 +9,7 @@ module junction_elements
     use face, only: face_interpolation, face_force_JBadjacent_values
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements, pack_zero_depth_interior_faces
     use update
-    use utility_unit_testing, only: util_utest_CLprint
+    !use utility_unit_testing, only: util_utest_CLprint
     use utility_crash, only: util_crashpoint
 
 !%----------------------------------------------------------------------------- 
@@ -34,7 +34,7 @@ module junction_elements
 
     real(8) :: coef1, coef2, coef3, coef4
 
-    integer :: printJM = 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
+    integer :: printJM = 51 ! 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
 
     contains
 !%==========================================================================
@@ -61,6 +61,12 @@ module junction_elements
             coef4 = threehalfR * coef3        
         !%-----------------------------------------------------------------
         !%-----------------------------------------------------------------
+
+        !% --- set the faceR(:,deltaQ) to zero as it is an accumulator for
+        !%     changes both caused by face interpolation and changes caused
+        !%     by junction solution
+        faceR(:,fr_DeltaQ) = zeroR
+
         !% --- Ensures JB interpweights are based on flow on both sides of face
         !%     This is needed so that when Q(JB) = 0 the adjacent element Q
         !%     will be interpolated to the intervening face
@@ -69,7 +75,7 @@ module junction_elements
         thisP => elemP(1:Npack,ep_JB)
         call update_interpweights_JB (thisP, Npack, .false.)
 
-            ! call util_utest_CLprint ('------- DDD08 after update_interpweights_JB')  
+           ! ! call util_utest_CLprint ('------- DDD08 after update_interpweights_JB')  
         
         ! print *, ' '
         ! print *,  'resid ',junction_conservation_residual(printJM)
@@ -90,9 +96,10 @@ module junction_elements
         !      and JB values  for head, dQdH, DeltaQ, flowrate, StorageRate, OverflowRate
         Npack => npack_elemP(ep_JM)
         thisP => elemP(1:Npack,ep_JM)
+
         call junction_calculation_3 (thisP, Npack, istep)
 
-            ! call util_utest_CLprint ('------- DDD10 after junction_calculation') 
+           ! call util_utest_CLprint ('------- DDD10 after junction_calculation') 
 
             ! print *, ' '
             ! print *,  'resid ',junction_conservation_residual(printJM)
@@ -104,7 +111,7 @@ module junction_elements
         !%     .true. = force interp weights for Q to favor JB
         call update_auxiliary_variables_JMJB ( .true.)
 
-            ! call util_utest_CLprint ('------- DDD11 after update_auxiliary_variables_JMJB') 
+           ! ! call util_utest_CLprint ('------- DDD11 after update_auxiliary_variables_JMJB') 
             ! print *, ' '
             ! print *,  'resid ',junction_conservation_residual(printJM)
             ! print *, ' '
@@ -112,7 +119,7 @@ module junction_elements
         call adjust_element_toplevel (JB)
         call adjust_element_toplevel (JM)
        
-            ! call util_utest_CLprint ('------- DDD12 after adjust element toplevel') 
+           ! ! call util_utest_CLprint ('------- DDD12 after adjust element toplevel') 
             ! print *, ' '
             ! print *,  'resid ',junction_conservation_residual(printJM)
             ! print *, ' '
@@ -120,7 +127,7 @@ module junction_elements
         call face_force_JBadjacent_values (ep_JM, .true.)
         call face_force_JBadjacent_values (ep_JM, .false.)
 
-            ! call util_utest_CLprint ('------- DDD13  after face_force_JB... in junction')
+           ! ! call util_utest_CLprint ('------- DDD13  after face_force_JB... in junction')
             ! print *, ' '
             ! print *, 'resid ',junction_conservation_residual(printJM)
             ! print *, ' '
@@ -135,14 +142,14 @@ module junction_elements
         call junction_CC_for_JBadjacent (ep_CC_UpstreamOfJunction,   istep, .true.)
         call junction_CC_for_JBadjacent (ep_CC_DownstreamOfJunction, istep, .false.)
 
-            ! call util_utest_CLprint ('------- DDD14  after junction_CC_forJBadjacent')
+           ! ! call util_utest_CLprint ('------- DDD14  after junction_CC_forJBadjacent')
             ! print *, ' '
             ! print *, 'resid ',junction_conservation_residual(printJM)
             ! print *, ' '
 
         call adjust_face_toplevel(fp_JB)
 
-            ! call util_utest_CLprint ('------- DDD15  after junction_face toplevel')
+           ! ! call util_utest_CLprint ('------- DDD15  after junction_face toplevel')
             ! print *, ' ', printJM
             ! print *, 'resid ',junction_conservation_residual(printJM)
             ! print *, ' '
@@ -199,23 +206,27 @@ module junction_elements
             print *, 'However, method ',trim(reverseKey(setting%Solver%MomentumSourceMethod)),' is used'
             call util_crashpoint(6698734)
         end if
+
+        ! print *, ' '
+        ! print *, 'in junction face terms '
+        ! print *, ' AA weir rect breadth         ',elemSR(211,esr_Weir_RectangularBreadth)
         
             ! print *, 'in junction face terms'
         !% --- fa and fb terms for the JB elements adjacent to a JB face
         do mm=1,Npack
 
-            !     print *, ' '
-            !     print *, 'in junction_face_terms'
-            !     print *, 'mm = ',mm
+                ! print *, ' '
+                ! print *, 'in junction_face_terms -----------------------------------------------------------'
+                ! print *, 'mm, face, ',mm, faceP(mm,thisColP)
 
             fIdx => faceP(mm,thisColP)
 
-            ! print *, 'fidx ',fidx
+                ! print *, 'fidx ',fidx
 
             eDn  => faceI(fIdx,fi_Melem_dL)
             eUp  => faceI(fIdx,fi_Melem_uL)
 
-            !print *, 'fidx, eDn, eUp', fIdx, eDn, eUp
+            ! print *, 'fidx, eDn, eUp', fIdx, eDn, eUp
 
             !% --- error checking
             if ((elemI(eDn,ei_elementType) == JB) .and. (elemI(eUp,ei_elementType) == JB)) then 
@@ -228,6 +239,9 @@ module junction_elements
             !% --- handle JB upstream of JM (downstream JB element = eDn, upstream of JM )
             if (elemI(eDn,ei_elementType) == JB) then
 
+                ! print *, 'eDn, JB  ',eDn
+                ! print *, 'eUp type ',eUp,elemI(eUp,ei_elementType), trim(reverseKey(elemI(eUp,ei_elementType)))
+
                 !% --- get the JM index
                 JMidx => elemSI(eDn,esi_JunctionBranch_Main_Index)
 
@@ -236,6 +250,9 @@ module junction_elements
                     case (CC)
                         !% --- dQ/dH only exists if junction head is above Zbottom
                         !%     of adjacent element, and if Fr adjacent is not supercritical
+                            ! print *, ' '
+                            ! print *, ' JMidx  HEad - Zbottom ',JMidx, elemR(JMidx,er_Head) - elemR(eUp,er_Zbottom)
+                            ! print *, ' '
                         if ((elemR(JMidx,er_Head) > elemR(eUp,er_Zbottom)) .and. &
                             (elemR(eUp,er_FroudeNumber) < oneR)) then
                                 !print *, 'is CC'
@@ -276,11 +293,19 @@ module junction_elements
                         end if
 
                     case (weir)
-                            ! print *, 'is Weir'
+
+                            ! print *, ' '
+                            ! print *, 'is Weir eUp =================================='
+                            ! print *, 'fidx, eDn, eUp', fIdx, eDn, eUp
+                            ! print *, 'flowdirection ',elemSI(eUp,esi_Weir_FlowDirection)
+
                         !% --- upstream weir, downstream JB
                         elemSR(eDn,esr_JunctionBranch_fb) = zeroR
-                        if (elemSR(eUp,esi_Weir_FlowDirection) == oneI) then 
-                                !print *, 'is + flow'
+
+                        if (elemSI(eUp,esi_Weir_FlowDirection) == oneI) then 
+
+                                ! print *, 'is + flow over weir eUp ',eUp
+
                             !% --- flow into JB
                             if (elemYN(eUp,eYN_isSurcharged)) then
                                 !% --- weir surcharged flow, 
@@ -292,15 +317,23 @@ module junction_elements
                                 !%     increase H at JB has no effect on Q
                                 elemSR(eDn,esr_JunctionBranch_fa) = zeroR
                             end if
+
+                            ! print *, '1 Weir fa ',elemSR(eDn,esr_JunctionBranch_fa)
+
                         else 
-                                !print *, 'is - flow', eUp
+                                ! print *, 'is - flow over weir eUp', eUp
                                 !print *, elemSR(eUp,esr_Weir_dQdHe)
                             !% --- flow out of JB (reverse flow)
                             !%     dQdHe < 0 because Q < 0
                             !%     increasing H at JB increases He and increases magnitude of the negative Q (towards negative infinity) 
                             !%     applies to boths surcharged and non-surcharged
                             elemSR(eDn,esr_JunctionBranch_fa) = elemSR(eUp,esr_Weir_dQdHe)
+
+                            ! print *, '2 Weir fa ',elemSR(eDn,esr_JunctionBranch_fa)
+
                         end if
+
+                            ! print *, ' '
 
                     case (orifice)
                         !% --- upstream orifice, downstream JB
@@ -325,6 +358,9 @@ module junction_elements
 
             !% --- handle downstream branch (upstream JB element)
             if (elemI(eUp,ei_elementType) == JB) then
+
+                ! print *, 'eUp, JB  ',eUp
+                ! print *, 'eDn type ',eDn,elemI(eDn,ei_elementType), trim(reverseKey(elemI(eDn,ei_elementType)))
 
                 !% --- get the JM index for usptream JM
                 JMidx => elemSI(eUp,esi_JunctionBranch_Main_Index)
@@ -374,19 +410,31 @@ module junction_elements
 
 
                     case (weir)
-                        !print *, 'is Weir'
-                        elemSR(eUp,esr_JunctionBranch_fa) = elemSR(eDn,esr_Weir_dQdHe)
+
+                            ! print *, ' '
+                            ! print *, 'is Weir eD =================================='
+                            ! print *, 'fidx, eDn, eUp', fIdx, eDn, eUp
+                            ! print *, 'flowdirection ',elemSI(eDn,esi_Weir_FlowDirection)
+
                         elemSR(eUp,esr_JunctionBranch_fb) = zeroR
 
-                        !% --- downstream weir, upstream JB
-                        elemSR(eDn,esr_JunctionBranch_fb) = zeroR
-                        if (elemSR(eDn,esi_Weir_FlowDirection) == oneI) then 
+                        if (elemSI(eDn,esi_Weir_FlowDirection) == oneI) then 
+
+                                ! print *, 'is + flow over weir eDn'
+
                             !% --- flow out of JB
                             !%     dQdHe > 0 because Q > 0
                             !%     increasing H at JB increases He of weir and increases magnitude of positive Q (towards positive inifinity)
                             !%     applies to surcharged and non-surcharged
                             elemSR(eUp,esr_JunctionBranch_fa) = elemSR(eDn,esr_Weir_dQdHe)
+
+
+                                ! print *, '3 Weir fa    ',elemSR(eUp,esr_JunctionBranch_fa)
+                                ! print *, '3  Weir dQdHe',elemSR(eDn,esr_Weir_dQdHe)
                         else 
+
+                                ! print *, 'is - flow over weir eDn', eDn
+
                             !% --- flow into JB (reverse flow)
                             if (elemYN(eDn,eYN_isSurcharged)) then
                                 !% --- surcharged weir inflow
@@ -398,7 +446,12 @@ module junction_elements
                                 !%     increase H at JB has no effect on Q
                                 elemSR(eUp,esr_JunctionBranch_fa) = zeroR
                             end if
+
+                            ! print *, '4 Weir fa ',elemSR(eUp,esr_JunctionBranch_fa)
+
                         end if
+
+                        ! print *, ' '
 
                     case (orifice)
                         !% --- downstream orifice, upstream JB
@@ -566,8 +619,8 @@ module junction_elements
 
                 ! if (JMidx==printJM) then
                 !     print *, ' '
-                !     print *, '-----------------------------------------------'
-                !     print *, 'mm, JM ',mm, JMidx
+                    ! print *, '-----------------------------------------------'
+                    ! print *, 'mm, JM ',mm, JMidx
                 !     print *, 'Aplan ',elemSR(JMidx,esr_Storage_Plan_Area)
                 !     print *, 'dt    ',setting%Time%Hydraulics%Dt
                 !     print *, 'Qlat  ',elemR(JMidx,er_FlowrateLateral)
@@ -578,7 +631,7 @@ module junction_elements
 
                 ! if (JMidx==printJM) print *, ' '
                 ! if (JMidx==printJM) print *,  'HBound'
-                ! if (JMidx==printJM) print *, Hbound(1), Hbound(2), Hbound(3)
+                ! if (JMidx==printJM) print *, Hbound(1),  Hbound(3)
                 ! if (JMidx==printJM) print *, elemR(JMidx+1,er_Zbottom), elemR(JMidx,er_Zbottom), elemR(JMidx+2,er_Zbottom)
 
             !% --- set the allowable change in junction main head
@@ -621,6 +674,7 @@ module junction_elements
                         elemR(JMidx,er_Volume) = elemR(JMidx,er_Volume_N0)
                         !elemSR(JMidx+ii,esr_JunctionBranch_dQdH) = zeroR
                     end do
+                    ! print *, 'skipping JM ',JMidx
                     cycle !% to next junction
                 end if
 
@@ -670,7 +724,8 @@ module junction_elements
             !% --- compute junction head change
             dH = junction_head_change (JMidx,Qnet,aQuad,bQuad,cQuad,rQuad, Hbound, dHlo, dHhi)
    
-                !  if (JMidx==printJM) print *, '   dH  0      ',dH
+                !  if (JMidx==printJM) 
+                !  print *, '   dH  0      ',dH
 
                 ! if (JMidx==printJM) print *, ' '
                 ! if (JMidx==printJM) print *, 'DH values'
@@ -681,7 +736,8 @@ module junction_elements
             !% --- limit junction head change by geometry and adjacent head
             dH = junction_head_limiter (JMidx,dH, dHhi, dHlo)
 
-                ! if (JMidx==printJM) print *, '   dH  5      ',dH
+                ! if (JMidx==printJM) 
+                ! print *, '   dH  5      ',dH
 
             !% --- update JM head
             elemR(JMidx,er_Head) = elemR(JMidx,er_Head) + dH
@@ -748,10 +804,19 @@ module junction_elements
 
                 ! if (JMidx==printJM) print *, 'Qstorage new ',Qstorage(JMidx)
 
-                ! if (JMidx==printJM) print *, 'Qstorage() - QnetBranches ', Qstorage(JMidx) - QnetBranches      
-  
+                ! if (JMidx==printJM) print *, 'Qstorage() - QnetBranches ', Qstorage(JMidx) - QnetBranches    
+
+               ! ! call util_utest_CLprint ('------- jjj01 abefore update Q dependent')
+
             !% --- update Volume, VolumeOverflow and JB face values
             call junction_update_Qdependent_values (JMidx, istep)
+
+               ! ! call util_utest_CLprint ('------- jjj02 after update Q dependent')
+
+                ! print *, ' '
+                ! print *, 'JMidx',JMidx
+                ! print *, 'VOl  ',elemR(JMidx,er_Volume), elemR(JMidx,er_Volume_N0)
+                ! print *, ' '
 
             !% TEST
             ! if (JMidx==printJM) then 
@@ -805,8 +870,8 @@ module junction_elements
         
         if (isUpstreamYN) then 
             !% --- pointer to the downstream JB face for CC upstream of JB
-            ! print *, ' '
-            ! print *, 'UPSTREAM ================================='
+                ! print *, ' '
+                ! print *, 'UPSTREAM ================================='
             fIdx => elemI(:,ei_Mface_dL)
             bsign = +oneR
         else
@@ -827,18 +892,20 @@ module junction_elements
             - bsign * crk * dt *  faceR(fIdx(thisCC),fr_DeltaQ)
 
         ! if (isUpstreamYN) then 
-        !     print *, fIdx(10)
+        !     print *, 'thisCC ',thisCC
+        !     print *, 'fidx   ',fIdx(thisCC)
         !     print *, bsign, crk, dt
-        !     print *, 'face    DN for Up',faceR(fIdx(10),fr_DeltaQ)
-        !     print *, 'Volume  UP ', oldVolume(10),elemR(10,er_Volume)
+        !     print *, 'face    DN for Up',faceR(fIdx(thisCC),fr_DeltaQ)
+        !     print *, 'OLD Volume  UP ', oldVolume(thisCC)
+        !     print *, 'New Volume  UP ',elemR(thisCC,er_Volume)
         !     print *, ' '
-        ! else 
-        !     print *, fIdx(22)
-        !     print *, bsign, crk, dt
-        !     print *, 'face    UP for Dn',faceR(fIdx(22),fr_DeltaQ)
-        !     print *, 'Volume  Dn ', oldVolume(22),elemR(22,er_Volume)
-        !     print *, 'Volume  Dn ', oldVolume(22),elemR(22,er_Volume) 
-        !     print *, ' '
+        ! ! else 
+        ! !     print *, fIdx(22)
+        ! !     print *, bsign, crk, dt
+        ! !     print *, 'face    UP for Dn',faceR(fIdx(22),fr_DeltaQ)
+        ! !     print *, 'Volume  Dn ', oldVolume(22),elemR(22,er_Volume)
+        ! !     print *, 'Volume  Dn ', oldVolume(22),elemR(22,er_Volume) 
+        ! !     print *, ' '
         ! end if
         ! print *, ' '
 
@@ -899,15 +966,19 @@ module junction_elements
             bcount    = zeroI
 
             !% --- cycle through branches (cannot be concurrent)
+            !%     fadj* are faces for adjustment, zeroI is null value
             do ii=1,max_branch_per_node
                 if (elemSI(JMidx+ii,esi_JunctionBranch_Exists)==oneI) then 
                     if (mod(ii,2)== 0) then 
                         !% --- downstream branch
                         if (elemR(JMidx+ii,er_Flowrate) > zeroR) then
-                            fadjMin  = elemI(JMidx+ii,ei_Mface_dL)
+                            !% --- outflow does not provide limiter
+                            !fadjMin  = elemI(JMidx+ii,ei_Mface_dL)
+                            fadjMin  = zeroI
                             fadjMax  = zeroI
-                            bcount = bcount+oneI
+                            !bcount = bcount+oneI
                         elseif (elemR(JMidx+ii,er_Flowrate) < zeroR) then
+                            !% -- inflow provides limiter to high head
                             fadjMax  = elemI(JMidx+ii,ei_Mface_dL)
                             fadjMin  = zeroI
                             bcount = bcount+oneI
@@ -918,25 +989,27 @@ module junction_elements
                     else
                         !% --- upstream branch
                         if (elemR(JMidx+ii,er_Flowrate) > zeroR) then
+                            !% --- inflow provides limiter to high head
                             fadjMax  = elemI(JMidx+ii,ei_Mface_uL)
                             fadjMin  = zeroI
                             bcount = bcount+oneI
                         elseif (elemR(JMidx+ii,er_Flowrate) < zeroR) then
-                            fadjMin  = elemI(JMidx+ii,ei_Mface_uL)
+                            !% --- outflow has no limiter
+                            fadjMin  = zeroI
                             fadjMax  = zeroI
-                            bcount = bcount+oneI
+                            !bcount = bcount+oneI
                         else
                             fadjMax = zeroI
                             fadjMin = zeroI
                         end if
                     end if
-                    if (fadjMin > zeroI) then 
-                        Hbound(1) = min(Hbound(1),faceR(fadjMin,fr_Head_Adjacent))
-                        Hbound(2) = Hbound(2)   + faceR(fadjMin,fr_Head_Adjacent)
-                    end if
+                    ! if (fadjMin > zeroI) then 
+                    !     !Hbound(1) = min(Hbound(1),faceR(fadjMin,fr_Head_Adjacent))
+                    !     !Hbound(2) = Hbound(2)   + faceR(fadjMin,fr_Head_Adjacent)
+                    ! end if
                     if (fadjMax > zeroI) then 
                         Hbound(3) = max(Hbound(3),faceR(fadjMax,fr_Head_Adjacent))
-                        Hbound(2) = Hbound(2)   + faceR(fadjMax,fr_Head_Adjacent)
+                        !Hbound(2) = Hbound(2)   + faceR(fadjMax,fr_Head_Adjacent)
                     end if
                 end if
             end do
@@ -954,12 +1027,12 @@ module junction_elements
                 Hbound(3) = +huge(oneR)
             end if
 
-            !% --- average of surrounding heads for branches with flow
-            if (bcount > 0) then
-                Hbound(2) = Hbound(2) / real(bcount,8)
-            else
-                Hbound(2) = elemR(JMidx,er_Head)
-            end if
+            ! !% --- average of surrounding heads for branches with flow
+            ! if (bcount > 0) then
+            !     Hbound(2) = Hbound(2) / real(bcount,8)
+            ! else
+            !     Hbound(2) = elemR(JMidx,er_Head)
+            ! end if
 
 
     end subroutine junction_main_head_bounds    
@@ -979,10 +1052,13 @@ module junction_elements
 
         !% --- positive allowed change in dH
         dHhi = Hbound(3) - elemR(JMidx,er_Head)
+
+        !print *, 'dHhi before ',dHhi
         if (dHhi < zeroR) dHhi = zeroR
 
         !% --- negative allowed change in dH
         dHlo = Hbound(1) - elemR(JMidx,er_Head)
+        !print *, 'dHlo before ',dHlo
         if (dHlo > zeroR ) dHlo = zeroR
 
     end subroutine junction_main_dHlimits    
@@ -1593,7 +1669,13 @@ module junction_elements
             if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
             elemSR(JMidx+ii,esr_JunctionBranch_dQdH)                  &
                  =  (  elemSR(JMidx+ii,esr_JunctionBranch_fa)         &
-                     + elemSR(JMidx+ii,esr_JunctionBranch_fb) * dH)      
+                     + elemSR(JMidx+ii,esr_JunctionBranch_fb) * dH) 
+            ! print *, ' '
+            ! print *, '       branch JB      ',JMidx+ii
+            ! print *, '       DQ DH TERMS fa ',elemSR(JMidx+ii,esr_JunctionBranch_fa)  
+            ! print *, '                   fb ',elemSR(JMidx+ii,esr_JunctionBranch_fb)      
+            ! print *, '                   dH ',dH    
+            ! print *, '                  dQdH', elemSR(JMidx+ii,esr_JunctionBranch_dQdH)
         end do
     
     end subroutine junction_update_branch_dQdH
@@ -1613,7 +1695,14 @@ module junction_elements
 
         do ii=1,max_branch_per_node
             if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle   
+            
             elemR(JMidx+ii,er_DeltaQ) = elemSR(JMidx+ii,esr_JunctionBranch_dQdH) * dH 
+
+            ! print *, ' '
+            ! print *, 'JB ',JMidx+ii 
+            ! print *, 'DH dQdH ', dH, elemSR(JMidx+ii,esr_JunctionBranch_dQdH)
+            ! print *, 'Delta Q ',elemR(JMidx+ii,er_DeltaQ)
+            ! print *, ' '
         end do
 
     end subroutine junction_update_branch_DeltaQ
@@ -1777,20 +1866,6 @@ module junction_elements
         
 
     end subroutine junction_update_Qdependent_values
-!%    
-!%==========================================================================
-!%==========================================================================
-! !%
-!     subroutine junction_update_face_values (JMidx)
-!         !%------------------------------------------------------------------
-!         !% Descriptions
-!         !% Copies JB element values to faces
-!         !%  upstream called with "oneI" argument, downstream called with "twoI"
-!         !%------------------------------------------------------------------
-!             integer, intent(in) :: JMidx
-!         !%------------------------------------------------------------------
-
-!     end subroutine junction_update_face_values 
 !%    
 !%==========================================================================
 !%==========================================================================
@@ -2141,21 +2216,21 @@ module junction_elements
     end subroutine junction_fix_conservation
 !%    
 !%==========================================================================
-!%==========================================================================
-!% 
-    !     real(8) pure function junction_source_term (JMidx, Qlat, Qover, QnetBranches) 
-    !         !%------------------------------------------------------------------
-    !         !% Description:
-    !         !% computes the junction source term for quadratic solution
-    !         !%------------------------------------------------------------------
-    !             real(8), intent(in) :: Qlat, Qover, QnetBranches
-    !         !%------------------------------------------------------------------
+! %==========================================================================
+! % 
+!         real(8) pure function junction_source_term (JMidx, Qlat, Qover, QnetBranches) 
+!             !%------------------------------------------------------------------
+!             !% Description:
+!             !% computes the junction source term for quadratic solution
+!             !%------------------------------------------------------------------
+!                 real(8), intent(in) :: Qlat, Qover, QnetBranches
+!             !%------------------------------------------------------------------
 
-    !         junction_source_term = Qlat + Qover + Qnetbranches
+!             junction_source_term = Qlat + Qover + Qnetbranches
 
-    !     end function junction_source_term
-    ! !%    
-!%==========================================================================
+!         end function junction_source_term
+!     !%    
+! %==========================================================================
 !%==========================================================================
 !% 
     ! subroutine junction_branch_dQdH (dQdH, JMidx, fm, kstart)    

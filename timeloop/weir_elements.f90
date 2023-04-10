@@ -47,6 +47,11 @@ module weir_elements
         !% get the flow direction and element head
         call  common_head_and_flowdirection_singular &
             (eIdx, esr_Weir_Zcrest, esr_Weir_NominalDownstreamHead, esi_Weir_FlowDirection)
+
+            ! print *, ' '
+            ! print *, 'in WEIR TOP LEVEL after common_head_and_flowdirection'
+            ! print *, elemSI(211,esi_Weir_FlowDirection)
+            ! print *, ' '    
         
         !% find flow through weirs
         call weir_flow (eidx) 
@@ -331,6 +336,9 @@ module weir_elements
                 CrestLength = max(zeroR, &
                         RectangularBreadth - WeirContractionFactor * real(EndContractions,8) * EffectiveHeadDelta)
 
+                ! print *, ' '
+                ! print *, 'RectangularBreadth ',RectangularBreadth        
+
                 Flowrate = real(FlowDirection,8) * CrestLength * CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent) 
 
                 if (hasFlapGate .and. ApplyHeadlossCorrection) then
@@ -340,8 +348,24 @@ module weir_elements
                 end if
 
                 !% find the dQ/dH
-                ! dQdH = WeirExponent * Flowrate/EffectiveHeadDelta  !% WRONG INPUT IS FULL HEAD DEPTH
-
+                ! print *, ' '
+                ! print *, 'in Transverse Weir Element'
+                ! print *, 'EffectiveHeadDelta ',EffectiveHeadDelta
+                ! print *, ' '
+                if (EffectiveHeadDelta > zeroR) then
+                    dQdH = WeirExponent * Flowrate/EffectiveHeadDelta 
+                    !dQdH = WeirExponent * CoeffRectangular &
+                    !    * ( CrestLength * (EffectiveHeadDelta**(WeirExponent - oneR)) ) !&
+                          ! - WeirContractionFactor * real(EndContractions,8) * (EffectiveHeadDelta ** WeirExponent) )
+                else
+                    dQdH = zeroR
+                end if
+                ! print *, 'WeirExponent      ',WeirExponent
+                ! print *, 'coeffRectangular  ',CoeffRectangular 
+                ! print *, 'crestLength       ',CrestLength
+                ! print *, 'eHead^-1/2        ',EffectiveHeadDelta**(WeirExponent - oneR)
+                ! print *, 'dQdH ',dQdH, elemSR(211,esr_Weir_dQdHe)
+                ! print *, ' '
                 !% correction factor for nominal downstream submergence
                 if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
                     ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)        
@@ -374,10 +398,8 @@ module weir_elements
                     !% find the dQ/dH
                     if (EffectiveHeadDelta > zeroR) then
                         dQdH = WeirExponent * Flowrate/EffectiveHeadDelta 
-                    dQdH = WeirExponent * Flowrate/EffectiveHeadDelta
-                        dQdH = WeirExponent * Flowrate/EffectiveHeadDelta 
-                    dQdH = WeirExponent * Flowrate/EffectiveHeadDelta
-                        dQdH = WeirExponent * Flowrate/EffectiveHeadDelta 
+                    else
+                        dQdH = zeroR
                     endif
 
 
@@ -402,7 +424,11 @@ module weir_elements
                         CoeffRectangular  * (EffectiveHeadDelta ** WeirExponent)
                     
                     !% find the dQ/dH
+                    if (EffectiveHeadDelta > zeroR) then
                         dQdH = WeirExponent * Flowrate/EffectiveHeadDelta
+                    else
+                        dQdH = zeroR
+                    end if
 
                     if ((NominalDsHead > Zcrest) .and. (ApplySubmergenceCorrection)) then
                         ratio = (NominalDsHead - Zcrest) / (Head - Zcrest)      
@@ -443,10 +469,8 @@ module weir_elements
                 !% find the dQ/dH
                 if (EffectiveHeadDelta > zeroR) then
                     dQdH = WeirExponent * FlowRect/EffectiveHeadDelta + WeirExponentVNotch * FlowTriang/EffectiveHeadDelta 
-                dQdH = WeirExponent * FlowRect/EffectiveHeadDelta + WeirExponentVNotch * FlowTriang/EffectiveHeadDelta
-                    dQdH = WeirExponent * FlowRect/EffectiveHeadDelta + WeirExponentVNotch * FlowTriang/EffectiveHeadDelta 
-                dQdH = WeirExponent * FlowRect/EffectiveHeadDelta + WeirExponentVNotch * FlowTriang/EffectiveHeadDelta
-                    dQdH = WeirExponent * FlowRect/EffectiveHeadDelta + WeirExponentVNotch * FlowTriang/EffectiveHeadDelta 
+                else
+                    dQdH = zeroR
                 end if
 
                 !% correction factor for nominal downstream submergence
@@ -480,10 +504,8 @@ module weir_elements
                 !% find the dQ/dH
                 if (EffectiveHeadDelta > zeroR) then
                     dQdH = WeirExponent * Flowrate/EffectiveHeadDelta 
-                dQdH = WeirExponent * Flowrate/EffectiveHeadDelta
-                    dQdH = WeirExponent * Flowrate/EffectiveHeadDelta 
-                dQdH = WeirExponent * Flowrate/EffectiveHeadDelta
-                    dQdH = WeirExponent * Flowrate/EffectiveHeadDelta 
+                else
+                    dQdH = zeroR
                 end if
 
                 !% correction factor for nominal downstream submergence

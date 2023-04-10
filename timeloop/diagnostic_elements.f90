@@ -66,21 +66,21 @@ module diagnostic_elements
 
         ! if (Npack > 0) then
 
-            ! ! call util_utest_CLprint ('in diagnostic_toplevel  AAAA')
+            ! ! ! call util_utest_CLprint ('in diagnostic_toplevel  AAAA')
 
         call diagnostic_by_type (elemPCol, istep)
 
-            ! ! call util_utest_CLprint ('in diagnostic_toplevel  BBB')
+            ! call util_utest_CLprint ('in diagnostic_toplevel  BBB')
 
         !% reset any face values affected
         call face_interpolation (facePCol,.true.,.true.,.true.,.true.,.true.)
 
-            ! ! call util_utest_CLprint ('in diagnostic_toplevel  CCC')
+            ! call util_utest_CLprint ('in diagnostic_toplevel  CCC')
 
         !% --- reset the zero and small depth fluxes
         call adjust_zero_and_small_depth_face (.false.)
 
-            ! ! call util_utest_CLprint ('in diagnostic_toplevel  DDD')
+            ! call util_utest_CLprint ('in diagnostic_toplevel  DDD')
 
         ! end if
        
@@ -120,9 +120,11 @@ module diagnostic_elements
             fJBdownstreamYN => faceYN(:,fYN_isDownstreamJBFace)
         !%------------------------------------------------------------------
 
-        !% --- cycle throug diagnostic elements adjacent to JB
+        !print *, 'in Fix JB adjacent '
+        !% --- cycle through diagnostic elements adjacent to JB
         do mm=1,Npack
             eIdx = thisE(mm)
+
             !% --- check if faces are not frozen
             if ( (.not. fFrozenYN(fup(eIdx))) .and. (.not. fFrozenYN(fdn(eIdx))) ) then
                 if (fJBupstreamYN(fup(eIdx))) then 

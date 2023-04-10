@@ -204,7 +204,7 @@ module geometry
         !% --- JB VALUES
         !%    assign the non-volume geometry on junction branches JB based on JM head
         !%    Values limited by full volume. Volume assigned is area * length
-        call geo_assign_JB (ep_JM_ETM)
+        call geo_assign_JB (ep_JM)
 
             ! ! call util_utest_CLprint ('------- in geometry after geo_assign_JB')
 

@@ -332,7 +332,7 @@ contains
         !% --- set all the auxiliary (dependent) variables
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables CC'
         call update_auxiliary_variables_CC (&
-            ep_CC_ETM, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
+            ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
             .true., .false., dummyIdx)
 
         ! print *, 'TEST20230327 BBBB'
@@ -2674,13 +2674,19 @@ contains
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom)  + link%R(thisLink,lr_InletOffset)
                     elemSR(:,esr_Weir_Zcrown)                = elemSR(:,esr_Weir_Zcrest) + link%R(thisLink,lr_FullDepth)
 
+                 
                     !% --- default channel geometry (overwritten later by adjacent CC shape)
                     !%     assumes channel is rectangular and uses weir data for channel
                     elemI(:,ei_geometryType)            = rectangular
-                    elemSGR(:,esgr_Rectangular_Breadth) = twoR * elemSR(:,esr_Weir_RectangularBreadth) 
+                    elemSGR(:,esgr_Rectangular_Breadth) = elemSR(:,esr_Weir_RectangularBreadth) 
                     elemR(:,er_BreadthMax)              = elemSR(:,esr_Weir_RectangularBreadth)                                     
                     elemR(:,er_FullDepth)               = twoR* max(elemSR(:,esr_Weir_Zcrown) - elemR(:,er_Zbottom), elemSR(:,esr_Weir_FullDepth))
                 endwhere
+
+                ! print *, ' in initial condition '
+                ! print *, elemSR(211,esr_Weir_RectangularBreadth)
+                ! stop 998273
+
 
             case default
 
@@ -6094,7 +6100,7 @@ contains
             real(8), pointer :: slope(:), length(:), fZbottom(:)
         !%------------------------------------------------------------------
         !% Aliases
-            thisCol = ep_CC_ALLtm
+            thisCol = ep_CC
             npack   => npack_elemP(thisCol)
             if (npack < 1) return
             thisP   => elemP(1:npack,thisCol)

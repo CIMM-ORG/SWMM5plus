@@ -749,6 +749,9 @@ module update
             if (elemSI(jB,esi_JunctionBranch_Exists) .ne. oneI) cycle
 
             if (.not. forceJBQyn) then
+
+               ! w_uQ(jB) = setting%Limiter%InterpWeight%Maximum
+               ! w_dQ(jB) = setting%Limiter%InterpWeight%Maximum
                 !% --- flowrate interpweight as time scaled
                 if (.not. isSlot(jB)) then
                     w_uQ(jB) = - onehalfR * length(jB)  / (velocity(jB) - wavespeed(jB))

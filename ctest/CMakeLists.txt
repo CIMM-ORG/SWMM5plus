@@ -295,75 +295,78 @@ enable_testing()
     ###### FIXED DOWNSTREAM BOUNDARY #####
 
 
-# # Passed 20230407
+# # Passed 20230410
 # add_test(NAME T003_CC_Fix_dx0010_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_CC_Fix_dx0010_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_10_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230407
+# # Passed 20230410
 # add_test(NAME T003_CC_Fix_dx0111_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_CC_Fix_dx0111_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_111_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
 
-# # Passed 20230407 -- but oscillations at initial element
+# # Failed 20230410 -- but looks OK
 # add_test(NAME T003_CC_Fix_dx0333_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_CC_Fix_dx0333_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_333_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
 
-    ###### FREE DOWNSTREAM BOUNDARY #####
+    ##### FREE DOWNSTREAM BOUNDARY #####
 
 
-# # Passed 20230407
+# # Passed 20230410
 # add_test(NAME T003_CC_Free_dx0010_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_CC_Free_dx0010_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_10_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230407 -- but some oscillations in downstream BC
+# # Passed 20230410 
 # add_test(NAME T003_CC_Free_dx0111_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_CC_Free_dx0111_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_111_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILED 20230407 -- due do depths but looks similar to others with dx333
+# # FAILED 20230410 -- due do depths but looks similar to others with dx333 -- time lage is aproblem
 # add_test(NAME T003_CC_Free_dx0333_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_CC_Free_dx0333_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_333_ForceStorage.json -o ./ctest/outbrh/
-## FAILS at stop 239874 with error message "small bquad "
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## FAILED 20230410 -- time lag
 # add_test(NAME T003_RC_Free_dx0333 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_RC_Free_dx0333.inp -s ./ctest/internal_testing/brh/settings_333.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-## FAILS at stop 6698734 with error message "small Rquad "
+## passed 20230410
 # add_test(NAME T003_RC_Free_dx0167 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_RC_Free_dx0167.inp -s ./ctest/internal_testing/brh/settings_167.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-## FAILS at stop 6698734 with error message "small Rquad "
+## passed 20230410
 # add_test(NAME T003_RC_Free_dx0111 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_RC_Free_dx0111.inp -s ./ctest/internal_testing/brh/settings_111.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-## FAILS at stop 6698734 with error message "small Rquad "
-# add_test(NAME T003_RC_Free_dx0048 
+## passed 20230410
+#add_test(NAME T003_RC_Free_dx0048 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_RC_Free_dx0048.inp -s ./ctest/internal_testing/brh/settings_48.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-## FAILS at stop 239874 with error message "small bquad "
+# ## passed 20230410
 # add_test(NAME T003_CC_Free_dx0048 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_CC_Free_dx0048.inp -s ./ctest/internal_testing/brh/settings_48.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILS at stop 6698734 with error message "small Rquad "
+# # # passed 20230410
 # add_test(NAME T003_CC_Free_dx0010 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T003_CC_Free_dx0010.inp -s ./ctest/internal_testing/brh/settings_10.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -388,31 +391,31 @@ enable_testing()
 
     ###### FREE DOWNSTREAM BOUNDARY #####
 
-# # Passed 20230407
+# Passed 20230410
 # add_test(NAME T004_CC_Free_dx0010_NJ2 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0010_NJ2.inp -s ./ctest/internal_testing/brh/settings_10_faceNJ2.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230407
+# # Passed 20230410
 # add_test(NAME T004_CC_Free_dx0010_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0010_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_10_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230407
+# # Passed 20230410
 # add_test(NAME T004_CC_Free_dx0050_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0050_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_50_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILED 20230407 -- Link C7 flow rate too slow to increase
+# # FAILED 20230410 -- Link C7 flow rate too slow to increase
 # add_test(NAME T004_CC_Free_dx0100_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0100_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_100_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILED 20230407  -- link flowrates C8, C9, C10 (slow increase)
+# # FAILED 20230410  -- link flowrates C8, C9, C10 (slow increase)
 # add_test(NAME T004a_CC_Free_dx0100_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004a_CC_Free_dx0100_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_100_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -421,24 +424,25 @@ enable_testing()
 
     ###### FIXED DOWNSTREAM BOUNDARY #####         
 
-# # Passed 20230407
+# # Passed 20230410
 # add_test(NAME T004_CC_Fix_dx0010_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Fix_dx0010_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_10_ForceStorage.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
-
-# # FAILS at stop 6698734 with error message "small Rquad "
+# # Passed 20230410
 # add_test(NAME T004_CC_Free_dx0010 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0010.inp -s ./ctest/internal_testing/brh/settings_10.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILS at stop 239874 with error message "small bquad "
+# # Passed 20230410
 # add_test(NAME T004_CC_Free_dx0050 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0050.inp -s ./ctest/internal_testing/brh/settings_50.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILS at stop 239874 with error message "small bquad "
+# FAILED 20230410 -- time lag
 # add_test(NAME T004_CC_Free_dx0100 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -459,39 +463,39 @@ enable_testing()
 ## Fix/Normal/Free = BC
 ## dxNNN = subelement length
 
-## passed 20230407
+# # passed 20230410
 # add_test(NAME T005_CC_Free_dx0010_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0010_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_10_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-## passed 20230407 -
+# # passed 20230410 -
 # add_test(NAME T005_CC_Free_dx0050_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0050_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_50_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# ## FAILED 20230407 -- needs more elements in each link
+# ## FAILED 20230410 -- needs more elements in each link
 # add_test(NAME T005_CC_Free_dx0100_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0100_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_100_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILS at stop 6698734 with error message "small Rquad "
-# add_test(NAME T005_CC_Free_dx0010 
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0010.inp -s ./ctest/internal_testing/brh/settings_10.json -o ./ctest/outbrh/
+# # passed 20230410
+# add_test(NAME T005_CC_Free_dx0010_ForceStorage 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0010_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_10_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILS at stop 239874 with error message "small bquad "
-# add_test(NAME T005_CC_Free_dx0050 
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0050.inp -s ./ctest/internal_testing/brh/settings_50.json -o ./ctest/outbrh/
+# # passed 20230410
+# add_test(NAME T005_CC_Free_dx0050_ForceStorage 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0050_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_50_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILS at stop 239874 with error message "small bquad "
-# add_test(NAME T005_CC_Free_dx0100 
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0100.inp -s ./ctest/internal_testing/brh/settings_100.json -o ./ctest/outbrh/
+# # Failed 20230410 -- time lag
+# add_test(NAME T005_CC_Free_dx0100_ForceStorage 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005_CC_Free_dx0100_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_100_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
@@ -511,11 +515,23 @@ enable_testing()
 ## Fix/Normal/Free = BC
 ## dxNNN = subelement length
 
-## 
-add_test(NAME T005W_RO_Free_dx0010_ForceJM 
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005W_RO_Free_dx0010_ForceJM.inp -s ./ctest/internal_testing/brh/settings_10_ForceJM.json -o ./ctest/outbrh/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+## passed 20230410
+# add_test(NAME T005Wr_RO_Free_dx0010_NJ2 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005Wr_RO_Free_dx0010_NJ2.inp -s ./ctest/internal_testing/brh/settings_10_faceNJ2.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230410
+# add_test(NAME T005Wr_RO_Free_dx0010_ForceJM 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005Wr_RO_Free_dx0010_ForceJM.inp -s ./ctest/internal_testing/brh/settings_10_ForceJM.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+## passed 20230410
+# add_test(NAME T005Wr_RO_Free_dx0010_weirJM 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005Wr_RO_Free_dx0010_weirJM.inp -s ./ctest/internal_testing/brh/settings_10_weirJM.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
 
 ##########################################################################################
@@ -532,13 +548,13 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 ## Fix/Normal/Free = BC
 ## dxNNN = subelement length
 
-# passed 20230407
+# # passed 20230410
 # add_test(NAME T006_CC_Free_dx0010_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T006_CC_Free_dx0010_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_10_ForceStorage.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# passed 20230407
+# # passed 20230410
 # add_test(NAME T006_CC_Free_dx0010_NJ2 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T006_CC_Free_dx0010_NJ2.inp -s ./ctest/internal_testing/brh/settings_10_faceNJ2.json -o ./ctest/outbrh/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -599,14 +615,14 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 
 # # ###################################### LEVEL 1 PASSED #############################
 
-#  # passed 20230407
+#  # passed 202304010
 # add_test(NAME extran1_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_final.inp -s ./ctest/internal_testing/level01_test/settings_extran1.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
 
-# # passed 20230407
+# # passed 20230410
 # add_test(NAME extran1_final_mod2
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level01_test/extran1_final_mod2.inp -s ./ctest/internal_testing/level01_test/settings_extran1.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -749,6 +765,7 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
+
 # # Passed 20230104 Failed 20230123
 # add_test(NAME extran4_roadway
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran4_roadway.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
@@ -761,9 +778,9 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230104 Failed 20230123
+# # FAILED 20230410
 # add_test(NAME extran4_trapezoidal
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran4_trapezoidal.inp -s ./ctest/internal_testing/level02_test/settings_forcedJM_and_storage.json -o ./ctest/output/
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran4_trapezoidal.inp -s ./ctest/internal_testing/level02_test/settings_10.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
@@ -940,12 +957,11 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 
 
 
-# FAILED -- something strange
+# FAILED 20230410 due to inflow condition.
 # add_test(NAME extran4_no_surcharge
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran4_no_surcharge.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
-
 
 
 
@@ -963,23 +979,23 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 
 ###################### FAILURES  -- LEVEL 3
 
-# # Passed 20230316
+# # Passed 20230410
 # add_test(NAME catchment_as_outfall
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/catchment_as_outfall.inp -s ./ctest/internal_testing/level03_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-## OK, but fails 20230406
+## FAILED 20230410 -- Q looks OK, depths are off
 # add_test(NAME Example1_mod01
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/Example1_mod01.inp -s ./ctest/internal_testing/level03_test/settings_default.json -o ./ctest/output/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # FAILED 20230316 -- fails, but looks OK 
-# add_test(NAME Example1
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/Example1.inp -s ./ctest/internal_testing/level03_test/settings_default.json -o ./ctest/output/
-# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-# )
+# # FAILED 20230410 -- flow rate residual
+add_test(NAME Example1
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/Example1.inp -s ./ctest/internal_testing/level03_test/settings_10.json -o ./ctest/output/
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
 
 # # FAILED 20230224 -- requires PUMPS
 # add_test(NAME Example3

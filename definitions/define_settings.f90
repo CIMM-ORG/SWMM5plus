@@ -31,72 +31,72 @@ module define_settings
     !%===================================================================
 
     !% setting%ACmethod%Anomaly
-    type ACmethodAnomalyType
-        ! density anomaly correction to handle residual (or non-convergence) of the AC
-        logical :: UseDensityCorrection = .false.
-        ! Note: setting the lowcutoff to zero can cause small truncation error velocities
-        ! to cause waves that buildup over time into a sloshing flow. The lowcutoff avoid this
-        real(8) :: DensityHighCutoff = 0.1d0
-        real(8) :: DensityLowCutoff = 1.0d-10
-        ! fraction of residual that is corrected - generally should be 1.0
-        real(8) :: FullPipeFactor = 1.0d0
-        ! fraction of residual that is corrected - generally should be 1.0
-        real(8) :: OpenPipeFactor = 1.0d0
-    end type ACmethodAnomalyType
+    ! type ACmethodAnomalyType
+    !     ! density anomaly correction to handle residual (or non-convergence) of the AC
+    !     logical :: UseDensityCorrection = .false.
+    !     ! Note: setting the lowcutoff to zero can cause small truncation error velocities
+    !     ! to cause waves that buildup over time into a sloshing flow. The lowcutoff avoid this
+    !     real(8) :: DensityHighCutoff = 0.1d0
+    !     real(8) :: DensityLowCutoff = 1.0d-10
+    !     ! fraction of residual that is corrected - generally should be 1.0
+    !     real(8) :: FullPipeFactor = 1.0d0
+    !     ! fraction of residual that is corrected - generally should be 1.0
+    !     real(8) :: OpenPipeFactor = 1.0d0
+    ! end type ACmethodAnomalyType
 
     !% setting%ACmethod%ImplicitCoef
     !% coefficients of the implicit stencil
-    type ACmethodImplicitCoefType
-        real(8) :: a1 = +threehalfR
-        real(8) :: a2 = -twoR
-        real(8) :: a3 = +onehalfR
-    end type ACmethodImplicitCoefType
+    ! type ACmethodImplicitCoefType
+    !     real(8) :: a1 = +threehalfR
+    !     real(8) :: a2 = -twoR
+    !     real(8) :: a3 = +onehalfR
+    ! end type ACmethodImplicitCoefType
 
     !% setting%ACmethod%CFL
-    type ACmethodCFLType
-        ! maximum cfl for the AC dtau -- may be higher than 1.0)
-        real(8) :: CFLmax = 2.0d0
-        ! small maximum cfl when reset to larger dtau
-        real(8) :: CFLsmall = 0.05d0
-    end type ACmethodCFLType
+    ! type ACmethodCFLType
+    !     ! maximum cfl for the AC dtau -- may be higher than 1.0)
+    !     real(8) :: CFLmax = 2.0d0
+    !     ! small maximum cfl when reset to larger dtau
+    !     real(8) :: CFLsmall = 0.05d0
+    ! end type ACmethodCFLType
 
-    !% setting%ACmethod%Celerity
-    type ACmethodCelerityType
-        ! celerity ratio of AC wave speed to gravity wave speed (1.0 works)
-        real(8) :: RC = 1.0d0
-    end type ACmethodCelerityType
+    ! !% setting%ACmethod%Celerity
+    ! type ACmethodCelerityType
+    !     ! celerity ratio of AC wave speed to gravity wave speed (1.0 works)
+    !     real(8) :: RC = 1.0d0
+    ! end type ACmethodCelerityType
 
     !% setting%ACmethod%Convergence
-    type ACmethodConvergenceType
-        ! AC convergence change in absolute L2 norm when cutting off AC
-        real(8) :: Habsolute = 1.0d-5
-        ! AC convergence relative change in L2 norm when cutting off AC
-        real(8) :: Hrelative = 1.0d-2
-        ! AC convergence change in absolute L2 norm when cutting off AC
-        real(8) :: Qabsolute = 1.0d-5
-        ! AC convergence relative change in L2 norm when cutting off AC
-        real(8) :: Qrelative = 1.0d-2
-    end type ACmethodConvergenceType
+    ! type ACmethodConvergenceType
+    !     ! AC convergence change in absolute L2 norm when cutting off AC
+    !     real(8) :: Habsolute = 1.0d-5
+    !     ! AC convergence relative change in L2 norm when cutting off AC
+    !     real(8) :: Hrelative = 1.0d-2
+    !     ! AC convergence change in absolute L2 norm when cutting off AC
+    !     real(8) :: Qabsolute = 1.0d-5
+    !     ! AC convergence relative change in L2 norm when cutting off AC
+    !     real(8) :: Qrelative = 1.0d-2
+    ! end type ACmethodConvergenceType
 
     !% setting%ACmethod%Iter
-    type ACmethodIterType
-        ! allows more iterations in first time step
-        integer :: Firststep = 100
-        ! cutoff for AC iterations without convergence
-        integer :: Max = 100
-        ! reset by code so that itermin * dtau >  dt
-        integer :: Min = 3    
-    end type ACmethodIterType
+    ! type ACmethodIterType
+    !     ! allows more iterations in first time step
+    !     integer :: Firststep = 100
+    !     ! cutoff for AC iterations without convergence
+    !     integer :: Max = 100
+    !     ! reset by code so that itermin * dtau >  dt
+    !     integer :: Min = 3    
+    ! end type ACmethodIterType
 
     !% setting%ACmethod%Switch
-    type ACmethodSwitchType
-        ! switch to AC solver if area/areaMax >  0.9
-        real(8) :: Area = 0.9d0
-        ! 5% buffer for the switch
-        real(8) :: Buffer = 0.05d0
-        ! switch to AC solver if depth/depthMax >  0.9
-        real(8) :: Depth = 0.9d0
-    end type ACmethodSwitchType
+    ! type ACmethodSwitchType
+    !     ! switch to AC solver if area/areaMax >  0.9
+    !     real(8) :: Area = 0.9d0
+    !     ! 5% buffer for the switch
+    !     real(8) :: Buffer = 0.05d0
+    !     ! switch to AC solver if depth/depthMax >  0.9
+    !     real(8) :: Depth = 0.9d0
+    ! end type ACmethodSwitchType
 
     !% setting%Adjust%Flowrate
     type AdjustFlowrateType
@@ -380,16 +380,16 @@ module define_settings
     !%===================================================================
 
     ! setting%ACmethodType
-    type ACmethodType
-        real(8) :: dtau = 1.0
-        type(ACmethodAnomalyType)      :: Anomaly
-        type(ACmethodImplicitCoefType) :: ImplicitCoef
-        type(ACmethodCFLType)          :: CFL
-        type(ACmethodCelerityType)     :: Celerity
-        type(ACmethodConvergenceType)  :: Convergence
-        type(ACmethodIterType)         :: Iter
-        type(ACmethodSwitchType)       :: Switch
-    end type ACmethodType
+    ! type ACmethodType
+    !     real(8) :: dtau = 1.0
+    !     type(ACmethodAnomalyType)      :: Anomaly
+    !     type(ACmethodImplicitCoefType) :: ImplicitCoef
+    !     type(ACmethodCFLType)          :: CFL
+    !     type(ACmethodCelerityType)     :: Celerity
+    !     type(ACmethodConvergenceType)  :: Convergence
+    !     type(ACmethodIterType)         :: Iter
+    !     type(ACmethodSwitchType)       :: Switch
+    ! end type ACmethodType
 
     ! setting%Adjust
     type AdjustType
@@ -542,7 +542,8 @@ module define_settings
         !% 20230405 brh  Default is FALSE to force JM, and TRUE to Force Storage 
         logical :: ForceNodesJM = .false.  !% forces CC nodes between two conduits to be nJM rather than nJ2 faces
         !%                                 !% note CC nodes will only be nJ2 faces if SurchargeDepth = InfinitExtraDepthValue
-        logical :: ForceStorage = .true.   !% forces nJM junctions without explicit storage to have implied storage
+                                           !% ONLY SET TRUE FOR ALGORITHM TESTING
+        logical :: ForceStorage = .true.   !% forces nJM junctions without explicit storage to have implied storage REQUIRED AS OF 20230410
         !rm 20220207brh logical :: isDynamicYN    = .false.
         !rm 20220207brh real(8) :: CFLlimit     = 0.5d0   !% limiter on CFL to control dynamic junction
         integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
@@ -575,6 +576,7 @@ module define_settings
 
     !% setting%Orifice
     type OrificeType
+        logical :: ForceOrificeNodesToJM = .false.  !% true only used for algorithm design
         real(8) :: SharpCrestedWeirCoefficient = 0.414
         real(8) :: TransverseWeirExponent = 1.5
         real(8) :: VillemonteCorrectionExponent = 0.385
@@ -633,7 +635,7 @@ module define_settings
 
     ! setting%SmallDepth
     type SmallDepthType
-        logical :: useMomentumCutoffYN = .true.
+        logical :: useMomentumCutoffYN = .false. !5 causes reversed flow with JB 20230410brh
         real(8) :: MomentumDepthCutoff = 0.001d0 ! m  !% prior to 20230327 using 0.03
         real(8) :: ManningsN = 0.1d0
         real(8) :: PumpVolumeFactor = 0.5d0  !% 
@@ -758,6 +760,7 @@ module define_settings
 
     !% setting%Weir  !% values set in define_settings_default
     type WeirType
+        logical :: ForceWeirNodesToJM = .false.  !% true only used for algorithm design
         type(WeirConstantType) :: Transverse
         type(WeirConstantType) :: SideFlow
         type(WeirConstantType) :: VNotch
@@ -799,7 +802,7 @@ module define_settings
     type settingType
         logical                  :: JSON_FoundFileYN = .false.
         logical                  :: JSON_CheckAllInputYN = .true.
-        type(ACmethodType)       :: ACmethod
+        !type(ACmethodType)       :: ACmethod
         type(AdjustType)         :: Adjust
         type(BCPropertiesType)   :: BC
         type(CaseNameType)       :: CaseName ! name of case
@@ -948,122 +951,122 @@ contains
 
     !% ACmethod. =====================================================================
         !% --- ACmethod
-        !%                       ACmethod.dtau
-        call json%get('ACmethod.dtau', real_value, found)
-        if (found) setting%ACmethod%dtau = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting "// 'ACmethod.dtau not found'
+        ! !%                       ACmethod.dtau
+        ! call json%get('ACmethod.dtau', real_value, found)
+        ! if (found) setting%ACmethod%dtau = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting "// 'ACmethod.dtau not found'
 
-        !% --- ACmethod.Anomaly
-        !%                       Anomaly.UseDensityCorrectionn
-        call json%get('ACmethod.Anomaly.UseDensityCorrection', logical_value, found)
-        if (found) setting%ACmethod%Anomaly%UseDensityCorrection = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Anomaly.UseDensityCorrection not found'
+        ! !% --- ACmethod.Anomaly
+        ! !%                       Anomaly.UseDensityCorrectionn
+        ! call json%get('ACmethod.Anomaly.UseDensityCorrection', logical_value, found)
+        ! if (found) setting%ACmethod%Anomaly%UseDensityCorrection = logical_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Anomaly.UseDensityCorrection not found'
   
-        !%                       Anomaly.DensityLowCutoff
-        call json%get('ACmethod.Anomaly.DensityLowCutoff', real_value, found)
-        if (found) setting%ACmethod%Anomaly%DensityLowCutoff = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Anomaly.DensityLowCutoff not found'
+        ! !%                       Anomaly.DensityLowCutoff
+        ! call json%get('ACmethod.Anomaly.DensityLowCutoff', real_value, found)
+        ! if (found) setting%ACmethod%Anomaly%DensityLowCutoff = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Anomaly.DensityLowCutoff not found'
 
-        !%                       Anomaly.DensityHighCutoff              
-        call json%get('ACmethod.Anomaly.DensityHighCutoff', real_value, found)
-        if (found) setting%ACmethod%Anomaly%DensityHighCutoff = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Anomaly.DensityHighCutoff not found'
+        ! !%                       Anomaly.DensityHighCutoff              
+        ! call json%get('ACmethod.Anomaly.DensityHighCutoff', real_value, found)
+        ! if (found) setting%ACmethod%Anomaly%DensityHighCutoff = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Anomaly.DensityHighCutoff not found'
        
-        !%                       Anomaly.FullPipeFactor
-        call json%get('ACmethod.Anomaly.FullPipeFactor', real_value, found)
-        if (found) setting%ACmethod%Anomaly%FullPipeFactor = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Anomaly.FullPipeFactor not found'
+        ! !%                       Anomaly.FullPipeFactor
+        ! call json%get('ACmethod.Anomaly.FullPipeFactor', real_value, found)
+        ! if (found) setting%ACmethod%Anomaly%FullPipeFactor = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Anomaly.FullPipeFactor not found'
         
-        !%                       Anomaly.OpenPipeFactor
-        call json%get('ACmethod.Anomaly.OpenPipeFactor', real_value, found)
-        if (found) setting%ACmethod%Anomaly%OpenPipeFactor = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Anomaly.OpenPipeFactor not found'
+        ! !%                       Anomaly.OpenPipeFactor
+        ! call json%get('ACmethod.Anomaly.OpenPipeFactor', real_value, found)
+        ! if (found) setting%ACmethod%Anomaly%OpenPipeFactor = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Anomaly.OpenPipeFactor not found'
      
-        !% --- ACmethod.ImplicitCoef 
-        !%                       ImplicitCoef.a1
-        call json%get('ACmethod.ImplicitCoef.a1', real_value, found)
-        if (found) setting%ACmethod%ImplicitCoef%a1 = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.ImplicitCoef.a1 not found'
+        ! !% --- ACmethod.ImplicitCoef 
+        ! !%                       ImplicitCoef.a1
+        ! call json%get('ACmethod.ImplicitCoef.a1', real_value, found)
+        ! if (found) setting%ACmethod%ImplicitCoef%a1 = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.ImplicitCoef.a1 not found'
         
-        !%                       ImplicitCoef.a2
-        call json%get('ACmethod.ImplicitCoef.a2', real_value, found)
-        if (found) setting%ACmethod%ImplicitCoef%a2 = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.ImplicitCoef.a2 not found'
+        ! !%                       ImplicitCoef.a2
+        ! call json%get('ACmethod.ImplicitCoef.a2', real_value, found)
+        ! if (found) setting%ACmethod%ImplicitCoef%a2 = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.ImplicitCoef.a2 not found'
         
-        !%                       ImplicitCoef.a3
-        call json%get('ACmethod.ImplicitCoef.a3', real_value, found)
-        if (found) setting%ACmethod%ImplicitCoef%a3 = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.ImplicitCoef.a3 not found'
+        ! !%                       ImplicitCoef.a3
+        ! call json%get('ACmethod.ImplicitCoef.a3', real_value, found)
+        ! if (found) setting%ACmethod%ImplicitCoef%a3 = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.ImplicitCoef.a3 not found'
 
-        !% --- ACmethod.CFL
-        !%                       CFL.CFLmax
-        call json%get('ACmethod.CFL.CFLmax', real_value, found)
-        if (found) setting%ACmethod%CFL%CFLmax = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.CFL.CFLmax not found'
+        ! !% --- ACmethod.CFL
+        ! !%                       CFL.CFLmax
+        ! call json%get('ACmethod.CFL.CFLmax', real_value, found)
+        ! if (found) setting%ACmethod%CFL%CFLmax = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.CFL.CFLmax not found'
         
-        !%                       CFL.CFLsmall
-        call json%get('ACmethod.CFL.CFLsmall', real_value, found)
-        if (found) setting%ACmethod%CFL%CFLsmall = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.CFL.CFLsmall not found'
+        ! !%                       CFL.CFLsmall
+        ! call json%get('ACmethod.CFL.CFLsmall', real_value, found)
+        ! if (found) setting%ACmethod%CFL%CFLsmall = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.CFL.CFLsmall not found'
 
-        !% --- ACmethod.Celerity
-        !%                       Celerity.RC
-        call json%get('ACmethod.Celerity.RC', real_value, found)
-        if (found) setting%ACmethod%Celerity%RC = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Celerity.RC not found'
+        ! !% --- ACmethod.Celerity
+        ! !%                       Celerity.RC
+        ! call json%get('ACmethod.Celerity.RC', real_value, found)
+        ! if (found) setting%ACmethod%Celerity%RC = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Celerity.RC not found'
 
-        !% --- ACmethod.Convergence
-        !%                       Convergence.Habsolute
-        call json%get('ACmethod.Convergence.Habsolute', real_value, found)
-        if (found) setting%ACmethod%Convergence%Habsolute = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Convergence.Habsolute not found'
+        ! !% --- ACmethod.Convergence
+        ! !%                       Convergence.Habsolute
+        ! call json%get('ACmethod.Convergence.Habsolute', real_value, found)
+        ! if (found) setting%ACmethod%Convergence%Habsolute = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Convergence.Habsolute not found'
         
-        !%                       Convergence.Hrelative
-        call json%get('ACmethod.Convergence.Hrelative', real_value, found)
-        if (found) setting%ACmethod%Convergence%Hrelative = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Convergence.Hrelative not found'
+        ! !%                       Convergence.Hrelative
+        ! call json%get('ACmethod.Convergence.Hrelative', real_value, found)
+        ! if (found) setting%ACmethod%Convergence%Hrelative = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Convergence.Hrelative not found'
         
-        !%                       Convergence.Qabsolute
-        call json%get('ACmethod.Convergence.Qabsolute', real_value, found)
-        if (found) setting%ACmethod%Convergence%Qabsolute = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Convergence.Qabsolute not found'
+        ! !%                       Convergence.Qabsolute
+        ! call json%get('ACmethod.Convergence.Qabsolute', real_value, found)
+        ! if (found) setting%ACmethod%Convergence%Qabsolute = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Convergence.Qabsolute not found'
         
-        !%                       Convergence.Qrelative
-        call json%get('ACmethod.Convergence.Qrelative', real_value, found)
-        if (found) setting%ACmethod%Convergence%Qrelative = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Convergence.Qrelative not found'
+        ! !%                       Convergence.Qrelative
+        ! call json%get('ACmethod.Convergence.Qrelative', real_value, found)
+        ! if (found) setting%ACmethod%Convergence%Qrelative = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Convergence.Qrelative not found'
 
-        !% --- ACmethod.Iter
-        !%                       Iter.Firststep
-        call json%get('ACmethod.Iter.Firststep', integer_value, found)
-        if (found) setting%ACmethod%Iter%Firststep = integer_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Iter.Firststep not found'
+        ! !% --- ACmethod.Iter
+        ! !%                       Iter.Firststep
+        ! call json%get('ACmethod.Iter.Firststep', integer_value, found)
+        ! if (found) setting%ACmethod%Iter%Firststep = integer_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Iter.Firststep not found'
         
-        !%                       Iter.Max
-        call json%get('ACmethod.Iter.Max', integer_value, found)
-        if (found) setting%ACmethod%Iter%Max = integer_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Iter.Max not found'
+        ! !%                       Iter.Max
+        ! call json%get('ACmethod.Iter.Max', integer_value, found)
+        ! if (found) setting%ACmethod%Iter%Max = integer_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Iter.Max not found'
         
-        !%                       Iter.Min
-        call json%get('ACmethod.Iter.Min', integer_value, found)
-        if (found) setting%ACmethod%Iter%Min = integer_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Iter.Min not found'
+        ! !%                       Iter.Min
+        ! call json%get('ACmethod.Iter.Min', integer_value, found)
+        ! if (found) setting%ACmethod%Iter%Min = integer_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Iter.Min not found'
 
-        !% --- ACmethod.Switch 
-        !%                       Switch.Area
-        call json%get('ACmethod.Switch.Area', real_value, found)
-        if (found) setting%ACmethod%Switch%Area = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Switch.Area not found'
+        ! !% --- ACmethod.Switch 
+        ! !%                       Switch.Area
+        ! call json%get('ACmethod.Switch.Area', real_value, found)
+        ! if (found) setting%ACmethod%Switch%Area = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Switch.Area not found'
         
-        !%                       Switch.Buffer
-        call json%get('ACmethod.Switch.Buffer', real_value, found)
-        if (found) setting%ACmethod%Switch%Buffer = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Switch.Buffer not found'
+        ! !%                       Switch.Buffer
+        ! call json%get('ACmethod.Switch.Buffer', real_value, found)
+        ! if (found) setting%ACmethod%Switch%Buffer = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Switch.Buffer not found'
         
-        !%                       Switch.Depth
-        call json%get('ACmethod.Switch.Depth', real_value, found)
-        if (found) setting%ACmethod%Switch%Depth = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Switch.Depth not found'
+        ! !%                       Switch.Depth
+        ! call json%get('ACmethod.Switch.Depth', real_value, found)
+        ! if (found) setting%ACmethod%Switch%Depth = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ACmethod.Switch.Depth not found'
 
     !% Adjust. =====================================================================
         !% --- Adjust.Flowrate
@@ -1580,6 +1583,11 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - setting " // 'Link.OpenChannelFullDepth not found'
 
     !% Orifice. =====================================================================
+        !%                      ForceOrificeNodesToJM
+        call json%get('Orifice.ForceOrificeNodesToJM', logical_value, found)
+        if (found) setting%Orifice%ForceOrificeNodesToJM = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Orifice.ForceOrificeNodesToJM not found'
+
         !%                       SharpCrestedWeirCoefficeint
         call json%get('Orifice.SharpCrestedWeirCoefficient', real_value, found)
         if (found) setting%Orifice%SharpCrestedWeirCoefficient = real_value
@@ -2236,6 +2244,12 @@ contains
         !% do not read          TIme.CPU.EpochFinishSeconds
 
     !% Weir.=====================================================================
+
+        !%                      ForceWeirNodesToJM
+        call json%get('Weir.ForceWeirNodesToJM', logical_value, found)
+        if (found) setting%Weir%ForceWeirNodesToJM = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Weir.ForceWeirNodesToJM not found'
+
         !%                       Transverse.WeirExponent
         call json%get('Weir.Transverse.WeirExponent', real_value, found)
         if (found) setting%Weir%Transverse%WeirExponent = real_value

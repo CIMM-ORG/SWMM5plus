@@ -7,13 +7,5 @@
     },
     "Discretization" : {
         "NominalElemLength" : 10.00
-    },
-    "Junction" : {
-        "ForceNodesJM" : false,
-        "ForceStorage" : true
-    },
-     "Weir" : {
-        "ForceWeirNodesToJM" : false
-        
-    } 
+    }  
 }

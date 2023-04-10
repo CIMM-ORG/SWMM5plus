@@ -209,20 +209,20 @@ module lowlevel_rk2
         real(8), pointer :: Csource(:), VolumeM(:), Cgamma(:)
         real(8), pointer :: crk, dtau
         !%-----------------------------------------------------------------------------
-        thisP   => elemP(1:Npack,thisCol)
-        VolumeM => elemR(:,er_VolumeLastAC) !% last complete AC solve
-        Csource => elemR(:,er_SourceContinuity)
-        Cgamma  => elemR(:,er_GammaC)
-        crk     => setting%Solver%crk2(istep)
-        dtau    => setting%ACmethod%dtau
-        !%-----------------------------------------------------------------------------
+        ! thisP   => elemP(1:Npack,thisCol)
+        ! VolumeM => elemR(:,er_VolumeLastAC) !% last complete AC solve
+        ! Csource => elemR(:,er_SourceContinuity)
+        ! Cgamma  => elemR(:,er_GammaC)
+        ! crk     => setting%Solver%crk2(istep)
+        ! dtau    => setting%ACmethod%dtau
+        ! !%-----------------------------------------------------------------------------
 
-        elemR(thisP,outCol) = &
-              ( VolumeM(thisP) + crk * dtau * Csource(thisP) ) &
-              / (oneR + crk * dtau * Cgamma(thisP) )
+        ! elemR(thisP,outCol) = &
+        !       ( VolumeM(thisP) + crk * dtau * Csource(thisP) ) &
+        !       / (oneR + crk * dtau * Cgamma(thisP) )
 
-        !% reset the source
-        Csource(thisP) = zeroR      
+        ! !% reset the source
+        ! Csource(thisP) = zeroR      
 
     end subroutine ll_continuity_volume_CCJM_AC_open
 !%
@@ -239,20 +239,20 @@ module lowlevel_rk2
         real(8), pointer :: Csource(:),  Cgamma(:), eHeadM(:)
         real(8), pointer :: crk, dtau
         !%-----------------------------------------------------------------------------
-        thisP   => elemP(1:Npack,thisCol)
-        eHeadM  => elemR(:,er_HeadLastAC)
-        Csource => elemR(:,er_SourceContinuity)
-        Cgamma  => elemR(:, er_GammaC)
-        crk     => setting%Solver%crk2(istep)
-        dtau    => setting%ACmethod%dtau
-        !%-----------------------------------------------------------------------------
+        ! thisP   => elemP(1:Npack,thisCol)
+        ! eHeadM  => elemR(:,er_HeadLastAC)
+        ! Csource => elemR(:,er_SourceContinuity)
+        ! Cgamma  => elemR(:, er_GammaC)
+        ! crk     => setting%Solver%crk2(istep)
+        ! dtau    => setting%ACmethod%dtau
+        ! !%-----------------------------------------------------------------------------
 
-        elemR(thisP ,outCol) = &
-              ( eHeadM(thisP) + crk * dtau * Csource(thisP ) ) &
-              / (oneR + crk * dtau * Cgamma(thisP ) )
+        ! elemR(thisP ,outCol) = &
+        !       ( eHeadM(thisP) + crk * dtau * Csource(thisP ) ) &
+        !       / (oneR + crk * dtau * Cgamma(thisP ) )
 
-        !% reset the source
-        Csource(thisP) = zeroR      
+        ! !% reset the source
+        ! Csource(thisP) = zeroR      
 
     end subroutine ll_continuity_head_CCJM_AC_surcharged
 !%
@@ -824,18 +824,18 @@ module lowlevel_rk2
         crk => setting%Solver%crk2
         !%-----------------------------------------------------------------------------
 
-        if (thisMethod == AC) then
-            delt         => setting%ACmethod%dtau
-            volumeLast   => elemR(:,er_VolumeLastAC)
-            velocityLast => elemR(:,er_VelocityLastAC)
-        elseif (thisMethod == ETM) then !% real time march
+        ! if (thisMethod == AC) then
+        !     delt         => setting%ACmethod%dtau
+        !     volumeLast   => elemR(:,er_VolumeLastAC)
+        !     velocityLast => elemR(:,er_VelocityLastAC)
+        ! elseif (thisMethod == ETM) then !% real time march
             delt         => setting%Time%Hydraulics%Dt
             volumeLast   => elemR(:,er_Volume_N0)
             velocityLast => elemR(:,er_Velocity_N0)
-        else
-            print *, 'error, if-else that should not be reached'
-            stop 38293
-        end if
+        ! else
+        !     print *, 'error, if-else that should not be reached'
+        !     stop 38293
+        ! end if
 
         Msource => elemR(:,er_SourceMomentum)
         GammaM  => elemR(:,er_GammaM)
@@ -929,13 +929,13 @@ module lowlevel_rk2
         real(8), pointer :: a1, dt, GammaM(:)
         !%-----------------------------------------------------------------------------
         !%
-        thisP => elemP(1:Npack,thisCol)
-        a1 => setting%ACmethod%ImplicitCoef%a1
-        dt => setting%Time%Hydraulics%Dt
-        GammaM => elemR(:,er_GammaM) ! used and updated
-        !%-----------------------------------------------------------------------------
+        ! thisP => elemP(1:Npack,thisCol)
+        ! a1 => setting%ACmethod%ImplicitCoef%a1
+        ! dt => setting%Time%Hydraulics%Dt
+        ! GammaM => elemR(:,er_GammaM) ! used and updated
+        ! !%-----------------------------------------------------------------------------
 
-        elemR(thisP,inoutCol) = GammaM(thisP) + a1 / dt
+        ! elemR(thisP,inoutCol) = GammaM(thisP) + a1 / dt
 
     end subroutine ll_momentum_add_gamma_CC_AC
 !%
@@ -953,20 +953,20 @@ module lowlevel_rk2
         real(8), pointer :: velocityN0(:), velocityN1(:)
         real(8), pointer :: a2, a3, dt
         !%-----------------------------------------------------------------------------
-        thisP => elemP(1:Npack,thisCol)
-        dt => setting%Time%Hydraulics%Dt
-        a2 => setting%ACmethod%ImplicitCoef%a2
-        a3 => setting%ACmethod%ImplicitCoef%a3
-        !%-----------------------------------------------------------------------------
-        Msource    => elemR(:,inoutCol)
-        volumeN0   => elemR(:,er_Volume_N0)
-        volumeN1   => elemR(:,er_Volume_N1)
-        velocityN0 => elemR(:,er_velocity_N0)
-        velocityN1 => elemR(:,er_velocity_N1)
+        ! thisP => elemP(1:Npack,thisCol)
+        ! dt => setting%Time%Hydraulics%Dt
+        ! a2 => setting%ACmethod%ImplicitCoef%a2
+        ! a3 => setting%ACmethod%ImplicitCoef%a3
+        ! !%-----------------------------------------------------------------------------
+        ! Msource    => elemR(:,inoutCol)
+        ! volumeN0   => elemR(:,er_Volume_N0)
+        ! volumeN1   => elemR(:,er_Volume_N1)
+        ! velocityN0 => elemR(:,er_velocity_N0)
+        ! velocityN1 => elemR(:,er_velocity_N1)
 
-        elemR(thisP,inoutCol) = Msource(thisP) &
-                - (+a2 * volumeN0(thisP) * velocityN0(thisP) &
-                   +a3 * volumeN1(thisP) * velocityN1(thisP) ) / dt
+        ! elemR(thisP,inoutCol) = Msource(thisP) &
+        !         - (+a2 * volumeN0(thisP) * velocityN0(thisP) &
+        !            +a3 * volumeN1(thisP) * velocityN1(thisP) ) / dt
 
     end subroutine ll_momentum_add_source_CC_AC
 !%
@@ -1141,18 +1141,18 @@ module lowlevel_rk2
             epsH         => setting%Eps%Head
         !%-----------------------------------------------------------------------------
         !%
-            select case (whichTM)
-            case (ALLtm)
-                thisColP_JM            => col_elemP(ep_JM_ALLtm)
-            case (ETM)
-                thisColP_JM            => col_elemP(ep_JM_ETM)
-            case (AC)
-                thisColP_JM            => col_elemP(ep_JM_AC)
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                stop 7659
-            end select
+            ! select case (whichTM)
+            ! case (ALLtm)
+            !     thisColP_JM            => col_elemP(ep_JM_ALLtm)
+            ! case (ETM)
+                thisColP_JM            => col_elemP(ep_JM)
+            ! case (AC)
+            !     thisColP_JM            => col_elemP(ep_JM_AC)
+            ! case default
+            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !     print *, 'which has key ',trim(reverseKey(whichTM))
+            !     stop 7659
+            ! end select
     
             !% --- alternate form of junctions skips this
             if (setting%Junction%Method .ne. Explicit2) then 
@@ -1573,18 +1573,18 @@ module lowlevel_rk2
         epsH         => setting%Eps%Head
         !%-----------------------------------------------------------------------------
         !%
-        select case (whichTM)
-        case (ALLtm)
-            thisColP_JM            => col_elemP(ep_JM_ALLtm)
-        case (ETM)
-            thisColP_JM            => col_elemP(ep_JM_ETM)
-        case (AC)
-            thisColP_JM            => col_elemP(ep_JM_AC)
-        case default
-            print *, 'CODE ERROR: time march type unknown for # ', whichTM
-            print *, 'which has key ',trim(reverseKey(whichTM))
-            stop 7659
-        end select
+        ! select case (whichTM)
+        ! case (ALLtm)
+        !     thisColP_JM            => col_elemP(ep_JM_ALLtm)
+        ! case (ETM)
+            thisColP_JM            => col_elemP(ep_JM)
+        ! case (AC)
+        !     thisColP_JM            => col_elemP(ep_JM_AC)
+        ! case default
+        !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+        !     print *, 'which has key ',trim(reverseKey(whichTM))
+        !     stop 7659
+        ! end select
 
         !% --- alternate form of junctions skip this
         if (setting%Junction%Method .ne. Explicit1) then
@@ -1884,18 +1884,18 @@ module lowlevel_rk2
 
         !%------------------------------------------------------------------
         !% Preliminaries:
-            select case (whichTM)
-            case (ALLtm)
-                thisColP_JM            => col_elemP(ep_JM_ALLtm)
-            case (ETM)
-                thisColP_JM            => col_elemP(ep_JM_ETM)
-            case (AC)
-                thisColP_JM            => col_elemP(ep_JM_AC)
-            case default
-                print *, 'CODE ERROR: time march type unknown for # ', whichTM
-                print *, 'which has key ',trim(reverseKey(whichTM))
-                stop 7659
-            end select 
+            ! select case (whichTM)
+            ! case (ALLtm)
+            !     thisColP_JM            => col_elemP(ep_JM_ALLtm)
+            ! case (ETM)
+                thisColP_JM            => col_elemP(ep_JM)
+            ! case (AC)
+            !     thisColP_JM            => col_elemP(ep_JM_AC)
+            ! case default
+            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+            !     print *, 'which has key ',trim(reverseKey(whichTM))
+            !     stop 7659
+            ! end select 
         !%------------------------------------------------------------------
     
         Npack => npack_elemP(thisColP_JM)

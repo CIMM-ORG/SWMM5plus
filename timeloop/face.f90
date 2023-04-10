@@ -10,7 +10,7 @@ module face
     use utility_profiler
     use utility, only: util_sign_with_ones, util_CLprint, util_syncwrite
     use utility_crash, only: util_crashpoint
-    use utility_unit_testing, only: util_utest_CLprint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
 
     implicit none
@@ -214,8 +214,8 @@ module face
             !% --- push junction JB flowrate values back to faces  
             call face_force_JBvalues (fr_Flowrate, er_Flowrate, ei_Mface, thisJM(mm), kstart) 
 
-            !% --- push junction JB Delta Q values back to faces
-            call face_force_JBvalues (fr_DeltaQ, er_DeltaQ, ei_Mface, thisJM(mm), kstart) 
+            !% ---add junction JB Delta Q values to face value caused by interpolation
+            call face_add_JBvalues (fr_DeltaQ, er_DeltaQ, ei_Mface, thisJM(mm), kstart) 
 
             !print *, thisJM(mm)
 
@@ -702,12 +702,17 @@ module face
             integer :: fGeoSetU(2), fGeoSetD(2), eGeoSet(2)
             integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
             integer :: fFlowSet(2), eFlowSet(2)
+
+            real(8), pointer :: fQold(:)
+            integer, pointer :: thisP(:)
+
             !integer :: fOtherSet(1), eOtherSet(1)
             character(64) :: subroutine_name = 'face_interpolation_interior'
         !%------------------------------------------------------------------
         !% Aliases       
             Npack => npack_faceP(facePackCol)
             if (Npack < 1) return
+            fQold => faceR(:,fr_Temp01)
         !%------------------------------------------------------------------  
         !% Preliminaries    
             if (setting%Debug%File%face) &
@@ -750,6 +755,12 @@ module face
         if (Qyn) then
             fFlowSet = [fr_Flowrate, fr_Preissmann_Number]
             eFlowSet = [er_Flowrate, er_Preissmann_Number]
+
+            if (facePackCol == fp_JB) then 
+                !% --- store the old flowrate so we can compute the deltaQ
+                thisP => faceP(1:Npack,facePackCol)
+                fQold(thisP) = faceR(thisP,fr_Flowrate)
+            end if
             
             ! print *, ' '
             ! print *, 'in face before '
@@ -762,6 +773,12 @@ module face
                 ! print *, 'in face after '
                 ! print *, elemR(10,er_Flowrate), faceR(11,fr_Flowrate), elemR(12,er_Flowrate)
                 ! print *, ' '
+
+            if (facePackCol == fp_JB) then 
+                    ! print *, ' '
+                    ! print *, '                                  CALLING face_DeltaQ =============='
+                call face_deltaQ (facePackCol,.true.,fQold)
+            end if
 
             !% --- calculate the velocity in faces and put limiter
             call face_velocities (facePackCol, .true.)
@@ -882,6 +899,10 @@ module face
         if (Qyn) then
             fFlowSet      = [  fr_Flowrate,   fr_Preissmann_Number]
             eGhostFlowSet = [ebgr_Flowrate, ebgr_Preissmann_Number]
+
+            print *,'  '
+            print *, ' NEED the shared routine for fr_DeltaQ '
+            stop 2098734
 
             call face_interp_shared_set &
                 (fFlowSet, eGhostFlowSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
@@ -1332,6 +1353,48 @@ module face
 !%==========================================================================
 !%==========================================================================  
 !%
+    subroutine face_deltaQ (facePackCol, isInterior, faceQold)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes the change in face DQ caused by face interpolation for
+        !% JB as part of junctions. This must be included in the total deltaQ
+        !% change caused by the junction
+        !%-------------------------------------------------------------------  
+        !% Declarations:
+            integer, intent(in) :: facePackCol
+            logical, intent(in) :: isInterior
+            real(8), intent(in) :: faceQold(:)
+
+            integer, pointer :: Npack, thisP(:)
+
+            integer :: ii
+        !%-------------------------------------------------------------------  
+        !% Preliminaries
+            if (isInterior) then
+                !% calculation at the interior faces
+                Npack => npack_faceP(facePackCol)
+                thisP => faceP(1:Npack,facePackCol)
+            else
+                !% calculation at the shared faces
+                Npack => npack_facePS(facePackCol)
+                thisP => facePS(1:Npack,facePackCol)
+            end if
+            if (Npack < 1) return
+        !%-------------------------------------------------------------------      
+
+        faceR(thisP,fr_DeltaQ) = faceR(thisP,fr_Flowrate) - faceQold(thisP) 
+
+        ! print *, ' '
+        ! print *, 'in face Delta Q'
+        ! do ii=1,size(thisP)
+        !     print *, ii, thisP(ii), faceR(thisP(ii),fr_Flowrate), faceQold(thisP(ii))
+        ! end do
+
+    end subroutine face_deltaQ
+!%  
+!%========================================================================== 
+!%==========================================================================
+!%   
     subroutine face_velocities (facePackCol, isInterior)
         !%------------------------------------------------------------------
         !% Description:
@@ -1788,6 +1851,33 @@ module face
     end subroutine face_force_JBvalues
 !%    
 !%==========================================================================
+!%==========================================================================
+!% 
+    subroutine face_add_JBvalues (frCol, erCol, fiIdx, JMidx, kstart)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Adds the JB element value to the adjacent face value
+        !%------------------------------------------------------------------
+            integer, intent(in) :: frCol  !% column in faceR array for output
+            integer, intent(in) :: erCol  !% column in elemR array for input
+            integer, intent(in) :: fiIdx  !% face index column for up/dn map
+            integer, intent(in) :: JMidx  !% junction main index
+            integer, intent(in) :: kstart !% =1 for upstream, 2 for downstream
+            integer :: kk
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        !do concurrent (kk=kstart:max_branch_per_node:2)
+        do kk=kstart,max_branch_per_node,2
+            if (elemSI(JMidx+kk,esi_JunctionBranch_Exists).ne. oneI) cycle
+
+            faceR(elemI(JMidx+kk,fiIdx),frCol) = faceR(elemI(JMidx+kk,fiIdx),frCol) + elemR(JMidx+kk,erCol)
+
+        end do
+    
+    end subroutine face_add_JBvalues
+!%    
+!%==========================================================================    
 !%==========================================================================
 !%
     ! subroutine face_zerodepth_shared (facePackCol)

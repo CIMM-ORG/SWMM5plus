@@ -11,5 +11,8 @@
     "Junction" : {
         "ForceNodesJM" : false,
         "ForceStorage" : true
+    } ,
+    "Weir" : {
+        "ForceWeirNodesToJM" : false
     } 
 }

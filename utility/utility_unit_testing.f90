@@ -45,86 +45,7 @@ contains
 
             integer  :: tE, tFu, tFd
 
-            ! integer ::  iet(7) = (/2,   3,  5,4,6    ,15,  16  /)
-            ! integer ::  ift(4) = (/   3,   4      ,5 ,  14/)     
-
-            !integer :: iet(7) = (/ 18,  19,   21, 20, 22,     31  ,  32/)
-            !integer :: ift(4) = (/   19,    20          , 21,    30 /)
-
-
-
-            ! integer :: iet(7) = (/  31  , 32,    33,   34,    35,   36 ,37   /)
-             !integer :: ift(4) = (/     30,    31,     34 , 35/)
-
-            !integer :: iet(7) = (/ 37, 38, 39, 40, 41,   42,  43 /)
-            !integer :: ift(4) = (/   37, 38,          40,   41 /)
-
-            !integer :: iet(7) = (/43, 44, 45, 46, 47, 48, 49 /)
-            !integer :: ift(4) = (/   37, 38,          40,   41 /)
-
-            !integer :: iet(7) = (/55,   56,   57,  58,   59,   60,    61 /)
-            !integer :: ift(6) = (/   54,   55 ,  56,  57,    58,   59/)
-
-            !% extran1_rect_open_001 and 002
-            !integer :: iet(9) = (/   18,  19,   21, 20,  22, 31, 32,  33,  34/)
-            !integer :: ift(6) = (/      19 , 20,            21, 30, 31, 32  /)
-
-
-            !% extran1_rect_open_002
-            ! integer :: iet(7) = (/ 21,  20, 22,  31,  32,   33,   34, 35,  36,  37,  38,  39,   40/)
-            ! integer :: ift(6) = (/   21,  31,   32 ,  33,  34,  35,  36,  37,  38  /)
-
-         !% extran1_rect_open_final
-            !integer :: iet(9) = (/18,  19,   21,  20,  22,    134,     135,    136,  137 /)
-            !integer :: ift(6) = (/  19,   20 ,              21,    132,     133,   134/)
-
-         !% extran1_horizontal_ellipsi_final
-            ! integer :: iet(9) = (/200,     201,    202,     165, 164, 166 ,   175,    176,   156/)
-            ! integer :: ift(6) = (/     190,   191,    157,                158    , 167  , 149/)
-
-            ! !% extran1_horizontal_ellipsi_final
-            ! integer :: iet(9) = (/ 29,   30,   32,  31,  33,   178,   179,   180, 181 /)
-            ! integer :: ift(6) = (/    28,   29,              30,   168,   169, 170/)
-
-            !integer :: iet(9) = (/ 178,   179,    180,   181,   182,   183,  184,   185, 186 /)
-            !integer :: ift(8) = (/     168,   169,   170,    171,   172,  173,   174,  176 /)
-
-
-            !% user5_reduced04 at 200 m
-            !integer :: iet(8) = (/  1,   2,   3,  5, 4, 6,   15,   16/)
-            !integer :: ift(7) = (/1  , 2 ,  3 , 4,         5,   14,  15/)
-
-            !% user5 reduced05 at 20 m
-            !integer :: iet(6) = (/  41, 42, 43, 44, 45, 46/)
-            !integer :: ift(7) = (/41,  42, 43, 44, 45, 46, 47/)
-    
-            !% user5 reduced06 at 10 m
-            !integer :: iet(7) = (/  60,    61,   63, 62, 64,  73,  74 /)
-            !integer :: ift(6) = (/60,   61,   62,           63,  72,  73/)
-    
-            !% user5_C.inp
-            !integer :: iet(7) = (/     632,     633,     635, 634  , 636,    645     ,646 /)
-            !integer :: ift(6) = (/550,     551,     552,                553,    562,     510/)
-
-            !% user5_C.inp
-            !integer :: iet(7) = (/ 1784,    1793,       1795, 1794, 1796,   1805,   1807 /)
-            !integer :: ift(4) = (/      1450,     1459,                 1460,   1469 /)
-
-            !% user5_C.inp
-            ! integer :: iet(7) = (/         1783, 1782, 1784,       1793,     1795, 1794, 1796  /)
-            ! integer :: ift(3) = (/  1449,                   1450,      1459 /)
-
-            !% Co_circ_02.inp
-            !integer :: iet(7) = (/  2,  3,    5, 4, 6,   15,   16/)
-            !integer :: ift(4) = (/    3,   4,          5,   14 /)
-
-            !% extran1_final.inp
-            ! integer ::  iet(7) = (/ 151,  152,     154, 153, 155     , 177,   106/)
-            ! integer ::  ift(4)  = (/    146,   147,               148,     100  /)
-      
-            ! integer :: iet2(5) = (/ 175,   176,    156, 153, 155      /)
-            ! integer :: ift2(3) = (/     167,  149 ,               148/)
-
+   
             ! !% YJ_Geom_Test_mod01
             ! integer :: iet(7) = (/  1,  2,   4,3,5, 14, 15/)
             ! integer :: ift(6)  = (/1,  2,  3,      4,  13, 14/)
@@ -181,8 +102,23 @@ contains
 
             !% T005_CC_Free_dx0050_ForceStorage
 
-            integer :: iet(8) = (/   1,   1,   2,    4,3,5,   14,     15/)
-            integer :: ift(7) = (/ 1,   1  , 2,   3,        4,   13,    14/)
+            ! integer :: iet(8) = (/   1,   1,   2,    4,3,5,   14,     15/)
+            ! integer :: ift(7) = (/ 1,   1  , 2,   3,        4,   13,    14/)
+
+            !% T005W_RO_Free_dx0010_ForceJM
+            !integer :: iet(11) = (/ 93,   94,    96,95,97,   211,    107,106,108,  117,  118/)
+            !integer :: ift(6) = (/     86,    87,         88,     97,            98,  107 /)
+
+            !% T005Wr_RO_Free-dx0010_weirJM
+            ! integer :: iet(11) = (/  49,   50,    52,51,53,   123,    63,62,64,   73,  74/)
+            ! integer :: ift(6)  = (/     50,   51,         52,     61,         62,   71 /)
+
+
+             !% T005Wr_RO_Free-dx0010_faceNJ2 with only upstream node
+            integer :: iet(8) = (/  49,   50,    52,51,53,   112,    62,  63 /)
+            integer :: ift(5)  = (/     50,   51,         52,     61,    62 /)
+
+            real(8) :: tempV, tempVold, tempFin, tempFout
 
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
@@ -200,12 +136,12 @@ contains
 
             !return 
 
-         !   if (setting%Time%Step < 700) return
+          if (setting%Time%Step < 2458) return
 
-         !     if (setting%Time%Step > 750) then
+            !   if (setting%Time%Step > 1) then
 
-         !        stop  6098723
-         !     end if
+            !      stop  6098723
+            !   end if
 
       !% --- USEFUL HEADER -----------------------------------------------
             print *, ' '
@@ -214,9 +150,80 @@ contains
             '; dt = ',setting%Time%Hydraulics%Dt,&
             '; time = ',setting%Time%Now / 60.d0, ' min'       
 
-               !return
-            
+            ! print *, ' '
+            ! print *, 'conservation at ii=',62
+            ! print *, 4, (elemR(62,er_Volume) - elemR(62,er_Volume_N0)) &
+            !       -(   faceR(elemI(63,ei_Mface_uL),fr_Flowrate_Conservative)  &
+            !          - faceR(elemI(64,ei_Mface_dL),fr_Flowrate_Conservative)  &
+            !       ) * setting%Time%Hydraulics%Dt
+            ! print *, ' '
 
+            ! print *, 'components'
+            ! print *, 'vol: ',elemR(62,er_Volume), elemR(62,er_Volume_N0)
+            ! print *, 'Flux ', faceR(elemI(63,ei_Mface_uL),fr_Flowrate_Conservative)* setting%Time%Hydraulics%Dt
+            ! print *, 'Flux ',-faceR(elemI(64,ei_Mface_dL),fr_Flowrate_Conservative) * setting%Time%Hydraulics%Dt
+            ! print *, ' '
+            ! print *, 'depth ',elemR(62,er_Depth), setting%ZeroValue%Depth
+
+            ! print *, ' '
+            ! print *, 'effective weir full depth ',elemSR(211,esr_Weir_EffectiveFullDepth)
+            ! print *, 'effective head delta      ',elemSR(211,esr_Weir_EffectiveHeadDelta)
+            ! print *, 'dQdH                      ',elemSR(211,esr_Weir_dQdHe)
+            
+            ! tempVold = sum(elemR(1:50,er_Volume_N0) + elemR(51,er_Volume_N0) + elemR(62,er_Volume_N0)) &
+            !                   +sum(elemR(73:122,er_Volume_N0))
+            ! tempV    = sum(elemR(1:50,er_Volume) + elemR(51,er_Volume) + elemR(62,er_Volume)) &
+            !                   +sum(elemR(73:122,er_Volume))
+            ! tempFin  = faceR(1,fr_Flowrate_Conservative) * setting%Time%Hydraulics%Dt
+            ! tempFout = faceR(120,fr_Flowrate_Conservative)* setting%Time%Hydraulics%Dt
+            ! print *, 'old vol        ',tempVold
+            ! print *, 'volume         ',tempV
+            ! print *, ' '
+            ! print *, 'inflow volume  ', tempFin
+            ! print *, 'outflow_volume ', tempFout
+            ! print *, ' '
+            ! print *, 'net volume change   ', tempV - tempVold
+            ! print *, 'net flow vol change ', tempFin - tempFout
+            ! print *, ' '
+            ! print *, 'Cons ', (tempV - tempVold) - (tempFin - tempFout)
+            ! print *, ' '
+
+            ! print *, 'elem 50 vol   ', elemR(50,er_Volume), elemR(50,er_Volume_N0)
+            
+            ! print *, 'face 51 Q*dt  ', faceR(51,fr_Flowrate)*setting%Time%Hydraulics%Dt
+            ! print *, 'face 50 Q*dt  ', faceR(50,fr_Flowrate)*setting%Time%Hydraulics%Dt
+            ! print *, 'face net flux ', faceR(50,fr_Flowrate)*setting%Time%Hydraulics%Dt - faceR(51,fr_Flowrate)*setting%Time%Hydraulics%Dt
+            ! print *, 'elem 50 Vdelta', elemR(50,er_Volume) - elemR(50,er_Volume_N0)
+            ! print *, 'elem 50 cons  ', (elemR(50,er_Volume) - elemR(50,er_Volume_N0)) - (faceR(50,fr_Flowrate)*setting%Time%Hydraulics%Dt - faceR(51,fr_Flowrate)*setting%Time%Hydraulics%Dt)
+            ! print *, ' '
+            
+            ! print *, 'face 52 Q*dt  ', faceR(52,fr_Flowrate)*setting%Time%Hydraulics%Dt
+            ! print *, 'face 51 Q*dt  ', faceR(51,fr_Flowrate)*setting%Time%Hydraulics%Dt
+            ! print *, 'face net flux ', faceR(51,fr_Flowrate)*setting%Time%Hydraulics%Dt - faceR(52,fr_Flowrate)*setting%Time%Hydraulics%Dt
+            ! print *, 'JM 51 Volumes ', elemR(51,er_Volume), elemR(51,er_Volume_N0)
+            ! print *, 'JM 51 Vdelta  ', elemR(51,er_Volume) - elemR(51,er_Volume_N0)
+            ! print *, 'JM t1 cons    ', elemR(51,er_Volume) - elemR(51,er_Volume_N0) - (faceR(51,fr_Flowrate)*setting%Time%Hydraulics%Dt - faceR(52,fr_Flowrate)*setting%Time%Hydraulics%Dt)
+            ! print *, ' '
+
+            ! print *, 'JB Q          ',elemR(52,er_Flowrate), elemR(53,er_Flowrate)
+            ! print *, 'JB 52 Head, Zb',elemR(52,er_Head),  elemR(52,er_Zbottom)
+            ! print *, 'JB 52,H-Zb    ',elemR(52,er_Head) - elemR(52,er_Zbottom)
+            ! print *, 'JB 52 Depth   ',elemR(52,er_Depth), setting%ZeroValue%Depth
+            ! print *, ' '
+
+            ! print *, 'FLOWRATES CC, face, JB '
+            ! print *, elemR(50,er_Flowrate), faceR(51,fr_Flowrate), elemR(52,er_Flowrate)
+            ! print *, ' '
+
+            ! print *, 'Delta Q CC, face, JB '
+            ! print *, elemR(51,er_DeltaQ), faceR(51,fr_DeltaQ), elemR(52,er_DeltaQ)
+            ! print *, ' '
+
+
+         !   if (setting%Time%Step > 247) then 
+         !      stop 550987
+         !    end if
+            !stop 440978
 
       !% --- SETUP  -----------------------------------------------
          !   print *, 'up, face:    ',elemI(iet,ei_Mface_uL)
@@ -270,59 +277,64 @@ contains
             ! !return 
             ! stop 2398744
 
-         !% branches and elements   
+
+      !% branches and elements   
 
          ! print *, 'branches and elements'
-            do ii=1,N_elem(1)
-               if (elemI(ii,ei_elementType) == CC) then
-                  if (faceI(fup(ii),fi_BCType) == BCup) then 
-                     write(*,"(A, i5, A)"), 'fbcU', fup(ii),       '             '//trim(reverseKey(faceI(fup(ii),fi_BCType))) 
-                  end if
-                     write(*,"(A, i5, A)"), 'fup ', fup(ii),       '             '//trim(reverseKey(faceI(fup(ii),fi_BCType)))         
-                     write(*,"(A, i5,A)"), 'e   ', ii,            '             '//trim(reverseKey(elemI(    ii ,ei_elementType)))//'      '//trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
-                     write(*,"(A, i5,A)"), 'fdn ', fdn(ii),       '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
-                  if (faceI(fup(ii),fi_BCType) == BCdn) then
-                     write(*,"(A, i5, A)"), 'fbcD', fdn(ii),       '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
-                  end if 
-               elseif (elemI(ii,ei_elementType) == JM) then
-                  !% upstream branches
-                  do jj=1,max_branch_per_node,2
-                     if  (elemSI(ii+jj,esi_JunctionBranch_Exists) == oneI) then
-                        write(*,"(A, i5,  A)"),     'fup ', fup(ii+jj),  '             '//trim(reverseKey(faceI(fup(ii+jj),fi_BCType)))
-                        write(*,"(A, i5, A, i5)"), 'eJB ', ii+jj,      '             JB ',   elemSI(ii+jj,esi_JunctionBranch_IsUpstream)
-                     end if
-                  end do
-                  !%  JM
-                        write(*,"(A, i5, A)"),      'eJM ', ii,  ' '//trim(reverseKey(elemI(ii,ei_elementType)))//'      '//trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
-                  !% downstream branches
-                  do jj=2,max_branch_per_node,2
-                     if  (elemSI(ii+jj,esi_JunctionBranch_Exists) == oneI) then
-                        write(*,"(A, i5,  A, i5)"), 'eJB ', ii+jj     ,  '            JB ', elemSI(ii+jj,esi_JunctionBranch_IsUpstream)
-                        write(*,"(A, i5, A)"),     'fdn ', fdn(ii+jj),  '               '//trim(reverseKey(faceI(fdn(ii+jj),fi_BCType)))
-                     end if
-                  end do
-               elseif ((elemI(ii,ei_elementType) == JB) ) then
-                  ! skip
-               else 
-                  print *, 'unexpected element type '
-                  print *, trim(reverseKey(elemI(ii,ei_elementType)))
-                  stop 77873
-               end if
-             end do
-               !   stop 239874
-               !   return
+               ! do ii=1,N_elem(1)
+               !    if (elemI(ii,ei_elementType) == CC) then
+               !       if (faceI(fup(ii),fi_BCType) == BCup) then 
+               !          write(*,"(A, i5, A)"), 'fbcU', fup(ii),       '             '//trim(reverseKey(faceI(fup(ii),fi_BCType))) 
+               !       end if
+               !          write(*,"(A, i5, A)"), 'fup ', fup(ii),       '             '//trim(reverseKey(faceI(fup(ii),fi_BCType)))         
+               !          write(*,"(A, i5,A)"), 'e   ', ii,            '             '//trim(reverseKey(elemI(    ii ,ei_elementType)))//'      '//trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
+               !          write(*,"(A, i5,A)"), 'fdn ', fdn(ii),       '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
+               !       if (faceI(fup(ii),fi_BCType) == BCdn) then
+               !          write(*,"(A, i5, A)"), 'fbcD', fdn(ii),       '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
+               !       end if 
+               !    elseif (elemI(ii,ei_elementType) == JM) then
+               !       !% upstream branches
+               !       do jj=1,max_branch_per_node,2
+               !          if  (elemSI(ii+jj,esi_JunctionBranch_Exists) == oneI) then
+               !             write(*,"(A, i5,  A)"),     'fup ', fup(ii+jj),  '             '//trim(reverseKey(faceI(fup(ii+jj),fi_BCType)))
+               !             write(*,"(A, i5, A, i5)"), 'eJB ', ii+jj,      '             JB ',   elemSI(ii+jj,esi_JunctionBranch_IsUpstream)
+               !          end if
+               !       end do
+               !       !%  JM
+               !             write(*,"(A, i5, A)"),      'eJM ', ii,  ' '//trim(reverseKey(elemI(ii,ei_elementType)))//'      '//trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
+               !       !% downstream branches
+               !       do jj=2,max_branch_per_node,2
+               !          if  (elemSI(ii+jj,esi_JunctionBranch_Exists) == oneI) then
+               !             write(*,"(A, i5,  A, i5)"), 'eJB ', ii+jj     ,  '            JB ', elemSI(ii+jj,esi_JunctionBranch_IsUpstream)
+               !             write(*,"(A, i5, A)"),     'fdn ', fdn(ii+jj),  '               '//trim(reverseKey(faceI(fdn(ii+jj),fi_BCType)))
+               !          end if
+               !       end do
+               !    elseif ((elemI(ii,ei_elementType) == JB) ) then
+               !       ! skip
+               !    elseif ((elemI(ii,ei_elementType) == weir)) then 
+               !       write(*,"(A, i5, A)"), 'fup ', fup(ii),       '             '//trim(reverseKey(faceI(fup(ii),fi_BCType)))         
+               !       write(*,"(A, i5,A)"), 'e   ', ii,            '             '//trim(reverseKey(elemI(    ii ,ei_elementType)))//'      '//trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
+               !       write(*,"(A, i5,A)"), 'fdn ', fdn(ii),       '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
+               !    else 
+               !       print *, 'unexpected element type '
+               !       print *, trim(reverseKey(elemI(ii,ei_elementType)))
+               !       stop 77873
+               !    end if
+               !  end do
+               !      stop 239874
+               !      return
 
-            print *, ' '
-            print *, 'link,node names'
-            do ii=1,N_elem(1)
-               if (elemI(ii,ei_link_Gidx_SWMM) < nullvalueI) then 
-                  print *, ii, elemI(ii,ei_link_Gidx_SWMM), trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str), ' islink'
-               elseif (elemI(ii,ei_node_Gidx_SWMM) < nullvalueI) then
-                  print *, ii, elemI(ii,ei_node_Gidx_SWMM), trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str), ' isnode'
-               end if
-            end do
+               ! print *, ' '
+               ! print *, 'link,node names'
+               ! do ii=1,N_elem(1)
+               !    if (elemI(ii,ei_link_Gidx_SWMM) < nullvalueI) then 
+               !       print *, ii, elemI(ii,ei_link_Gidx_SWMM), trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str), ' islink'
+               !    elseif (elemI(ii,ei_node_Gidx_SWMM) < nullvalueI) then
+               !       print *, ii, elemI(ii,ei_node_Gidx_SWMM), trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str), ' isnode'
+               !    end if
+               ! end do
 
-            stop 2398746
+               ! stop 2398746
 
 
             !    do ii=1,size(iet)
@@ -356,7 +368,297 @@ contains
 
   
       !   return
+
+
+
+
+
+
+         write(*,"(A9,17A11)"),' ','elem','faceU','faceD','elem','faceU','faceD','jb','JM','jb','faceU','faceD','WEIR','faceU','faceD','elem','faceU','faceD','elem'
+
+     
+         write(*,"(A,31f11.4)") '  Head    '  ,          &
+            elemR(iet(1),er_Head), &
+               faceR(ift(1),fr_Head_u), &
+               faceR(ift(1),fr_Head_d), &
+            elemR(iet(2),er_Head), &
+               faceR(ift(2),fr_Head_u), &
+               faceR(ift(2),fr_Head_d), &
+            elemR(iet(3),er_Head), &
+            elemR(iet(4),er_Head), &
+            elemR(iet(5),er_Head), &
+               faceR(ift(3),fr_Head_u), &
+               faceR(ift(3),fr_Head_d), &
+            elemR(iet(6),er_Head),&
+               faceR(ift(4),fr_Head_u), &
+               faceR(ift(4),fr_Head_d), &
+            elemR(iet(7),er_Head), &
+               faceR(ift(5),fr_Head_u), &
+               faceR(ift(5),fr_Head_d), &
+            elemR(iet(8),er_Head)
+
+
+         write(*,"(A,31f11.4)") '   Zbot   '  ,          &
+            elemR(iet(1),er_Zbottom), &
+               faceR(ift(1),fr_Zbottom), &
+               faceR(ift(1),fr_Zbottom), &
+            elemR(iet(2),er_Zbottom), &
+               faceR(ift(2),fr_Zbottom), &
+               faceR(ift(2),fr_Zbottom), &
+            elemR(iet(3),er_Zbottom), &
+            elemR(iet(4),er_Zbottom), &
+            elemR(iet(5),er_Zbottom), &
+               faceR(ift(3),fr_Zbottom), &
+               faceR(ift(3),fr_Zbottom), &
+            elemR(iet(6),er_Zbottom),&
+               faceR(ift(4),fr_Zbottom), &
+               faceR(ift(4),fr_Zbottom), &
+            elemR(iet(7),er_Zbottom), &
+               faceR(ift(5),fr_Zbottom), &
+               faceR(ift(5),fr_Zbottom), &
+            elemR(iet(8),er_Zbottom)
+
+            write(*,"(A,31f11.4)") ' Depth    '  ,          &
+            elemR(iet(1),er_Depth), &
+               faceR(ift(1),fr_Depth_u), &
+               faceR(ift(1),fr_Depth_d), &
+            elemR(iet(2),er_Depth), &
+               faceR(ift(2),fr_Depth_u), &
+               faceR(ift(2),fr_Depth_d), &
+            elemR(iet(3),er_Depth), &
+            elemR(iet(4),er_Depth), &
+            elemR(iet(5),er_Depth), &
+               faceR(ift(3),fr_Depth_u), &
+               faceR(ift(3),fr_Depth_d), &
+            elemR(iet(6),er_Depth),&
+               faceR(ift(4),fr_Depth_u), &
+               faceR(ift(4),fr_Depth_d), &
+            elemR(iet(7),er_Depth), &
+               faceR(ift(5),fr_Depth_u), &
+               faceR(ift(5),fr_Depth_d), &
+            elemR(iet(8),er_Depth)
+
+            print *, ' '
+
+            write(*,"(A,31f11.4)") '   Flow   '  ,          &
+            elemR(iet(1),er_Flowrate), &
+               faceR(ift(1),fr_Flowrate), &
+               faceR(ift(1),fr_Flowrate), &
+            elemR(iet(2),er_Flowrate), &
+               faceR(ift(2),fr_Flowrate), &
+               faceR(ift(2),fr_Flowrate), &
+            elemR(iet(3),er_Flowrate), &
+            elemR(iet(4),er_Flowrate), &
+            elemR(iet(5),er_Flowrate), &
+               faceR(ift(3),fr_Flowrate), &
+               faceR(ift(3),fr_Flowrate), &
+            elemR(iet(6),er_Flowrate),&
+               faceR(ift(4),fr_Flowrate), &
+               faceR(ift(4),fr_Flowrate), &
+            elemR(iet(7),er_Flowrate), &
+               faceR(ift(5),fr_Flowrate), &
+               faceR(ift(5),fr_Flowrate), &
+            elemR(iet(8),er_Flowrate)
+
+           ! write(*,"(A,31f11.4)") '      '  ,          &
+            ! elemR(iet(1),er_), &
+            !    faceR(ift(1),fr__u), &
+            !    faceR(ift(1),fr__d), &
+            ! elemR(iet(2),er_), &
+            !    faceR(ift(2),fr__u), &
+            !    faceR(ift(2),fr__d), &
+            ! elemR(iet(3),er_), &
+            ! elemR(iet(4),er_), &
+            ! elemR(iet(5),er_), &
+            !    faceR(ift(3),fr__u), &
+            !    faceR(ift(3),fr__d), &
+            ! elemR(iet(6),er_),&
+            !    faceR(ift(4),fr__u), &
+            !    faceR(ift(4),fr__d), &
+            ! elemR(iet(7),er_), &
+            !    faceR(ift(5),fr__u), &
+            !    faceR(ift(5),fr__d), &
+            ! elemR(iet(8),er_)
+            
+            return
+
+
+
+
+   write(*,"(A9,17A11)"),' ','elem','faceU','faceD','elem','faceU','faceD','jb','JM','jb','faceU','faceD','WEIR','faceU','faceD','jb','JM','jb','faceU','faceD','elem','faceU','faceD','elem'
       
+         write(*,"(A,31f11.4)") '  Head    '  ,          &
+            elemR(iet(1),er_Head), &
+               faceR(ift(1),fr_Head_u), &
+               faceR(ift(1),fr_Head_d), &
+            elemR(iet(2),er_Head), &
+               faceR(ift(2),fr_Head_u), &
+               faceR(ift(2),fr_Head_d), &
+            elemR(iet(3),er_Head), &
+            elemR(iet(4),er_Head), &
+            elemR(iet(5),er_Head), &
+               faceR(ift(3),fr_Head_u), &
+               faceR(ift(3),fr_Head_d), &
+            elemR(iet(6),er_Head),&
+               faceR(ift(4),fr_Head_u), &
+               faceR(ift(4),fr_Head_d), &
+            elemR(iet(7),er_Head), &
+            elemR(iet(8),er_Head), &
+            elemR(iet(9),er_Head), &
+               faceR(ift(5),fr_Head_u), &
+               faceR(ift(5),fr_Head_d), &
+            elemR(iet(10),er_Head), &
+               faceR(ift(6),fr_Head_u), &
+               faceR(ift(6),fr_Head_d), &
+            elemR(iet(11),er_Head)
+
+         write(*,"(A,31f11.4)") '  ZBtm    '  ,          &
+            elemR(iet(1),er_Zbottom), &
+               faceR(ift(1),fr_Zbottom), &
+               faceR(ift(1),fr_Zbottom), &
+            elemR(iet(2),er_Zbottom), &
+               faceR(ift(2),fr_Zbottom), &
+               faceR(ift(2),fr_Zbottom), &
+            elemR(iet(3),er_Zbottom), &
+            elemR(iet(4),er_Zbottom), &
+            elemR(iet(5),er_Zbottom), &
+               faceR(ift(3),fr_Zbottom), &
+               faceR(ift(3),fr_Zbottom), &
+            elemR(iet(6),er_Zbottom),&
+               faceR(ift(4),fr_Zbottom), &
+               faceR(ift(4),fr_Zbottom), &
+            elemR(iet(7),er_Zbottom), &
+            elemR(iet(8),er_Zbottom), &
+            elemR(iet(9),er_Zbottom), &
+               faceR(ift(5),fr_Zbottom), &
+               faceR(ift(5),fr_Zbottom), &
+            elemR(iet(10),er_Zbottom), &
+               faceR(ift(6),fr_Zbottom), &
+               faceR(ift(6),fr_Zbottom), &
+            elemR(iet(11),er_Zbottom)
+
+
+      write(*,"(A,31f11.4)") '  Depth   '  ,          &
+            elemR(iet(1),er_Depth), &
+               faceR(ift(1),fr_Depth_u), &
+               faceR(ift(1),fr_Depth_d), &
+            elemR(iet(2),er_Depth), &
+               faceR(ift(2),fr_Depth_u), &
+               faceR(ift(2),fr_Depth_d), &
+            elemR(iet(3),er_Depth), &
+            elemR(iet(4),er_Depth), &
+            elemR(iet(5),er_Depth), &
+               faceR(ift(3),fr_Depth_u), &
+               faceR(ift(3),fr_Depth_d), &
+            elemR(iet(6),er_Depth),&
+               faceR(ift(4),fr_Depth_u), &
+               faceR(ift(4),fr_Depth_d), &
+            elemR(iet(7),er_Depth), &
+            elemR(iet(8),er_Depth), &
+            elemR(iet(9),er_Depth), &
+               faceR(ift(5),fr_Depth_u), &
+               faceR(ift(5),fr_Depth_d), &
+            elemR(iet(10),er_Depth), &
+               faceR(ift(6),fr_Depth_u), &
+               faceR(ift(6),fr_Depth_d), &
+            elemR(iet(11),er_Depth)
+
+         write(*,"(A,31e11.3)") '  Flow    '  ,          &
+            elemR(iet(1),er_Flowrate), &
+               faceR(ift(1),fr_Flowrate), &
+               faceR(ift(1),fr_Flowrate), &
+            elemR(iet(2),er_Flowrate), &
+               faceR(ift(2),fr_Flowrate), &
+               faceR(ift(2),fr_Flowrate), &
+            elemR(iet(3),er_Flowrate), &
+            elemR(iet(4),er_Flowrate), &
+            elemR(iet(5),er_Flowrate), &
+               faceR(ift(3),fr_Flowrate), &
+               faceR(ift(3),fr_Flowrate), &
+            elemR(iet(6),er_Flowrate),&
+               faceR(ift(4),fr_Flowrate), &
+               faceR(ift(4),fr_Flowrate), &
+            elemR(iet(7),er_Flowrate), &
+            elemR(iet(8),er_Flowrate), &
+            elemR(iet(9),er_Flowrate), &
+               faceR(ift(5),fr_Flowrate), &
+               faceR(ift(5),fr_Flowrate), &
+            elemR(iet(10),er_Flowrate), &
+               faceR(ift(6),fr_Flowrate), &
+               faceR(ift(6),fr_Flowrate), &
+            elemR(iet(11),er_Flowrate)
+
+            write(*,"(A,31e11.3)") '  Qcons   '  ,          &
+            elemR(iet(1),er_Flowrate), &
+               faceR(ift(1),fr_Flowrate_Conservative), &
+               faceR(ift(1),fr_Flowrate_Conservative), &
+            elemR(iet(2),er_Flowrate), &
+               faceR(ift(2),fr_Flowrate_Conservative), &
+               faceR(ift(2),fr_Flowrate_Conservative), &
+            elemR(iet(3),er_Flowrate), &
+            elemR(iet(4),er_Flowrate), &
+            elemR(iet(5),er_Flowrate), &
+               faceR(ift(3),fr_Flowrate_Conservative), &
+               faceR(ift(3),fr_Flowrate_Conservative), &
+            elemR(iet(6),er_Flowrate),&
+               faceR(ift(4),fr_Flowrate_Conservative), &
+               faceR(ift(4),fr_Flowrate_Conservative), &
+            elemR(iet(7),er_Flowrate), &
+            elemR(iet(8),er_Flowrate), &
+            elemR(iet(9),er_Flowrate), &
+               faceR(ift(5),fr_Flowrate_Conservative), &
+               faceR(ift(5),fr_Flowrate_Conservative), &
+            elemR(iet(10),er_Flowrate), &
+               faceR(ift(6),fr_Flowrate_Conservative), &
+               faceR(ift(6),fr_Flowrate_Conservative), &
+            elemR(iet(11),er_Flowrate)
+
+      write(*,"(A,31e11.4)") '  Vol     '  ,          &
+            elemR(iet(1),er_Volume), &
+               0.d0, &
+               0.d0, &
+            elemR(iet(2),er_Volume), &
+            0.d0, &
+               0.d0, &
+            elemR(iet(3),er_Volume), &
+            elemR(iet(4),er_Volume), &
+            elemR(iet(5),er_Volume), &
+               0.d0, &
+               0.d0, &
+            elemR(iet(6),er_Volume),&
+            0.d0, &
+               0.d0, &
+            elemR(iet(7),er_Volume), &
+            elemR(iet(8),er_Volume), &
+            elemR(iet(9),er_Volume), &
+            0.d0, &
+               0.d0, &
+            elemR(iet(10),er_Volume), &
+               0.d0, &
+               0.d0, &
+            elemR(iet(11),er_Flowrate)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      return
+
+
+
+
        
             !write(*,"(A, A,L3, A,A,A, L3, A,A,A, L3, A,A, L3, A,A, L3, A,A,A, L3, A,A, A,  L3, A,A,  L3, A,A, L3, A, A, L3)"),&
       write(*,"(A,A,L3,  A,A,A,L3,   A,A,A,L3,  A,A,A,L3,    A,A,L3,  A,A,L3,  A,A,A,L3,   A,A,A,L3)"),&
@@ -1532,32 +1834,32 @@ contains
       kk = 1
       dup_found = .false.
 
-      !% checking elemP(:,ep_AC) indexes
-      min_val = minval(elemP(:,ep_AC)) - 1
-      max_val = maxval(elemP(:,ep_AC))
-      ii = 0
+      ! !% checking elemP(:,ep_AC) indexes
+      ! min_val = minval(elemP(:,ep_AC)) - 1
+      ! max_val = maxval(elemP(:,ep_AC))
+      ! ii = 0
 
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(elemP(:,ep_AC),mask=elemP(:,ep_AC)>min_val)
-      end do
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(elemP(:,ep_AC),mask=elemP(:,ep_AC)>min_val)
+      ! end do
 
-      !% Here we check if nullvalueI is part packed array and if so we subtract one.
-      !% We do this because
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
+      ! !% Here we check if nullvalueI is part packed array and if so we subtract one.
+      ! !% We do this because
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
 
 
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_AC) is only filled with nullvalueI. This_image ::", this_image()
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "elemP(:,ep_AC) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_ac)) then
-         print *, "ERROR:::: elemP(:,ep_AC) is not unique. This_image ::", this_image()
+      ! else if (ii /= npack_elemP(ep_ac)) then
+      !    print *, "ERROR:::: elemP(:,ep_AC) is not unique. This_image ::", this_image()
 
-      else
-         print *, "elemP(:,ep_AC) is unique. This_image ::", this_image()
-      end if
+      ! else
+      !    print *, "elemP(:,ep_AC) is unique. This_image ::", this_image()
+      ! end if
 
 
       !% checking elemP(:,ep_ALLtm) indexes
@@ -1586,69 +1888,41 @@ contains
       end if
 
 
-      !% checking elemP(:,ep_CC_AC) indexes
+      ! !% checking elemP(:,ep_CC_AC) indexes
 
-      min_val = minval(elemP(:,ep_CC_AC)) - 1
-      max_val = maxval(elemP(:,ep_CC_AC))
+      ! min_val = minval(elemP(:,ep_CC_AC)) - 1
+      ! max_val = maxval(elemP(:,ep_CC_AC))
+      ! ii = 0
+
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(elemP(:,ep_CC_AC),mask=elemP(:,ep_CC_AC)>min_val)
+      ! end do
+
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
+
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "elemP(:,ep_CC_AC) is only filled with nullvalueI. This_image ::", this_image()
+
+      ! else if (ii /= npack_elemP(ep_CC_AC)) then
+      !    print *, "ERROR:::: elemP(:,ep_CC_AC) is not unique. This_image ::", this_image()
+
+      ! else
+      !    print *, "elemP(:,ep_CC_AC) is unique. This_image ::", this_image()
+      ! end if
+
+
+      !% checking elemP(:,ep_CC) indexes
+
+      min_val = minval(elemP(:,ep_CC)) - 1
+      max_val = maxval(elemP(:,ep_CC))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_CC_AC),mask=elemP(:,ep_CC_AC)>min_val)
-      end do
-
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
-
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_CC_AC) is only filled with nullvalueI. This_image ::", this_image()
-
-      else if (ii /= npack_elemP(ep_CC_AC)) then
-         print *, "ERROR:::: elemP(:,ep_CC_AC) is not unique. This_image ::", this_image()
-
-      else
-         print *, "elemP(:,ep_CC_AC) is unique. This_image ::", this_image()
-      end if
-
-
-      !% checking elemP(:,ep_CC_ALLtm) indexes
-
-      min_val = minval(elemP(:,ep_CC_ALLtm)) - 1
-      max_val = maxval(elemP(:,ep_CC_ALLtm))
-      ii = 0
-
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(elemP(:,ep_CC_ALLtm),mask=elemP(:,ep_CC_ALLtm)>min_val)
-      end do
-
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
-
-
-
-
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_CC_ALLtm) is only filled with nullvalueI. This_image ::", this_image()
-
-      else if (ii /= npack_elemP(ep_CC_Alltm)) then
-         print *, "ERROR:::: elemP(:,ep_CC_ALLtm) is not unique. This_image ::", this_image()
-
-      else
-         print *, "elemP(:,ep_CC_ALLtm) is unique. This_image ::", this_image()
-      end if
-
-      !% checking elemP(:,ep_CC_ETM) indexes
-
-      min_val = minval(elemP(:,ep_CC_ETM)) - 1
-      max_val = maxval(elemP(:,ep_CC_ETM))
-      ii = 0
-
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(elemP(:,ep_CC_ETM),mask=elemP(:,ep_CC_ETM)>min_val)
+         min_val = minval(elemP(:,ep_CC),mask=elemP(:,ep_CC)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -1656,26 +1930,54 @@ contains
       end if
 
 
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_CC_ETM) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_CC_ETM)) then
-         print *, "ERROR:::: elemP(:,ep_CC_ETM) is not unique. This_image ::", this_image()
+
+      if (ii == 0 .and. min_val == nullvalueI) then
+         print *, "elemP(:,ep_CC) is only filled with nullvalueI. This_image ::", this_image()
+
+      else if (ii /= npack_elemP(ep_CC)) then
+         print *, "ERROR:::: elemP(:,ep_CC) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_CC_ETM) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_CC) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemP(:,ep_CC_H_ETM) indexes
+      ! !% checking elemP(:,ep_CC_ETM) indexes
+
+      ! min_val = minval(elemP(:,ep_CC_ETM)) - 1
+      ! max_val = maxval(elemP(:,ep_CC_ETM))
+      ! ii = 0
+
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(elemP(:,ep_CC_ETM),mask=elemP(:,ep_CC_ETM)>min_val)
+      ! end do
+
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
 
 
-      min_val = minval(elemP(:,ep_CC_H_ETM)) - 1
-      max_val = maxval(elemP(:,ep_CC_H_ETM))
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "elemP(:,ep_CC_ETM) is only filled with nullvalueI. This_image ::", this_image()
+
+      ! else if (ii /= npack_elemP(ep_CC_ETM)) then
+      !    print *, "ERROR:::: elemP(:,ep_CC_ETM) is not unique. This_image ::", this_image()
+
+      ! else
+      !    print *, "elemP(:,ep_CC_ETM) is unique. This_image ::", this_image()
+      ! end if
+
+      !% checking elemP(:,ep_CC_H) indexes
+
+
+      min_val = minval(elemP(:,ep_CC_H)) - 1
+      max_val = maxval(elemP(:,ep_CC_H))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_CC_H_ETM),mask=elemP(:,ep_CC_H_ETM)>min_val)
+         min_val = minval(elemP(:,ep_CC_H),mask=elemP(:,ep_CC_H)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -1684,25 +1986,51 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_CC_H_ETM) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_CC_H) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_CC_H_ETM)) then
-         print *, "ERROR:::: elemP(:,ep_CC_H_ETM) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_CC_H)) then
+         print *, "ERROR:::: elemP(:,ep_CC_H) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_CC_H_ETM) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_CC_H) is unique. This_image ::", this_image()
       end if
 
       !% checking elemP(:,ep_CC_Q_AC) indexes
 
 
-      min_val = minval(elemP(:,ep_CC_Q_AC)) - 1
-      max_val = maxval(elemP(:,ep_CC_Q_AC))
+      ! min_val = minval(elemP(:,ep_CC_Q_AC)) - 1
+      ! max_val = maxval(elemP(:,ep_CC_Q_AC))
+      ! ii = 0
+
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(elemP(:,ep_CC_Q_AC),mask=elemP(:,ep_CC_Q_AC)>min_val)
+      ! end do
+
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
+
+
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "elemP(:,ep_CC_Q_AC) is only filled with nullvalueI. This_image ::", this_image()
+
+      ! else if (ii /= npack_elemP(ep_CC_Q_AC)) then
+      !    print *, "ERROR:::: elemP(:,ep_CC_Q_AC) is not unique. This_image ::", this_image()
+
+      ! else
+      !    print *, "elemP(:,ep_CC_Q_AC) is unique. This_image ::", this_image()
+      ! end if
+
+      !% checking elemP(:,ep_CC_Q) indexes
+
+      min_val = minval(elemP(:,ep_CC_Q)) - 1
+      max_val = maxval(elemP(:,ep_CC_Q))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_CC_Q_AC),mask=elemP(:,ep_CC_Q_AC)>min_val)
+         min_val = minval(elemP(:,ep_CC_Q),mask=elemP(:,ep_CC_Q)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -1711,39 +2039,13 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_CC_Q_AC) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_CC_Q) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_CC_Q_AC)) then
-         print *, "ERROR:::: elemP(:,ep_CC_Q_AC) is not unique. This_image ::", this_image()
-
-      else
-         print *, "elemP(:,ep_CC_Q_AC) is unique. This_image ::", this_image()
-      end if
-
-      !% checking elemP(:,ep_CC_Q_ETM) indexes
-
-      min_val = minval(elemP(:,ep_CC_Q_ETM)) - 1
-      max_val = maxval(elemP(:,ep_CC_Q_ETM))
-      ii = 0
-
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(elemP(:,ep_CC_Q_ETM),mask=elemP(:,ep_CC_Q_ETM)>min_val)
-      end do
-
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
-
-
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_CC_Q_ETM) is only filled with nullvalueI. This_image ::", this_image()
-
-      else if (ii /= npack_elemP(ep_CC_Q_ETM)) then
-         print *, "ERROR:::: elemP(:,ep_CC_Q_ETM) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_CC_Q)) then
+         print *, "ERROR:::: elemP(:,ep_CC_Q) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_CC_Q_ETM) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_CC_Q is unique. This_image ::", this_image()
       end if
 
       !% checking elemP(:,ep_CCJB_ACsurcharged) indexes
@@ -1935,86 +2237,86 @@ contains
          print *, "elemP(:,ep_Diag) is unique. This_image ::", this_image()
       end if
 
-      !% checking elemP(:,ep_ETM) indexes
+      ! !% checking elemP(:,ep_ETM) indexes
 
-      min_val = minval(elemP(:,ep_ETM)) - 1
-      max_val = maxval(elemP(:,ep_ETM))
-      ii = 0
+      ! min_val = minval(elemP(:,ep_ETM)) - 1
+      ! max_val = maxval(elemP(:,ep_ETM))
+      ! ii = 0
 
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(elemP(:,ep_ETM),mask=elemP(:,ep_ETM)>min_val)
-      end do
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(elemP(:,ep_ETM),mask=elemP(:,ep_ETM)>min_val)
+      ! end do
 
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
 
 
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_ETM) is only filled with nullvalueI. This_image ::", this_image()
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "elemP(:,ep_ETM) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_ETM)) then
-         print *, "ERROR:::: elemP(:,ep_ETM) is not unique. This_image ::", this_image()
+      ! else if (ii /= npack_elemP(ep_ETM)) then
+      !    print *, "ERROR:::: elemP(:,ep_ETM) is not unique. This_image ::", this_image()
 
-      else
-         print *, "elemP(:,ep_ETM) is unique. This_image ::", this_image()
-      end if
+      ! else
+      !    print *, "elemP(:,ep_ETM) is unique. This_image ::", this_image()
+      ! end if
 
 
       !% checking elemP(:,ep_JM_AC) indexes
 
-      min_val = minval(elemP(:,ep_JM_AC)) - 1
-      max_val = maxval(elemP(:,ep_JM_AC))
-      ii = 0
+      ! min_val = minval(elemP(:,ep_JM_AC)) - 1
+      ! max_val = maxval(elemP(:,ep_JM_AC))
+      ! ii = 0
 
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(elemP(:,ep_JM_AC),mask=elemP(:,ep_JM_AC)>min_val)
-      end do
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(elemP(:,ep_JM_AC),mask=elemP(:,ep_JM_AC)>min_val)
+      ! end do
 
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
 
 
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_JM_AC) is only filled with nullvalueI. This_image ::", this_image()
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "elemP(:,ep_JM_AC) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_JM_AC)) then
-         print *, "ERROR:::: elemP(:,ep_JM_AC) is not unique. This_image ::", this_image()
+      ! else if (ii /= npack_elemP(ep_JM_AC)) then
+      !    print *, "ERROR:::: elemP(:,ep_JM_AC) is not unique. This_image ::", this_image()
 
-      else
-         print *, "elemP(:,ep_JM_AC) is unique. This_image ::", this_image()
-      end if
+      ! else
+      !    print *, "elemP(:,ep_JM_AC) is unique. This_image ::", this_image()
+      ! end if
 
 
       !% checking elemP(:,ep_JM_ALLtm) indexes
 
 
-      min_val = minval(elemP(:,ep_JM_ALLtm)) - 1
-      max_val = maxval(elemP(:,ep_JM_ALLtm))
-      ii = 0
+      ! min_val = minval(elemP(:,ep_JM_ALLtm)) - 1
+      ! max_val = maxval(elemP(:,ep_JM_ALLtm))
+      ! ii = 0
 
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(elemP(:,ep_JM_ALLtm),mask=elemP(:,ep_JM_ALLtm)>min_val)
-      end do
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(elemP(:,ep_JM_ALLtm),mask=elemP(:,ep_JM_ALLtm)>min_val)
+      ! end do
 
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
 
 
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_JM_ALLtm) is only filled with nullvalueI. This_image ::", this_image()
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "elemP(:,ep_JM_ALLtm) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_JM_ALLtm)) then
-         print *, "ERROR:::: elemP(:,ep_JM_ALLtm) is not unique. This_image ::", this_image()
+      ! else if (ii /= npack_elemP(ep_JM_ALLtm)) then
+      !    print *, "ERROR:::: elemP(:,ep_JM_ALLtm) is not unique. This_image ::", this_image()
 
-      else
-         print *, "elemP(:,ep_JM_ALLtm) is unique. This_image ::", this_image()
-      end if
+      ! else
+      !    print *, "elemP(:,ep_JM_ALLtm) is unique. This_image ::", this_image()
+      ! end if
 
 
       !% checking elemP(:,ep_JB_ETM) indexes

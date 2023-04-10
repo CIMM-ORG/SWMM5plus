@@ -1500,7 +1500,7 @@ contains
             real(8) :: dt1, dt2
         !%------------------------------------------------------------------
         !% Aliases
-            ncol        => col_elemP(ep_CC_Alltm) !% cannot use JM elements
+            ncol        => col_elemP(ep_CC) !% cannot use JM elements
             npack       => npack_elemP(ncol)
             if (npack < 1) return
             thisP       => elemP(1:npack,ncol)
@@ -2118,7 +2118,7 @@ contains
         !%      (no lateral flows into JB or diagnostic)
 
 
-        thisCol = ep_CCJM_H_ETM
+        thisCol = ep_CCJM_H
         Npack => npack_elemP(thisCol)   
 
         !print *, 'Npack here ',Npack
