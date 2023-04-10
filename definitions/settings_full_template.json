@@ -107,6 +107,7 @@
             "isAreaOut"               : true,
             "isDepthOut"              : true,
             "isFlowrateOut"           : true,
+            "isFlowrateAvgOut"        : true, 
             "isFluxConsOut"           : true,
             "isFroudeNumberOut"       : false,
             "isHeadOut"               : true,
