@@ -479,6 +479,7 @@ contains
             output_typeUnits_elemR(ii) = 'm^3/s'
             output_typeProcessing_elemR(ii) = AverageElements
             output_typeMultiplyByBarrels_elemR(ii) = oneI
+            setting%Output%ElemFlowIndex = ii 
         end if
         !% --- Conservative Flux rates, on elements this is the lateral flows
         if (setting%Output%DataOut%isFluxConsOut) then
@@ -1122,7 +1123,7 @@ contains
         !% --- OutLink_ProcessedDataR(:,:,:) averages the OutLink_ElemDataR over the links (not coarray)
         !%-------------------------------------------------------------------
             logical, intent(in) :: isLastStep
-            integer, pointer :: thisLevel, Npack, thisP(:), thisType(:)
+            integer, pointer :: thisLevel, Npack, thisP(:), thisType(:), fup(:)
             integer :: ii, jj
             character(64)    :: subroutine_name = 'outputML_store_data'
         !%--------------------------------------------------------------------
@@ -1174,6 +1175,21 @@ contains
                       + setting%Solver%ReferenceHead
                     end if
                 end if
+
+                !For elements that need their flowrate averaged    
+                if (setting%output%ElemFlowIndex > 0 ) then
+                    where(elemI(1:Npack,ei_elementType) .eq. CC )
+                        elemOutR(1:Npack,setting%output%ElemFlowIndex,thisLevel) = ( faceR(elemI(1:Npack,ei_Mface_uL),fr_Flowrate) &
+                        + faceR(elemI(1:Npack,ei_Mface_uL),fr_Flowrate) ) / 2
+                    end where
+
+                    where(elemI(1:Npack,ei_elementType) .eq. diagnostic )
+                        elemOutR(1:Npack,setting%output%ElemFlowIndex,thisLevel) = ( faceR(elemI(1:Npack,ei_Mface_uL),fr_Flowrate) &
+                        + faceR(elemI(1:Npack,ei_Mface_uL),fr_Flowrate) ) / 2
+                    end where
+
+                end if
+
 
                 ! !% ---- HACK debug print
                 ! if (setting%Time%Now > 373.24d0*60.d0*60.d0) then
