@@ -29,7 +29,6 @@ def get_index_from_data_array(array,array_name,data_name):
         print("\"isElemZBottomOut\"        : true,")
         print("\"isElemZCrownOut\"         : true,")
         print("\"isElemLengthOut\"         : true,")
-        print("\"isHeadOut\"               : true ")
         print("-------------------------------------------------------------------------------") 
         exit()
         exit(1)
@@ -156,7 +155,7 @@ if 'profiles' not in all_attribute_names:
 
 else:
     # say we have a profile like below from the hdf file
-    profile = h5_file.attrs['profiles'][0,:].astype('U13')
+    profile = h5_file.attrs['profile'][0,:].astype('U13')
 
 
 # say we have a profile like below from the hdf file
@@ -275,6 +274,7 @@ element_name    = np.hstack(element_name)
 feature_length  = np.hstack(feature_length) * Yf
 feature_zcrown  = np.hstack(feature_zcrown) * Yf
 feature_zbottom = np.hstack(feature_zbottom) * Yf
+feature_type    = np.hstack(feature_type)
 
  
 # find nelem
