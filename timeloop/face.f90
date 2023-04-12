@@ -766,12 +766,22 @@ module face
             ! print *, 'in face before '
             ! print *, elemR(10,er_Flowrate), faceR(11,fr_Flowrate), elemR(12,er_Flowrate)
             ! print *, ' '
+            ! print *, ' '
+            ! print *, 'in face before face interp '
+            ! print *, elemR(50,er_InterpWeight_dQ), elemR(52,er_InterpWeight_uQ)
+            ! print *, elemR(50,er_Flowrate), faceR(51,fr_Flowrate), elemR(52,er_Flowrate)
+            ! print *, ' '
 
             call face_interp_interior_set &
                 (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
 
-                ! print *, 'in face after '
-                ! print *, elemR(10,er_Flowrate), faceR(11,fr_Flowrate), elemR(12,er_Flowrate)
+                ! print *, ' '
+                ! print *, 'in face after face interp '
+                ! print *, elemR(50,er_InterpWeight_dQ), elemR(52,er_InterpWeight_uQ)
+                ! print *, elemR(50,er_Flowrate), faceR(51,fr_Flowrate), elemR(52,er_Flowrate)
+                ! print *, 'value ',(elemR(50,er_InterpWeight_dQ) * elemR(52,er_Flowrate) &
+                !                + elemR(52,er_InterpWeight_uQ) * elemR(50,er_Flowrate)) &
+                !                /(elemR(50,er_InterpWeight_dQ)+ elemR(52,er_InterpWeight_uQ))
                 ! print *, ' '
 
             if (facePackCol == fp_JB) then 
@@ -1010,6 +1020,13 @@ module face
             ! end if
 
       
+            ! if (ii==1) then 
+            !     print *, 'in interp for Q?'
+            !     print *, 'working on: ',eup(51), 51, edn(51)
+            !     print *, elemR(eup(51),eset(ii)), elemR(edn(51),eWup)
+            !     print *, elemR(edn(51),eset(ii)), elemR(eup(51),eWdn)
+            !     print *, ' ' 
+            ! end if
       
 
             faceR(thisP,fset(ii)) = &

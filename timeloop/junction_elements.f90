@@ -9,7 +9,7 @@ module junction_elements
     use face, only: face_interpolation, face_force_JBadjacent_values
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements, pack_zero_depth_interior_faces
     use update
-    !use utility_unit_testing, only: util_utest_CLprint
+    use utility_unit_testing, only: util_utest_CLprint
     use utility_crash, only: util_crashpoint
 
 !%----------------------------------------------------------------------------- 
@@ -75,7 +75,7 @@ module junction_elements
         thisP => elemP(1:Npack,ep_JB)
         call update_interpweights_JB (thisP, Npack, .false.)
 
-           ! ! call util_utest_CLprint ('------- DDD08 after update_interpweights_JB')  
+           call util_utest_CLprint ('------- DDD08 after update_interpweights_JB')  
         
         ! print *, ' '
         ! print *,  'resid ',junction_conservation_residual(printJM)
@@ -86,7 +86,7 @@ module junction_elements
         sync all
         call face_interpolation(fp_JB, .false., .false., .true., .true., .true.) 
 
-            ! call util_utest_CLprint ('------- DDD09 after face_interpolation for JB') 
+            call util_utest_CLprint ('------- DDD09 after face_interpolation for JB') 
 
             ! print *, ' '
             ! print *,  'resid ',junction_conservation_residual(printJM)
@@ -239,8 +239,8 @@ module junction_elements
             !% --- handle JB upstream of JM (downstream JB element = eDn, upstream of JM )
             if (elemI(eDn,ei_elementType) == JB) then
 
-                ! print *, 'eDn, JB  ',eDn
-                ! print *, 'eUp type ',eUp,elemI(eUp,ei_elementType), trim(reverseKey(elemI(eUp,ei_elementType)))
+                 print *, 'eDn, JB  ',eDn
+                 print *, 'eUp type ',eUp,elemI(eUp,ei_elementType), trim(reverseKey(elemI(eUp,ei_elementType)))
 
                 !% --- get the JM index
                 JMidx => elemSI(eDn,esi_JunctionBranch_Main_Index)
@@ -253,6 +253,8 @@ module junction_elements
                             ! print *, ' '
                             ! print *, ' JMidx  HEad - Zbottom ',JMidx, elemR(JMidx,er_Head) - elemR(eUp,er_Zbottom)
                             ! print *, ' '
+
+                       !if (faceR(fidx,fr_Head_d) > elemR(eDn,er_Zbottom)) then 
                         if ((elemR(JMidx,er_Head) > elemR(eUp,er_Zbottom)) .and. &
                             (elemR(eUp,er_FroudeNumber) < oneR)) then
                                 !print *, 'is CC'
@@ -619,8 +621,8 @@ module junction_elements
 
                 ! if (JMidx==printJM) then
                 !     print *, ' '
-                    ! print *, '-----------------------------------------------'
-                    ! print *, 'mm, JM ',mm, JMidx
+                !     print *, '-----------------------------------------------'
+                !     print *, 'mm, JM ',mm, JMidx
                 !     print *, 'Aplan ',elemSR(JMidx,esr_Storage_Plan_Area)
                 !     print *, 'dt    ',setting%Time%Hydraulics%Dt
                 !     print *, 'Qlat  ',elemR(JMidx,er_FlowrateLateral)

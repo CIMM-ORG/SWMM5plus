@@ -63,7 +63,7 @@ module runge_kutta2
         istep = oneI
 
             !print *, ' '
-        !   call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
+         ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
             !print *, 'TEST20230327   GGG',elemR(22,er_Head), elemR(22,er_Zbottom)
             !stop 709873
 
@@ -112,7 +112,8 @@ module runge_kutta2
 
         !% --- face interpolation (all faces)
         !%     because of forceJByn = .true. in last call to update_auxiliary_variables_JMJB 
-        !%     this will favor JB element values at JB faces
+        !%     this will favor JB element values at JB faces, which is the mass conservative
+        !%     value
         sync all
         call face_interpolation(fp_all,.true.,.true.,.true.,.false.,.false.)
         call util_crashstop(72112342)
