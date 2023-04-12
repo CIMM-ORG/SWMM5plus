@@ -415,6 +415,7 @@ contains
         if (setting%Output%DataOut%isAreaOut)                    N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isDepthOut)                   N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isFlowrateOut)                N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isFlowrateAvgOut)             N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isFluxConsOut)                N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isFroudeNumberOut)            N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isHeadOut)                    N_OutTypeElem =  N_OutTypeElem + 1
@@ -478,8 +479,17 @@ contains
             output_typenames_elemR(ii) = 'Flowrate'
             output_typeUnits_elemR(ii) = 'm^3/s'
             output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = oneI 
+        end if
+        !% --- Flow rate Average
+        if (setting%Output%DataOut%isFlowrateOut) then
+            ii = ii+1
+            output_types_elemR(ii) = er_Flowrate
+            output_typenames_elemR(ii) = 'Average Flowrate'
+            output_typeUnits_elemR(ii) = 'm^3/s'
+            output_typeProcessing_elemR(ii) = AverageElements
             output_typeMultiplyByBarrels_elemR(ii) = oneI
-            setting%Output%ElemFlowIndex = ii 
+            setting%Output%ElemFlowAvgIndex = ii
         end if
         !% --- Conservative Flux rates, on elements this is the lateral flows
         if (setting%Output%DataOut%isFluxConsOut) then
@@ -1177,14 +1187,14 @@ contains
                 end if
 
                 !For elements that need their flowrate averaged    
-                if (setting%output%ElemFlowIndex > 0 ) then
+                if (setting%output%ElemFlowAvgIndex > 0 ) then
                     where(elemI(1:Npack,ei_elementType) .eq. CC )
-                        elemOutR(1:Npack,setting%output%ElemFlowIndex,thisLevel) = ( faceR(elemI(1:Npack,ei_Mface_uL),fr_Flowrate) &
+                        elemOutR(1:Npack,setting%output%ElemFlowAvgIndex,thisLevel) = ( faceR(elemI(1:Npack,ei_Mface_uL),fr_Flowrate) &
                         + faceR(elemI(1:Npack,ei_Mface_uL),fr_Flowrate) ) / 2
                     end where
 
                     where(elemI(1:Npack,ei_elementType) .eq. diagnostic )
-                        elemOutR(1:Npack,setting%output%ElemFlowIndex,thisLevel) = ( faceR(elemI(1:Npack,ei_Mface_uL),fr_Flowrate) &
+                        elemOutR(1:Npack,setting%output%ElemFlowAvgIndex,thisLevel) = ( faceR(elemI(1:Npack,ei_Mface_uL),fr_Flowrate) &
                         + faceR(elemI(1:Npack,ei_Mface_uL),fr_Flowrate) ) / 2
                     end where
 

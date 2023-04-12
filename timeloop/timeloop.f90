@@ -1433,10 +1433,10 @@ contains
         !  print *, 'final DT: ',newDT
         !  print *, ' '
 
-        if (newDT < 0.01d0) then 
-            print *, 'ERROR: time step has dropped below 0.01 s. need to investigate!'
-            call util_crashpoint(119874)
-        end if
+        ! if (newDT < 0.01d0) then 
+        !     print *, 'ERROR: time step has dropped below 0.01 s. need to investigate!'
+        !     call util_crashpoint(119874)
+        ! end if
 
         !% increment the hydraulics time clock
         nextHydraulicsTime = lastHydraulicsTime + newDT

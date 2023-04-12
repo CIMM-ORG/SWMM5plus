@@ -6,6 +6,7 @@ module junction_elements
     use define_xsect_tables
     use define_settings, only: setting
     use adjust
+    use preissmann_slot, only: slot_JB_computation
     use face, only: face_interpolation, face_force_JBadjacent_values
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements, pack_zero_depth_interior_faces
     use update
@@ -833,6 +834,9 @@ module junction_elements
 
             ! if (JMidx==printJM) print *, 'CONS residual ',junction_conservation_residual (JMidx)
 
+            !% slot calculations for JBs
+            call slot_JB_computation (JMidx)
+            
         end do
 
         !stop 5509873

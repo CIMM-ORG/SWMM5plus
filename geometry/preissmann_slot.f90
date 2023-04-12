@@ -329,7 +329,7 @@ module preissmann_slot
 !%==========================================================================    
 !%==========================================================================
 !%
-    subroutine slot_JB_computation (thisColP_JM)
+    subroutine slot_JB_computation (JMidx)
         !%------------------------------------------------------------------
         !% Description:
         !% Slot computation for Junction Branches
@@ -339,8 +339,8 @@ module preissmann_slot
         !% not consider the number of barrels.
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, intent(in) :: thisColP_JM
-            integer, pointer :: Npack, thisP(:), tM, BranchExists(:)
+            integer, intent(in) :: JMidx
+            integer, pointer :: BranchExists(:)
             real(8), pointer :: area(:), depth(:), head(:), length(:), volume(:), zcrown(:), zbottom(:)
             real(8), pointer :: fullDepth(:), fullArea(:), fPNumber(:), PNumber(:), PCelerity(:), ellDepth(:)
             real(8), pointer :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:) !, ellMax(:)
@@ -348,20 +348,17 @@ module preissmann_slot
             real(8), pointer :: overflow(:), grav, TargetPCelerity, Alpha
             logical, pointer :: isSlot(:) , fSlot(:), isDnJB(:), isSurcharge(:), canSurcharge(:)
             integer, pointer :: SlotMethod, fUp(:), fDn(:)
-            integer :: tB, ii, kk
+            integer :: tB, ii
 
             character(64) :: subroutine_name = 'slot_JB_computation'
         !%------------------------------------------------------------------
         !% Preliminaries:
-            !% --- exit if not using PS
-            if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
-            Npack => npack_elemP(thisColP_JM)
-            if (Npack < 1) return
-            if (setting%Debug%File%geometry) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !% --- exit if not using PS
+        if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
+        if (setting%Debug%File%geometry) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% Aliases
-            thisP         => elemP(1:Npack,thisColP_JM)
             area          => elemR(:,er_Area)
             depth         => elemR(:,er_Depth)
             head          => elemR(:,er_Head)
@@ -397,95 +394,91 @@ module preissmann_slot
             Alpha           => setting%Solver%PreissmannSlot%Alpha
         !%------------------------------------------------------------------
         !% JB slot adjustment
-        !% cycle through the all the main junctions and each of its branches
-        do ii=1,Npack
-            tM => thisP(ii) !% junction main ID
-            ! handle the upstream branches
-            do kk=1,max_branch_per_node,2
-                tB = tM + kk  !% JB branch ID
-                
-                if (BranchExists(tB)==1) then
-                    !% initialize slot
-                    isSlot(tB)     = .false.
-                    isSurcharge(tB)= .false.
-                    SlotDepth(tB)  = zeroR
-                    SlotArea(tB)   = zeroR
-                    SlotWidth(tB)  = zeroR
-                    SlotVolume(tB) = zeroR
-                    PCelerity(tB)  = zeroR
+        ! handle the upstream branches
+        do ii=1,max_branch_per_node,2
+            tB = JMidx + ii  !% JB branch ID
+            
+            if (BranchExists(tB)==1) then
+                !% initialize slot
+                isSlot(tB)     = .false.
+                isSurcharge(tB)= .false.
+                SlotDepth(tB)  = zeroR
+                SlotArea(tB)   = zeroR
+                SlotWidth(tB)  = zeroR
+                SlotVolume(tB) = zeroR
+                PCelerity(tB)  = zeroR
 
-                    !% HACK -- may want to define explicitly each JB
-                    !% as either closed/open  20220915 brh
+                !% HACK -- may want to define explicitly each JB
+                !% as either closed/open  20220915 brh
 
-                    !% assuming a slot if the head is above the crown
-                    !% or the upstream CC is in a slot
-                    if ((head(tB) .gt. zcrown(tB)) .and. (canSurcharge(tB))) then
-                        isSlot(tB)     = .true.
-                        fSlot(fUp(tB)) = .true.
-                        isSurcharge(tB)= .true.
-                        PNumber(tB)    = fPNumber(fUp(tB))
-                        PCelerity(tB)  = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
-                        SlotDepth(tB)  = max(head(tB) - zcrown(tB), zeroR)   
-                        SlotArea(tB)   = (SlotDepth(tB) * (PNumber(tB)**twoR) * grav * &
-                                            fullArea(tB)) / (TargetPCelerity ** twoR)
-                        SlotVolume(tB) = SlotArea(tB) * length(tB)
-                        
-                        !% add the slot geometry back to previously solved geometry
-                        volume(tB)   = volume(tB)  + SlotVolume(tB)
-                        !area(tB)   = area(tB)    + SlotArea(tB) !% 20220915 brh CONSISTENCY WITH CC adjustment
-                        depth(tB)    = depth(tB)   + SlotDepth(tB)
-                        ellDepth(tB) = depth(tB)
-                        !pressurehead(tB) = pressurehead(tB) + SlotDepth(tB)
-                        Overflow(tB) = zeroR  !% defined as zero (no oveflow from JB)
-                    else 
-                        !% --- excess head at JB in an open channel represents
-                        !%     head from ponding of JM, so do not adjust.
-                        !%     Volume and depth are retained at full levels
-                    end if  
+                !% assuming a slot if the head is above the crown
+                !% or the upstream CC is in a slot
+                if ((head(tB) .gt. zcrown(tB)) .and. (canSurcharge(tB))) then
+                    isSlot(tB)     = .true.
+                    fSlot(fUp(tB)) = .true.
+                    isSurcharge(tB)= .true.
+                    PNumber(tB)    = fPNumber(fUp(tB))
+                    PCelerity(tB)  = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
+                    SlotDepth(tB)  = max(head(tB) - zcrown(tB), zeroR)   
+                    SlotArea(tB)   = (SlotDepth(tB) * (PNumber(tB)**twoR) * grav * &
+                                        fullArea(tB)) / (TargetPCelerity ** twoR)
+                    SlotVolume(tB) = SlotArea(tB) * length(tB)
+                    
+                    !% add the slot geometry back to previously solved geometry
+                    volume(tB)   = volume(tB)  + SlotVolume(tB)
+                    !area(tB)   = area(tB)    + SlotArea(tB) !% 20220915 brh CONSISTENCY WITH CC adjustment
+                    ! depth(tB)    = depth(tB)   + SlotDepth(tB)
+                    ! ellDepth(tB) = depth(tB)
+                    !pressurehead(tB) = pressurehead(tB) + SlotDepth(tB)
+                    Overflow(tB) = zeroR  !% defined as zero (no oveflow from JB)
+                else 
+                    !% --- excess head at JB in an open channel represents
+                    !%     head from ponding of JM, so do not adjust.
+                    !%     Volume and depth are retained at full levels
+                end if  
+            end if
+        end do
+        !% handle the downstream branches
+        do ii=2,max_branch_per_node,2
+            tB = JMidx + ii
+            if (BranchExists(tB)==1) then
+                !% initialize slot
+                isSlot(tB)     = .false.
+                isSurcharge(tB)= .false.
+                SlotDepth(tB)  = zeroR
+                SlotArea(tB)   = zeroR
+                SlotWidth(tB)  = zeroR
+                SlotVolume(tB) = zeroR
+                PCelerity(tB)  = zeroR
+
+                !% assuming a slot if the head is above the crown
+                !% or the downstream CC is in a slot
+                if ((head(tB) .gt. zcrown(tB)) .and. (canSurcharge(tB))) then
+                    isSlot(tB)     = .true.
+                    isSurcharge(tB)= .true.
+                    fSlot(fDn(tB)) = .true.
+                    PNumber(tB)    = fPNumber(fDn(tB))
+                    PCelerity(tB)  = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
+
+                    SlotDepth(tB)  = max(head(tB) - zcrown(tB), zeroR)    
+
+                    SlotArea(tB)   = (SlotDepth(tB) * (PNumber(tB)**twoR) * grav * &
+                                        fullArea(tB)) / (TargetPCelerity ** twoR)
+                    SlotVolume(tB) = SlotArea(tB) * length(tB)
+
+                    !% add the slot geometry back to previously solved geometry
+                    volume(tB)   = volume(tB)  + SlotVolume(tB)
+                    !area(tB)   = area(tB)    + SlotArea(tB) !% 20220915 brh CONSISTENCY WITH CC adjustment
+                    ! depth(tB)    = depth(tB)   + SlotDepth(tB)
+                    ! ellDepth(tB) = depth(tB)
+                    !pressurehead(tB) = pressurehead(tB) + SlotDepth(tB)
+                    Overflow(tB) = zeroR !% defined as zero (no overflow from JB)
+                else 
+                    !% --- excess head at JB in an open channel represents
+                    !%     head from ponding of JM, so do not adjust level.
+                    !%     Volume and depth are retained at full levels
                 end if
-            end do
-            !% handle the downstream branches
-            do kk=2,max_branch_per_node,2
-                tB = tM + kk
-                if (BranchExists(tB)==1) then
-                    !% initialize slot
-                    isSlot(tB)     = .false.
-                    isSurcharge(tB)= .false.
-                    SlotDepth(tB)  = zeroR
-                    SlotArea(tB)   = zeroR
-                    SlotWidth(tB)  = zeroR
-                    SlotVolume(tB) = zeroR
-                    PCelerity(tB)  = zeroR
-
-                    !% assuming a slot if the head is above the crown
-                    !% or the downstream CC is in a slot
-                    if ((head(tB) .gt. zcrown(tB)) .and. (canSurcharge(tB))) then
-                        isSlot(tB)     = .true.
-                        isSurcharge(tB)= .true.
-                        fSlot(fDn(tB)) = .true.
-                        PNumber(tB)    = fPNumber(fDn(tB))
-                        PCelerity(tB)  = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
-
-                        SlotDepth(tB)  = max(head(tB) - zcrown(tB), zeroR)    
-
-                        SlotArea(tB)   = (SlotDepth(tB) * (PNumber(tB)**twoR) * grav * &
-                                            fullArea(tB)) / (TargetPCelerity ** twoR)
-                        SlotVolume(tB) = SlotArea(tB) * length(tB)
-
-                        !% add the slot geometry back to previously solved geometry
-                        volume(tB)   = volume(tB)  + SlotVolume(tB)
-                        !area(tB)   = area(tB)    + SlotArea(tB) !% 20220915 brh CONSISTENCY WITH CC adjustment
-                        depth(tB)    = depth(tB)   + SlotDepth(tB)
-                        ellDepth(tB) = depth(tB)
-                        !pressurehead(tB) = pressurehead(tB) + SlotDepth(tB)
-                        Overflow(tB) = zeroR !% defined as zero (no overflow from JB)
-                    else 
-                        !% --- excess head at JB in an open channel represents
-                        !%     head from ponding of JM, so do not adjust level.
-                        !%     Volume and depth are retained at full levels
-                    end if
-                end if
-            end do
+            end if
         end do
                   
         !%------------------------------------------------------------------

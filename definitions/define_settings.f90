@@ -138,6 +138,7 @@ module define_settings
         logical :: isAreaOut                = .true.
         logical :: isDepthOut               = .true.
         logical :: isFlowrateOut            = .true.
+        logical :: isFlowrateAvgOut         = .true. 
         logical :: isFluxConsOut            = .false.
         logical :: isFroudeNumberOut        = .true.
         logical :: isHeadOut                = .true.
@@ -601,7 +602,7 @@ module define_settings
         integer :: ElemHeadIndex = 0                         !% NOT A USER SETTING
         integer :: FaceUpHeadIndex = 0                       !% NOT A USER SETTING
         integer :: faceDnHeadIndex = 0                       !% NOT A USER SETTING
-        integer :: ElemFlowIndex   = 0                       !% NOT A USER SETTING 
+        integer :: ElemFlowAvgIndex= 0                       !% NOT A USER SETTING 
         integer (kind=8) :: MemoryStorageMax = 29000000  
         type(CommandLineType) :: CommandLine
         type(DataOutType) :: DataOut
@@ -1662,6 +1663,11 @@ contains
         call json%get('Output.DataOut.isFlowrateOut', logical_value, found)
         if (found) setting%Output%DataOut%isFlowrateOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isFlowrateOut not found'
+
+        !%                       Dataout.isFlowrateAvgOut
+        call json%get('Output.DataOut.isFlowrateAvgOut', logical_value, found)
+        if (found) setting%Output%DataOut%isFlowrateAVgOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isFlowrateAvgOut not found'
 
         !%                       Dataout.isFluxConsOut
         call json%get('Output.DataOut.isFluxConsOut', logical_value, found)
