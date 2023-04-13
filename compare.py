@@ -301,7 +301,7 @@ if print_plots:
 for x in all_dset_names:
     
     # Check if the data set is a link
-    if(x[0:5]=='link_'):
+    if x[0:5]=='link_' and x[0:11] != 'link_static':
 
         # ... store link name 
         link_name = x[5::]
@@ -426,7 +426,7 @@ for x in all_dset_names:
         if (x[0:10]=='node_face_'):
             is_nJ2 = True
             data_set_name = x
-        else:
+        elif (x[0:10]=='node_elem_'):
             is_nJ2 = False
             data_set_name = 'nodeFV_'+node_name+'_PiezometricHead'
             

@@ -884,7 +884,7 @@ contains
         if (setting%Output%DataOut%isLinkZBottomDownOut) then
             jj = jj+1
             output_static_types_Link(jj) = lr_ZbottomDn
-            output_static_typenames_Link(jj) = 'Link Z Bottom Up'
+            output_static_typenames_Link(jj) = 'Link Z Bottom Dn'
             output_static_typeUnits_Link(jj) = 'm'
             output_static_typeProcessing_Link(jj) = AverageElements
             output_static_typeMultiplyByBarrels_Link(jj) = zeroI

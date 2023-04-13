@@ -1,13 +1,15 @@
 # dependencies and packages
+# dependencies and packages
 import pandas as pd
 import os
 import sys
-from datetime import datetime
-from tkinter import TRUE
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import matplotlib.transforms as transforms
+import matplotlib.patches as patches
+from swmmtoolbox import swmmtoolbox
 
 
 # important functions
@@ -35,10 +37,11 @@ def get_index_from_data_array(array,array_name,data_name):
     else:
         return idx[0]
 
-# keys for element types
+# keys for element type
+# all the links (including diags are considered CC in this animation code)
 CC   = 1
-nJm  = 2
-diag = 3
+nJ2  = 2
+nJm  = 3
 
 #-----------------------------------------------------------------------------------
 # USER SETTING CONTROL
@@ -127,21 +130,21 @@ node_type = []
 # to find the link and node names
 for keys in all_dset_keys:
     # Check if the data set is a link
-    if(keys[0:5]=='link_'):
+    if(keys[0:5]=='link_' and  keys[0:11] != 'link_static'):
         # ... store link name 
         link_name.append(keys[5::])
     # Check if the data set is a node
     if((keys[0:10]=='node_face_') or (keys[0:10]=='node_elem_')):
         # ... store node name
         node_name.append(keys[10::])
-        if (keys[0:10]=='node_face_'):
+        if keys[0:10]=='node_face_':
             node_type.append('nJ2')
-        else:
+        elif keys[0:10]=='node_elem_':
             node_type.append('nJm')
 
 # get the profile from the h5 file
 all_attribute_names=h5_file.attrs.keys()
-if 'profiles' not in all_attribute_names:
+if 'profile' not in all_attribute_names:
     print("----------------------------- ERROR IN GETTING PROFILES --------------------------------")
     print("profiles is not in the output.h5; please add profiles at the end of SWMM5 input file as:")
     print("                                                                                        ")
@@ -157,9 +160,8 @@ else:
     # say we have a profile like below from the hdf file
     profile = h5_file.attrs['profile'][0,:].astype('U13')
 
-
 # say we have a profile like below from the hdf file
-profile  = h5_file.attrs['profiles'][0,:].astype('U13')
+profile  = h5_file.attrs['profile'][0,:].astype('U13')
 
 element_head     = []
 element_length   = []
@@ -167,11 +169,9 @@ element_zbottom  = []
 element_zcrown   = []
 element_type     = []
 element_name     = []
+element_rank     = []
 feature_type     = []
-feature_name     = []
 feature_length   = []
-feature_zcrown   = []
-feature_zbottom  = []
 
 nFeatures = 0
 
@@ -185,12 +185,35 @@ for feature_no,feature in enumerate(profile):
         # to find the node type
         nidx = node_name.index(feature)
         
-        if node_type[nidx] == 'nJm':
+        if node_type[nidx] == 'nJ2':
+            # find the head of the nJ2 face
+            node_data_set = 'node_face_'+feature
+            node_data = h5_file[node_data_set]
+            index_1 = get_index_from_data_array(node_data,node_data_set,'PiezometricHeadUpstream')
+            index_2 = get_index_from_data_array(node_data,node_data_set,'PiezometricHeadDownstream')
+            node_face_heads = 0.5 * (node_data[:,index_1] + node_data[:,index_2])
+            # append the nJ2 heads to a compined list
+            element_head.append(node_face_heads)
+            # append rest of the geometry as zero (updated later)
+            element_zbottom.append(0)
+            element_zcrown.append(0)
+            element_length.append(0)
+            feature_length.append(0)
+            # append element type
+            element_type.append(nJ2)
+            # append feature type
+            feature_type.append(nJ2)
+            # append the name of the features the element comes from
+            element_name.append(feature)
+            element_rank.append(feature_no)
+            
+        
+        elif node_type[nidx] == 'nJm':
             # find the name of the Piezometric head dataset in the hdf5
             # using the node ID
             node_data_set = 'nodeFV_'+feature+'_PiezometricHead'
             node_elem_heads = h5_file[node_data_set][:,1]
-            # append the link heads to a compined list
+            # append the nJm heads to a compined list
             element_head.append(node_elem_heads)
             # now retrieve static dataset for geometry
             # find the name of the static file in the hdf5 dataset
@@ -212,15 +235,11 @@ for feature_no,feature in enumerate(profile):
             feature_length.append(elem_lengths)
             # append element type
             element_type.append(nJm)
-            # append the name of the feature
-            feature_name.append(feature)
             # append feature type
             feature_type.append(nJm)
-            # get node zcrown and bottom
-            feature_zcrown.append(elem_zcrown)
-            feature_zbottom.append(elem_zbottom)
             # append the name of the features the element comes from
             element_name.append(feature)
+            element_rank.append(feature_no)
             
     else:
         # find the name of the Piezometric head dataset in the hdf5
@@ -250,15 +269,11 @@ for feature_no,feature in enumerate(profile):
         feature_length.append(sum(elem_lengths))
         # append element type
         element_type.append(CC * np.ones(elem_lengths.shape[0]))
-        # append the name of the feature
-        feature_name.append(feature)
         # append feature type
         feature_type.append(CC)
-        # append link zbottom and crown
-        feature_zcrown.append(0.5*(min(elem_zcrown)+max(elem_zcrown)))
-        feature_zbottom.append(0.5*(min(elem_zbottom)+max(elem_zbottom)))
         # append the name of the features the element comes from
         element_name.append(np.repeat(feature,elem_lengths.shape[0]))
+        element_rank.append(feature_no * np.ones(elem_lengths.shape[0]))
     
 # find the simulation time
 sim_time = h5_file[head_data_set][:,0]
@@ -271,23 +286,35 @@ element_zcrown  = np.hstack(element_zcrown) * Yf
 element_length  = np.hstack(element_length) * Yf
 element_type    = np.hstack(element_type)
 element_name    = np.hstack(element_name)
+element_rank    = np.hstack(element_rank)
 feature_length  = np.hstack(feature_length) * Yf
-feature_zcrown  = np.hstack(feature_zcrown) * Yf
-feature_zbottom = np.hstack(feature_zbottom) * Yf
 feature_type    = np.hstack(feature_type)
-
  
 # find nelem
 nelem = element_length.shape[0]
-# find the x val to plot result
-xval = np.zeros(nelem, dtype=np.float64) 
-length = 0
 
+# find the x val to plot heads
+xval = np.zeros(nelem, dtype=np.float64)
+length_counter = 0
 
-for index,item in enumerate(element_length):
-    xval[index] = length + item * 0.5
-    length      = length + item
-            
+for idx,item in enumerate(element_length):
+    
+    if element_type[idx] == nJ2:
+        # xval is for the head plot 
+        xval[idx] = length_counter
+    
+    elif element_type[idx] == nJm:
+        # xval is for the head plot
+        xval[idx] = length_counter + item * 0.5
+        # advance for the next element        
+        length_counter = length_counter + item 
+        
+    elif element_type[idx] == CC:
+        # xval is for the head plot
+        xval[idx] = length_counter + item * 0.5
+        # advance for the next element        
+        length_counter = length_counter + item 
+
 # set the location of link node labels
 xval_feature = np.zeros(feature_length.shape[0], dtype=np.float64) 
 length = 0
@@ -296,7 +323,8 @@ length = 0
 for index,item in enumerate(feature_length):
     xval_feature[index] = length + item * 0.5
     length              = length + item
-    
+
+
 # animation plot
 fig, ax = plt.subplots()
 plt.rcParams['figure.figsize'] = [10, 4]
@@ -306,46 +334,115 @@ x = 0
 # take 10% of the gradient difference as buffer for plotting
 max_zrown = max(element_zcrown)
 max_head  = np.amax(element_head)
-min_zbottom = min(element_zbottom)
-buffer = 0.1 * (abs(max(max_zrown,max_head))-abs(min_zbottom))
+if np.all(element_zbottom == 0):
+    min_zbottom = 0
+else:
+    min_zbottom = np.min(element_zbottom[np.nonzero(element_zbottom)])
+# buffer for plotting and labels
+buffer = 0.2 * (abs(max_zrown)-abs(min_zbottom))
 
+
+# transpormation for plotting
+trans = transforms.blended_transform_factory(
+    ax.transData, ax.transAxes)
 # geometry profile in the animation
-for indx, feature in enumerate(feature_name):
-    
+
+for indx, feature in enumerate(profile):
+
     # plot the conduits first
     if feature_type[indx] == CC:
         # plot the z bottom
-        ax.plot(xval[element_name==feature], element_zbottom[element_name==feature], '-k') 
+        ax.plot(xval[element_rank==indx], element_zbottom[element_rank==indx], '-k') 
         # plot the crown elevation
-        ax.plot(xval[element_name==feature], element_zcrown[element_name==feature], '-k') 
+        ax.plot(xval[element_rank==indx], element_zcrown[element_rank==indx], '-k') 
         # plot vlines to seperate the links
         ax.axvline(x=np.cumsum(feature_length)[indx],color='b',linestyle='-',linewidth=0.15)
+        
+        # calculations fro link labels
+        feature_zbottom = 0.5 * (min(element_zbottom[element_rank==indx])
+                                +max(element_zbottom[element_rank==indx]))
         # link labels
-        ax.text(xval_feature[indx],feature_zcrown[indx]+buffer,feature_name[indx],
+        ax.text(xval_feature[indx],feature_zbottom-buffer,feature,
                 rotation=90,ha='center',va='bottom', fontsize='small')
+    
+    elif feature_type[indx] == nJ2:
+        # find the index of the J2 face
+        J_idx = np.where(element_rank==indx)[0]
+        if indx == 0:
+            # store the index of the elem d/s 
+            J_plot_idx = np.array(J_idx+1)
+        elif indx == profile.shape[0]-1:
+            # store the index of the elem u/s 
+            J_plot_idx = np.array(J_idx-1)
+        else:
+            # store the index of the elem u/s, elem d/s 
+            J_plot_idx = np.array([J_idx-1,J_idx+1])
+                                   
+        # plot the zbottom of the junction by combining elem u/s, JM and elem d/s zbottom
+        ax.plot(xval[J_plot_idx], element_zbottom[J_plot_idx],'-k')
+        # plot the zcrown  of the junction by combining elem u/s, JM and elem d/s zbottom
+        ax.plot(xval[J_plot_idx], element_zcrown[J_plot_idx],'-k')
         
     # plot junction geometry
     elif feature_type[indx] == nJm:
-        # JM is not at the start or end of the network
-        if indx > 0 or indx < feature_type.shape[0]:
-            # find the index of the JM
-            J_idx = np.where(element_name==feature)[0]
-            # store the index of the elem u/s, JM and elem d/s 
-            J_plot_idx = np.array([J_idx-1,J_idx,J_idx+1])
-            # plot the zbottom of the junction by combining elem u/s, JM and elem d/s zbottom
-            ax.plot(xval[J_plot_idx], element_zbottom[J_plot_idx], '-k')
-            # plot a vertical line to show the z crown at the u/s of the junction
-            plt.vlines(x = xval[J_plot_idx[0]], ymin = element_zcrown[J_plot_idx[0]],
-                       ymax = element_zcrown[J_plot_idx[1]], color='black')
+        # find the index of the JM
+        J_idx = np.where(element_rank==indx)[0]
+        
+        # JM at the start of the profile
+        if indx == 0:
+            # plot horizontoal lines to represent zbottom   
+            plt.hlines(y=element_zbottom[J_idx],xmin=xval[J_idx],xmax=xval[J_idx+1], color='black')
+            # plot vertical line to show the offsets
+            plt.vlines(x = xval[J_idx+1], ymin = element_zbottom[J_idx],
+                       ymax = element_zbottom[J_idx+1], color='black')
+            
             # plot a vertical line to show the z crown at the d/s of the junction
-            plt.vlines(x = xval[J_plot_idx[2]], ymin = element_zcrown[J_plot_idx[2]],
-                       ymax = element_zcrown[J_plot_idx[1]], color='black')
+            plt.vlines(x = xval[J_idx+1], ymin = element_zcrown[J_idx+1],
+                       ymax = element_zcrown[J_idx], color='black')
+            
+            # plot another horizontal line to close up the JM
+            plt.hlines(y=element_zcrown[J_idx],xmin=xval[J_idx],xmax=xval[J_idx+1], color='black')
+        
+        # JM at the end of the profile
+        elif indx == profile.shape[0]-1:
+            # plot horizontoal lines to represent zbottom   
+            plt.hlines(y=element_zbottom[J_idx],xmin=xval[J_idx-1],xmax=xval[J_idx], color='black')
+            # plot vertical line to show the offsets
+            plt.vlines(x = xval[J_idx-1], ymin = element_zbottom[J_idx],
+                       ymax = element_zbottom[J_idx-1], color='black')
+            
+            # plot a vertical line to show the z crown at the u/s of the junction
+            plt.vlines(x = xval[J_idx-1], ymin = element_zcrown[J_idx-1],
+                       ymax = element_zcrown[J_idx], color='black')
+            
+            # plot another horizontal line to close up the JM
+            plt.hlines(y=element_zcrown[J_idx],xmin=xval[J_idx-1],xmax=xval[J_idx], color='black')
+            
+        # JM at the middle of the profile
+        else:
+            # plot horizontoal lines to represent zbottom   
+            plt.hlines(y=element_zbottom[J_idx],xmin=xval[J_idx-1],xmax=xval[J_idx+1], color='black')
+            # plot vertical line to show the offsets
+            plt.vlines(x = xval[J_idx-1], ymin = element_zbottom[J_idx],
+                       ymax = element_zbottom[J_idx-1], color='black')
+            plt.vlines(x = xval[J_idx+1], ymin = element_zbottom[J_idx],
+                       ymax = element_zbottom[J_idx+1], color='black')
+            
+            # plot a vertical line to show the z crown at the u/s of the junction
+            plt.vlines(x = xval[J_idx-1], ymin = element_zcrown[J_idx-1],
+                       ymax = element_zcrown[J_idx], color='black')
+            # plot a vertical line to show the z crown at the d/s of the junction
+            plt.vlines(x = xval[J_idx+1], ymin = element_zcrown[J_idx+1],
+                       ymax = element_zcrown[J_idx], color='black')
+            
+            # plot another horizontal line to close up the JM
+            plt.hlines(y=element_zcrown[J_idx],xmin=xval[J_idx-1],xmax=xval[J_idx+1], color='black')
             
             # node labels
-            ax.text(xval_feature[indx],feature_zbottom[indx]-buffer,feature_name[indx],
-                rotation=90,ha='center',va='top', fontsize='small')
+#             ax.text(xval_feature[indx],feature_zbottom[indx]-buffer,feature_name[indx],
+#                 rotation=90,ha='center',va='top', fontsize='small')
         
-          
+# animation line          
 line,  = ax.plot(xval, element_head[x,:], '-o', markersize=2.0, color='xkcd:cerulean')
 time_text = ax.text(0.98, 0.95,'',ha='right',va='top',transform=plt.gca().transAxes,fontsize='small')
 
@@ -353,8 +450,7 @@ time_text = ax.text(0.98, 0.95,'',ha='right',va='top',transform=plt.gca().transA
 plt.xlabel('Length along the profile '+Yunit)
 plt.ylabel('Piezometric Head '+Yunit)
 plt.xlim(min(xval),max(xval))
-plt.ylim(min_zbottom-buffer,max(max_zrown,max_head)+buffer)
-
+plt.ylim(min_zbottom-buffer,max_zrown+buffer)
 
 def animate(ii):
     line.set_ydata(element_head[x+ii,:])  # update the data.
@@ -363,6 +459,8 @@ def animate(ii):
 
 
 ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=50, blit=False)
+
+# show the animation plot
 plt.show()
 
 if save_animation:
