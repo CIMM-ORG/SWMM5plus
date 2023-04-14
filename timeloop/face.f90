@@ -1819,23 +1819,37 @@ module face
             Npack => npack_faceP(facePackCol)
             if (Npack < oneI) return !% --- only used if such faces exist
         !%------------------------------------------------------------------ 
+
+        !% HACK violates no-neighbor rule
             
         do mm=1,Npack
             fidx => faceP(mm,facePackCol)  !% --- face index
             !% -- does this have JB downstream?
             if (elemSI(faceI(fidx,fi_Melem_dL),esi_JunctionBranch_Exists) == oneI) then
-                eidx => faceI(fidx,fi_Melem_uL) !% --- upstream element
-                faceR(fidx,fr_Head_Adjacent)     = elemR(eidx,er_Head)
-                faceR(fidx,fr_Topwidth_Adjacent) = elemR(eidx,er_TopWidth)
-                faceR(fidx,fr_Length_Adjacent)   = elemR(eidx,er_Length)
-            end if
+                eidx => faceI(fidx,fi_Melem_uL) !% --- upstream element NO NEIGHBOR VIOLATION
+            end if 
             !% --- does this have JB upstream?
             if (elemSI(faceI(fidx,fi_Melem_uL),esi_JunctionBranch_Exists) == oneI) then 
-                eidx => faceI(fidx,fi_Melem_dL) !% -- downstream element
-                faceR(fidx,fr_Head_Adjacent)     = elemR(eidx,er_Head)
-                faceR(fidx,fr_Topwidth_Adjacent) = elemR(eidx,er_TopWidth)
-                faceR(fidx,fr_Length_Adjacent)   = elemR(eidx,er_Length)
+                eidx => faceI(fidx,fi_Melem_dL) !% -- downstream element NO NEIGHBOR VIOLATION
             end if
+
+            faceR(fidx,fr_Head_Adjacent)     = elemR(eidx,er_Head)
+            faceR(fidx,fr_Topwidth_Adjacent) = elemR(eidx,er_TopWidth)
+            faceR(fidx,fr_Length_Adjacent)   = elemR(eidx,er_Length)
+
+            select case (elemI(eidx,ei_elementType))
+                case (CC,outlet,pump)
+                    faceR(fidx,fr_Zcrest_Adjacent) = elemR(eidx,er_Zbottom)
+                case (weir)
+                    faceR(fidx,fr_Zcrest_Adjacent) = elemSR(eidx,esr_Weir_Zcrest) 
+                case (orifice)
+                    faceR(fidx,fr_Zcrest_Adjacent) = elemSR(eidx,esr_Orifice_Zcrest)
+                case default
+                    print *, 'CODE ERROR: unexpected case default'
+                    call util_crashpoint(629873)
+            end select
+
+
         end do
  
     end subroutine face_junction_adjacent_values    

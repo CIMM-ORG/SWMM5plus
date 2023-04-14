@@ -415,6 +415,12 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
+# # 
+# add_test(NAME T004_CC_Free_dx0100_NJ2a
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004_CC_Free_dx0100_NJ2.inp -s ./ctest/internal_testing/brh/settings_100_faceNJ2.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
 # # FAILED 20230410  -- link flowrates C8, C9, C10 (slow increase)
 # add_test(NAME T004a_CC_Free_dx0100_ForceStorage 
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T004a_CC_Free_dx0100_ForceStorage.inp -s ./ctest/internal_testing/brh/settings_100_ForceStorage.json -o ./ctest/outbrh/
@@ -529,11 +535,11 @@ enable_testing()
 # )
 
 
-# passed 20230410
-add_test(NAME T005Wr_RO_Free_dx0010_NJ2 
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005Wr_RO_Free_dx0010_NJ2.inp -s ./ctest/internal_testing/brh/settings_10_faceNJ2.json -o ./ctest/outbrh/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# # passed 20230410
+# add_test(NAME T005Wr_RO_Free_dx0010_NJ2 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T005Wr_RO_Free_dx0010_NJ2.inp -s ./ctest/internal_testing/brh/settings_10_faceNJ2.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
 
 ##########################################################################################
@@ -1156,3 +1162,11 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
 
+
+
+
+
+add_test(NAME T007_RO_Free_dx0010_NJ2
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh/T007_RO_Free_dx0010_NJ2.inp -s ./ctest/internal_testing/brh/settings_10_faceNJ2.json -o ./ctest/outbrh/
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)

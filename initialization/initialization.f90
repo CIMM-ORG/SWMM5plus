@@ -1324,7 +1324,7 @@ contains
                     end if
 
     ! print *, '20230412 DEBUGGING TEST HERE TO BE DELETED 7609873 FORCING ONE NODE nJM in T005Wr_RO_Free-dx0010...NJ2 system'
-    ! if (ii == 7) then 
+    ! if (ii == 6) then 
     !     node%I(ii,ni_node_type) = nJM
     ! end if
 

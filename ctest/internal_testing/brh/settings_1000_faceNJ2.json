@@ -6,7 +6,7 @@
         "Short" : "test"
     },
     "Discretization" : {
-        "NominalElemLength" : 10.00
+        "NominalElemLength" : 1000.00
     },
     "Junction" : {
         "ForceNodesJM" : false

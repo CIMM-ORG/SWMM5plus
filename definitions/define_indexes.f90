@@ -1376,6 +1376,7 @@ module define_indexes
         enumerator :: fr_Head_Adjacent          !% head of adjacent upstream or downstream element for JB faces
         enumerator :: fr_Topwidth_Adjacent      !% topwidth of adjacent upstream or downstream element
         enumerator :: fr_Length_Adjacent        !% length of adjacent upstream or downstream element
+        enumerator :: fr_Zcrest_Adjacent
         enumerator :: fr_KJunction_MinorLoss    !% K factor for entrance/exit loss from element adjacent to nJM
         !enumerator :: fr_Length_u               !% length of upstream element
         !enumerator :: fr_Length_d               !% length of downstream element
