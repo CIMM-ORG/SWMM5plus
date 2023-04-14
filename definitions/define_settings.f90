@@ -156,14 +156,14 @@ module define_settings
         logical :: isWaveSpeedOut           = .false.
         logical :: isPreissmannCelerityOut  = .false.
         logical :: isPreissmannNumberOut    = .false.
-        Logical :: isElemLengthOut          = .false.  
+        Logical :: isElemLengthOut          = .true.  
         Logical :: isElemBottomSlopeOut     = .false.      
         Logical :: isElemBreathMaxOut       = .false.      
         Logical :: isElemFullAreaOut        = .false.      
         Logical :: isElemFullDepthOut       = .false.  
         Logical :: isElemManningsOut        = .false.      
-        Logical :: isElemZBottomOut         = .false.  
-        Logical :: isElemZCrownOut          = .false.  
+        Logical :: isElemZBottomOut         = .true.  
+        Logical :: isElemZCrownOut          = .true.  
         Logical :: isLinkLengthOut          = .false.  
         Logical :: isLinkAdjustedLengthOut  = .false.          
         Logical :: isLinkInletOffsetOut     = .false.      
