@@ -839,9 +839,9 @@ module face
             logical, intent(in) :: Gyn, Hyn, Qyn !% = true for interp geometry, head, flowrate, respectively
             logical, intent(in ):: skipJump
             integer, pointer    :: Npack        !% expected number of packed rows in faceP.
-            integer :: fGeoSetU(2), fGeoSetD(2), eGhostGeoSet(2)
-            integer :: fHeadSetU(1), fHeadSetD(1), eGhostHeadSet(1)
-            integer :: fFlowSet(2), eGhostFlowSet(2)
+            integer :: fGeoSetU(2), fGeoSetD(2), eGeoSet(2)
+            integer :: fHeadSetU(1), fHeadSetD(1), eHeadSet(1)
+            integer :: fFlowSet(2), eFlowSet(2)
             !integer :: fOtherSet(1), eGhostOtherSet(1)
             integer(kind=8) :: crate, cmax, cval
             character(64) :: subroutine_name = 'face_interpolation_shared'
@@ -877,12 +877,12 @@ module face
 
         !% set the matching sets
         if (Gyn) then
-            fGeoSetU     = [  fr_Area_u, fr_Depth_u]
-            fGeoSetD     = [  fr_Area_d, fr_Depth_d]
-            eGhostGeoSet = [ebgr_Area, ebgr_Depth]
+            fGeoSetU = [fr_Area_u, fr_Depth_u]
+            fGeoSetD = [fr_Area_d, fr_Depth_d]
+            eGeoSet  = [er_Area, er_Depth]
 
             call face_interp_shared_set &
-                (fGeoSetU, eGhostGeoSet, ebgr_InterpWeight_dG, ebgr_InterpWeight_uG, facePackCol, Npack)
+                (fGeoSetU, eGeoSet, er_InterpWeight_dG, er_InterpWeight_uG, facePackCol, Npack)
 
             !% --- copy upstream to downstream storage at a face
             !%    (only for Head and Geometry types)
@@ -892,12 +892,12 @@ module face
         end if
 
         if (Hyn) then
-            fHeadSetU     = [fr_Head_u]
-            fHeadSetD     = [fr_Head_d]
-            eGhostHeadSet = [ebgr_Head]
+            fHeadSetU = [fr_Head_u]
+            fHeadSetD = [fr_Head_d]
+            eHeadSet  = [er_Head]
 
             call face_interp_shared_set &
-                (fHeadSetU, eGhostHeadSet, ebgr_InterpWeight_dH, ebgr_InterpWeight_uH, facePackCol, Npack)
+                (fHeadSetU, eHeadSet, er_InterpWeight_dH, er_InterpWeight_uH, facePackCol, Npack)
 
             !% --- copy upstream to downstream storage at a face
             !%     (only for Head and Geometry types)
@@ -907,15 +907,15 @@ module face
         end if
 
         if (Qyn) then
-            fFlowSet      = [  fr_Flowrate,   fr_Preissmann_Number]
-            eGhostFlowSet = [ebgr_Flowrate, ebgr_Preissmann_Number]
+            fFlowSet = [fr_Flowrate, fr_Preissmann_Number]
+            eFlowSet = [er_Flowrate, er_Preissmann_Number]
 
             print *,'  '
             print *, ' NEED the shared routine for fr_DeltaQ '
             stop 2098734
 
             call face_interp_shared_set &
-                (fFlowSet, eGhostFlowSet, ebgr_InterpWeight_dQ, ebgr_InterpWeight_uQ, facePackCol, Npack)
+                (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
 
             call face_velocities (facePackCol, .false.)
 
@@ -1151,7 +1151,7 @@ module face
         !% transfers local data from elemR to elemB%R
         !%-------------------------------------------------------------------
         !% Declarations
-            integer             :: ii, eColumns(Ncol_elemBGR) 
+            integer             :: ii !, eColumns(Ncol_elemBGR) 
             integer, intent(in) :: facePackCol, Npack
             integer, pointer    :: thisP, eUp, eDn, JMidx
             logical, pointer    :: isGhostUp, isGhostDn
@@ -1161,14 +1161,18 @@ module face
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"  
 
-            !% HACK: this eset has to be exactly mimic the indexes for ebgr_... 
-            eColumns = [er_Area, er_Topwidth, er_Depth, er_DeltaQ, &
-                        er_Head, er_Flowrate, er_Preissmann_Number, er_Volume,     &
-                        er_Velocity, er_GammaM, er_Length, er_KJunction_MinorLoss, &
-                        er_InterpWeight_dG, er_InterpWeight_uG,                    &
-                        er_InterpWeight_dH, er_InterpWeight_uH,                    &
-                        er_InterpWeight_dQ, er_InterpWeight_uQ,                    &
-                        er_InterpWeight_dP, er_InterpWeight_uP] 
+            !% saz 20230414 
+            !% HACK: elemB%R/elemGR(:,:) will share the same number of columns as elemR
+            !% thus we can readily use er_.... column indexs
+
+            ! !% HACK: this eset has to be exactly mimic the indexes for ebgr_... 
+            ! eColumns = [er_Area, er_Topwidth, er_Depth, er_DeltaQ, &
+            !             er_Head, er_Flowrate, er_Preissmann_Number, er_Volume,     &
+            !             er_Velocity, er_GammaM, er_Length, er_KJunction_MinorLoss, &
+            !             er_InterpWeight_dG, er_InterpWeight_uG,                    &
+            !             er_InterpWeight_dH, er_InterpWeight_uH,                    &
+            !             er_InterpWeight_dQ, er_InterpWeight_uQ,                    &
+            !             er_InterpWeight_dP, er_InterpWeight_uP] 
 
         !%--------------------------------------------------------------------
         !% cycle through all the shared faces
@@ -1187,10 +1191,10 @@ module face
             !print *, 'xxAA ',this_image(), ii, thisP, isGhostUp, isGhostDn, eUp, eDn
             !% condition for upstream element is ghost
             if (isGhostUp) then
-                elemB%R(ii,:) = elemR(eDn,eColumns)
+                elemB%R(ii,:) = elemR(eDn,:)
             !% condition for downstream element is ghost
             elseif (isGhostDn) then
-                elemB%R(ii,:) = elemR(eUp,eColumns)
+                elemB%R(ii,:) = elemR(eUp,:)
             else
                 write(*,*) 'CODE ERROR: unexpected else'
                 !stop 
@@ -1202,7 +1206,7 @@ module face
             if ((isGhostUp) .and. (elemI(eUp,ei_elementType) == JB)) then
                 !JMidx => elemI(eup,ei_main_idx_for_branch)
                 JMidx => elemSI(eup,esi_JunctionBranch_Main_Index)
-                elemB%R(ii,ebgr_Volume) = elemR(JMidx,er_Volume)
+                elemB%R(ii,er_Volume) = elemR(JMidx,er_Volume)
             end if
         end do
 
@@ -1567,9 +1571,9 @@ module face
             isGhostDn       => faceYN(thisP,fYN_isDnGhost)
             !%---------------------------------------------------------------
             if (isGhostUp) then 
-                faceR(thisP,fr_FlowrateMax) = elemGR(ii,ebgr_Volume) / dt
+                faceR(thisP,fr_FlowrateMax) = elemGR(ii,er_Volume) / dt
             elseif (isGhostDn) then 
-                faceR(thisP,fr_FlowrateMin) = -elemGR(ii,ebgr_Volume) / dt 
+                faceR(thisP,fr_FlowrateMin) = -elemGR(ii,er_Volume) / dt 
             end if
 
         end do

@@ -2297,7 +2297,9 @@ contains
 
         Nelems => N_elem(this_image())
         nrow = count(elemYN(1:Nelems,eYN_isBoundary_up)) + count(elemYN(1:Nelems,eYN_isBoundary_dn))
-        ncol => Ncol_elemBGR
+        !% saz 20230414 
+        !% HACK: elemB%R/elemGR(:,:) will share the same number of columns as elemR
+        ncol => Ncol_elemR
 
         allocate(elemGR(nrow, ncol), stat=allocation_status, errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'elemGR')

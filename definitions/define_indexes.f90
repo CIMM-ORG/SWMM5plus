@@ -1284,32 +1284,34 @@ module define_indexes
     !% Define the column indexes for elemB%R/elemGR(:,:) arrays
     !% These arrays are used to store/transfer inter image data
     !%-------------------------------------------------------------------------
-    enum, bind(c)
-        enumerator ::  ebgr_Area = 1                  !% cross-sectional flow area (latest) boundary/ghost element 
-        enumerator ::  ebgr_Depth                     !% Depth of flow boundary/ghost element
-        enumerator ::  ebgr_DeltaQ                    !% flowrate change due to junction
-        !enumerator ::  ebgr_2B_psiL                   !% 2 * beta * psi * L term for junctions
-        !enumerator ::  ebgr_EnergyHead                !% total energy head
-        enumerator ::  ebgr_Head                      !% piezometric head (latest) -- water surface elevation in open channel boundary/ghost element
-        enumerator ::  ebgr_Flowrate                  !% flowrate (latest) boundary/ghost element
-        enumerator ::  ebgr_Preissmann_Number         !% preissmann number boundary/ghost element
-        enumerator ::  ebgr_Volume                    !% volume at boundary/ghost element
-        enumerator ::  ebgr_Velocity                  !% velocity at boundary/ghost element
-        enumerator ::  ebgr_GammaM                    !% momentum source term
-        enumerator ::  ebgr_Length
-        enumerator ::  ebgr_KJunction_MinorLoss
-        enumerator ::  ebgr_InterpWeight_dG           !% interpolation Weight, downstream, for geometry boundary/ghost element
-        enumerator ::  ebgr_InterpWeight_uG           !% interpolation Weight, upstream, for geometry boundary/ghost element 
-        enumerator ::  ebgr_InterpWeight_dH           !% interpolation Weight, downstream for head boundary/ghost element
-        enumerator ::  ebgr_InterpWeight_uH           !% interpolation Weight, upstream for head boundary/ghost element 
-        enumerator ::  ebgr_InterpWeight_dQ           !% interpolation Weight, downstream, for flowrate boundary/ghost element
-        enumerator ::  ebgr_InterpWeight_uQ           !% interpolation Weight, upstream, for flowrate boundary/ghost element
-        enumerator ::  ebgr_InterpWeight_dP           !% interpolation Weight, downstream, for preissman number boundary/ghost element
-        enumerator ::  ebgr_InterpWeight_uP           !% interpolation Weight, upstream, for preissman number boundary/ghost element
-        enumerator ::  ebgr_lastplusone               !% must be last enum item boundary/ghost element
-    end enum
-    !% note, this must be changed to whatever the last enum element is!
-    integer, target :: Ncol_elemBGR =  ebgr_lastplusone-1
+    !% saz 20230414 
+    !% HACK: elemB%R/elemGR(:,:) will share the same number of columns as elemR
+    ! enum, bind(c)
+    !     enumerator ::  ebgr_Area = 1                  !% cross-sectional flow area (latest) boundary/ghost element 
+    !     enumerator ::  ebgr_Depth                     !% Depth of flow boundary/ghost element
+    !     enumerator ::  ebgr_DeltaQ                    !% flowrate change due to junction
+    !     !enumerator ::  ebgr_2B_psiL                   !% 2 * beta * psi * L term for junctions
+    !     !enumerator ::  ebgr_EnergyHead                !% total energy head
+    !     enumerator ::  ebgr_Head                      !% piezometric head (latest) -- water surface elevation in open channel boundary/ghost element
+    !     enumerator ::  ebgr_Flowrate                  !% flowrate (latest) boundary/ghost element
+    !     enumerator ::  ebgr_Preissmann_Number         !% preissmann number boundary/ghost element
+    !     enumerator ::  ebgr_Volume                    !% volume at boundary/ghost element
+    !     enumerator ::  ebgr_Velocity                  !% velocity at boundary/ghost element
+    !     enumerator ::  ebgr_GammaM                    !% momentum source term
+    !     enumerator ::  ebgr_Length
+    !     enumerator ::  ebgr_KJunction_MinorLoss
+    !     enumerator ::  ebgr_InterpWeight_dG           !% interpolation Weight, downstream, for geometry boundary/ghost element
+    !     enumerator ::  ebgr_InterpWeight_uG           !% interpolation Weight, upstream, for geometry boundary/ghost element 
+    !     enumerator ::  ebgr_InterpWeight_dH           !% interpolation Weight, downstream for head boundary/ghost element
+    !     enumerator ::  ebgr_InterpWeight_uH           !% interpolation Weight, upstream for head boundary/ghost element 
+    !     enumerator ::  ebgr_InterpWeight_dQ           !% interpolation Weight, downstream, for flowrate boundary/ghost element
+    !     enumerator ::  ebgr_InterpWeight_uQ           !% interpolation Weight, upstream, for flowrate boundary/ghost element
+    !     enumerator ::  ebgr_InterpWeight_dP           !% interpolation Weight, downstream, for preissman number boundary/ghost element
+    !     enumerator ::  ebgr_InterpWeight_uP           !% interpolation Weight, upstream, for preissman number boundary/ghost element
+    !     enumerator ::  ebgr_lastplusone               !% must be last enum item boundary/ghost element
+    ! end enum
+    ! !% note, this must be changed to whatever the last enum element is!
+    ! integer, target :: Ncol_elemBGR =  ebgr_lastplusone-1
 
 
 !%
