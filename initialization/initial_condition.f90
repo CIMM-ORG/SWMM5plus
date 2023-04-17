@@ -169,9 +169,19 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
         call init_IC_diagnostic_geometry_from_adjacent (.false.)
 
+
+        !% --- identify all faces adjacent to diagnostic elements
+        call init_IC_identify_diagnostic_adjacent_faces ()
+
+        call init_IC_identify_diagnostic_adjacent_elements ()
+
         !% --- identify special case diagnostic elements that have JB on either side
         !%     these have the face flowrates frozen in the junction residual computation
         call init_IC_diagnostic_JB_bounded ()
+
+        call init_IC_identify_CC_adjacent_faces ()
+
+        call init_IC_identify_CC_adjacent_elements ()
 
         !% --- error checking for nullvalues
         !%     keep for future debugging use.
@@ -382,7 +392,7 @@ contains
 
         !% --- update faces
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
-        call face_interpolation (fp_all,.true.,.true.,.true.,.false.,.false.)
+        call face_interpolation (fp_all_interior,.true.,.true.,.true.,.false.,.false.)
 
         ! print *, 'TEST20230327 FFF'
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
@@ -400,7 +410,7 @@ contains
 
         !% --- update the initial condition in all diagnostic elements
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
-        call diagnostic_toplevel (ep_Diag, fp_Diag, 2)
+        call diagnostic_toplevel (ep_Diag, fp_Diag_interior, 2)
 
            ! ! call util_utest_CLprint ('initial_condition after diagnostic_toplevel')
 
@@ -437,8 +447,8 @@ contains
         ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_flowrate_max...'
         ! !call util_CLprint()
         ! call sleep(1)
-        ! call face_flowrate_max_interior (fp_all)
-        ! call face_flowrate_max_shared   (fp_all)
+        ! call face_flowrate_max_interior (fp_all_interior)
+        ! call face_flowrate_max_shared   (fp_all_interior)
 
         ! print *, elemI(143,ei_elementType),trim(reverseKey(elemI(143,ei_elementType)))
         ! print *, 'pump ',elemR(143,er_Flowrate), elemR(143,er_Setting)
@@ -3251,6 +3261,243 @@ contains
     end subroutine init_IC_diagnostic_geometry_from_adjacent
 !%
 !%==========================================================================
+
+!%==========================================================================
+!%     
+    subroutine init_IC_identify_diagnostic_adjacent_faces ()
+        !%-----------------------------------------------------------------
+        !% Description
+        !% Cycles through all faces to find all diagnostic-adjacent faces
+        !% (including shared faces)
+        !%-----------------------------------------------------------------
+        !% Declarations
+        integer, pointer :: eDn, eUp
+
+        integer, pointer :: Aidx, Nfaces
+        integer :: ii, Ci, ff
+    
+        !%-----------------------------------------------------------------
+        !% Preliminaries:
+            Nfaces => N_face(this_image())
+        !%-----------------------------------------------------------------
+
+        do ff=1,Nfaces
+
+            !% --- initialization
+            faceYN(ff,fYN_isDiag_adjacent_all) = .false.
+
+            if (faceYN(ff,fYN_isSharedFace)) then 
+                if (faceYN(ff,fYN_isDnGhost)) then 
+                    !% -- up is not a ghost
+                    eUp => faceI(ff,fi_Melem_uL)
+                    if  (elemI(eUp,ei_QeqType) .eq. diagnostic) then 
+
+                        faceYN(ff,fYN_isDiag_adjacent_all) = .true.
+                        cycle
+
+                    end if
+                    !% --- down is a ghost 
+                    Ci   =  faceI(ff,fi_Connected_image)
+                    Aidx => faceI(ff,fi_GhostElem_dL)
+                    if (elemI(Aidx,ei_QeqType)[Ci] .eq. diagnostic) then 
+
+                        faceYN(ff,fYN_isDiag_adjacent_all) = .true.
+                        cycle
+
+                    end if
+
+                elseif (faceYN(ff,fYN_isUpGhost)) then 
+                    !% --- down is not a ghost
+                    eDn => faceI(ff,fi_Melem_dL)
+                    if (elemI(eDn,ei_QeqType) .eq. diagnostic) then 
+
+                        faceYN(ff,fYN_isDiag_adjacent_all) = .true.
+                        cycle
+
+                    end if
+                    !% --- up is a ghost
+                    Ci   =  faceI(ff,fi_Connected_image)
+                    Aidx => faceI(ff,fi_GhostElem_uL)
+                    if (elemI(Aidx,ei_QeqType)[Ci] .eq. diagnostic) then 
+
+                        faceYN(ff,fYN_isDiag_adjacent_all) = .true.
+                        cycle
+
+                    end if
+                else
+                    print *, 'CODE ERROR: unexpected else '
+                    call util_crashpoint(99187333)
+                end if
+            else 
+                eDn => faceI(ff,fi_Melem_dL)
+                eUp => faceI(ff,fi_Melem_uL)
+                if ((elemI(eDn,ei_QeqType) .eq. diagnostic) .or.       &
+                    (elemI(eUp,ei_QeqType) .eq. diagnostic)     ) then 
+
+                    faceYN(ff,fYN_isDiag_adjacent_all) = .true. 
+                    cycle  
+
+                else 
+                    !% skip
+                end if
+            end if
+
+        end do
+
+    end subroutine init_IC_identify_diagnostic_adjacent_faces
+!%
+!%==========================================================================
+!%==========================================================================
+!%     
+    subroutine init_IC_identify_CC_adjacent_faces ()
+        !%-----------------------------------------------------------------
+        !% Description
+        !% Cycles through all faces to find all CC-adjacent faces
+        !% (including shared faces)
+        !%-----------------------------------------------------------------
+        !% Declarations
+        integer, pointer :: eDn, eUp
+
+        integer, pointer :: Aidx, Nfaces
+        integer :: ii, Ci, ff
+    
+        !%-----------------------------------------------------------------
+        !% Preliminaries:
+            Nfaces => N_face(this_image())
+        !%-----------------------------------------------------------------
+
+        do ff=1,Nfaces
+
+            !% --- initialization
+            faceYN(ff,fYN_isCC_adjacent_all) = .false.
+
+            if (faceYN(ff,fYN_isSharedFace)) then 
+                !% -- check when downstream is ghost
+                if (faceYN(ff,fYN_isDnGhost)) then 
+                    !% -- up is not a ghost
+                    eUp => faceI(ff,fi_Melem_uL)
+                    if  (elemI(eUp,ei_elementType) .eq. CC) then 
+
+                        faceYN(ff,fYN_isCC_adjacent_all) = .true.
+                        cycle
+
+                    else 
+                        !% no action
+                    end if
+                    !% --- down is a ghost 
+                    Ci   =  faceI(ff,fi_Connected_image)
+                    Aidx => faceI(ff,fi_GhostElem_dL)
+                    if (elemI(Aidx,ei_elementType)[Ci] .eq. CC) then 
+
+                        faceYN(ff,fYN_isCC_adjacent_all) = .true.
+                        cycle
+
+                    else 
+                        !% no action
+                    end if
+
+                !% --- check with upstream is ghost
+                elseif (faceYN(ff,fYN_isUpGhost)) then 
+                    !% --- down is not a ghost
+                    eDn => faceI(ff,fi_Melem_dL)
+                    if (elemI(eDn,ei_elementType) .eq. CC) then 
+
+                        faceYN(ff,fYN_isCC_adjacent_all) = .true.
+                        cycle
+
+                    else 
+                        !% no action
+                    end if
+                    !% --- up is a ghost
+                    Ci   =  faceI(ff,fi_Connected_image)
+                    Aidx => faceI(ff,fi_GhostElem_uL)
+                    if (elemI(Aidx,ei_elementType)[Ci] .eq. CC) then 
+
+                        faceYN(ff,fYN_isCC_adjacent_all) = .true.
+                        cycle
+
+                    else 
+                        !% no action
+                    end if
+                else
+                    print *, 'CODE ERROR: unexpected else '
+                    call util_crashpoint(99187333)
+                end if
+            else 
+                eDn => faceI(ff,fi_Melem_dL)
+                eUp => faceI(ff,fi_Melem_uL)
+                if ((elemI(eDn,ei_elementType) .eq. CC) .or.       &
+                    (elemI(eUp,ei_elementType) .eq. CC)     ) then 
+
+                    faceYN(ff,fYN_isCC_adjacent_all) = .true. 
+                    cycle  
+
+                else 
+                    !% no action
+                end if
+            end if
+
+        end do
+
+    end subroutine init_IC_identify_CC_adjacent_faces
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
+    subroutine init_IC_identify_diagnostic_adjacent_elements ()  
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% identifies elemYN(:,eYN_isDiag_Adjacent) elements
+        !% MUST be called after init_IC_identify_diagnostic_adjacent_faces
+        !%-----------------------------------------------------------------
+            integer, pointer :: thisP(:), Npack
+        !%-----------------------------------------------------------------
+
+        Npack => npack_elemP(ep_CCJB)
+        if (Npack < 1) return 
+
+        !% --- only time marching elements (no Diag)
+        thisP => elemP(1:Npack,ep_CCJB)
+
+        elemYN(thisP,eYN_isDiag_Adjacent) = .false.
+
+        where ((faceYN(elemI(thisP,ei_Mface_uL),fYN_isDiag_adjacent_all)) .or. &
+               (faceYN(elemI(thisP,ei_Mface_dL),fYN_isDiag_adjacent_all)) )
+
+            elemYN(thisP,eYN_isDiag_Adjacent) = .true.
+        endwhere
+        
+    end subroutine init_IC_identify_diagnostic_adjacent_elements
+!%
+!%==========================================================================
+  !%==========================================================================
+!%    
+    subroutine init_IC_identify_CC_adjacent_elements ()  
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% identifies elemYN(:,eYN_isCC_Adjacent) elements
+        !% MUST be called after init_IC_identify_CC_adjacent_faces
+        !%-----------------------------------------------------------------
+            integer, pointer :: thisP(:), Npack
+        !%-----------------------------------------------------------------
+
+        Npack => npack_elemP(ep_CCJBDiag)
+        if (Npack < 1) return 
+
+        !% --- only time marching elements (no Diag)
+        thisP => elemP(1:Npack,ep_CCJBDiag)
+
+        elemYN(thisP,eYN_isCC_Adjacent) = .false.
+
+        where ((faceYN(elemI(thisP,ei_Mface_uL),fYN_isCC_adjacent_all)) .or. &
+               (faceYN(elemI(thisP,ei_Mface_dL),fYN_isCC_adjacent_all)) )
+
+            elemYN(thisP,eYN_isCC_Adjacent) = .true.
+        endwhere
+        
+    end subroutine init_IC_identify_CC_adjacent_elements
+!%
+!%==========================================================================
 !%==========================================================================
 !% 
     subroutine init_IC_diagnostic_JB_bounded ()
@@ -3514,7 +3761,7 @@ contains
             integer              :: nbranches
             real(8), allocatable :: integrated_volume(:)
             real(8)              :: LupMax, LdnMax
-            real(8)              :: aa,bb, lowZ
+            real(8)              :: aa,bb, lowZ, largestBreadth
             logical              :: isupstream
 
             character(64) :: subroutine_name = 'init_IC_get_junction_data'
@@ -3966,7 +4213,7 @@ contains
             elemR(JBidx,er_Volume_N1)    = elemR(JBidx,er_Volume)
             
 
-            !print *, 'in initial', JBidx, elemR(JBidx,er_Length)
+            !print *, 'in initial', JBidx, elemR(JBidx,er_BreadthMax)
 
         end do
         
@@ -3986,10 +4233,22 @@ contains
         !% --- get junction main geometry based on type
         JmType => elemSI(JMidx,esi_JunctionMain_Type)
 
+
         select case (JmType)
 
             case (ImpliedStorage)
-                elemSR(JMidx,esr_Storage_Plan_Area) = setting%Junction%SurfaceArea_Minimum
+                largestBreadth = zeroR
+                do ii=1,max_branch_per_node
+                    if (.not. elemSI(JMidx+ii,esi_JunctionBranch_Exists) == oneI) cycle
+                    if (elemR(JMidx+ii,er_BreadthMax) == nullvalueR) cycle
+                    largestBreadth = max(largestBreadth,elemR(JMidx+ii,er_BreadthMax))
+                end do
+                if (largestBreadth < sqrt(setting%Junction%SurfaceArea_Minimum)) then 
+                    elemSR(JMidx,esr_Storage_Plan_Area) = setting%Junction%SurfaceArea_Minimum
+                else
+                    elemSR(JMidx,esr_Storage_Plan_Area) &
+                        = setting%Constant%pi  * ((setting%Junction%BreadthFactor * largestBreadth)**2) / fourR
+                end if
                 elemR (JMidx,er_FullVolume)         = elemSR(JMidx,esr_Storage_Plan_Area) * elemR(JMidx, er_FullDepth)
                 elemR (JMidx,er_FullArea)           = elemSR(JMidx,esr_Storage_Plan_Area)
                 elemR (JMidx,er_BreadthMax)         = sqrt(elemSR(JMidx,esr_Storage_Plan_Area) )
@@ -5256,8 +5515,8 @@ contains
         !%------------------------------------------------------------------   
         !% Aliases
             !% --- use only the time-marching elements to set reference head
-            Npack => npack_elemP(ep_ALLtm)
-            thisP => elemP(1:Npack,ep_ALLtm)
+            Npack => npack_elemP(ep_CCJM)
+            thisP => elemP(1:Npack,ep_CCJM)
         !%------------------------------------------------------------------  
 
         !% --- Get the reference head  
@@ -5308,8 +5567,8 @@ contains
         !%------------------------------------------------------------------   
         !% Aliases
             !% --- use only the time-marching elements to set reference head
-            Npack => npack_elemP(ep_ALLtm)
-            thisP => elemP(1:Npack,ep_ALLtm)
+            Npack => npack_elemP(ep_CCJM)
+            thisP => elemP(1:Npack,ep_CCJM)
         !%------------------------------------------------------------------   
         !% list of indexes using Z reference
                 ! er_Head
@@ -6220,16 +6479,14 @@ contains
 
         !% --- cycle through to set ZeroValues consistent with depth
         !%     use the set of all time-marching elements
-        Npack => npack_elemP(ep_ALLtm)
+        Npack => npack_elemP(ep_CCJM)
         if (Npack > 0) then
-            !thisP => elemP(1:Npack,ep_ALLtm)
-
             !% --- temporary store of initial depth and replace with zero depth
             elemR(:,er_Temp04) = elemR(:,er_Depth)
             elemR(:,er_Depth)  = depth0 * 0.99d0
 
             do ii=1,Npack
-                thisP => elemP(ii,ep_ALLtm)
+                thisP => elemP(ii,ep_CCJM)
                 select case (elemI(thisP,ei_elementType))
                 case (CC)
                     !% temporary store a values for zero depth
@@ -6269,7 +6526,7 @@ contains
             !%     that a zerovalue for depth will have a larger
             !%     value of topwidth, area, and volume than the
             !%     zerovalues of the respective terms
-            allP => elemP(1:Npack,ep_ALLtm)
+            allP => elemP(1:Npack,ep_CCJM)
             topwidth0 = minval( elemR(allP,er_Temp01)) * onehalfR
             area0     = minval( elemR(allP,er_Temp02)) * onehalfR
             volume0   = minval( elemR(allP,er_Temp03)) * onehalfR

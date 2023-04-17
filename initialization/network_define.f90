@@ -434,6 +434,11 @@ contains
                         write(*,"(A,A)")             '       This link name is            ',trim(link%Names(elemI(elementIdx(ii),ei_link_Gidx_SWMM))%str)
                         write(*,"(A,f12.3)")         '       The SWMM link length is ',link%R(elemI(elementIdx(ii),ei_link_Gidx_SWMM),lr_Length)
 
+                        print *, 'RECOMMEND SHORTER NOMINAL ELEMENT LENGTH.'
+                        print *, 'STOP HERE (working on new algorithm)'
+                        call util_crashpoint(6098723)
+
+
                     end if
                     elementLength(ii) = MinElemLength
                 end if

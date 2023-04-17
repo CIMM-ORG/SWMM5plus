@@ -24,6 +24,8 @@
         enumerator :: ETM_AC                !% Explicit time march and AC solver
         enumerator :: AC                    !% AC elements or solver
         enumerator :: CCJM                  !% channel, conduit or junction main
+        enumerator :: CCDiag                !% CC and Diag elements
+        enumerator :: JBDiag                !% JB and Diag elements
         enumerator :: ALL                   !% all elements
         !% different link and their geometry types (HACK: probably could be consolidated to element types)
         enumerator :: lChannel              !% channel link
@@ -374,6 +376,8 @@
         reverseKey(ETM_AC) = 'ETM_AC'
         reverseKey(AC) = 'AC'
         reverseKey(CCJM) = 'CCJM'
+        reverseKey(CCDiag) = 'CCDiag'
+        reverseKey(JBDiag) = 'JBDiag'
         reverseKey(ALL) = 'ALL'
         reverseKey(lChannel) = 'lChannel'
         reverseKey(lPipe) = 'lPipe'
@@ -665,6 +669,8 @@
         write(*,'(A," = ",i4)') trim(reverseKey(catenary)) , catenary
         write(*,'(A," = ",i4)') trim(reverseKey(CC)) , CC
         write(*,'(A," = ",i4)') trim(reverseKey(CCJM)) , CCJM
+        write(*,'(A," = ",i4)') trim(reverseKey(CCDiag)) , CCDiag
+        write(*,'(A," = ",i4)') trim(reverseKey(JBDiag)), JBDiag
         !write(*,'(A," = ",i4)') trim(reverseKey(CD)) , CD
         write(*,'(A," = ",i4)') trim(reverseKey(circular)) , circular
         write(*,'(A," = ",i4)') trim(reverseKey(ControlCurve)) , ControlCurve

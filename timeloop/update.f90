@@ -10,7 +10,7 @@ module update
     use utility_profiler
     use utility_crash
     !use utility, only: util_syncwrite 
-    ! use utility_unit_testing, only: util_utest_CLprint
+    use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -26,6 +26,7 @@ module update
     public :: update_auxiliary_variables_JMJB
     public :: update_interpweights_JB
     public :: update_element_psi_CC
+    public :: update_element_velocity_from_flowrate
     !public :: update_element_energyHead_CC
     !public :: update_Froude_number_junction_branch
 
@@ -213,7 +214,49 @@ module update
         ! print *, 'psiL   ',psiL(2:3)
         ! print *, 'Qelem2 ',Qelem(2:3)**2
 
-    end subroutine update_element_psi_CC    
+    end subroutine update_element_psi_CC  
+!%
+!%==========================================================================
+!%==========================================================================
+!% 
+    subroutine update_element_velocity_from_flowrate (thisP)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% computes element velocity from flowrate with limiters
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisP(:)
+
+            real(8), parameter :: local_smalldepth_factor = tenR
+
+            real(8), pointer :: grav
+        !%------------------------------------------------------------------
+        !% Aliases
+            grav => setting%Constant%gravity
+        !%------------------------------------------------------------------
+
+        !% -- standard velocity computation
+        where (elemR(thisP,er_Area) > setting%ZeroValue%Area)
+            elemR(thisP,er_Velocity) = elemR(thisP,er_Flowrate) / elemR(thisP,er_Area)
+        elsewhere
+            elemR(thisP,er_Velocity) = zeroR
+        endwhere
+
+        !% limit small depth velocities to Fr =1 velocity
+        where (elemR(thisP,er_Depth) .le. local_smalldepth_factor * setting%ZeroValue%Depth)
+            elemR(thisP,er_Velocity) = sign(max( abs(elemR(thisP,er_Velocity)),        &
+                                                sqrt(grav * elemR(thisP,er_Depth)) ),  &
+                                            elemR(thisP,er_Flowrate) )
+        endwhere
+
+        if (setting%Limiter%Velocity%UseLimitMaxYN) then 
+            where (abs(elemR(thisP,er_Velocity)) > setting%Limiter%Velocity%Maximum)
+                elemR(thisP,er_Velocity) = sign(0.99d0 * setting%Limiter%Velocity%Maximum, &
+                                                elemR(thisP,er_Flowrate))
+            endwhere
+        end if
+
+    end subroutine     
 !%
 !%==========================================================================
 !%==========================================================================
@@ -274,29 +317,24 @@ module update
         !% --- geometry for both JM and JB
         call geometry_toplevel_JMJB ()  
        
-            ! ! ! call util_utest_CLprint ('------- in update after geometry_toplevel_JMJB')
+            ! call util_utest_CLprint ('------- in update after geometry_toplevel_JMJB')
         
         
-        !% --- Froude number and wavespeed on JB
+        !% --- Froude number, wavespeed, and interpwights on JB
         Npack => npack_elemP(thisCol_JB)
         if (Npack > 0) then 
             thisP => elemP(1:Npack, thisCol_JB)
             call update_Froude_number_element (thisP) 
             call update_wavespeed_element(thisP)
+            call update_interpweights_JB (thisP, Npack, forceJByn)
         end if
 
-        !% --- wave speed on JM (no Fr since no velocity on JM)
+        !% --- wave speed, Froude number on JM
         Npack => npack_elemP(thisCol_JM)
         if (Npack > 0) then
             thisP => elemP(1:Npack, thisCol_JM)
             call update_wavespeed_element(thisP)
-        end if
-
-        !% --- interpolation weights on JB
-        Npack => npack_elemp(thisCol_JB) 
-        if (Npack > 0) then  
-            thisP => elemP(1:Npack,thisCol_JB)
-            call update_interpweights_JB (thisP, Npack, forceJByn)
+            call update_Froude_number_element (thisP) 
         end if
 
         
@@ -329,12 +367,12 @@ module update
 
         !     print *, 'OBSOLETE' 
         !     stop 298734
-        !      ! ! ! ! call util_utest_CLprint ('in update before geometry toplevel')
+        !      ! ! ! ! ! call util_utest_CLprint ('in update before geometry toplevel')
         
         ! ! !% --- update the head (non-surcharged) and geometry
         ! ! call geometry_toplevel (whichTM)
 
-        ! !      ! ! ! ! call util_utest_CLprint ('in update before adjust_limit_velocity_max')
+        ! !      ! ! ! ! ! call util_utest_CLprint ('in update before adjust_limit_velocity_max')
 
         ! !      !stop 1098734
 
@@ -342,7 +380,7 @@ module update
         ! ! call adjust_limit_velocity_max_CC (whichTM)
         ! ! call util_crashstop(21987)
 
-        ! !     ! ! ! ! call util_utest_CLprint ('in update before update_CC_element_flowrate')
+        ! !     ! ! ! ! ! call util_utest_CLprint ('in update before update_CC_element_flowrate')
 
         ! ! !% --- set packed column for updated elements
         ! ! select case (whichTM)
@@ -366,38 +404,38 @@ module update
         ! ! !%     The JB flowrate is not updated until after face interpolation
         ! ! call update_element_flowrate (thisCol_CC)
 
-        ! !     ! ! ! ! call util_utest_CLprint ('in update before update_Froude_number_element')
+        ! !     ! ! ! ! ! call util_utest_CLprint ('in update before update_Froude_number_element')
 
         ! ! !% --- compute element Froude numbers for CC
         ! ! call update_Froude_number_element (thisCol_CC)
 
-        ! !      ! ! ! ! call util_utest_CLprint ('in update before CC wavespeed')
+        ! !      ! ! ! ! ! call util_utest_CLprint ('in update before CC wavespeed')
 
         ! ! !% --- compute the wave speeds
         ! ! call update_wavespeed_element(thisCol_CC)
 
-        ! !     ! ! ! ! call util_utest_CLprint ('in update before JM wavespeed')
+        ! !     ! ! ! ! ! call util_utest_CLprint ('in update before JM wavespeed')
 
         ! ! call update_wavespeed_element(thisCol_JM)
 
-        ! !     ! ! ! ! call util_utest_CLprint ('in update before CC interpweights')
+        ! !     ! ! ! ! ! call util_utest_CLprint ('in update before CC interpweights')
 
         ! ! !% --- compute element-face interpolation weights on CC
         ! ! call update_interpweights_CC(thisCol_CC, whichTM)
 
-        ! !     ! ! ! ! call util_utest_CLprint ('in update before JB interpweights')
+        ! !     ! ! ! ! ! call util_utest_CLprint ('in update before JB interpweights')
 
         ! ! !% --- compute element-face interpolation weights on JB
         ! ! !%     .false. as the general call to update aux does not force JB
         ! ! call update_interpweights_JB (thisCol_JM, .false.)
 
         
-        ! !     ! ! ! ! call util_utest_CLprint ('in update before update Froude Number Junction Branch')
+        ! !     ! ! ! ! ! call util_utest_CLprint ('in update before update Froude Number Junction Branch')
 
         ! ! !% --- compute element Froude number for JB
         ! ! call update_Froude_number_JB (thisCol_JM) 
 
-        ! !     ! ! ! ! call util_utest_CLprint ('in update before update BCoutlet_flowrate')
+        ! !     ! ! ! ! ! call util_utest_CLprint ('in update before update BCoutlet_flowrate')
 
         ! ! !% --- not needed 20220716brh
         ! ! !% --- flow values on an BC outlet face 20220714brh
@@ -435,14 +473,14 @@ module update
  
         flowrate(thisP) = area(thisP) * velocity(thisP)
 
-        ! ! ! call util_utest_CLprint ('in update element Flowrate B')
+        ! ! ! ! call util_utest_CLprint ('in update element Flowrate B')
 
         !% --- limit flowrate by the full value (if it exists)
         where ((Qmax(thisP) > zeroR) .and. (abs(flowrate(thisP)) > Qmax(thisP)))
             flowrate(thisP) = sign(Qmax(thisP), flowrate(thisP))
         end where
         
-        ! ! ! call util_utest_CLprint ('in update element Flowrate C')
+        ! ! ! ! call util_utest_CLprint ('in update element Flowrate C')
 
         ! print *, flowrate(139), area(139), velocity(139)
         ! print*, flowrate(thisP), 'flowrate(thisP)'

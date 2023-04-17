@@ -25,9 +25,14 @@ module face
     !%----------------------------------------------------------------------
     private
 
+    public :: face_pull_facedata_to_JBelem
+    public :: face_push_elemdata_to_face
+    public :: face_push_diag_adjacent_data_to_face
     public :: face_interpolation
     public :: face_interpolate_bc
     public :: face_force_JBadjacent_values
+    public :: face_velocities
+    
     ! public :: face_FluxCorrection_interior
     ! public :: face_flowrate_max_interior
     ! public :: face_flowrate_max_shared
@@ -36,6 +41,131 @@ module face
 !%==========================================================================
 !% PUBLIC
 !%==========================================================================
+!%    
+    subroutine face_push_elemdata_to_face (thisPCol, frCol, erCol, elemXR, UpstreamFaceTF)
+        !%------------------------------------------------------------------
+        !% Description
+        !% pushes one column (erCol) of elemXR(:,:) array to one fr_.. column for the
+        !% elemP packed column. If UpstreamFaceTF is true the push is to the
+        !% upstream face, otherwise to downstream 
+        !% NOTE this can give a segmentation fault if the face map for the
+        !% any of the packed elements gives a nullvalueI. To prevent this from
+        !% happening, make sure that calls to this including JB elements are
+        !% done either using upstream only or downstream only.
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), intent(in) :: elemXR(:,:)
+            integer, intent(in) :: thisPCol, frCol, erCol
+            logical, intent(in) :: UpstreamFaceTF
+            integer, pointer :: Npack, thisP(:)
+            integer :: eiMface
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            Npack => npack_elemP(thisPCol)
+            if (Npack < 1) return
+            thisP => elemP(1:Npack,thisPCol)
+            if (UpstreamFaceTF) then 
+                eiMface = ei_Mface_uL 
+            else 
+                eiMface = ei_Mface_dL 
+            end if
+        !%------------------------------------------------------------------
+
+        !% --- push data
+        faceR(elemI(thisP,eiMface),frCol) = elemXR(thisP,erCol)
+
+    end subroutine face_push_elemdata_to_face
+!%
+!%==========================================================================    
+!%==========================================================================
+!%
+    subroutine face_push_diag_adjacent_data_to_face (thisPCol )
+        !%------------------------------------------------------------------
+        !% Description
+        !% Pushes element data into the fr_..._adjacent data fields
+        !% thsiPCol must be a packed set of diagnostic elements that are
+        !% adjacent to JB elements
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisPCol
+            integer, pointer    :: Npack, thisP(:), fup, fdn
+            integer :: ii, kk, ff
+        !%------------------------------------------------------------------
+            Npack => npack_elemP(thisPCol)
+            if (Npack < 1) return 
+        !%------------------------------------------------------------------   
+
+        !% --- cycle through a set of diagnostic elements
+        do ii=1,Npack
+            !% -- cycle through upstream and downstream faces
+            do kk=1,2
+                if (kk==1) then !% -- upstream face
+                    ff = elemI(thisP(ii),ei_Mface_uL)
+                    if (.not. faceYN(ff,fYN_isUpstreamJBFace)) cycle !% if not JB adjacent
+                else !% -- downstream face
+                    ff = elemI(thisP(ii),ei_Mface_dL)
+                    if (.not. faceYN(ff,fYN_isDownstreamJBFace)) cycle !% if not JB adjacent
+                end if
+
+                !% --- set the adjacent element value storage on the face
+                select case (elemI(thisP(ii),ei_elementType))
+                    case (weir)
+                        faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Weir_Zcrest)
+                        faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Weir_dQdHe)
+                    case (orifice)
+                        faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Orifice_Zcrest)
+                        faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Orifice_dQdHe)
+                    case (outlet)
+                        faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Outlet_Zcrest)
+                        faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Outlet_dQdHe)
+                    case (pump)
+                        faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Pump_Zcrest)
+                        faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Pump_dQdHp)
+                    case default 
+                        print *, 'CODE ERROR: unexpected case default'
+                        call util_crashpoint(3111987)
+                end select
+            end do
+
+        end do    
+
+
+    end  subroutine face_push_diag_adjacent_data_to_face
+!%
+!%==========================================================================    
+!%==========================================================================
+!%    
+    subroutine face_pull_facedata_to_JBelem (thisPcol, frCol, eDataOut)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Pulls data from faceR(:,frCol) to eDataOut for the elements
+        !% in elemP(:,thisPcol). eDataOut should be (e.g.) elemR(:,er_Flowrate)
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in)    :: thisPcol, frCol
+            real(8), intent(inout) :: eDataOut(:)
+            integer, pointer       :: NPack, thisP(:)
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            Npack => npack_elemP(thisPcol)
+            if (Npack < 1) return 
+            thisP => elemP(1:Npack,thisPcol)
+        !%------------------------------------------------------------------
+
+        where (elemSI(thisP,esi_JunctionBranch_IsUpstream) == oneI)
+            !% --- upstream JB branch
+            eDataOut(thisP) = faceR(elemI(thisP,ei_Mface_uL),frCol)
+        elsewhere
+            !% --- downstream JB branch
+            eDataOut(thisP) = faceR(elemI(thisP,ei_Mface_dL),frCol)
+        endwhere
+
+    end subroutine face_pull_facedata_to_JBelem    
+!%
+!%==========================================================================    
+!%==========================================================================
+!%     
+!% 
 !%
     subroutine face_interpolation (facecol, Gyn, Hyn, Qyn, skipJump, skipZeroAdjust)
         !%------------------------------------------------------------------
@@ -94,7 +224,7 @@ module face
 
         !% --- force zero fluxes on closed element downstream faces
         !%     note this does not require a "faceCol" argument as we
-        !%     will execute this for both fp_all and fp_Diag calls
+        !%     will execute this for both fp_all_interior and fp_Diag_interior calls
         if (Qyn) then
             call adjust_face_for_zero_setting ()
         end if
@@ -211,6 +341,8 @@ module face
             ! print *, 'mm',mm
             ! print *, 'thisJM(mm)', thisJM(mm)
 
+
+
             !% --- push junction JB flowrate values back to faces  
             call face_force_JBvalues (fr_Flowrate, er_Flowrate, ei_Mface, thisJM(mm), kstart) 
 
@@ -218,6 +350,14 @@ module face
             call face_add_JBvalues (fr_DeltaQ, er_DeltaQ, ei_Mface, thisJM(mm), kstart) 
 
             !print *, thisJM(mm)
+
+            ! if (.not. isJBupstreamYN) then
+            !     if (thisJM(mm) == 137) then 
+            !         print *, ' '
+            !         print *, 'Delta Q transfer ',elemR(139,er_DeltaQ), faceR(126,er_DeltaQ)
+            !         print *, ' '
+            !     end if
+            ! end if
 
             !% --- push JB head to adjacent face
             call face_force_JBvalues (fr_Head_d, er_Head, ei_Mface, thisJM(mm), kstart) 
@@ -756,7 +896,7 @@ module face
             fFlowSet = [fr_Flowrate, fr_Preissmann_Number]
             eFlowSet = [er_Flowrate, er_Preissmann_Number]
 
-            if (facePackCol == fp_JB) then 
+            if (facePackCol == fp_JB_interior) then 
                 !% --- store the old flowrate so we can compute the deltaQ
                 thisP => faceP(1:Npack,facePackCol)
                 fQold(thisP) = faceR(thisP,fr_Flowrate)
@@ -784,7 +924,7 @@ module face
                 !                /(elemR(50,er_InterpWeight_dQ)+ elemR(52,er_InterpWeight_uQ))
                 ! print *, ' '
 
-            if (facePackCol == fp_JB) then 
+            if (facePackCol == fp_JB_interior) then 
                     ! print *, ' '
                     ! print *, '                                  CALLING face_DeltaQ =============='
                 call face_deltaQ (facePackCol,.true.,fQold)
@@ -813,8 +953,8 @@ module face
         end if
 
         !% --- for JB faces (only) store the adjacent head, topwidth, length values
-        if (facePackCol .ne. fp_notJB) then
-            call face_junction_adjacent_values (fp_JB)
+        if (facePackCol .ne. fp_notJB_interior) then
+            call face_junction_adjacent_values (fp_JB_interior)
         end if
 
         !%------------------------------------------------------------------
@@ -939,8 +1079,8 @@ module face
         end if
 
         !% --- for JB faces (only) store the adjacent head, topwidth, length values
-        if (facePackCol .ne. fp_notJB) then
-            !call ??? face_junction_adjacent_values (fp_JB)
+        if (facePackCol .ne. fp_notJB_interior) then
+            !call ??? face_junction_adjacent_values (fp_JB_interior)
             print *, 'ERROR: shared faces not complete'
             print *, 'need to handle the fr_..._Adjacent values as in face_junction_adjacent_values'
             call util_crashpoint(7229873)
@@ -1416,6 +1556,9 @@ module face
         !%------------------------------------------------------------------
         !% Description:
         !% This subroutine calculates the face valocity and adjusts for limiter
+        !% NOTE: this subroutine CANNOT address adjacent element data. The
+        !% facePackCol is allowed to include fp_..._all data, which contains
+        !% both interior and shared faces.
         !%-------------------------------------------------------------------  
             integer, intent(in) :: facePackCol
             logical, intent(in) :: isInterior
@@ -1815,7 +1958,7 @@ module face
             integer :: ii, mm
         !%------------------------------------------------------------------
         !% Preliminaries
-            if (facePackCol .ne. fp_JB) return !% --- only used for JB faces
+            if (facePackCol .ne. fp_JB_interior) return !% --- only used for JB faces
             Npack => npack_faceP(facePackCol)
             if (Npack < oneI) return !% --- only used if such faces exist
         !%------------------------------------------------------------------ 

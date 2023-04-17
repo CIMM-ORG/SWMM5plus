@@ -1150,14 +1150,20 @@ contains
                     
 
                 !% --- special channels and conduits that allow nJ2
-                if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)          &
-                        .or.                                                 &
-                        (link%I(linkDn,li_link_type) .eq. lChannel)          &
-                      )                                                      &
-                      .and.                                                  &
-                      (node%R(ii,nr_PondedArea) == zeroR)                    &
-                      .and.                                                  &
-                      (node%R(ii,nr_SurchargeExtraDepth) == zeroR)           & 
+                if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)                &
+                        .or.                                                       &
+                        (link%I(linkDn,li_link_type) .eq. lChannel)                &
+                      )                                                            &
+                      .and.                                                        &
+                      (node%R(ii,nr_PondedArea) == zeroR)                          &
+                      .and.                                                        &
+                      (  (node%R(ii,nr_SurchargeExtraDepth) == zeroR)              & 
+                          .or.                                                     &
+                         (node%R(ii,nr_SurchargeExtraDepth)                        &
+                           == setting%Junction%InfiniteExtraDepthValue)            &
+                         .or.                                                      &
+                         (node%R(ii,nr_SurchargeExtraDepth)                        &
+                            == setting%Junction%InfiniteExtraDepthValue*0.3048d0)) & 
                     ) then
                     !% nJ2 OPEN CHANNEL FACE
                     !% --- if either link is an open channel AND the ponded area

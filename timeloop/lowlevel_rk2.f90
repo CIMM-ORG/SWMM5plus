@@ -1155,9 +1155,9 @@ module lowlevel_rk2
             ! end select
     
             !% --- alternate form of junctions skips this
-            if (setting%Junction%Method .ne. Explicit2) then 
-                return
-            end if
+            ! if (setting%Junction%Method .ne. Explicit2) then 
+            !     return
+            ! end if
         !%-----------------------------------------------------------------------------
             !% --- original form of junctions:
             Npack => npack_elemP(thisColP_JM)
@@ -1587,10 +1587,10 @@ module lowlevel_rk2
         ! end select
 
         !% --- alternate form of junctions skip this
-        if (setting%Junction%Method .ne. Explicit1) then
-            !% do nothing
-            return
-        end if
+        ! if (setting%Junction%Method .ne. Explicit1) then
+        !     !% do nothing
+        !     return
+        ! end if
 
         !% --- original form of junctions:
         Npack => npack_elemP(thisColP_JM)

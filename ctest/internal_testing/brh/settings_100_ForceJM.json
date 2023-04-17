@@ -1,0 +1,14 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "test",
+        "Short" : "test"
+    },
+    "Discretization" : {
+        "NominalElemLength" : 100.00
+    },
+    "Junction" : {
+        "ForceNodesJM" : true
+    } 
+}

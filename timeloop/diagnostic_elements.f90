@@ -29,6 +29,7 @@ module diagnostic_elements
 
     public :: diagnostic_toplevel
     public :: diagnostic_fix_JB_adjacent
+    public :: diagnostic_by_type 
 
     contains
 !%==========================================================================
@@ -212,7 +213,7 @@ module diagnostic_elements
             !% --- prevent an RK2 first step from setting the flowrate to zero
             !%     Otherwise the conservative flux is identically zero for the
             !%     entire time step
-            if ((istep == 1) .and. (FlowRate(thisP(ii)) .eq. zeroR)) then
+            if (((istep == oneI) .or. (istep == zeroI)) .and. (FlowRate(thisP(ii)) .eq. zeroR)) then
                 FlowRate(thisP(ii)) = onehalfR * (FlowRate(thisP(ii)) + FlowRateOld)
             end if
         end do

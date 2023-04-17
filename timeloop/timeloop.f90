@@ -25,7 +25,7 @@ module timeloop
               interface_get_groundwater_inflow
     use utility_crash
     use control_hydraulics, only: control_update
-    use utility_unit_testing, only: util_utest_CLprint
+    use utility_unit_testing, only: util_utest_CLprint 
 
     implicit none
 
@@ -334,7 +334,7 @@ contains
 
                         call bc_update() 
 
-                        ! ! ! call util_utest_CLprint ('CCCCC_01 of tl_outerloop ')
+                            ! call util_utest_CLprint ('CCCCC_01 of tl_outerloop ')
 
                         call tl_lateral_inflow()
                         call tl_smallestBC_timeInterval ()
@@ -667,7 +667,7 @@ contains
                 ! print *, 'into rk2 ETM'
             !% ETM with Preissmann slot for surcharge
 
-            call rk2_toplevel_ETM_4()
+            call rk2_toplevel_ETM_5()
             
                 ! print *, 'out of rk2_toplevel_ETM'
                 !outstring = '    tl_hydraulics 222 '
@@ -1581,53 +1581,55 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%    
-    subroutine tl_solver_select()
-        !%------------------------------------------------------------------
-        !% Description:
-        !% For ETM_AC dual method, this sets the elemI(:,ei_tmType) to the type of solver
-        !% needed depending on the volume and the volume cutoffs.
-        !% Should only be called if setting%Solver%SolverSelect == ETM_AC
-        !%-----------------------------------------------------------------
-        !% Delcarations
-            integer :: thisCol
-            integer, pointer :: Npack, tmType(:), thisP(:)
-            real(8), pointer :: sfup, sfdn
-            real(8), pointer :: volume(:), FullVolume(:)
-            character(64) :: subroutine_name = 'tl_solver_select'
-        !%-------------------------------------------------------------------
-        !% Preliminaries
-            if (setting%Solver%SolverSelect .ne. ETM_AC) return
-            if (setting%Debug%File%timeloop) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-------------------------------------------------------------------
-        !% Aliases:       
-            thiscol = ep_ALLtm
-            Npack => npack_elemP(thisCol)
-            thisP => elemP(1:Npack,thisCol)
+    ! subroutine tl_solver_select()
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% For ETM_AC dual method, this sets the elemI(:,ei_tmType) to the type of solver
+    !     !% needed depending on the volume and the volume cutoffs.
+    !     !% Should only be called if setting%Solver%SolverSelect == ETM_AC
+    !     !%-----------------------------------------------------------------
+    !     !% Delcarations
+    !         integer :: thisCol
+    !         integer, pointer :: Npack, tmType(:), thisP(:)
+    !         real(8), pointer :: sfup, sfdn
+    !         real(8), pointer :: volume(:), FullVolume(:)
+    !         character(64) :: subroutine_name = 'tl_solver_select'
+    !     !%-------------------------------------------------------------------
+    !     !% Preliminaries
+    !         if (setting%Solver%SolverSelect .ne. ETM_AC) return
+    !         if (setting%Debug%File%timeloop) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%-------------------------------------------------------------------
+    !     !% Aliases:       
+    !         thiscol = ep_CCJM
+    !         Npack => npack_elemP(thisCol)
+    !         thisP => elemP(1:Npack,thisCol)
 
-            tmType     => elemI(:,ei_tmType)
-            volume     => elemR(:,er_Volume)
-            FullVolume => elemR(:,er_FullVolume)
+    !         tmType     => elemI(:,ei_tmType)
+    !         volume     => elemR(:,er_Volume)
+    !         FullVolume => elemR(:,er_FullVolume)
 
-            sfup => setting%Solver%SwitchFractionUp
-            sfdn => setting%Solver%SwitchFractionDn
-        !%-------------------------------------------------------------------
-        !% Look for ETM elements that are above the cutoff for going to AC and set
-        !% these to AC
-        where ( ( (volume(thisP) / FullVolume(thisP) ) > sfup ) .and. (tmType(thisP) == ETM) )
-            tmType(thisP) = AC
-        endwhere
+    !         sfup => setting%Solver%SwitchFractionUp
+    !         sfdn => setting%Solver%SwitchFractionDn
+    !     !%-------------------------------------------------------------------
+    !     !% Look for ETM elements that are above the cutoff for going to AC and set
+    !     ! !% these to AC
+    !     ! where ( ( (volume(thisP) / FullVolume(thisP) ) > sfup ) .and. (tmType(thisP) == ETM) )
+    !     !     tmType(thisP) = AC
+    !     ! endwhere
 
-        !% Look for AC elements that are below the cutoff for going back to ETM and
-        !% set these to ETM
-        where ( ( (volume(thisP) / FullVolume(thisP) ) < sfdn) .and. (tmType(thisP) == AC) )
-            tmType(thisP) = ETM
-        endwhere
+    !     !% AC IS OBSOLETE
 
-        !%-------------------------------------------------------------------
-            if (setting%Debug%File%timeloop) &
-                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine tl_solver_select
+    !     !% Look for AC elements that are below the cutoff for going back to ETM and
+    !     !% set these to ETM
+    !     where ( ( (volume(thisP) / FullVolume(thisP) ) < sfdn) .and. (tmType(thisP) == AC) )
+    !         tmType(thisP) = ETM
+    !     endwhere
+
+    !     !%-------------------------------------------------------------------
+    !         if (setting%Debug%File%timeloop) &
+    !             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine tl_solver_select
 !%
 !%==========================================================================
 !%==========================================================================

@@ -115,13 +115,24 @@ contains
 
 
              !% T005Wr_RO_Free-dx0010_faceNJ2 with only upstream node
-            integer :: iet(8) = (/  49,   50,    52,51,53,   112,    62,  63 /)
-            integer :: ift(5)  = (/     50,   51,         52,     61,    62 /)
+            ! integer :: iet(8) = (/  49,   50,    52,51,53,   112,    62,  63 /)
+            ! integer :: ift(5)  = (/     50,   51,         52,     61,    62 /)
 
 
             !  !% T005Wr_RO_Free-dx0010_faceNJ2
             ! integer :: iet(5) = (/     49,   50,     101,      51,   52 /)
             ! integer :: ift(6)  = (/ 49,    50,   51,       52,   53,   54 /)
+
+
+            !% T007
+            ! integer :: iet(8) = (/  136,   136,    138,137,139,   148,      149,   150 /)
+            ! integer :: ift(5)  = (/     124,   125,            126,     135,    136 /)
+
+
+            !% T009
+            integer :: iet(8) = (/  4,   5,    7,6,8,   17,      18,   19 /)
+            integer :: ift(5)  = (/     5,   6,      7,     16,    17 /)
+
 
             real(8) :: tempV, tempVold, tempFin, tempFout
 
@@ -157,136 +168,16 @@ contains
             '; dt = ',setting%Time%Hydraulics%Dt,&
             '; time = ',setting%Time%Now / 60.d0, ' min'       
 
-         !
+         
+            return
 
             ! print *, ' '
-            ! print *, 'conservation at ii=',62
-            ! print *, 4, (elemR(62,er_Volume) - elemR(62,er_Volume_N0)) &
-            !       -(   faceR(elemI(63,ei_Mface_uL),fr_Flowrate_Conservative)  &
-            !          - faceR(elemI(64,ei_Mface_dL),fr_Flowrate_Conservative)  &
-            !       ) * setting%Time%Hydraulics%Dt
+            ! print *, 'dQdH elem    ', elemSR(139,esr_JunctionBranch_dQdH) 
+            ! print *, 'Delta Q Elem ', elemR(139,er_DeltaQ)
+            ! print *, 'Delta_Q face ', faceR(126,fr_DeltaQ)
             ! print *, ' '
-
-            ! print *, 'components'
-            ! print *, 'vol: ',elemR(62,er_Volume), elemR(62,er_Volume_N0)
-            ! print *, 'Flux ', faceR(elemI(63,ei_Mface_uL),fr_Flowrate_Conservative)* setting%Time%Hydraulics%Dt
-            ! print *, 'Flux ',-faceR(elemI(64,ei_Mface_dL),fr_Flowrate_Conservative) * setting%Time%Hydraulics%Dt
-            ! print *, ' '
-            ! print *, 'depth ',elemR(62,er_Depth), setting%ZeroValue%Depth
-
-            ! print *, ' '
-            ! print *, 'effective weir full depth ',elemSR(211,esr_Weir_EffectiveFullDepth)
-            ! print *, 'effective head delta      ',elemSR(211,esr_Weir_EffectiveHeadDelta)
-            ! print *, 'dQdH                      ',elemSR(211,esr_Weir_dQdHe)
-            
-            ! tempVold = sum(elemR(1:50,er_Volume_N0) + elemR(51,er_Volume_N0) + elemR(62,er_Volume_N0)) &
-            !                   +sum(elemR(73:122,er_Volume_N0))
-            ! tempV    = sum(elemR(1:50,er_Volume) + elemR(51,er_Volume) + elemR(62,er_Volume)) &
-            !                   +sum(elemR(73:122,er_Volume))
-            ! tempFin  = faceR(1,fr_Flowrate_Conservative) * setting%Time%Hydraulics%Dt
-            ! tempFout = faceR(120,fr_Flowrate_Conservative)* setting%Time%Hydraulics%Dt
-            ! print *, 'old vol        ',tempVold
-            ! print *, 'volume         ',tempV
-            ! print *, ' '
-            ! print *, 'inflow volume  ', tempFin
-            ! print *, 'outflow_volume ', tempFout
-            ! print *, ' '
-            ! print *, 'net volume change   ', tempV - tempVold
-            ! print *, 'net flow vol change ', tempFin - tempFout
-            ! print *, ' '
-            ! print *, 'Cons ', (tempV - tempVold) - (tempFin - tempFout)
-            ! print *, ' '
-
-            ! print *, 'elem 50 vol   ', elemR(50,er_Volume), elemR(50,er_Volume_N0)
-            
-            ! print *, 'face 51 Q*dt  ', faceR(51,fr_Flowrate)*setting%Time%Hydraulics%Dt
-            ! print *, 'face 50 Q*dt  ', faceR(50,fr_Flowrate)*setting%Time%Hydraulics%Dt
-            ! print *, 'face net flux ', faceR(50,fr_Flowrate)*setting%Time%Hydraulics%Dt - faceR(51,fr_Flowrate)*setting%Time%Hydraulics%Dt
-            ! print *, 'elem 50 Vdelta', elemR(50,er_Volume) - elemR(50,er_Volume_N0)
-            ! print *, 'elem 50 cons  ', (elemR(50,er_Volume) - elemR(50,er_Volume_N0)) - (faceR(50,fr_Flowrate)*setting%Time%Hydraulics%Dt - faceR(51,fr_Flowrate)*setting%Time%Hydraulics%Dt)
-            ! print *, ' '
-            
-            ! print *, 'face 52 Q*dt  ', faceR(52,fr_Flowrate)*setting%Time%Hydraulics%Dt
-            ! print *, 'face 51 Q*dt  ', faceR(51,fr_Flowrate)*setting%Time%Hydraulics%Dt
-            ! print *, 'face net flux ', faceR(51,fr_Flowrate)*setting%Time%Hydraulics%Dt - faceR(52,fr_Flowrate)*setting%Time%Hydraulics%Dt
-            ! print *, 'JM 51 Volumes ', elemR(51,er_Volume), elemR(51,er_Volume_N0)
-            ! print *, 'JM 51 Vdelta  ', elemR(51,er_Volume) - elemR(51,er_Volume_N0)
-            ! print *, 'JM t1 cons    ', elemR(51,er_Volume) - elemR(51,er_Volume_N0) - (faceR(51,fr_Flowrate)*setting%Time%Hydraulics%Dt - faceR(52,fr_Flowrate)*setting%Time%Hydraulics%Dt)
-            ! print *, ' '
-
-            ! print *, 'JB Q          ',elemR(52,er_Flowrate), elemR(53,er_Flowrate)
-            ! print *, 'JB 52 Head, Zb',elemR(52,er_Head),  elemR(52,er_Zbottom)
-            ! print *, 'JB 52,H-Zb    ',elemR(52,er_Head) - elemR(52,er_Zbottom)
-            ! print *, 'JB 52 Depth   ',elemR(52,er_Depth), setting%ZeroValue%Depth
-            ! print *, ' '
-
-            ! print *, 'FLOWRATES CC, face, JB '
-            ! print *, elemR(50,er_Flowrate), faceR(51,fr_Flowrate), elemR(52,er_Flowrate)
-            ! print *, ' '
-
-            ! print *, 'Delta Q CC, face, JB '
-            ! print *, elemR(51,er_DeltaQ), faceR(51,fr_DeltaQ), elemR(52,er_DeltaQ)
-            ! print *, ' '
-
-
-         !   if (setting%Time%Step > 247) then 
-         !      stop 550987
-         !    end if
-            !stop 440978
-
+    
       !% --- SETUP  -----------------------------------------------
-         !   print *, 'up, face:    ',elemI(iet,ei_Mface_uL)
-               !   print *, 'dn  face:    ',elemI(iet,ei_Mface_dL)
-               !   print *, ' '
-               !   print *, 'up elem      ',faceI(ift,fi_Melem_uL)
-               !   print *, 'dn elem      ',faceI(ift,fi_Melem_dL)
-               !   print *, ' '
-
-               ! stop 2098374
-
-
-         !% --- initial conditions
-            ! do ii=1,N_elem(1)
-            !       if (elemI(ii,ei_elementType) == CC) then
-            !          if (faceI(fup(ii),fi_BCType) == BCup) then 
-            !          write(*,"(A, i5, 3e12.3,A)"), 'f ', fup(ii),      faceR(fup(ii),fr_Depth_u), faceR(fup(ii),fr_Head_u), faceR(fup(ii),fr_Flowrate)  , '             '//trim(reverseKey(faceI(fup(ii),fi_BCType))) 
-            !          end if
-            !          write(*,"(A, i5, 3e12.3,A)"), 'f ', fup(ii),      faceR(fup(ii),fr_Depth_d), faceR(fup(ii),fr_Head_d), faceR(fup(ii),fr_Flowrate)  , '             '//trim(reverseKey(faceI(fup(ii),fi_BCType)))         
-            !          write(*,"(A, i5, 4e12.3,A)"), 'e ', ii,           elemR(    ii, er_Depth),   elemR(    ii, er_Head),   elemR(    ii, er_Flowrate), elemR(ii,er_Volume)  , ' '//trim(reverseKey(elemI(    ii ,ei_elementType)))
-            !          write(*,"(A, i5, 3e12.3,A)"), 'f ', fdn(ii),      faceR(fdn(ii),fr_Depth_u), faceR(fdn(ii),fr_Head_u), faceR(fdn(ii),fr_Flowrate)  , '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
-            !          if (faceI(fup(ii),fi_BCType) == BCdn) then
-            !          write(*,"(A, i5, 3e12.3,A)"), 'f ', fdn(ii),      faceR(fdn(ii),fr_Depth_d), faceR(fdn(ii),fr_Head_d), faceR(fdn(ii),fr_Flowrate)  , '             '//trim(reverseKey(faceI(fdn(ii),fi_BCType)))
-            !          end if 
-            !       elseif (elemI(ii,ei_elementType) == JM) then
-            !          !% upstream branches
-            !          do jj=1,max_branch_per_node,2
-            !             if  (elemSI(ii+jj,esi_JunctionBranch_Exists) == oneI) then
-            !                write(*,"(A, i5, 3e12.3, A)"),  'f ', fup(ii+jj),  faceR(fup(ii+jj),fr_Depth_d), faceR(fup(ii+jj),fr_Head_d), faceR(fup(ii+jj),fr_Flowrate) , '             '//trim(reverseKey(faceI(fup(ii+jj),fi_BCType)))
-            !                write(*,"(A, i5, 3e12.3, A, i5)"), 'e ', ii+jj,       elemR(    ii+jj, er_Depth),   elemR(    ii+jj, er_Head),   elemR(    ii+jj, er_Flowrate) , '             JB ',   elemSI(ii+jj,esi_JunctionBranch_IsUpstream)
-            !             end if
-            !          end do
-            !          !%  JM
-            !                write(*,"(A, i5, 4e12.3,A)"), 'e ', ii, elemR(ii,er_Depth), elemR(ii,er_Head), elemR(ii,er_Flowrate) , elemR(ii,er_Volume), ' '//trim(reverseKey(elemI(ii,ei_elementType)))
-            !          !% downstream branches
-            !          do jj=2,max_branch_per_node,2
-            !             if  (elemSI(ii+jj,esi_JunctionBranch_Exists) == oneI) then
-            !                write(*,"(A, i5, 3e12.3, A, i5)"), 'e ', ii+jj     , elemR(    ii+jj, er_Depth),   elemR(    ii+jj, er_Head),   elemR(    ii+jj ,er_Flowrate) , '            JB ', elemSI(ii+jj,esi_JunctionBranch_IsUpstream)
-            !                write(*,"(A, i5, 3e12.3, A)"),  'f ', fdn(ii+jj), faceR(fdn(ii+jj),fr_Depth_u), faceR(fdn(ii+jj),fr_Head_u), faceR(fdn(ii+jj),fr_Flowrate) ,  '             '//trim(reverseKey(faceI(fdn(ii+jj),fi_BCType)))
-            !             end if
-            !          end do
-            !       elseif ((elemI(ii,ei_elementType) == JB) ) then
-            !          ! skip
-            !       else 
-            !          print *, 'unexpected element type '
-            !          print *, trim(reverseKey(elemI(ii,ei_elementType)))
-            !          stop 77873
-            !       end if
-            ! end do
-
-            ! !return 
-            ! stop 2398744
-
-
       !% branches and elements   
 
          ! print *, 'branches and elements'
@@ -470,7 +361,7 @@ contains
 
    !NJ2 with 1 junction   
 
-         write(*,"(A9,17A11)"),' ','elem','faceU','faceD','elem','faceU','faceD','jb','JM','jb','faceU','faceD','WEIR','faceU','faceD','elem','faceU','faceD','elem'
+         write(*,"(A9,20A11)"),' ','elem','faceU','faceD','elem','faceU','faceD','jb','JM','jb','faceU','faceD','elem','faceU','faceD','elem','faceU','faceD','elem'
 
      
          write(*,"(A,31f11.4)") '  Head    '  ,          &
@@ -557,25 +448,47 @@ contains
             elemR(iet(8),er_Flowrate)
 
 
-            write(*,"(A,31e11.4)") '   iwUQ   '  ,          &
-            elemR(iet(1),er_InterpWeight_uQ), &
-               0.d0, &
-               faceR(ift(1),fr_Flowrate), &
-            elemR(iet(2),er_InterpWeight_uQ), &
-               faceR(ift(2),fr_Flowrate), &
-               faceR(ift(2),fr_Flowrate), &
-            elemR(iet(3),er_InterpWeight_uQ), &
-            elemR(iet(4),er_Flowrate), &
-            elemR(iet(5),er_InterpWeight_uQ), &
-               faceR(ift(3),fr_Flowrate), &
-               faceR(ift(3),fr_Flowrate), &
-            elemR(iet(6),er_InterpWeight_uQ),&
-               faceR(ift(4),fr_Flowrate), &
-               faceR(ift(4),fr_Flowrate), &
-            elemR(iet(7),er_Flowrate), &
-               faceR(ift(5),fr_Flowrate), &
-               faceR(ift(5),fr_Flowrate), &
-            elemR(iet(8),er_Flowrate)
+
+            write(*,"(A,31f11.4)") ' Vel    '  ,          &
+            elemR(iet(1),er_Velocity), &
+               faceR(ift(1),fr_Velocity_u), &
+               faceR(ift(1),fr_Velocity_d), &
+            elemR(iet(2),er_Velocity), &
+               faceR(ift(2),fr_Velocity_u), &
+               faceR(ift(2),fr_Velocity_d), &
+            elemR(iet(3),er_Velocity), &
+            elemR(iet(4),er_Velocity), &
+            elemR(iet(5),er_Velocity), &
+               faceR(ift(3),fr_Velocity_u), &
+               faceR(ift(3),fr_Velocity_d), &
+            elemR(iet(6),er_Velocity),&
+               faceR(ift(4),fr_Velocity_u), &
+               faceR(ift(4),fr_Velocity_d), &
+            elemR(iet(7),er_Velocity), &
+               faceR(ift(5),fr_Velocity_u), &
+               faceR(ift(5),fr_Velocity_d), &
+            elemR(iet(8),er_Velocity)
+
+
+            ! write(*,"(A,31e11.4)") '   iwUQ   '  ,          &
+            ! elemR(iet(1),er_InterpWeight_uQ), &
+            !    0.d0, &
+            !    faceR(ift(1),fr_Flowrate), &
+            ! elemR(iet(2),er_InterpWeight_uQ), &
+            !    faceR(ift(2),fr_Flowrate), &
+            !    faceR(ift(2),fr_Flowrate), &
+            ! elemR(iet(3),er_InterpWeight_uQ), &
+            ! elemR(iet(4),er_Flowrate), &
+            ! elemR(iet(5),er_InterpWeight_uQ), &
+            !    faceR(ift(3),fr_Flowrate), &
+            !    faceR(ift(3),fr_Flowrate), &
+            ! elemR(iet(6),er_InterpWeight_uQ),&
+            !    faceR(ift(4),fr_Flowrate), &
+            !    faceR(ift(4),fr_Flowrate), &
+            ! elemR(iet(7),er_Flowrate), &
+            !    faceR(ift(5),fr_Flowrate), &
+            !    faceR(ift(5),fr_Flowrate), &
+            ! elemR(iet(8),er_Flowrate)
 
            ! write(*,"(A,31f11.4)") '      '  ,          &
             ! elemR(iet(1),er_), &
@@ -1983,13 +1896,13 @@ contains
 
       !% checking elemP(:,ep_ALLtm) indexes
 
-      min_val = minval(elemP(:,ep_ALLtm)) - 1
-      max_val = maxval(elemP(:,ep_ALLtm))
+      min_val = minval(elemP(:,ep_CCJM)) - 1
+      max_val = maxval(elemP(:,ep_CCJM))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(elemP(:,ep_ALLtm),mask=elemP(:,ep_ALLtm)>min_val)
+         min_val = minval(elemP(:,ep_CCJM),mask=elemP(:,ep_CCJM)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -1997,13 +1910,13 @@ contains
       end if
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemP(:,ep_ALLtm) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "elemP(:,ep_CCJM) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemP(ep_ALLtm)) then
-         print *, "ERROR:::: elemP(:,ep_ALLtm) is not unique. This_image ::", this_image()
+      else if (ii /= npack_elemP(ep_CCJM)) then
+         print *, "ERROR:::: elemP(:,ep_CCJM) is not unique. This_image ::", this_image()
 
       else
-         print *, "elemP(:,ep_ALLtm) is unique. This_image ::", this_image()
+         print *, "elemP(:,ep_CCJM) is unique. This_image ::", this_image()
       end if
 
 
@@ -3122,16 +3035,16 @@ contains
       !    print *, "elemPGac(:,epg_JB_trapezoidal) is unique. This_image ::", this_image()
       ! end if
 
-      !% checking faceP(:,fp_all) indexes
+      !% checking faceP(:,fp_all_interior) indexes
 
 
-      min_val = minval(faceP(:,fp_all)) - 1
-      max_val = maxval(faceP(:,fp_all))
+      min_val = minval(faceP(:,fp_all_interior)) - 1
+      max_val = maxval(faceP(:,fp_all_interior))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(faceP(:,fp_all),mask=faceP(:,fp_all)>min_val)
+         min_val = minval(faceP(:,fp_all_interior),mask=faceP(:,fp_all_interior)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -3140,25 +3053,52 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "faceP(:,fp_all) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "faceP(:,fp_all_interior) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_faceP(fp_all)) then
-         print *, "ERROR:::: faceP(:,fp_all) is not unique. This_image ::", this_image()
+      else if (ii /= npack_faceP(fp_all_interior)) then
+         print *, "ERROR:::: faceP(:,fp_all_interior) is not unique. This_image ::", this_image()
 
       else
-         print *, "faceP(:,fp_all) is unique. This_image ::", this_image()
+         print *, "faceP(:,fp_all_interior) is unique. This_image ::", this_image()
       end if
 
       !% checking faceP(:,fp_AC) indexes
 
 
-      min_val = minval(faceP(:,fp_AC)) - 1
-      max_val = maxval(faceP(:,fp_AC))
+      ! min_val = minval(faceP(:,fp_AC)) - 1
+      ! max_val = maxval(faceP(:,fp_AC))
+      ! ii = 0
+
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(faceP(:,fp_AC),mask=faceP(:,fp_AC)>min_val)
+      ! end do
+
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
+
+
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "faceP(:,fp_AC) is only filled with nullvalueI. This_image ::", this_image()
+
+      ! else if (ii /= npack_faceP(fp_AC)) then
+      !    print *, "ERROR:::: faceP(:,fp_AC) is not unique. This_image ::", this_image()
+
+      ! else
+      !    print *, "faceP(:,fp_AC) is unique. This_image ::", this_image()
+      ! end if
+
+      !% checking faceP(:,fp_Diag_interior) indexes
+
+
+      min_val = minval(faceP(:,fp_Diag_interior)) - 1
+      max_val = maxval(faceP(:,fp_Diag_interior))
       ii = 0
 
       do while(min_val<max_val)
          ii = ii + 1
-         min_val = minval(faceP(:,fp_AC),mask=faceP(:,fp_AC)>min_val)
+         min_val = minval(faceP(:,fp_Diag_interior),mask=faceP(:,fp_Diag_interior)>min_val)
       end do
 
       if (min_val == nullvalueI) then
@@ -3167,40 +3107,13 @@ contains
 
 
       if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "faceP(:,fp_AC) is only filled with nullvalueI. This_image ::", this_image()
+         print *, "faceP(:,fp_Diag_interior) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_faceP(fp_AC)) then
-         print *, "ERROR:::: faceP(:,fp_AC) is not unique. This_image ::", this_image()
-
-      else
-         print *, "faceP(:,fp_AC) is unique. This_image ::", this_image()
-      end if
-
-      !% checking faceP(:,fp_Diag) indexes
-
-
-      min_val = minval(faceP(:,fp_Diag)) - 1
-      max_val = maxval(faceP(:,fp_Diag))
-      ii = 0
-
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(faceP(:,fp_Diag),mask=faceP(:,fp_Diag)>min_val)
-      end do
-
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
-
-
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "faceP(:,fp_Diag) is only filled with nullvalueI. This_image ::", this_image()
-
-      else if (ii /= npack_faceP(fp_Diag)) then
-         print *, "ERROR:::: faceP(:,fp_Diag) is not unique. This_image ::", this_image()
+      else if (ii /= npack_faceP(fp_Diag_interior)) then
+         print *, "ERROR:::: faceP(:,fp_Diag_interior) is not unique. This_image ::", this_image()
 
       else
-         print *, "faceP(:,fp_Diag) is unique. This_image ::", this_image()
+         print *, "faceP(:,fp_Diag_interior) is unique. This_image ::", this_image()
       end if
 
       !% checking faceP(:,fp_JumpDn) indexes

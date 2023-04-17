@@ -458,9 +458,9 @@ module define_indexes
         enumerator :: eYN_isBoundary_up                 !% TRUE if the element is connected to a shared face upstream thus a boundary element of a partition
         enumerator :: eYN_isBoundary_dn                 !% TRUE if the element is connected to a shared face downstream thus a boundary element of a partition
         enumerator :: eYN_isCulvert                     !% TRUE if CC element is inlet, outlet or culvert barrel
-        !enumerator :: eYN_isDownstreamJB                !% TRUE if the element is downstream JB
-        !enumerator :: eYN_isUpstreamJB                !% TRUE if the element is downstream JB
         enumerator :: eYN_isDummy
+        enumerator :: eYN_isCC_Adjacent                 !% TRUE if element is adjacent to CC
+        enumerator :: eyN_isDiag_Adjacent               !% TRUE if element is adjacent to a diagnostic element
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
         enumerator :: eYN_isElementUpstreamOfJB
         enumerator :: eYN_isForceMain                   !% TRUE if this is a force main element
@@ -485,10 +485,14 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         !enumerator :: ep_AC = 1                     !% all AC elements
-        enumerator :: ep_ALLtm = 1                      !% all time-marching elements
+        !enumerator :: ep_ALLtm = 1                      !% all time-marching elements
         !enumerator :: ep_CC_AC                      !% all CC elements that are AC
         !enumerator :: ep_CC_ACsurcharged            !% all CC elements that are AC
-        enumerator :: ep_CC                   !% all CC elements that are ETM or AC
+        enumerator :: ep_CC                         !% all CC elements
+        enumerator :: ep_CCJB                       !% all CC or JB elements
+        enumerator :: ep_CCJM                       !% all CC or JM elements
+        enumerator :: ep_CCJBDiag                   !% all CC, JB, or Diagnostic elements
+        enumerator :: ep_CCDiagJM                   !% all CC ,JM or Diagnostic elements
         !enumerator :: ep_CC_ALLtm_ACsurcharged      !% all CC elements that are AC and surcharged
         !enumerator :: ep_CC_ETM                     !% all CC elements that are ETM
         !enumerator :: ep_CC_ETM_PSsurcharged        !% CC elements that are ETM and surcharged
@@ -509,7 +513,7 @@ module define_indexes
         !enumerator :: ep_culvert_outlet             !% all CC elements that are also culvert outlets
         !enumerator :: ep_culvert_inout              !% all CC elements that are both culvert inlet and outlet
         enumerator :: ep_Diag                       !% diagnostic elements (static)
-        enumerator :: ep_Diag_notJB                 !% diagnostic elements not adjacent to JB (static)
+        enumerator :: ep_Diag_notJBadjacent                 !% diagnostic elements not adjacent to JB (static)
         enumerator :: ep_Diag_JBadjacent            !% diagnostic elements adjacent to JB element (static)
         !enumerator :: ep_ETM                        !% all ETM elements
         enumerator :: ep_JM                         !% all JM elements
@@ -517,6 +521,10 @@ module define_indexes
         !enumerator :: ep_JM_ALLtm                   !% Junction mains with any time march (static)
         !enumerator :: ep_JM_ETM                     !% junction mains using ETM method
         enumerator :: ep_JB                         !% any valid JB branch
+        enumerator :: ep_JB_Downstream               !% all the downstream JB elements 
+        enumerator :: ep_JB_Upstream               !% all the downstream JB elements 
+        enumerator :: ep_JB_Diag_Adjacent            !% all JB adjacent to Diag elements
+        enumerator :: ep_JB_CC_Adjacent              !% all JB adjacent to CC elements
         !enumerator :: ep_JB_AC                      !% junction branches using AC method
         !enumerator :: ep_JB_ALLtm                   !% Junction branches with any time march (static)
         !enumerator :: ep_JB_ETM                     !% junction branches using ETM method
@@ -546,9 +554,11 @@ module define_indexes
         !enumerator :: ep_CCJM_H_AC                  !% all CCJM solved for head with AC
         !enumerator :: ep_CCJB_eAC_i_fETM            !% all AC next to ETM
         enumerator :: ep_BClat                      !% all elements with lateral BC
-        enumerator :: ep_JB_Downstream             !% all the downstream JB elements 
+        
         enumerator :: ep_CC_DownstreamOfJunction  !% all CC element downstream of a JB 
         enumerator :: ep_CC_UpstreamOfJunction    !% all CC elements upstream of a JB
+        enumerator :: ep_Diag_DownstreamOfJunction !% all Diag element downstream of a JB
+        enumerator :: ep_Diag_UpstreamOfJunction    !% all Diag elements upstream of a JB
         enumerator :: ep_CC_Open_Elements           !% all CC elements that are open channel
         enumerator :: ep_CC_Closed_Elements         !% all closed CC elements 
         !enumerator :: ep_JM_Closed_Elements         !% all closed JM elements
@@ -839,6 +849,7 @@ module define_indexes
         enumerator ::  esr_Pump_xMin                       !% minimum pt. on pump curve 
         enumerator ::  esr_Pump_xMax                       !% maximum pt. on pump curve
         enumerator ::  esr_Pump_dQdHp                      !% rate of change of Q with pump head
+        enumerator ::  esr_Pump_Zcrest
         enumerator ::  esr_Pump_lastplusone                !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSR_Pump = esr_Pump_lastplusone-1
@@ -1377,6 +1388,7 @@ module define_indexes
         enumerator :: fr_Topwidth_Adjacent      !% topwidth of adjacent upstream or downstream element
         enumerator :: fr_Length_Adjacent        !% length of adjacent upstream or downstream element
         enumerator :: fr_Zcrest_Adjacent
+        enumerator :: fr_dQdH_Adjacent          !% dQdH of JB-adjacent diagnostic element
         enumerator :: fr_KJunction_MinorLoss    !% K factor for entrance/exit loss from element adjacent to nJM
         !enumerator :: fr_Length_u               !% length of upstream element
         !enumerator :: fr_Length_d               !% length of downstream element
@@ -1421,8 +1433,10 @@ module define_indexes
         enumerator :: fYN_isDownstreamJBFace
         enumerator :: fYN_isUpstreamJBFace
         enumerator :: fYN_isFaceOut
-        enumerator :: fYN_isDiag_adjacent
-        enumerator :: fYN_isJB_adjacent
+        enumerator :: fYN_isDiag_adjacent_all
+        enumerator :: fYN_isDiag_adjacent_interior
+        !enumerator :: fYN_isJB_adjacent
+        enumerator :: fYN_isCC_adjacent_all
         enumerator :: fYN_isJB_QfrozenByDiag
         !% HACK: The following might not be needed
         ! enumerator :: fYN_isETM_adjacent
@@ -1441,12 +1455,20 @@ module define_indexes
     !% These are for the packed array of face data
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: fp_all = 1                !% all interior faces except boundary, null, and shared faces
-        enumerator :: fp_notJB                  !% all interior faces except JB, boundary, null, and shared
-        enumerator :: fp_AC                     !% face with adjacent AC element
-        enumerator :: fp_Diag                   !% face with adjacent diagnostic element
-        enumerator :: fp_Diag_notJB
-        enumerator :: fp_JB                     !% face with adjacent JB
+        enumerator :: fp_all_interior = 1        !% all interior faces except boundary, null, and shared faces
+        enumerator :: fp_notJB_interior          !% all interior faces except JB, boundary, null, and shared
+        !enumerator :: fp_notDiag_interior        !% all interior faces except Diag, boundary, null, and shares
+        !enumerator :: fp_AC                     !% face with adjacent AC element
+        
+        enumerator :: fp_Diag_all                !% any face with adjacent Diag. -- cannot be used with interp
+        enumerator :: fp_Diag_JB_all    !% any face adjacent to both JB and Diag -- cannot be used with interp
+        enumerator :: fp_Diag_interior                   !% interior face with adjacent diagnostic element
+        enumerator :: fp_Diag_NotJB_interior
+        enumerator :: fp_notJB_all              !% any face not adjacent to JB
+        enumerator :: fp_JB_all                 !% any face with adjacent JB -- cannot be used with interp
+        enumerator :: fp_JB_interior            !% interior face with adjacent JB
+        enumerator :: fp_JBCC_interior          !% interior face between JB and CC
+        enumerator :: fp_JBDiag_all              !% any face that adjacent oto JB or CC
         enumerator :: fp_elem_downstream_is_zero
         enumerator :: fp_elem_upstream_is_zero
         enumerator :: fp_elem_bothsides_are_zero

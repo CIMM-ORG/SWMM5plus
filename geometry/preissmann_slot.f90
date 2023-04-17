@@ -637,11 +637,11 @@ module preissmann_slot
 
                 !% Test code: set any diagnostic face as venting point
                 !% thus not changing preissmann number here
-                where (faceYN(fUP(thisP),fYN_isDiag_adjacent))
+                where (faceYN(fUP(thisP),fYN_isDiag_adjacent_interior))
                     isfSlot(fUp(thisP)) = .false.
                 end where
 
-                where (faceYN(fDn(thisP),fYN_isDiag_adjacent))
+                where (faceYN(fDn(thisP),fYN_isDiag_adjacent_interior))
                     isfSlot(fDn(thisP)) = .false.
                 end where
 

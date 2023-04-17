@@ -110,7 +110,7 @@ module adjust
 
     call pack_zero_depth_interior_faces (facePcol)
 
-    if (facePcol == fp_all) then 
+    if (facePcol == fp_all_interior) then 
         if (setting%SmallDepth%useMomentumCutoffYN) then
             !% --- face ad hoc flux adjustments 
             !%     (.false. so that conservative fluxes are not altered)
@@ -209,7 +209,7 @@ module adjust
             call pack_small_and_zero_depth_elements (CC)
             call pack_small_and_zero_depth_elements (JM)
 
-            call pack_zero_depth_interior_faces (fp_all)
+            call pack_zero_depth_interior_faces (fp_all_interior)
             
         end if
                ! ! ! ! ! call util_utest_CLprint('-------------1111')

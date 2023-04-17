@@ -539,7 +539,7 @@ module define_settings
 
     ! setting%Junction
     type JunctionType
-        integer :: Method = Implicit0 !% keywords Explicit1, Explicit2, Implicit0
+        logical :: UseJunctionMomentumTF = .false.   !% turns on/off junction main velocity term
         !% 20230405 brh  Default is FALSE to force JM, and TRUE to Force Storage 
         logical :: ForceNodesJM = .false.  !% forces CC nodes between two conduits to be nJM rather than nJ2 faces
         !%                                 !% note CC nodes will only be nJ2 faces if SurchargeDepth = InfinitExtraDepthValue
@@ -555,7 +555,8 @@ module define_settings
         real(8) :: InfiniteExtraDepthValue = 1000.d0  !% Surcharge Depth if this value or higher is treated as impossible to overflow
         real(8) :: OverflowOrificeLength = 1.5d0 !% length of overfloe orifice
         real(8) :: OverflowOrificeHeight = 0.15d0
-        real(8) :: SurfaceArea_Minimum
+        real(8) :: SurfaceArea_Minimum !% from EPA-SWMM, minimum for ImpliedStorage
+        real(8) :: BreadthFactor = 1.5d0 !% multiplier of breadthMax used to multiply diameter of largest branch for computing ImpliedJunction area
     end type JunctionType
 
     ! setting%Limiter
@@ -1391,22 +1392,30 @@ contains
 
     !% Junctions. =====================================================================
         !%                            Junction.Method
-        call json%get('Junction.Method', c, found)
-        if (found) then            
-            call util_lower_case(c)
-            if (c == 'implicit0') then
-                setting%Junction%Method = Implicit0
-            else if (c == 'explicit1') then
-                setting%Junction%Method = Explicit1
-            else if (c == 'explicit2') then
-                setting%Junction%Method = Explicit2
-            else
-                write(*,"(A)") 'Error - json file - setting.Link.DefaultInitDepthType of ',trim(c)
-                write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '... linear, uniform, exponential, fixedhead'
-                stop 93775
-            end if
-        end if
+        ! call json%get('Junction.Method', c, found)
+        ! if (found) then            
+        !     call util_lower_case(c)
+        !     if (c == 'implicit0') then
+        !         setting%Junction%Method = Implicit0
+        !     else if (c == 'explicit1') then
+        !         setting%Junction%Method = Explicit1
+        !     else if (c == 'explicit2') then
+        !         setting%Junction%Method = Explicit2
+        !     else
+        !         write(*,"(A)") 'Error - json file - setting.Link.DefaultInitDepthType of ',trim(c)
+        !         write(*,"(A)") '..is not in allowed options of:'
+        !         write(*,"(A)") '... linear, uniform, exponential, fixedhead'
+        !         stop 93775
+        !     end if
+        ! end if
+
+        
+
+        !%                       Junction.UseJunctionMomentumTF
+        call json%get('Junction.UseJunctionMomentumTF', logical_value, found)
+        if (found) setting%Junction%UseJunctionMomentumTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.UseJunctionMomentumTF not found'
+
        
         !%                       Junction.ForceNodesJM
         call json%get('Junction.ForceNodesJM', logical_value, found)
@@ -1464,7 +1473,15 @@ contains
         if (found) setting%Junction%OverflowOrificeHeight = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.OverflowOrificeHeight not found'
 
+        !%                       Junction.SurfaceArea_Minimum
+        call json%get('Junction.SurfaceArea_Minimum', real_value, found)
+        if (found) setting%Junction%SurfaceArea_Minimum = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.SurfaceArea_Minimum not found'
 
+        !%                       Junction.BreadthFactor
+        call json%get('Junction.BreadthFactor', real_value, found)
+        if (found) setting%Junction%BreadthFactor = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.BreadthFactor not found'
 
     !% Limiter. =====================================================================
         !rm 20220207brh
