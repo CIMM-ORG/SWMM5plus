@@ -36,7 +36,7 @@ module geometry
     use utility_profiler
     use utility_crash
 
-    use utility_unit_testing, only: util_utest_CLprint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
 
     implicit none

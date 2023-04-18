@@ -10,7 +10,7 @@ module face
     use utility_profiler
     use utility, only: util_sign_with_ones, util_CLprint, util_syncwrite
     use utility_crash, only: util_crashpoint
-    ! use utility_unit_testing, only: util_utest_CLprint
+    !use utility_unit_testing, only: util_utest_CLprint
 
 
     implicit none
@@ -165,8 +165,6 @@ module face
 !%==========================================================================    
 !%==========================================================================
 !%     
-!% 
-!%
     subroutine face_interpolation (facecol, Gyn, Hyn, Qyn, skipJump, skipZeroAdjust)
         !%------------------------------------------------------------------
         !% Description:
@@ -242,15 +240,15 @@ module face
 
             call face_zerodepth_interior(fp_elem_downstream_is_zero)
 
-                ! call util_utest_CLprint ('    XXX03 face after face_zerodetph_interior 1')
+                ! call util_utest_CLprint ('    XXX03 face after face_zerodepth_interior 1')
 
             call face_zerodepth_interior(fp_elem_upstream_is_zero)
                 
-                ! call util_utest_CLprint ('    XXX04 face after face_zerodetph_interior 2')
+                ! call util_utest_CLprint ('    XXX04 face after face_zerodepth_interior 2')
 
             call face_zerodepth_interior(fp_elem_bothsides_are_zero)
 
-                ! call util_utest_CLprint ('    XXX05 face after face_zerodepht_interior 3')
+                ! call util_utest_CLprint ('    XXX05 face after face_zerodepth_interior 3')
 
         end if
 
@@ -1932,6 +1930,7 @@ module face
                     ! print *, eFlowrate(eDn(43))
 
                 case (fp_elem_bothsides_are_zero)
+
                     !% --- keep the previously interpolated head and depth, 
                     !%     but ensure area and fluxes are zero
                     fAreaDn(thisP)     = zeroR

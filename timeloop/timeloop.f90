@@ -25,7 +25,7 @@ module timeloop
               interface_get_groundwater_inflow
     use utility_crash
     use control_hydraulics, only: control_update
-    use utility_unit_testing, only: util_utest_CLprint 
+    ! use utility_unit_testing, only: util_utest_CLprint 
 
     implicit none
 
