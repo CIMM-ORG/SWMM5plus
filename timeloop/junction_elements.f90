@@ -7,7 +7,6 @@ module junction_elements
     use define_settings, only: setting
     use adjust
     use diagnostic_elements, only: diagnostic_by_type
-    use preissmann_slot, only: slot_JB_computation
     use face
     use pack_mask_arrays, only: pack_small_and_zero_depth_elements, pack_zero_depth_interior_faces
     use update
@@ -1337,11 +1336,7 @@ module junction_elements
 
             !% --- update Volume, VolumeOverflow and JB face values
             call junction_update_Qdependent_values (JMidx, istep)
-
-            !% slot calculations for JBs
-            call slot_JB_computation (JMidx)
-            
-
+        
         end do
     end subroutine junction_calculation_4
 !%
@@ -1593,7 +1588,7 @@ module junction_elements
             ! if (JMidx==printJM) print *, 'CONS residual ',junction_conservation_residual (JMidx)
 
             !% slot calculations for JBs
-            call slot_JB_computation (JMidx)
+            ! call slot_JB_computation (JMidx)
             
         end do
 

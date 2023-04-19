@@ -207,6 +207,11 @@ module geometry
         call geo_assign_JB (ep_JM)
 
             ! call util_utest_CLprint ('------- in geometry after geo_assign_JB')
+        
+        !% --- JB slot adjustments
+        !%     make the slot adjustments for JB after the geometry is assigned
+        !%     this slot adjustment is based on the head on the JB
+        call slot_JB_computation (ep_JM)
 
         !% --- JM values
         call geo_assign_JM ()
