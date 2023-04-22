@@ -459,8 +459,8 @@ module define_indexes
         enumerator :: eYN_isBoundary_dn                 !% TRUE if the element is connected to a shared face downstream thus a boundary element of a partition
         enumerator :: eYN_isCulvert                     !% TRUE if CC element is inlet, outlet or culvert barrel
         enumerator :: eYN_isDummy
-        enumerator :: eYN_isCC_Adjacent                 !% TRUE if element is adjacent to CC
-        enumerator :: eyN_isDiag_Adjacent               !% TRUE if element is adjacent to a diagnostic element
+        enumerator :: eYN_is_CCadjacent_JBorDiag           !% TRUE if element is adjacent to CC and is not CC
+        enumerator :: eYN_is_DiagAdjacent               !% TRUE if element is adjacent to a diagnostic element
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
         enumerator :: eYN_isElementUpstreamOfJB
         enumerator :: eYN_isForceMain                   !% TRUE if this is a force main element
@@ -489,6 +489,7 @@ module define_indexes
         !enumerator :: ep_CC_AC                      !% all CC elements that are AC
         !enumerator :: ep_CC_ACsurcharged            !% all CC elements that are AC
         enumerator :: ep_CC                         !% all CC elements
+        enumerator :: ep_CCDiag                     !% all CC or Diag elements
         enumerator :: ep_CCJB                       !% all CC or JB elements
         enumerator :: ep_CCJM                       !% all CC or JM elements
         enumerator :: ep_CCJBDiag                   !% all CC, JB, or Diagnostic elements
@@ -508,7 +509,7 @@ module define_indexes
         !enumerator :: ep_CCJB_ETM_PSsurcharged        !% CC and JB elements that are ETM and surcharged
         !enumerator :: ep_CCJM_H_AC_open             !% CC and JM elements that are AC for H and open channel
         enumerator :: ep_CCJM_H                 !% CC and JM elements that are time-marching for H
-        enumerator :: ep_CC_isClosedSetting          !% CC elements that have er_Setting = 0.0 indicating closed off
+        !enumerator :: ep_CC_isClosedSetting          !% CC elements that have er_Setting = 0.0 indicating closed off
         enumerator :: ep_Culvert_Inlet              !% all CC elements that are also culvert inlets
         !enumerator :: ep_culvert_outlet             !% all CC elements that are also culvert outlets
         !enumerator :: ep_culvert_inout              !% all CC elements that are both culvert inlet and outlet
@@ -1425,8 +1426,8 @@ module define_indexes
     !% These are the full arrays of face logical data
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: fYN_isAC_adjacent = 1
-        enumerator :: fYN_isInteriorFace
+       ! enumerator :: fYN_isAC_adjacent = 1
+        enumerator :: fYN_isInteriorFace = 1
         enumerator :: fYN_isSharedFace
         enumerator :: fYN_isUpGhost
         enumerator :: fYN_isDnGhost
@@ -1457,30 +1458,42 @@ module define_indexes
     !% These are for the packed array of face data
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: fp_all_interior = 1        !% all interior faces except boundary, null, and shared faces
-        enumerator :: fp_notJB_interior          !% all interior faces except JB, boundary, null, and shared
+        !% ==========================================
+        !% --- STATIC columns defined for both interior and shared face arrays (...IorS)
+        enumerator :: fp_noBC_IorS = 1              !% faces except boundary and null,
+        enumerator :: fp_CC_both_IorS               !% faces with CC on both sides.
+        enumerator :: fp_Diag_IorS                  !% faces with adjacent diagnostic element
+        enumerator :: fp_JB_IorS                    !% facse with adjacent JB
+        
+        !%--- DYNAMIC  defined for both interior and shared face arrays (...IorS)
+        enumerator :: fp_CC_downstream_is_zero_IorS !% CC on both sides and downstream (only) is zero depth
+        enumerator :: fp_CC_upstream_is_zero_IorS   !% CC on both sides and upstream (only) is zero depth
+        enumerator :: fp_CC_bothsides_are_zero_IorS !% CC on both sides and both sides are zero depth
+        enumerator :: fp_JumpDn_IorS                 !% face with hydraulic jump from nominal downstream to upstream
+        enumerator :: fp_JumpUp_IorS                 !% face with hydraulic jump from nominal upstream to downstream
+   
+       ! enumerator :: fp_notJB_interior          !% all interior faces except JB, boundary, null, and shared
         !enumerator :: fp_notDiag_interior        !% all interior faces except Diag, boundary, null, and shares
         !enumerator :: fp_AC                     !% face with adjacent AC element
-        
-        enumerator :: fp_Diag_all                !% any face with adjacent Diag. -- cannot be used with interp
-        enumerator :: fp_Diag_JB_all    !% any face adjacent to both JB and Diag -- cannot be used with interp
-        enumerator :: fp_Diag_interior                   !% interior face with adjacent diagnostic element
-        enumerator :: fp_Diag_NotJB_interior
-        enumerator :: fp_notJB_all              !% any face not adjacent to JB
+        !enumerator :: fp_Diag_NotJB_interior
+        !enumerator :: fp_Diag_JB_all    !% any face adjacent to both JB and Diag -- cannot be used with interp
+        !enumerator :: fp_JBCC_interior          !% interior face between JB and CC
+
+        !% ==========================================
+        !% --- STATIC packed maps that cannot be used with up/down element mapping and are only used with faceP array
+        enumerator :: fp_Diag_all               !% any face with adjacent Diag. -- cannot be used with interp  
         enumerator :: fp_JB_all                 !% any face with adjacent JB -- cannot be used with interp
-        enumerator :: fp_JB_interior            !% interior face with adjacent JB
-        enumerator :: fp_JBCC_interior          !% interior face between JB and CC
-        enumerator :: fp_JBDiag_all              !% any face that adjacent oto JB or CC
-        enumerator :: fp_elem_downstream_is_zero
-        enumerator :: fp_elem_upstream_is_zero
-        enumerator :: fp_elem_bothsides_are_zero
-        enumerator :: fp_JumpDn                 !% face with hydraulic jump from nominal downstream to upstream
-        enumerator :: fp_JumpUp                 !% face with hydraulic jump from nominal upstream to downstream
-        enumerator :: fp_BCup
-        enumerator :: fp_BCdn
+        enumerator :: fp_JBorDiag_all              !% any face that adjacent oto JB or CC
+        enumerator :: fp_notJB_all              !% any face not adjacent to JB
+
+        !% --- STATIC columns that are (by definition) not shared
         enumerator :: fp_J1                     !% faces that are dead-ends of link without inflow BC
         enumerator :: fp_J1_BCup                !% faces that are either J1 or BCup
+        enumerator :: fp_BCup
+        enumerator :: fp_BCdn
+        
         enumerator :: fp_Output_Faces           !% faces that are selected for output
+
         enumerator :: fp_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_faceP =  fp_lastplusone-1

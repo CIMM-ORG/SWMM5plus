@@ -44,15 +44,15 @@ module jump
         call jump_face_identify
         
         !% enforce hydraulic jump on downstream jumps
-        facePackCol => col_faceP(fp_JumpDn)
-        Npack       => npack_faceP(fp_JumpDn)
+        facePackCol => col_faceP(fp_JumpDn_IorS)
+        Npack       => npack_faceP(fp_JumpDn_IorS)
         if (Npack > 0) then
             call jump_enforce (facePackCol, Npack, jump_from_downstream)
         end if
         
         !% enforce hydraulic jump on upstream jumps
-        facePackCol => col_faceP(fp_JumpUp)
-        Npack       => npack_faceP(fp_JumpUp)
+        facePackCol => col_faceP(fp_JumpUp_IorS)
+        Npack       => npack_faceP(fp_JumpUp_IorS)
         if (Npack > 0) then
             call jump_enforce (facePackCol, Npack, jump_from_upstream)
         end if
@@ -117,7 +117,7 @@ module jump
         !% count the number of faces with flow in nominal downstream and a jump 
         !% from upstream (supercritical) to downstream (subcritical)
         !% and open-channel flow on either side
-        npack_faceP(fp_JumpUp) = count( &
+        npack_faceP(fp_JumpUp_IorS) = count( &
             isInterior &
             .and. &
             (Head(eup) < Head(edn)) &
@@ -140,11 +140,11 @@ module jump
             .and. &
             (.not. isZeroDepth(edn)) )
 
-        Npack_JumpUp => npack_faceP(fp_JumpUp) 
+        Npack_JumpUp => npack_faceP(fp_JumpUp_IorS) 
 
         !% pack the indexes 
         if (Npack_JumpUp > 0) then
-            faceP(1:Npack_JumpUp, fp_JumpUp) = pack(faceIdx, &
+            faceP(1:Npack_JumpUp, fp_JumpUp_IorS) = pack(faceIdx, &
                 isInterior &
                 .and. &
                 (Head(eup) < Head(edn)) &
@@ -168,7 +168,7 @@ module jump
                 (.not. isZeroDepth(edn)) )
 
             !% pointer to the packed indexes
-            thisP => faceP(1:Npack_JumpUp,fp_JumpUp)
+            thisP => faceP(1:Npack_JumpUp,fp_JumpUp_IorS)
 
             !% designate these as an upstream jump
             jumptype(thisP) = jump_from_upstream
@@ -186,7 +186,7 @@ module jump
         !% count the number of faces with reverse flow and a jump from 
         !% downstream (supercritical) to upstream (subcritical)
         !% and open channel flow on either side
-        npack_faceP(fp_JumpDn)  = count( &
+        npack_faceP(fp_JumpDn_IorS)  = count( &
             isInterior &
             .and. &
             (Head(eup) > Head(edn)) &
@@ -210,11 +210,11 @@ module jump
             (.not. isZeroDepth(edn)) )
 
         !% assign the above count to the npack storage for later use
-        Npack_JumpDn => npack_faceP(fp_JumpDn)
+        Npack_JumpDn => npack_faceP(fp_JumpDn_IorS)
 
         !% pack the indexes 
         if (Npack_JumpDn > 0) then
-            faceP(1:Npack_JumpDn, fp_JumpDn) = pack(faceIdx, &
+            faceP(1:Npack_JumpDn, fp_JumpDn_IorS) = pack(faceIdx, &
                 isInterior &
                 .and. &
                 (Head(eup) > Head(edn)) &
@@ -238,7 +238,7 @@ module jump
                 (.not. isZeroDepth(edn)) )
             
             !% pointer to thee packed indexes
-            thisP => faceP(1:Npack_JumpDn,fp_JumpDn)
+            thisP => faceP(1:Npack_JumpDn,fp_JumpDn_IorS)
 
             !% designate these as an upstream jump
             jumptype(thisP) = jump_from_downstream

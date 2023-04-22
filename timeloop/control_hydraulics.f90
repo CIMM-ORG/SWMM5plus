@@ -49,7 +49,6 @@ contains
         !%------------------------------------------------------------------
 
         ! print *, 'in control update '
-        ! print *, 'pump ',elemR(143,er_Flowrate), elemR(143,er_Setting)
 
         !% --- store monitoring element data across all images
         call control_update_monitor_across_images()
@@ -67,15 +66,10 @@ contains
         !% --- adjust settings
         !%     here we need to change the elemR(:,er_settings) for orifices, 
         !%     weirs, pumps, outlets and conduits.
-        ! print *, 'pump AAAA',elemR(143,er_Flowrate), elemR(143,er_Setting)
         call control_update_setting ()
-        ! print *, 'pump ZZZZ',elemR(143,er_Flowrate), elemR(143,er_Setting)
 
         !% --- adjust the values in the elemR array for new elemR(:,er_Setting)
         call control_update_element_values ()
-
-        ! print *, 'pump ',elemR(143,er_Flowrate), elemR(143,er_Setting)
-        ! print *, 'leaving control update'
 
         !%------------------------------------------------------------------
 

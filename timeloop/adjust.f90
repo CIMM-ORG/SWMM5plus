@@ -4,7 +4,8 @@ module adjust
     use define_keys
     use define_indexes
     use define_settings, only: setting
-    use pack_mask_arrays, only: pack_small_and_zero_depth_elements, pack_zero_depth_interior_faces
+    !use geometry, only: geo_area_from_depth_singular
+    use pack_mask_arrays, only: pack_small_or_zero_depth_elements, pack_CC_zeroDepth_interior_faces
     use utility
     use utility_crash
     !use utility_unit_testing, only: util_utest_CLprint
@@ -21,12 +22,14 @@ module adjust
 
     private
 
+    !public :: adjust_face_for_openclosed_elem
+
     public :: adjust_element_toplevel
     public :: adjust_face_toplevel
 
     public :: adjust_zero_or_small_depth_identify_NEW
 
-    public :: adjust_face_for_zero_setting
+    !public :: adjust_face_for_zero_setting
     public :: adjust_face_for_zero_setting_singular
 
     public :: adjust_zero_and_small_depth_elem
@@ -62,30 +65,35 @@ module adjust
             integer, intent(in) :: elementType !%, CC, JM, JB
         !%------------------------------------------------------------------
 
+            ! ! call util_utest_CLprint ('        ADJUST yyy00 before zero...')
 
     !% --- CC ELEMENT AD HOC ADJUSTMENTS    
     !% --- identify zero depths (.true. is zero depth)
     call adjust_zero_or_small_depth_identify_NEW(elementType,.true.)
 
-        ! call util_utest_CLprint ('        ADJUST XXX01 after zero depth identify')
+        ! ! call util_utest_CLprint ('        ADJUST yyy01 after zero depth identify')
 
     if (setting%SmallDepth%useMomentumCutoffYN) then    
         !% --- identify small depths (.false. is small depth)
         call adjust_zero_or_small_depth_identify_NEW(elementType,.false.)
 
-        ! call util_utest_CLprint ('        ADJUST XXX02 after small depth identify')
+        ! ! call util_utest_CLprint ('        ADJUST yyy02 after small depth identify')
             
     end if
 
     !% --- create packed arrays of zero and small depths
-    call pack_small_and_zero_depth_elements (elementType)
+    call pack_small_or_zero_depth_elements (elementType,.true.)
 
-            ! call util_utest_CLprint ('        ADJUST XXX03 after pack elements')
+    if (setting%SmallDepth%useMomentumCutoffYN) then   
+        call pack_small_or_zero_depth_elements (elementType,.false.)
+    end if
+
+            ! ! call util_utest_CLprint ('        ADJUST yyy03 after pack elements')
 
     !% --- adjust head, flowrate, and auxiliary values at zero depth
     call adjust_zerodepth_element_values (elementType) 
 
-            ! call util_utest_CLprint ('        ADJUST XXX04 after zero depth element values')
+            ! ! call util_utest_CLprint ('        ADJUST yyy04 after zero depth element values')
 
     if (elementType == CC) then 
         if (setting%SmallDepth%useMomentumCutoffYN) then
@@ -93,7 +101,7 @@ module adjust
             !%     (.false. so that smalldepth fluxes are not set to zero)
             call adjust_smalldepth_element_fluxes_CC (.false.)
 
-                ! call util_utest_CLprint ('        ADJUST XXX05 after small depth element fluxes')
+                ! ! call util_utest_CLprint ('        ADJUST yyy05 after small depth element fluxes')
         end if
 
         call adjust_limit_velocity_max_CC () 
@@ -106,20 +114,29 @@ module adjust
 !%    
     subroutine adjust_face_toplevel (facePcol)
 
-        integer, intent(in) :: facePcol
+       integer, intent(in) :: facePcol
 
-    call pack_zero_depth_interior_faces (facePcol)
+    !call pack_CC_zeroDepth_interior_faces ()
 
-    if (facePcol == fp_all_interior) then 
-        if (setting%SmallDepth%useMomentumCutoffYN) then
-            !% --- face ad hoc flux adjustments 
-            !%     (.false. so that conservative fluxes are not altered)
-            call adjust_smalldepth_face_fluxes_CC (.false.)
-                    ! ! ! ! ! call util_utest_CLprint ('------- HHH01  after face_adjustment')
-        end if
+    ! print *, ' '
+    ! print *, 'in adjust face toplevel'
+    ! print *, 'facePCol ',fp_noBC_IorS
+    ! print *, faceP(1:npack_faceP(facePcol),facePcol)
+    ! print *, ' '
+
+
+    !% only valid for fp_noBC_IorS
+
+!     !if (facePcol == fp_noBC_IorS) then 
+!         if (setting%SmallDepth%useMomentumCutoffYN) then
+!             !% --- face ad hoc flux adjustments 
+!             !%     (.false. so that conservative fluxes are not altered)
+!             call adjust_smalldepth_face_fluxes_CC (.false.)
+!                     ! call util_utest_CLprint ('------- HHH01  after face_adjustment')
+!         end if
         
-        call adjust_zerodepth_face_fluxes_CC  (.false.)
-    end if
+!         call adjust_zerodepth_face_fluxes_CC  (.false.)
+!    ! end if
 
 
     end subroutine adjust_face_toplevel
@@ -146,33 +163,33 @@ module adjust
 !%==========================================================================
 !%==========================================================================  
 !%
-    subroutine adjust_face_for_zero_setting ()
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Sets all zero fluxes on downstream faces of "closed" CC elements
-        !% i.e. where elemR(:,er_Setting) = 0.0
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, pointer :: ptype, npack, thisP(:), dFace(:)
-        !%------------------------------------------------------------------
-        !% Aliases:    
-            ptype => col_elemP(ep_CC_isClosedSetting)
-            npack => npack_elemP(ptype)
-            dFace => elemI(:,ei_Mface_dL)
-        !%------------------------------------------------------------------    
-        !% Preliminaries    
-            if (npack < 1) return
-        !%------------------------------------------------------------------ 
-        !% --- elements that are closed (er_Setting = 0.0)        
-        thisP => elemP(1:npack,ep_CC_isClosedSetting)
+    ! subroutine adjust_face_for_zero_setting ()
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Sets all zero fluxes on downstream faces of "closed" CC elements
+    !     !% i.e. where elemR(:,er_Setting) = 0.0
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer, pointer :: ptype, npack, thisP(:), dFace(:)
+    !     !%------------------------------------------------------------------
+    !     !% Aliases:    
+    !         ptype => col_elemP(ep_CC_isClosedSetting)
+    !         npack => npack_elemP(ptype)
+    !         dFace => elemI(:,ei_Mface_dL)
+    !     !%------------------------------------------------------------------    
+    !     !% Preliminaries    
+    !         if (npack < 1) return
+    !     !%------------------------------------------------------------------ 
+    !     !% --- elements that are closed (er_Setting = 0.0)        
+    !     thisP => elemP(1:npack,ep_CC_isClosedSetting)
 
-        !% --- force flows and velocities to zero
-        faceR(dface(thisP), fr_Flowrate)              = zeroR
-        faceR(dface(thisP), fr_Flowrate_Conservative) = zeroR
-        faceR(dface(thisP), fr_Velocity_d)            = zeroR
-        faceR(dface(thisP), fr_Velocity_u)            = zeroR
+    !     !% --- force flows and velocities to zero
+    !     faceR(dface(thisP), fr_Flowrate)              = zeroR
+    !     faceR(dface(thisP), fr_Flowrate_Conservative) = zeroR
+    !     faceR(dface(thisP), fr_Velocity_d)            = zeroR
+    !     faceR(dface(thisP), fr_Velocity_u)            = zeroR
 
-    end subroutine adjust_face_for_zero_setting
+    ! end subroutine adjust_face_for_zero_setting
 !%
 !%==========================================================================
 !%==========================================================================  
@@ -197,7 +214,7 @@ module adjust
         !% Aliases:   
         !%------------------------------------------------------------------
      
-              ! ! ! ! ! call util_utest_CLprint('-------------0000')
+              ! call util_utest_CLprint('-------------0000')
 
         if (isReset) then
             call adjust_zerodepth_identify_all ()
@@ -206,32 +223,37 @@ module adjust
                 call adjust_smalldepth_identify_all ()
             end if
             
-            call pack_small_and_zero_depth_elements (CC)
-            call pack_small_and_zero_depth_elements (JM)
+            call pack_small_or_zero_depth_elements (CC,.true.)
+            call pack_small_or_zero_depth_elements (JM,.true.)
 
-            call pack_zero_depth_interior_faces (fp_all_interior)
+            if (setting%SmallDepth%useMomentumCutoffYN) then
+                call pack_small_or_zero_depth_elements (CC,.false.)
+                call pack_small_or_zero_depth_elements (JM,.false.)
+            end if
+
+            call pack_CC_zeroDepth_interior_faces ()
             
         end if
-               ! ! ! ! ! call util_utest_CLprint('-------------1111')
+               ! call util_utest_CLprint('-------------1111')
 
         call adjust_zerodepth_element_values (CC) 
 
-             ! ! ! ! ! call util_utest_CLprint('-------------AAAA')
+             ! call util_utest_CLprint('-------------AAAA')
         
         call adjust_zerodepth_element_values (JM) 
 
-             ! ! ! ! ! call util_utest_CLprint('-------------BBBB')
+             ! call util_utest_CLprint('-------------BBBB')
 
 
         if (setting%SmallDepth%useMomentumCutoffYN) then 
             call adjust_smalldepth_element_fluxes_CC (isZeroFlux)
         end if
 
-            ! ! ! ! ! call util_utest_CLprint('-------------CCCC')
+            ! call util_utest_CLprint('-------------CCCC')
         
         call adjust_limit_velocity_max_CC () 
 
-            ! ! ! ! ! call util_utest_CLprint('-------------DDDD')
+            ! ! ! ! ! ! call util_utest_CLprint('-------------DDDD')
 
 
         !%------------------------------------------------------------------
@@ -256,26 +278,26 @@ module adjust
         !%------------------------------------------------------------------
         !% Aliases:
         !%------------------------------------------------------------------
-            ! ! ! ! call util_utest_CLprint ('FFF01  before zero/small face step 0-----------------')
+            ! ! ! ! ! call util_utest_CLprint ('FFF01  before zero/small face step 0-----------------')
 
         if (setting%SmallDepth%useMomentumCutoffYN) then 
             call adjust_smalldepth_face_fluxes_CC      (ifixQCons)
             call adjust_smalldepth_face_fluxes_JMJB    (ifixQCons)
         end if
 
-            ! ! ! ! call util_utest_CLprint ('FFF01  after zero/small face step A-----------------')
+            ! ! ! ! ! call util_utest_CLprint ('FFF01  after zero/small face step A-----------------')
 
         call adjust_zerodepth_face_fluxes_CC   (ifixQCons)
 
-            ! ! ! ! call util_utest_CLprint ('FFF02  after zero/small face step B-----------------')
+            ! ! ! ! ! call util_utest_CLprint ('FFF02  after zero/small face step B-----------------')
 
         call adjust_zerodepth_face_fluxes_JMJB (ifixQCons)
 
-            ! ! ! ! call util_utest_CLprint ('FFF03  after zero/small face step C-----------------')
+            ! ! ! ! ! call util_utest_CLprint ('FFF03  after zero/small face step C-----------------')
 
         call adjust_JB_elem_flux_to_equal_face () !% 20220123brh
 
-            ! ! ! ! call util_utest_CLprint ('FFF04  after zero/small face step D-----------------')
+            ! ! ! ! ! call util_utest_CLprint ('FFF04  after zero/small face step D-----------------')
        
 
         !%------------------------------------------------------------------
@@ -711,7 +733,7 @@ module adjust
 
         elemR(thisP,er_Area)         = setting%ZeroValue%Area
         elemR(thisP,er_dHdA)         = oneR / setting%ZeroValue%TopWidth
-        elemR(thisP,er_EllDepth)     = setting%ZeroValue%Depth
+        elemR(thisP,er_EllDepth)     = setting%ZeroValue%Depth * 0.99d0
         !elemR(thisP,er_Flowrate)     = zeroR ! 20230409 brh -- allow a flowrate, but not velocity NEEDED FOR JB
         elemR(thisP,er_FroudeNumber) = zeroR
         elemR(thisP,er_Perimeter)    = setting%ZeroValue%TopWidth + setting%ZeroValue%Depth
@@ -929,6 +951,8 @@ module adjust
     end subroutine adjust_smalldepth_element_fluxes_CC  
 !%  
 !%========================================================================== 
+
+
 !%==========================================================================
 !%
     subroutine adjust_zerodepth_face_fluxes_CC (ifixQCons)
@@ -980,19 +1004,23 @@ module adjust
 
             ! print *, ' '
             ! print *, 'in adjust_zerodepth_face-fluxes'
-            ! print *, 'fup, fdn ',fup(15), fdn(15)
+            ! print *, 'thisP', thisP(1), thisP(2)
+            ! print *, 'fup, fdn ',fup(2), fdn(2)
 
         !% --- choose either zero or an inflow
         fQ(fup(thisP)) = max(fQ(fup(thisP)), zeroR)
         fQ(fdn(thisP)) = min(fQ(fdn(thisP)), zeroR)
 
 
-            ! print *, 'AAA   fQ ',fQ(5),fQ(14)
+        ! print *, 'IN FACE Q ADJUST  fQ ',fQ(fup(2)), fQ(fdn(2))
 
-            ! ! ! ! ! ! call util_utest_CLprint ('-------- before adjust-faceflux-for-headgradient in adjust zerodepth')
+            ! ! ! ! ! ! ! call util_utest_CLprint ('-------- before adjust-faceflux-for-headgradient in adjust zerodepth')
 
         !% --- Set inflow from adjacent cell based on head gradient
         call adjust_faceflux_for_headgradient (thisP, setting%SmallDepth%MomentumDepthCutoff)
+
+
+        ! print *, 'IN FACE Q ADJUST  fQ ',fQ(fup(2)), fQ(fdn(2))
 
         ! print *, ' '
         ! print *, 'thisP ',thisP
@@ -1002,7 +1030,7 @@ module adjust
 
             ! print *, 'BBB   fQ ',fQ(5), fQ(14)
 
-            ! ! ! ! ! ! call util_utest_CLprint ('-------- after adjust-faceflux-for-headgradient in adjust zerodepth')
+            ! ! ! ! ! ! ! call util_utest_CLprint ('-------- after adjust-faceflux-for-headgradient in adjust zerodepth')
 
         !% --- reset the conservative fluxes
         if (ifixQCons) then
@@ -2053,8 +2081,8 @@ module adjust
         !%     depth at the face is twice the small depth cutoff
 
         ! print *, 'first where '
-        ! print *, elemH(178), faceHu(fdn(178))   
-        ! print *, faceDu(fdn(178)), twoR * thisMomentumDepthCutoff
+        ! print *, elemH(2), faceHu(fup(2))   
+        ! print *, faceDu(fup(2)), twoR * thisMomentumDepthCutoff
         ! print *, ' '
 
         where ( (elemH(thisP) < faceHu(fdn(thisP)) ) &
@@ -2082,8 +2110,15 @@ module adjust
         ! print *, ' '
 
         ! print *, 'second where '
-        ! print *, elemH(178), faceHd(fup(178))   
-        ! print *, faceDd(fup(178)), twoR * thisMomentumDepthCutoff
+        ! print *, elemH(2), faceHu(fup(2))   
+        ! print *, faceDu(fup(2)), twoR * thisMomentumDepthCutoff
+        ! print *, ' '
+        ! print *, faceQ(fup(2)), dt * grav * faceAd(fup(2)) * (faceHd(fup(2)) - elemH(2)) &
+        ! / (onehalfR * (elemL(2)))
+        ! print *, 'faceAd ',faceAd(fup(2))
+        ! print *, 'faceAu ',faceAu(fup(2))
+        ! print *, 'faceHD ',faceHd(fup(2))
+        ! print *, 'elemH  ',elemH(2)
         ! print *, ' '
 
         !% --- for the upstream face dH/dx > 0 leads to a positive Q
@@ -2105,7 +2140,7 @@ module adjust
         end where
 
         ! print *, 'at end '
-        ! print *, faceQ(fup(178)), faceQmax(fup(178))
+        ! print *, faceQ(fup(2)), faceQmax(fup(2))
         ! print *, ' '
 
     end subroutine adjust_faceflux_for_headgradient

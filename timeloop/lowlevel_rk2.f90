@@ -46,8 +46,8 @@ module lowlevel_rk2
     public :: ll_restore_from_temporary
     public :: ll_extrapolate_values
     public :: ll_interpolate_values
-    public :: ll_flowrate_and_velocity_JB
-    public :: ll_flowrate_and_velocity_JB_2
+   ! public :: ll_flowrate_and_velocity_JB
+   ! public :: ll_flowrate_and_velocity_JB_2
     !public :: ll_momentum_solve_JB
     ! public :: ll_CC_slot_computation_ETM
     ! public :: ll_JM_slot_computation_ETM
@@ -1086,668 +1086,668 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%   
-    subroutine ll_flowrate_and_velocity_JB_2 (whichTM, istep)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Updates the flowrate and velocity on junction branches from face values
-        !% obtained in the face interpolation
-        !%-----------------------------------------------------------------------------
-            integer, intent(in) :: whichTM, istep
-            integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
-            integer, pointer :: Npack
-            real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) !%, fFlowMax(:)
-            real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), eRH(:), vMax
-            real(8), pointer :: eVolume(:), eLength(:), dt, grav, epsH, crk(:)
-            real(8), pointer :: eRough(:)
-            real(8), pointer :: fZbottom(:), fDepth_d(:), fDepth_u(:)
-            real(8), pointer :: fVelocity_d(:), fVelocity_u(:)
-            integer :: ii, kk, tB
-            real(8) :: dHead, gamma, FrFace, headloss
-            integer, pointer :: iFaceUp(:), iFaceDn(:)
-            integer, pointer :: tFup, tFdn
-            logical, pointer :: isZeroDepth(:)
-        !%-----------------------------------------------------------------------------
-        !%
-            BranchExists => elemSI(:,esi_JunctionBranch_Exists)
-            eArea        => elemR(:,er_Area)
-            eVelocity    => elemR(:,er_Velocity)
-            eFlow        => elemR(:,er_Flowrate)
-            eVolume      => elemR(:,er_Volume)
-            eLength      => elemR(:,er_Length)
-            eRH          => elemR(:,er_HydRadius)
-            eRough       => elemR(:,er_ManningsN)
+    ! subroutine ll_flowrate_and_velocity_JB_2 (whichTM, istep)
+        ! !%-----------------------------------------------------------------------------
+        ! !% Description:
+        ! !% Updates the flowrate and velocity on junction branches from face values
+        ! !% obtained in the face interpolation
+        ! !%-----------------------------------------------------------------------------
+        !     integer, intent(in) :: whichTM, istep
+        !     integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
+        !     integer, pointer :: Npack
+        !     real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) !%, fFlowMax(:)
+        !     real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), eRH(:), vMax
+        !     real(8), pointer :: eVolume(:), eLength(:), dt, grav, epsH, crk(:)
+        !     real(8), pointer :: eRough(:)
+        !     real(8), pointer :: fZbottom(:), fDepth_d(:), fDepth_u(:)
+        !     real(8), pointer :: fVelocity_d(:), fVelocity_u(:)
+        !     integer :: ii, kk, tB
+        !     real(8) :: dHead, gamma, FrFace, headloss
+        !     integer, pointer :: iFaceUp(:), iFaceDn(:)
+        !     integer, pointer :: tFup, tFdn
+        !     logical, pointer :: isZeroDepth(:)
+        ! !%-----------------------------------------------------------------------------
+        ! !%
+        !     BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+        !     eArea        => elemR(:,er_Area)
+        !     eVelocity    => elemR(:,er_Velocity)
+        !     eFlow        => elemR(:,er_Flowrate)
+        !     eVolume      => elemR(:,er_Volume)
+        !     eLength      => elemR(:,er_Length)
+        !     eRH          => elemR(:,er_HydRadius)
+        !     eRough       => elemR(:,er_ManningsN)
     
-            fDepth_u     => faceR(:,fr_Depth_u)
-            fDepth_d     => faceR(:,fr_Depth_d)
-            fVelocity_u  => faceR(:,fr_Velocity_u)
-            fVelocity_d  => faceR(:,fr_Velocity_d)
-            fDepth_u     => faceR(:,fr_Depth_u)
-            fDepth_d     => faceR(:,fr_Depth_d)
-            fZbottom     => faceR(:,fr_Zbottom)
-            fFlow        => faceR(:,fr_Flowrate)
-            iFaceUp      => elemI(:,ei_Mface_uL)
-            iFaceDn      => elemI(:,ei_Mface_dL)
+        !     fDepth_u     => faceR(:,fr_Depth_u)
+        !     fDepth_d     => faceR(:,fr_Depth_d)
+        !     fVelocity_u  => faceR(:,fr_Velocity_u)
+        !     fVelocity_d  => faceR(:,fr_Velocity_d)
+        !     fDepth_u     => faceR(:,fr_Depth_u)
+        !     fDepth_d     => faceR(:,fr_Depth_d)
+        !     fZbottom     => faceR(:,fr_Zbottom)
+        !     fFlow        => faceR(:,fr_Flowrate)
+        !     iFaceUp      => elemI(:,ei_Mface_uL)
+        !     iFaceDn      => elemI(:,ei_Mface_dL)
     
-            eHead        => elemR(:,er_Head)
-            fHead_u      => faceR(:,fr_Head_u)
-            fHead_d      => faceR(:,fr_Head_d)
+        !     eHead        => elemR(:,er_Head)
+        !     fHead_u      => faceR(:,fr_Head_u)
+        !     fHead_d      => faceR(:,fr_Head_d)
     
-            isZeroDepth  => elemYN(:,eYN_isZeroDepth)
+        !     isZeroDepth  => elemYN(:,eYN_isZeroDepth)
     
-            crk          => setting%Solver%crk2
-            vMax         => setting%Limiter%Velocity%Maximum
-            dt           => setting%Time%Hydraulics%Dt
-            grav         => setting%constant%gravity
-            epsH         => setting%Eps%Head
-        !%-----------------------------------------------------------------------------
-        !%
-            ! select case (whichTM)
-            ! case (ALLtm)
-            !     thisColP_JM            => col_elemP(ep_JM_ALLtm)
-            ! case (ETM)
-                thisColP_JM            => col_elemP(ep_JM)
-            ! case (AC)
-            !     thisColP_JM            => col_elemP(ep_JM_AC)
-            ! case default
-            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
-            !     print *, 'which has key ',trim(reverseKey(whichTM))
-            !     stop 7659
-            ! end select
+        !     crk          => setting%Solver%crk2
+        !     vMax         => setting%Limiter%Velocity%Maximum
+        !     dt           => setting%Time%Hydraulics%Dt
+        !     grav         => setting%constant%gravity
+        !     epsH         => setting%Eps%Head
+        ! !%-----------------------------------------------------------------------------
+        ! !%
+        !     ! select case (whichTM)
+        !     ! case (ALLtm)
+        !     !     thisColP_JM            => col_elemP(ep_JM_ALLtm)
+        !     ! case (ETM)
+        !         thisColP_JM            => col_elemP(ep_JM)
+        !     ! case (AC)
+        !     !     thisColP_JM            => col_elemP(ep_JM_AC)
+        !     ! case default
+        !     !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+        !     !     print *, 'which has key ',trim(reverseKey(whichTM))
+        !     !     stop 7659
+        !     ! end select
     
-            !% --- alternate form of junctions skips this
-            ! if (setting%Junction%Method .ne. Explicit2) then 
-            !     return
-            ! end if
-        !%-----------------------------------------------------------------------------
-            !% --- original form of junctions:
-            Npack => npack_elemP(thisColP_JM)
-            if (Npack > 0) then
-                thisP => elemP(1:Npack,thisColP_JM)
-                do ii=1,Npack
-                    tM => thisP(ii)  !% JM junction main ID
-                    ! handle the upstream branches
-                    do kk=1,max_branch_per_node,2
-                        tB = tM + kk  !% JB branch ID
-                        if (BranchExists(tB)==oneI) then
-                            ! head difference across the branch
-                            tFup => iFaceUp(tB)
-                            !% use the downstream face, so that near-zero is handled
-                            dHead = fHead_d(tFup) - eHead(tB) !% using elem to face
+        !     !% --- alternate form of junctions skips this
+        !     ! if (setting%Junction%Method .ne. Explicit2) then 
+        !     !     return
+        !     ! end if
+        ! !%-----------------------------------------------------------------------------
+        !     !% --- original form of junctions:
+        !     Npack => npack_elemP(thisColP_JM)
+        !     if (Npack > 0) then
+        !         thisP => elemP(1:Npack,thisColP_JM)
+        !         do ii=1,Npack
+        !             tM => thisP(ii)  !% JM junction main ID
+        !             ! handle the upstream branches
+        !             do kk=1,max_branch_per_node,2
+        !                 tB = tM + kk  !% JB branch ID
+        !                 if (BranchExists(tB)==oneI) then
+        !                     ! head difference across the branch
+        !                     tFup => iFaceUp(tB)
+        !                     !% use the downstream face, so that near-zero is handled
+        !                     dHead = fHead_d(tFup) - eHead(tB) !% using elem to face
 
-                            if (dHead < zeroR) then
-                                !% --- head in JM is larger than upstream branch which implies reversed flow
-                                !%     handle different depth conditions
-                                if (eHead(tM) .le. (fZbottom(tFup) + setting%ZeroValue%Depth)) then
-                                    !% --- JM head below the invert of the upstream conduit, so no flow 
-                                    !%     Head on JB is the conduit face head
-                                    !eHead(tB)     = fHead_d(tFup) 
-                                    eFlow(tB)     = zeroR
-                                else 
-                                    !% --- JM head above invert of the upstream conduit
-                                    !%     expected flow from JM reversed into the upstream branch
-                                    !%     handle different velocity conditions
-                                    if (fFlow(tFup) > zeroR) then 
-                                        !% --- nominal flow against the head gradient is not allowed,
-                                        !%     set flux to zero and head to JM head
-                                        !eHead(tB)     = eHead(tM)
-                                        eFlow(tB)     = zeroR
-                                    else
-                                        !% --- negative flow
-                                        !%     nominal flow and head gradient are into upstream (reversed)
-                                        !%     so use the head at JM for the JB head
-                                        !eHead(tB)     = eHead(tM)
-                                        !%     estimate flowrate driven by head gradient from last value
-                                        !%     in JB
-                                        gamma = oneR                                 &
-                                                +   crk(istep) * dt * grav           &
-                                                * abs(eFlow(tB)) * (eRough(tB)**2) &
-                                                / (eArea(tB) * eRH(tB)**(fourthirdsR))
+        !                     if (dHead < zeroR) then
+        !                         !% --- head in JM is larger than upstream branch which implies reversed flow
+        !                         !%     handle different depth conditions
+        !                         if (eHead(tM) .le. (fZbottom(tFup) + setting%ZeroValue%Depth)) then
+        !                             !% --- JM head below the invert of the upstream conduit, so no flow 
+        !                             !%     Head on JB is the conduit face head
+        !                             !eHead(tB)     = fHead_d(tFup) 
+        !                             eFlow(tB)     = zeroR
+        !                         else 
+        !                             !% --- JM head above invert of the upstream conduit
+        !                             !%     expected flow from JM reversed into the upstream branch
+        !                             !%     handle different velocity conditions
+        !                             if (fFlow(tFup) > zeroR) then 
+        !                                 !% --- nominal flow against the head gradient is not allowed,
+        !                                 !%     set flux to zero and head to JM head
+        !                                 !eHead(tB)     = eHead(tM)
+        !                                 eFlow(tB)     = zeroR
+        !                             else
+        !                                 !% --- negative flow
+        !                                 !%     nominal flow and head gradient are into upstream (reversed)
+        !                                 !%     so use the head at JM for the JB head
+        !                                 !eHead(tB)     = eHead(tM)
+        !                                 !%     estimate flowrate driven by head gradient from last value
+        !                                 !%     in JB
+        !                                 gamma = oneR                                 &
+        !                                         +   crk(istep) * dt * grav           &
+        !                                         * abs(eFlow(tB)) * (eRough(tB)**2) &
+        !                                         / (eArea(tB) * eRH(tB)**(fourthirdsR))
     
-                                        !% --- note that the dHead is upstream - downstream
-                                        eFlow(tB) = (   eFlow(tB)                                               &
-                                                    + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
-                                                    ) / gamma     
+        !                                 !% --- note that the dHead is upstream - downstream
+        !                                 eFlow(tB) = (   eFlow(tB)                                               &
+        !                                             + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
+        !                                             ) / gamma     
                                         
-                                        !% --- use the larger magnitude (negative) of the downstream face flowrate of this flowrate
-                                        !eFlow(tB)     = min(eFlow(tB),fFlow(tFup))
-                                    end if
-                                end if
+        !                                 !% --- use the larger magnitude (negative) of the downstream face flowrate of this flowrate
+        !                                 !eFlow(tB)     = min(eFlow(tB),fFlow(tFup))
+        !                             end if
+        !                         end if
 
-                            elseif (dHead > zeroR) then     
-                                !% --- head outside is larger than JM
-                                !%     so expected flow into JM from upstream branch
-                                !%     handle different depth conditions 
-                                if (fHead_d(tFup).le. (fZbottom(tFup) + setting%ZeroValue%Depth)) then
-                                    !% --- upstream head lower than invert of conduit at JM connection
-                                    !%     so no flow into JM
-                                    !eHead(tB)     = fHead_d(tFup)
-                                    eFlow(tB)     = zeroR
-                                else 
-                                    !% --- expected flow into JM from upstream branch
-                                    !%     handle waterfall or nonwaterfall conditions
-                                    if (eHead(tM) < fZbottom(tFup)) then 
-                                         !% --- low depth in JM causing waterfall into JM
-                                        if (fDepth_d(tFup) > setting%ZeroValue%Depth) then 
-                                            !% --- nonzero depth at face
-                                            !% --- compute Froude number on face
-                                            FrFace =  fVelocity_d(tFup) / (fDepth_d(tFup) * grav)
-                                            if (FrFace .ge. oneR) then 
-                                                !% --- supercritical flow
-                                                !%     use velocity and flowrate of face
-                                                !%     Head is smaller up face head or depth reduced by (HACK) 1/2
-                                                !eHead(tB)     = min(fZbottom(tFup) + onehalfR * fDepth_d(tFup), fHead - onehalfR * fDepth_d(tFup))
-                                                !% --- adjustment if above HACK makes head too small
-                                                !if (eHead(tB) < fZbottom(tFup)) then 
-                                                !    eHead(tB) = eHead(tB) + twoR * setting%ZeroValue%Depth
-                                                !end if
-                                                eFlow(tB)     = fFlow(tFup)
-                                            elseif (FrFace < zeroR) then 
-                                                !% --- nominally reversed flow
-                                                !%     no flow allowed out, head approximated as just above Zbottom
-                                                !%     of conduit at connection to JM
-                                                !eHead(tB)     = fZbottom(tFup) + twoR *setting%ZeroValue%Depth
-                                                eFlow(tB)     = zeroR
-                                            else
-                                                !% --- subctritical flow ending in waterfall
-                                                !% --- HACK -- instead of computing the
-                                                !%     critical depth we're just increasing
-                                                !%     the velocity to get the headloss
-                                                eVelocity(tB) = twoR * fVelocity_d(tFup)
-                                                headloss      = (eVelocity(tB)**2 )/ (twoR * grav)
-                                                eFlow(tB)     = fFlow(tFup)     
-                                                !% --- JB head is diminished by head loss, but at least 
-                                                !%     half of the head above the bottom of the conduit entrance
-                                                !eHead(tB) = max(fHead - headloss, fZbottom(tFup) + onehalfR*fDepth_d(tFup))                                        
-                                            end if
-                                        else 
-                                            !% --- zero depth at face 
-                                            !eHead(tB)     = fHead 
-                                            eFlow(tB)     = zeroR
-                                        end if
+        !                     elseif (dHead > zeroR) then     
+        !                         !% --- head outside is larger than JM
+        !                         !%     so expected flow into JM from upstream branch
+        !                         !%     handle different depth conditions 
+        !                         if (fHead_d(tFup).le. (fZbottom(tFup) + setting%ZeroValue%Depth)) then
+        !                             !% --- upstream head lower than invert of conduit at JM connection
+        !                             !%     so no flow into JM
+        !                             !eHead(tB)     = fHead_d(tFup)
+        !                             eFlow(tB)     = zeroR
+        !                         else 
+        !                             !% --- expected flow into JM from upstream branch
+        !                             !%     handle waterfall or nonwaterfall conditions
+        !                             if (eHead(tM) < fZbottom(tFup)) then 
+        !                                  !% --- low depth in JM causing waterfall into JM
+        !                                 if (fDepth_d(tFup) > setting%ZeroValue%Depth) then 
+        !                                     !% --- nonzero depth at face
+        !                                     !% --- compute Froude number on face
+        !                                     FrFace =  fVelocity_d(tFup) / (fDepth_d(tFup) * grav)
+        !                                     if (FrFace .ge. oneR) then 
+        !                                         !% --- supercritical flow
+        !                                         !%     use velocity and flowrate of face
+        !                                         !%     Head is smaller up face head or depth reduced by (HACK) 1/2
+        !                                         !eHead(tB)     = min(fZbottom(tFup) + onehalfR * fDepth_d(tFup), fHead - onehalfR * fDepth_d(tFup))
+        !                                         !% --- adjustment if above HACK makes head too small
+        !                                         !if (eHead(tB) < fZbottom(tFup)) then 
+        !                                         !    eHead(tB) = eHead(tB) + twoR * setting%ZeroValue%Depth
+        !                                         !end if
+        !                                         eFlow(tB)     = fFlow(tFup)
+        !                                     elseif (FrFace < zeroR) then 
+        !                                         !% --- nominally reversed flow
+        !                                         !%     no flow allowed out, head approximated as just above Zbottom
+        !                                         !%     of conduit at connection to JM
+        !                                         !eHead(tB)     = fZbottom(tFup) + twoR *setting%ZeroValue%Depth
+        !                                         eFlow(tB)     = zeroR
+        !                                     else
+        !                                         !% --- subctritical flow ending in waterfall
+        !                                         !% --- HACK -- instead of computing the
+        !                                         !%     critical depth we're just increasing
+        !                                         !%     the velocity to get the headloss
+        !                                         eVelocity(tB) = twoR * fVelocity_d(tFup)
+        !                                         headloss      = (eVelocity(tB)**2 )/ (twoR * grav)
+        !                                         eFlow(tB)     = fFlow(tFup)     
+        !                                         !% --- JB head is diminished by head loss, but at least 
+        !                                         !%     half of the head above the bottom of the conduit entrance
+        !                                         !eHead(tB) = max(fHead - headloss, fZbottom(tFup) + onehalfR*fDepth_d(tFup))                                        
+        !                                     end if
+        !                                 else 
+        !                                     !% --- zero depth at face 
+        !                                     !eHead(tB)     = fHead 
+        !                                     eFlow(tB)     = zeroR
+        !                                 end if
 
-                                    else 
-                                        !% --- non waterfall case with hFace > hJM
-                                        !%     handle different depth conditions
-                                        if (fDepth_d(tFup) > setting%ZeroValue%Depth) then 
-                                            !% --- handle different velocity directions
+        !                             else 
+        !                                 !% --- non waterfall case with hFace > hJM
+        !                                 !%     handle different depth conditions
+        !                                 if (fDepth_d(tFup) > setting%ZeroValue%Depth) then 
+        !                                     !% --- handle different velocity directions
 
-                                            ! print *, 'conditions 4'
-                                            ! print *, fVelocity_d(tFup)
-                                            ! print *, ' '
+        !                                     ! print *, 'conditions 4'
+        !                                     ! print *, fVelocity_d(tFup)
+        !                                     ! print *, ' '
 
-                                            if (fVelocity_d(tFup) > zeroR) then 
-                                                !% --- velocity is nominal downstream direction
-                                                !% --- inflow from face
-                                                eFlow(tB)     = fFlow(tFup)
-                                                headloss      = (fVelocity_d(tFup)**2 )/ (twoR * grav)
-                                                !% --- head with limited head loss
+        !                                     if (fVelocity_d(tFup) > zeroR) then 
+        !                                         !% --- velocity is nominal downstream direction
+        !                                         !% --- inflow from face
+        !                                         eFlow(tB)     = fFlow(tFup)
+        !                                         headloss      = (fVelocity_d(tFup)**2 )/ (twoR * grav)
+        !                                         !% --- head with limited head loss
 
-                                                ! print *, 'tfHead ',fHead, headloss, fZbottom(tFup)
-                                                ! print *,  fHead - headloss, fZbottom(tFup) + onehalfR*fDepth_d(tFup)
-                                                ! print *, ' '
+        !                                         ! print *, 'tfHead ',fHead, headloss, fZbottom(tFup)
+        !                                         ! print *,  fHead - headloss, fZbottom(tFup) + onehalfR*fDepth_d(tFup)
+        !                                         ! print *, ' '
 
-                                                !eHead(tB) = max(fHead_d(tFup)- headloss, fZbottom(tFup) + onehalfR*fDepth_d(tFup))
-                                            else 
-                                                !% --- outflow against the head gradient is not allowed
-                                                !%     use JM head for JB
-                                                !eHead(tB)     = eHead(tM) 
-                                                eFlow(tB)     = zeroR
-                                            end if
-                                        else
-                                            !% --- zero depth at face 
-                                            !eHead(tB)     = eHead(tM)
-                                            eFlow(tB)     = zeroR
-                                        end if
-                                    end if
-                                end if
-                            else
-                                !% --- head difference is identically zero
-                                !eHead(tB)     = eHead(tM)
-                                eFlow(tB)     = zeroR 
-                            end if
+        !                                         !eHead(tB) = max(fHead_d(tFup)- headloss, fZbottom(tFup) + onehalfR*fDepth_d(tFup))
+        !                                     else 
+        !                                         !% --- outflow against the head gradient is not allowed
+        !                                         !%     use JM head for JB
+        !                                         !eHead(tB)     = eHead(tM) 
+        !                                         eFlow(tB)     = zeroR
+        !                                     end if
+        !                                 else
+        !                                     !% --- zero depth at face 
+        !                                     !eHead(tB)     = eHead(tM)
+        !                                     eFlow(tB)     = zeroR
+        !                                 end if
+        !                             end if
+        !                         end if
+        !                     else
+        !                         !% --- head difference is identically zero
+        !                         !eHead(tB)     = eHead(tM)
+        !                         eFlow(tB)     = zeroR 
+        !                     end if
 
-                            !% commenting 20230123
-                            !% --- no JB driven inflow if JB is zerodepth
-                            !%     note that flow across face can still be driven by upstream
-                            ! if (isZeroDepth(tB)) then 
-                            !     eFlow(tB) = zeroR
-                            ! end if
+        !                     !% commenting 20230123
+        !                     !% --- no JB driven inflow if JB is zerodepth
+        !                     !%     note that flow across face can still be driven by upstream
+        !                     ! if (isZeroDepth(tB)) then 
+        !                     !     eFlow(tB) = zeroR
+        !                     ! end if
 
-                            !% commenting 20230123
-                            !% --- prevent outflow is zero depth JM
-                            ! if (isZeroDepth(tM) .and. (eFlow(tB) < zeroR )) then
-                            !     eFlow(tB) = zeroR
-                            ! end if
+        !                     !% commenting 20230123
+        !                     !% --- prevent outflow is zero depth JM
+        !                     ! if (isZeroDepth(tM) .and. (eFlow(tB) < zeroR )) then
+        !                     !     eFlow(tB) = zeroR
+        !                     ! end if
 
-                            !% commenting 20230123
-                            !% --- prevent outflow driven by JB if head JM <= head JB upstream face
-                            ! if ((eHead(tM) .le. fHead_d(tFup)) .and. (eFlow(tB) < zeroR )) then 
-                            !     eFlow(tB) = zeroR
-                            ! end if
+        !                     !% commenting 20230123
+        !                     !% --- prevent outflow driven by JB if head JM <= head JB upstream face
+        !                     ! if ((eHead(tM) .le. fHead_d(tFup)) .and. (eFlow(tB) < zeroR )) then 
+        !                     !     eFlow(tB) = zeroR
+        !                     ! end if
 
-                            !% Fix for velocity blowup due to small areas
-                            if (eArea(tB) <= setting%ZeroValue%Area) then
-                                eVelocity(tB) = zeroR
-                            else
-                                eVelocity(tB) = eFlow(tB) / eArea(tB)
-                            end if
+        !                     !% Fix for velocity blowup due to small areas
+        !                     if (eArea(tB) <= setting%ZeroValue%Area) then
+        !                         eVelocity(tB) = zeroR
+        !                     else
+        !                         eVelocity(tB) = eFlow(tB) / eArea(tB)
+        !                     end if
     
-                            if (abs(eVelocity(tB)) > vMax) then
-                                eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
-                            end if
-                        end if
-                    end do
+        !                     if (abs(eVelocity(tB)) > vMax) then
+        !                         eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
+        !                     end if
+        !                 end if
+        !             end do
 
-                    !% handle the downstream branches
-                    do kk=2,max_branch_per_node,2
-                        !print *, kk ,'in junction branch'
-                        tB = tM + kk
-                        if (BranchExists(tB)==oneI) then
-                            !print *, kk, 'in junction branch'
-                            tFdn => iFaceDn(tB)
-                            !% use the upstream face so that near-zero is handled
-                            dHead = eHead(tB) - fHead_u(tFdn) !% using elem to face
+        !             !% handle the downstream branches
+        !             do kk=2,max_branch_per_node,2
+        !                 !print *, kk ,'in junction branch'
+        !                 tB = tM + kk
+        !                 if (BranchExists(tB)==oneI) then
+        !                     !print *, kk, 'in junction branch'
+        !                     tFdn => iFaceDn(tB)
+        !                     !% use the upstream face so that near-zero is handled
+        !                     dHead = eHead(tB) - fHead_u(tFdn) !% using elem to face
 
-                            !% --- handle different head gradient directions
-                            if (dHead > zeroR) then
-                                !% --- head in JM is larger than upstream branch which implies standard flow
-                                !%     handle different depth conditions
+        !                     !% --- handle different head gradient directions
+        !                     if (dHead > zeroR) then
+        !                         !% --- head in JM is larger than upstream branch which implies standard flow
+        !                         !%     handle different depth conditions
 
-                                if (eHead(tM) .le. (fZbottom(tFdn) + setting%ZeroValue%Depth)) then
-                                    !% --- JM head below the invert of the downstream conduit, so no flow 
-                                    !%     Head on JB is the conduit face head
-                                    !eHead(tB)     = fHead 
-                                    eFlow(tB)     = zeroR
-                                else
-                                    !% --- JM head above invert of the upstream conduit
-                                    !%     expected flow from JM reversed into the upstream branch
-                                    !%     handle different velocity conditions
-                                    if (fFlow(tFdn) < zeroR) then 
-                                        !% --- nominal flow against the head gradient is not allowed,
-                                        !%     set flux to zero and head to JM head
-                                        !eHead(tB)     = eHead(tM)
-                                        eFlow(tB)     = zeroR
-                                    else 
-                                        !% --- nominal flow and head gradient are into downstream 
-                                        eHead(tB)     = eHead(tM)
-                                        !%     estimate flowrate driven by head gradient from last value
-                                        !%     in JB
-                                        gamma = oneR &
-                                                +   crk(istep) * dt * grav          &
-                                                * abs(eFlow(tB)) * (eRough(tB)**2) &
-                                                / (eArea(tB) * eRH(tB)**(fourthirdsR))
+        !                         if (eHead(tM) .le. (fZbottom(tFdn) + setting%ZeroValue%Depth)) then
+        !                             !% --- JM head below the invert of the downstream conduit, so no flow 
+        !                             !%     Head on JB is the conduit face head
+        !                             !eHead(tB)     = fHead 
+        !                             eFlow(tB)     = zeroR
+        !                         else
+        !                             !% --- JM head above invert of the upstream conduit
+        !                             !%     expected flow from JM reversed into the upstream branch
+        !                             !%     handle different velocity conditions
+        !                             if (fFlow(tFdn) < zeroR) then 
+        !                                 !% --- nominal flow against the head gradient is not allowed,
+        !                                 !%     set flux to zero and head to JM head
+        !                                 !eHead(tB)     = eHead(tM)
+        !                                 eFlow(tB)     = zeroR
+        !                             else 
+        !                                 !% --- nominal flow and head gradient are into downstream 
+        !                                 eHead(tB)     = eHead(tM)
+        !                                 !%     estimate flowrate driven by head gradient from last value
+        !                                 !%     in JB
+        !                                 gamma = oneR &
+        !                                         +   crk(istep) * dt * grav          &
+        !                                         * abs(eFlow(tB)) * (eRough(tB)**2) &
+        !                                         / (eArea(tB) * eRH(tB)**(fourthirdsR))
                 
-                                        eFlow(tB) = (   eFlow(tB)                                                &
-                                                    +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
-                                                    ) / gamma      
+        !                                 eFlow(tB) = (   eFlow(tB)                                                &
+        !                                             +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
+        !                                             ) / gamma      
                                       
-                                        !% --- use the larger of the downstream face flowrate of this flowrate
-                                        !eFlow(tB)     = max(eFlow(tB),fFlow(tFdn))
-                                    end if
-                                end if
+        !                                 !% --- use the larger of the downstream face flowrate of this flowrate
+        !                                 !eFlow(tB)     = max(eFlow(tB),fFlow(tFdn))
+        !                             end if
+        !                         end if
 
-                            elseif (dHead < zeroR) then 
-                                !% --- head outside is larger than JM
-                                !%     so expected flow into JM from downstream branch (reversed flow)
-                                !%     handle different depth conditions 
-                                if (fHead_u(tFdn) .le. (fZbottom(tFdn) + setting%ZeroValue%Depth)) then
-                                    !% --- downstream head lower than invert of conduit at JM connection
-                                    !%     so no flow into JM
-                                    !eHead(tB)     = fHead
-                                    eFlow(tB)     = zeroR
-                                else 
-                                    !% --- expected flow into JM from downstream branch
-                                    !%     handle waterfall or nonwaterfall conditions
-                                    if (eHead(tM) < fZbottom(tFdn)) then 
-                                        !% --- low depth in JM causing waterfall into JM
-                                        if (fDepth_u(tFdn) > setting%ZeroValue%Depth) then 
-                                            !% --- nonzero depth at face
-                                            !% --- compute Froude number on face
-                                            FrFace =  fVelocity_u(tFdn) / (fDepth_u(tFdn) * grav)
-                                            if (FrFace .le. oneR) then 
-                                                !% --- upstream supercritical flow
-                                                !%     use velocity and flowrate of face
-                                                !%     Head is smaller up face head or depth reduced by (HACK) 1/2
-                                                !eHead(tB)     = min(fZbottom(tFdn) + onehalfR * fDepth_u(tFdn), fHead - onehalfR * fDepth_u(tFdn))
-                                                !% --- adjustment if above HACK makes head too small
-                                                !if (eHead(tB) < fZbottom(tFdn)) then 
-                                                !    eHead(tB) = eHead(tB) + twoR * setting%ZeroValue%Depth
-                                                !end if
-                                                eFlow(tB)     = fFlow(tFup)
-                                            elseif (FrFace > zeroR) then 
-                                                !% --- downstream flow not allowed with reversed head gradient
-                                                !%     no flow allowed out, head approximated as just above Zbottom
-                                                !%     of conduit at connection to JM
-                                                !eHead(tB)     = fZbottom(tFdn) + twoR *setting%ZeroValue%Depth
-                                                eFlow(tB)     = zeroR
-                                            else
-                                                !% --- negative Froude number > -1
-                                                !%     subcritical flow upstream (reverse) ending in waterfall
-                                                !% --- HACK -- instead of computing the
-                                                !%     critical depth we're just increasing
-                                                !%     the velocity to get the headloss
-                                                eVelocity(tB) = twoR * fVelocity_u(tFdn)
-                                                headloss      = (eVelocity(tB)**2 ) / (twoR * grav)
-                                                eFlow(tB)     = fFlow(tFdn)     
-                                                !% --- JB head is diminished by head loss, but at least 
-                                                !%     half of the head above the bottom of the conduit entrance
-                                                !eHead(tB) = max(fHead - headloss, fZbottom(tFdn) + onehalfR*fDepth_u(tFdn))                                      
-                                            end if
-                                        else 
-                                            !% --- zero depth at face 
-                                            !eHead(tB)     = fHead 
-                                            eFlow(tB)     = zeroR
-                                        end if
-                                    else 
-                                        !% --- non waterfall case with hface > hJM implying possible reverse flow
-                                        !%     handle different depth conditions
-                                        if (fDepth_u(tFdn) > setting%ZeroValue%Depth) then 
-                                            !% --- handle different velocity directions
-                                            if (fVelocity_u(tFdn) < zeroR) then 
-                                                !% --- velocity is nominal upstream direction
-                                                !% --- inflow from face
-                                                eFlow(tB)     = fFlow(tFdn)
-                                                headloss      = (fVelocity_u(tFdn)**2 ) / (twoR * grav)
-                                                !% --- head with limited head loss
-                                                !eHead(tB) = max(fHead- headloss, fZbottom(tFdn) + onehalfR*fDepth_u(tFdn))
-                                            else 
-                                                !% --- outflow against the head gradient is not allowed
-                                                !%     use JM head for JB
-                                                !eHead(tB)     = eHead(tM) 
-                                                eFlow(tB)     = zeroR
-                                            end if
-                                        else
-                                            !% --- zero depth at face 
-                                            !eHead(tB)     = eHead(tM)
-                                            eFlow(tB)     = zeroR
-                                        end if
-                                    end if
-                                end if  
-                            else                                      
-                                !% --- head difference is identically zero
-                                !eHead(tB)     = eHead(tM)
-                                eFlow(tB)     = zeroR 
-                            end if
+        !                     elseif (dHead < zeroR) then 
+        !                         !% --- head outside is larger than JM
+        !                         !%     so expected flow into JM from downstream branch (reversed flow)
+        !                         !%     handle different depth conditions 
+        !                         if (fHead_u(tFdn) .le. (fZbottom(tFdn) + setting%ZeroValue%Depth)) then
+        !                             !% --- downstream head lower than invert of conduit at JM connection
+        !                             !%     so no flow into JM
+        !                             !eHead(tB)     = fHead
+        !                             eFlow(tB)     = zeroR
+        !                         else 
+        !                             !% --- expected flow into JM from downstream branch
+        !                             !%     handle waterfall or nonwaterfall conditions
+        !                             if (eHead(tM) < fZbottom(tFdn)) then 
+        !                                 !% --- low depth in JM causing waterfall into JM
+        !                                 if (fDepth_u(tFdn) > setting%ZeroValue%Depth) then 
+        !                                     !% --- nonzero depth at face
+        !                                     !% --- compute Froude number on face
+        !                                     FrFace =  fVelocity_u(tFdn) / (fDepth_u(tFdn) * grav)
+        !                                     if (FrFace .le. oneR) then 
+        !                                         !% --- upstream supercritical flow
+        !                                         !%     use velocity and flowrate of face
+        !                                         !%     Head is smaller up face head or depth reduced by (HACK) 1/2
+        !                                         !eHead(tB)     = min(fZbottom(tFdn) + onehalfR * fDepth_u(tFdn), fHead - onehalfR * fDepth_u(tFdn))
+        !                                         !% --- adjustment if above HACK makes head too small
+        !                                         !if (eHead(tB) < fZbottom(tFdn)) then 
+        !                                         !    eHead(tB) = eHead(tB) + twoR * setting%ZeroValue%Depth
+        !                                         !end if
+        !                                         eFlow(tB)     = fFlow(tFup)
+        !                                     elseif (FrFace > zeroR) then 
+        !                                         !% --- downstream flow not allowed with reversed head gradient
+        !                                         !%     no flow allowed out, head approximated as just above Zbottom
+        !                                         !%     of conduit at connection to JM
+        !                                         !eHead(tB)     = fZbottom(tFdn) + twoR *setting%ZeroValue%Depth
+        !                                         eFlow(tB)     = zeroR
+        !                                     else
+        !                                         !% --- negative Froude number > -1
+        !                                         !%     subcritical flow upstream (reverse) ending in waterfall
+        !                                         !% --- HACK -- instead of computing the
+        !                                         !%     critical depth we're just increasing
+        !                                         !%     the velocity to get the headloss
+        !                                         eVelocity(tB) = twoR * fVelocity_u(tFdn)
+        !                                         headloss      = (eVelocity(tB)**2 ) / (twoR * grav)
+        !                                         eFlow(tB)     = fFlow(tFdn)     
+        !                                         !% --- JB head is diminished by head loss, but at least 
+        !                                         !%     half of the head above the bottom of the conduit entrance
+        !                                         !eHead(tB) = max(fHead - headloss, fZbottom(tFdn) + onehalfR*fDepth_u(tFdn))                                      
+        !                                     end if
+        !                                 else 
+        !                                     !% --- zero depth at face 
+        !                                     !eHead(tB)     = fHead 
+        !                                     eFlow(tB)     = zeroR
+        !                                 end if
+        !                             else 
+        !                                 !% --- non waterfall case with hface > hJM implying possible reverse flow
+        !                                 !%     handle different depth conditions
+        !                                 if (fDepth_u(tFdn) > setting%ZeroValue%Depth) then 
+        !                                     !% --- handle different velocity directions
+        !                                     if (fVelocity_u(tFdn) < zeroR) then 
+        !                                         !% --- velocity is nominal upstream direction
+        !                                         !% --- inflow from face
+        !                                         eFlow(tB)     = fFlow(tFdn)
+        !                                         headloss      = (fVelocity_u(tFdn)**2 ) / (twoR * grav)
+        !                                         !% --- head with limited head loss
+        !                                         !eHead(tB) = max(fHead- headloss, fZbottom(tFdn) + onehalfR*fDepth_u(tFdn))
+        !                                     else 
+        !                                         !% --- outflow against the head gradient is not allowed
+        !                                         !%     use JM head for JB
+        !                                         !eHead(tB)     = eHead(tM) 
+        !                                         eFlow(tB)     = zeroR
+        !                                     end if
+        !                                 else
+        !                                     !% --- zero depth at face 
+        !                                     !eHead(tB)     = eHead(tM)
+        !                                     eFlow(tB)     = zeroR
+        !                                 end if
+        !                             end if
+        !                         end if  
+        !                     else                                      
+        !                         !% --- head difference is identically zero
+        !                         !eHead(tB)     = eHead(tM)
+        !                         eFlow(tB)     = zeroR 
+        !                     end if
 
-                            !% Commenting 20230123
-                            !% --- no JB driven inflow if JB is zerodepth
-                            !%     note that flow across face can still be driven by upstream
-                            ! if (isZeroDepth(tB)) then 
-                            !     eFlow(tB) = zeroR
-                            ! end if
+        !                     !% Commenting 20230123
+        !                     !% --- no JB driven inflow if JB is zerodepth
+        !                     !%     note that flow across face can still be driven by upstream
+        !                     ! if (isZeroDepth(tB)) then 
+        !                     !     eFlow(tB) = zeroR
+        !                     ! end if
     
-                            ! ! print *, 'tB and flow BBB',tB, eFlow(tB)
+        !                     ! ! print *, 'tB and flow BBB',tB, eFlow(tB)
     
-                            ! !% --- prevent outflow from zero depth JM
-                            ! if (isZeroDepth(tM) .and. (eFlow(tB) > zeroR )) then
-                            !     eFlow(tB) = zeroR
-                            ! end if
+        !                     ! !% --- prevent outflow from zero depth JM
+        !                     ! if (isZeroDepth(tM) .and. (eFlow(tB) > zeroR )) then
+        !                     !     eFlow(tB) = zeroR
+        !                     ! end if
 
     
-                            !% Commenting 20230123
-                            !% --- prevent JB-driven outflow if head JM <= head JB downstream face
-                            ! if ((eHead(tM) .le. fHead_u(tFdn)) .and. (eFlow(tB) > zeroR )) then 
-                            !     eFlow(tB) = zeroR
-                            ! end if
+        !                     !% Commenting 20230123
+        !                     !% --- prevent JB-driven outflow if head JM <= head JB downstream face
+        !                     ! if ((eHead(tM) .le. fHead_u(tFdn)) .and. (eFlow(tB) > zeroR )) then 
+        !                     !     eFlow(tB) = zeroR
+        !                     ! end if
     
-                            ! print *, 'tB and flow DDD',tB, eFlow(tB)
+        !                     ! print *, 'tB and flow DDD',tB, eFlow(tB)
     
-                            !% Fix for velocity blowup due to small areas
-                            if (eArea(tB) <= setting%ZeroValue%Area) then
-                                eVelocity(tB) = zeroR
-                            else
-                                eVelocity(tB) = eFlow(tB) / eArea(tB)
-                            end if
-                            ! print *, 'tB and flow DDD',tB, eFlow(tB)
+        !                     !% Fix for velocity blowup due to small areas
+        !                     if (eArea(tB) <= setting%ZeroValue%Area) then
+        !                         eVelocity(tB) = zeroR
+        !                     else
+        !                         eVelocity(tB) = eFlow(tB) / eArea(tB)
+        !                     end if
+        !                     ! print *, 'tB and flow DDD',tB, eFlow(tB)
     
-                            !print *, 'CCCCCC ',tM, tB, eVelocity(tB)
+        !                     !print *, 'CCCCCC ',tM, tB, eVelocity(tB)
     
-                            if (abs(eVelocity(tB)) > vMax) then
-                                eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
-                            end if
+        !                     if (abs(eVelocity(tB)) > vMax) then
+        !                         eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
+        !                     end if
     
-                            !print *, 'DDDDDD ',tM, tB, eVelocity(tB)
-                            ! print *, 'tB and flow EEE',tB, eFlow(tB)    
+        !                     !print *, 'DDDDDD ',tM, tB, eVelocity(tB)
+        !                     ! print *, 'tB and flow EEE',tB, eFlow(tB)    
     
-                        end if
-                    end do
+        !                 end if
+        !             end do
     
-                end do
-            end if
+        !         end do
+        !     end if
     
-            ! print *, ' '
-            ! print *, 'in ll_flowrate_and_velocity at end'
-            ! print *, elemR(51,er_Flowrate)
-            ! print *, ' '
+        !     ! print *, ' '
+        !     ! print *, 'in ll_flowrate_and_velocity at end'
+        !     ! print *, elemR(51,er_Flowrate)
+        !     ! print *, ' '
     
-        end subroutine ll_flowrate_and_velocity_JB_2
+        ! end subroutine ll_flowrate_and_velocity_JB_2
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_flowrate_and_velocity_JB (whichTM, istep)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Updates the flowrate and velocity on junction branches from face values
-        !% obtained in the face interpolation
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: whichTM, istep
-        integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
-        integer, pointer :: Npack
-        real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) !%, fFlowMax(:)
-        real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), eRH(:), vMax
-        real(8), pointer :: eVolume(:), eLength(:), dt, grav, epsH, crk(:)
-        real(8), pointer :: eRough(:)
-        integer :: ii, kk, tB
-        real(8) :: dHead, gamma
-        integer, pointer :: iFaceUp(:), iFaceDn(:)
-        integer, pointer :: tFup, tFdn
-        logical, pointer :: isZeroDepth(:)
-        !%-----------------------------------------------------------------------------
-        !%
-        BranchExists => elemSI(:,esi_JunctionBranch_Exists)
-        eArea        => elemR(:,er_Area)
-        eVelocity    => elemR(:,er_Velocity)
-        eFlow        => elemR(:,er_Flowrate)
-        eVolume      => elemR(:,er_Volume)
-        eLength      => elemR(:,er_Length)
-        eRH          => elemR(:,er_HydRadius)
-        eRough       => elemR(:,er_ManningsN)
+    ! subroutine ll_flowrate_and_velocity_JB (whichTM, istep)
+    !     !%-----------------------------------------------------------------------------
+    !     !% Description:
+    !     !% Updates the flowrate and velocity on junction branches from face values
+    !     !% obtained in the face interpolation
+    !     !%-----------------------------------------------------------------------------
+    !     integer, intent(in) :: whichTM, istep
+    !     integer, pointer :: thisColP_JM, thisP(:), BranchExists(:), tM, iup(:), idn(:)
+    !     integer, pointer :: Npack
+    !     real(8), pointer :: eHead(:), fHead_u(:), fHead_d(:) !%, fFlowMax(:)
+    !     real(8), pointer :: eFlow(:), fFlow(:), eArea(:), eVelocity(:), eRH(:), vMax
+    !     real(8), pointer :: eVolume(:), eLength(:), dt, grav, epsH, crk(:)
+    !     real(8), pointer :: eRough(:)
+    !     integer :: ii, kk, tB
+    !     real(8) :: dHead, gamma
+    !     integer, pointer :: iFaceUp(:), iFaceDn(:)
+    !     integer, pointer :: tFup, tFdn
+    !     logical, pointer :: isZeroDepth(:)
+    !     !%-----------------------------------------------------------------------------
+    !     !%
+    !     BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+    !     eArea        => elemR(:,er_Area)
+    !     eVelocity    => elemR(:,er_Velocity)
+    !     eFlow        => elemR(:,er_Flowrate)
+    !     eVolume      => elemR(:,er_Volume)
+    !     eLength      => elemR(:,er_Length)
+    !     eRH          => elemR(:,er_HydRadius)
+    !     eRough       => elemR(:,er_ManningsN)
 
-        fFlow        => faceR(:,fr_Flowrate)
-        !fFlowMax     => faceR(:,fr_Flowrate_Max)
-        iFaceUp      => elemI(:,ei_Mface_uL)
-        iFaceDn      => elemI(:,ei_Mface_dL)
+    !     fFlow        => faceR(:,fr_Flowrate)
+    !     !fFlowMax     => faceR(:,fr_Flowrate_Max)
+    !     iFaceUp      => elemI(:,ei_Mface_uL)
+    !     iFaceDn      => elemI(:,ei_Mface_dL)
 
-        eHead        => elemR(:,er_Head)
-        fHead_u      => faceR(:,fr_Head_u)
-        fHead_d      => faceR(:,fr_Head_d)
+    !     eHead        => elemR(:,er_Head)
+    !     fHead_u      => faceR(:,fr_Head_u)
+    !     fHead_d      => faceR(:,fr_Head_d)
 
-        isZeroDepth  => elemYN(:,eYN_isZeroDepth)
+    !     isZeroDepth  => elemYN(:,eYN_isZeroDepth)
 
-        crk          => setting%Solver%crk2
-        vMax         => setting%Limiter%Velocity%Maximum
-        dt           => setting%Time%Hydraulics%Dt
-        !rm 20220207brh headC        => setting%Junction%HeadCoef
-        grav         => setting%constant%gravity
-        epsH         => setting%Eps%Head
-        !%-----------------------------------------------------------------------------
-        !%
-        ! select case (whichTM)
-        ! case (ALLtm)
-        !     thisColP_JM            => col_elemP(ep_JM_ALLtm)
-        ! case (ETM)
-            thisColP_JM            => col_elemP(ep_JM)
-        ! case (AC)
-        !     thisColP_JM            => col_elemP(ep_JM_AC)
-        ! case default
-        !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
-        !     print *, 'which has key ',trim(reverseKey(whichTM))
-        !     stop 7659
-        ! end select
+    !     crk          => setting%Solver%crk2
+    !     vMax         => setting%Limiter%Velocity%Maximum
+    !     dt           => setting%Time%Hydraulics%Dt
+    !     !rm 20220207brh headC        => setting%Junction%HeadCoef
+    !     grav         => setting%constant%gravity
+    !     epsH         => setting%Eps%Head
+    !     !%-----------------------------------------------------------------------------
+    !     !%
+    !     ! select case (whichTM)
+    !     ! case (ALLtm)
+    !     !     thisColP_JM            => col_elemP(ep_JM_ALLtm)
+    !     ! case (ETM)
+    !         thisColP_JM            => col_elemP(ep_JM)
+    !     ! case (AC)
+    !     !     thisColP_JM            => col_elemP(ep_JM_AC)
+    !     ! case default
+    !     !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+    !     !     print *, 'which has key ',trim(reverseKey(whichTM))
+    !     !     stop 7659
+    !     ! end select
 
-        !% --- alternate form of junctions skip this
-        ! if (setting%Junction%Method .ne. Explicit1) then
-        !     !% do nothing
-        !     return
-        ! end if
+    !     !% --- alternate form of junctions skip this
+    !     ! if (setting%Junction%Method .ne. Explicit1) then
+    !     !     !% do nothing
+    !     !     return
+    !     ! end if
 
-        !% --- original form of junctions:
-        Npack => npack_elemP(thisColP_JM)
-        if (Npack > 0) then
-            thisP => elemP(1:Npack,thisColP_JM)
-            do ii=1,Npack
-                tM => thisP(ii)  !% JM junction main ID
-                ! handle the upstream branches
-                do kk=1,max_branch_per_node,2
-                    tB = tM + kk  !% JB branch ID
-                    if (BranchExists(tB)==oneI) then
+    !     !% --- original form of junctions:
+    !     Npack => npack_elemP(thisColP_JM)
+    !     if (Npack > 0) then
+    !         thisP => elemP(1:Npack,thisColP_JM)
+    !         do ii=1,Npack
+    !             tM => thisP(ii)  !% JM junction main ID
+    !             ! handle the upstream branches
+    !             do kk=1,max_branch_per_node,2
+    !                 tB = tM + kk  !% JB branch ID
+    !                 if (BranchExists(tB)==oneI) then
 
-                        ! head difference across the branch
-                        tFup => iFaceUp(tB)
-                        !% use the downstream face, so that near-zero is handled
-                        dHead = fHead_d(tFup) - eHead(tB) !% using elem to face
+    !                     ! head difference across the branch
+    !                     tFup => iFaceUp(tB)
+    !                     !% use the downstream face, so that near-zero is handled
+    !                     dHead = fHead_d(tFup) - eHead(tB) !% using elem to face
 
-                        gamma = oneR                                 &
-                                +   crk(istep) * dt * grav           &
-                                  * abs(eFlow(tB)) * (eRough(tB)**2) &
-                                  / (eArea(tB) * eRH(tB)**(fourthirdsR))
+    !                     gamma = oneR                                 &
+    !                             +   crk(istep) * dt * grav           &
+    !                               * abs(eFlow(tB)) * (eRough(tB)**2) &
+    !                               / (eArea(tB) * eRH(tB)**(fourthirdsR))
 
-                        !% --- CHANGED 20230113 to represent the flowrate associated
-                        !%     with the head gradient. This is later averaged
-                        !%     with the face flowrate to get the final JB and face flowrate
+    !                     !% --- CHANGED 20230113 to represent the flowrate associated
+    !                     !%     with the head gradient. This is later averaged
+    !                     !%     with the face flowrate to get the final JB and face flowrate
 
-                        !% --- note that the dHead is upstream - downstream
-                        eFlow(tB) = (   eFlow(tB)                                                &
-                                      + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
-                                    ) / gamma     
+    !                     !% --- note that the dHead is upstream - downstream
+    !                     eFlow(tB) = (   eFlow(tB)                                                &
+    !                                   + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
+    !                                 ) / gamma     
                                     
-                        ! eFlow(tB) = (                                                   &
-                        !             + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
-                        !           ) / gamma              
+    !                     ! eFlow(tB) = (                                                   &
+    !                     !             + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
+    !                     !           ) / gamma              
                                     
-                                    ! if (tB == 51) then
-                                    !     print *, ' '
-                                    !     print *, '  here in JB lowlevel'
-                                    !     print *, 'flowrate ',eFlow(51)
-                                    !     print *, 'area     ' ,eArea(tB)
-                                    !     print *, 'dhead    ',dHead
-                                    !     print *, 'gamma    ',gamma
-                                    !     print *, 'depth    ',elemR(51,er_Depth)
-                                    !     print *, 'iszero   ',elemYN(51,eYN_isZeroDepth)
-                                    !     print *, ' '
-                                    ! end if           
+    !                                 ! if (tB == 51) then
+    !                                 !     print *, ' '
+    !                                 !     print *, '  here in JB lowlevel'
+    !                                 !     print *, 'flowrate ',eFlow(51)
+    !                                 !     print *, 'area     ' ,eArea(tB)
+    !                                 !     print *, 'dhead    ',dHead
+    !                                 !     print *, 'gamma    ',gamma
+    !                                 !     print *, 'depth    ',elemR(51,er_Depth)
+    !                                 !     print *, 'iszero   ',elemYN(51,eYN_isZeroDepth)
+    !                                 !     print *, ' '
+    !                                 ! end if           
                                     
-                        !% --- no JB driven inflow if JB is zerodepth
-                        !%     note that flow across face can still be driven by upstream
-                        if (isZeroDepth(tB)) then 
-                            eFlow(tB) = zeroR
-                        end if
+    !                     !% --- no JB driven inflow if JB is zerodepth
+    !                     !%     note that flow across face can still be driven by upstream
+    !                     if (isZeroDepth(tB)) then 
+    !                         eFlow(tB) = zeroR
+    !                     end if
 
-                        !% --- prevent outflow is zero depth JM
-                        if (isZeroDepth(tM) .and. (eFlow(tB) < zeroR )) then
-                            eFlow(tB) = zeroR
-                        end if
+    !                     !% --- prevent outflow is zero depth JM
+    !                     if (isZeroDepth(tM) .and. (eFlow(tB) < zeroR )) then
+    !                         eFlow(tB) = zeroR
+    !                     end if
 
-                        !% --- prevent outflow driven by JB if head JM <= head JB upstream face
-                        if ((eHead(tM) .le. fHead_d(tFup)) .and. (eFlow(tB) < zeroR )) then 
-                            eFlow(tB) = zeroR
-                        end if
+    !                     !% --- prevent outflow driven by JB if head JM <= head JB upstream face
+    !                     if ((eHead(tM) .le. fHead_d(tFup)) .and. (eFlow(tB) < zeroR )) then 
+    !                         eFlow(tB) = zeroR
+    !                     end if
 
-                        !% Fix for velocity blowup due to small areas
-                        if (eArea(tB) <= setting%ZeroValue%Area) then
-                            eVelocity(tB) = zeroR
-                        else
-                            eVelocity(tB) = eFlow(tB) / eArea(tB)
-                        end if
+    !                     !% Fix for velocity blowup due to small areas
+    !                     if (eArea(tB) <= setting%ZeroValue%Area) then
+    !                         eVelocity(tB) = zeroR
+    !                     else
+    !                         eVelocity(tB) = eFlow(tB) / eArea(tB)
+    !                     end if
 
-                        !print *, 'AAAAAA ',tM, tB, eVelocity(tB)
+    !                     !print *, 'AAAAAA ',tM, tB, eVelocity(tB)
 
-                        if (abs(eVelocity(tB)) > vMax) then
-                            eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
-                        end if
+    !                     if (abs(eVelocity(tB)) > vMax) then
+    !                         eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
+    !                     end if
 
-                        !print *, 'BBBBBB ',tM, tB, eVelocity(tB)
+    !                     !print *, 'BBBBBB ',tM, tB, eVelocity(tB)
 
-                    end if
-                end do
-                !% handle the downstream branches
-                do kk=2,max_branch_per_node,2
-                    !print *, kk ,'in junction branch'
-                    tB = tM + kk
-                    if (BranchExists(tB)==oneI) then
+    !                 end if
+    !             end do
+    !             !% handle the downstream branches
+    !             do kk=2,max_branch_per_node,2
+    !                 !print *, kk ,'in junction branch'
+    !                 tB = tM + kk
+    !                 if (BranchExists(tB)==oneI) then
 
-                        !print *, kk, 'in junction branch'
-                        tFdn => iFaceDn(tB)
-                        !% use the upstream face so that near-zero is handled
-                        dHead = eHead(tB) - fHead_u(tFdn) !% using elem to face
+    !                     !print *, kk, 'in junction branch'
+    !                     tFdn => iFaceDn(tB)
+    !                     !% use the upstream face so that near-zero is handled
+    !                     dHead = eHead(tB) - fHead_u(tFdn) !% using elem to face
                        
-                        gamma = oneR &
-                                +   crk(istep) * dt * grav          &
-                                  * abs(eFlow(tB)) * (eRough(tB)**2) &
-                                  / (eArea(tB) * eRH(tB)**(fourthirdsR))
+    !                     gamma = oneR &
+    !                             +   crk(istep) * dt * grav          &
+    !                               * abs(eFlow(tB)) * (eRough(tB)**2) &
+    !                               / (eArea(tB) * eRH(tB)**(fourthirdsR))
    
-                        eFlow(tB) = (   eFlow(tB)                                                &
-                                     +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
-                                    ) / gamma      
+    !                     eFlow(tB) = (   eFlow(tB)                                                &
+    !                                  +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
+    !                                 ) / gamma      
                                     
-                        ! eFlow(tB) = (                                                  &
-                        !             +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
-                        !            ) / gamma    
+    !                     ! eFlow(tB) = (                                                  &
+    !                     !             +  crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
+    !                     !            ) / gamma    
 
-                        ! print *, 'tB and flow AAA',tB, eFlow(tB)            
+    !                     ! print *, 'tB and flow AAA',tB, eFlow(tB)            
                                    
-                        !% --- no JB driven inflow if JB is zerodepth
-                        !%     note that flow across face can still be driven by upstream
-                        if (isZeroDepth(tB)) then 
-                            eFlow(tB) = zeroR
-                        end if
+    !                     !% --- no JB driven inflow if JB is zerodepth
+    !                     !%     note that flow across face can still be driven by upstream
+    !                     if (isZeroDepth(tB)) then 
+    !                         eFlow(tB) = zeroR
+    !                     end if
 
-                        ! print *, 'tB and flow BBB',tB, eFlow(tB)
+    !                     ! print *, 'tB and flow BBB',tB, eFlow(tB)
 
-                        !% --- prevent outflow from zero depth JM
-                        if (isZeroDepth(tM) .and. (eFlow(tB) > zeroR )) then
-                            eFlow(tB) = zeroR
-                        end if
+    !                     !% --- prevent outflow from zero depth JM
+    !                     if (isZeroDepth(tM) .and. (eFlow(tB) > zeroR )) then
+    !                         eFlow(tB) = zeroR
+    !                     end if
 
-                        ! print *, 'tB and flow CCC',tB, eFlow(tB)
+    !                     ! print *, 'tB and flow CCC',tB, eFlow(tB)
 
-                        !% --- prevent JB-driven outflow if head JM <= head JB downstream face
-                        if ((eHead(tM) .le. fHead_u(tFdn)) .and. (eFlow(tB) > zeroR )) then 
-                            eFlow(tB) = zeroR
-                        end if
+    !                     !% --- prevent JB-driven outflow if head JM <= head JB downstream face
+    !                     if ((eHead(tM) .le. fHead_u(tFdn)) .and. (eFlow(tB) > zeroR )) then 
+    !                         eFlow(tB) = zeroR
+    !                     end if
 
-                        ! print *, 'tB and flow DDD',tB, eFlow(tB)
+    !                     ! print *, 'tB and flow DDD',tB, eFlow(tB)
 
-                        !% Fix for velocity blowup due to small areas
-                        if (eArea(tB) <= setting%ZeroValue%Area) then
-                            eVelocity(tB) = zeroR
-                        else
-                            eVelocity(tB) = eFlow(tB) / eArea(tB)
-                        end if
-                        ! print *, 'tB and flow DDD',tB, eFlow(tB)
+    !                     !% Fix for velocity blowup due to small areas
+    !                     if (eArea(tB) <= setting%ZeroValue%Area) then
+    !                         eVelocity(tB) = zeroR
+    !                     else
+    !                         eVelocity(tB) = eFlow(tB) / eArea(tB)
+    !                     end if
+    !                     ! print *, 'tB and flow DDD',tB, eFlow(tB)
 
-                        !print *, 'CCCCCC ',tM, tB, eVelocity(tB)
+    !                     !print *, 'CCCCCC ',tM, tB, eVelocity(tB)
 
-                        if (abs(eVelocity(tB)) > vMax) then
-                            eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
-                        end if
+    !                     if (abs(eVelocity(tB)) > vMax) then
+    !                         eVelocity(tB) = sign( 0.99d0 * vMax, eVelocity(tB) )
+    !                     end if
 
-                        !print *, 'DDDDDD ',tM, tB, eVelocity(tB)
-                        ! print *, 'tB and flow EEE',tB, eFlow(tB)    
+    !                     !print *, 'DDDDDD ',tM, tB, eVelocity(tB)
+    !                     ! print *, 'tB and flow EEE',tB, eFlow(tB)    
 
-                    end if
-                end do
+    !                 end if
+    !             end do
 
-            end do
-        end if
+    !         end do
+    !     end if
 
-        ! print *, ' '
-        ! print *, 'in ll_flowrate_and_velocity at end'
-        ! print *, elemR(51,er_Flowrate)
-        ! print *, ' '
+    !     ! print *, ' '
+    !     ! print *, 'in ll_flowrate_and_velocity at end'
+    !     ! print *, elemR(51,er_Flowrate)
+    !     ! print *, ' '
 
-    end subroutine ll_flowrate_and_velocity_JB
+    ! end subroutine ll_flowrate_and_velocity_JB
 !%
 !%==========================================================================
 !%==========================================================================

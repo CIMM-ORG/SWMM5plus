@@ -98,6 +98,8 @@ module geometry
             call slot_CC_ETM (thisP_Closed)
         end if
 
+        ! print *, 'in geometry AAAA',elemR(5,er_Depth), elemR(5,er_EllDepth)
+
         !% --- DEPTH
         !%     compute the depth on all elements of CC based on geometry.
         !%     If surcharged, this call returns the full depth of a closed conduit 
@@ -108,6 +110,7 @@ module geometry
             call geo_depth_from_volume_by_element_CC (thisP, npackP)
         end if
 
+        ! print *, 'in geometry BBBB',elemR(5,er_Depth), elemR(5,er_EllDepth)
 
         !% --- ZERO DEPTH CC
         !%     reset all zero or near-zero depths in CC
@@ -117,6 +120,8 @@ module geometry
         call adjust_limit_by_zerovalues &
             (er_Depth, setting%ZeroValue%Depth, thisP, .false.)
 
+            ! print *, 'in geometry CCCC',elemR(5,er_Depth), elemR(5,er_EllDepth)
+
         !% --- PIEZOMETRIC HEAD
         !%     compute the head on all elements of CC
         !%     This sets head consistent with depth computed in geo_depth_from_volume
@@ -124,6 +129,8 @@ module geometry
         !%     include surcharge effects     
         elemR(thisP,er_Head) = llgeo_head_from_depth_pure &
                                     (thisP, elemR(thisP,er_Depth))
+
+                                    ! print *, 'in geometry DDDD',elemR(5,er_Depth), elemR(5,er_EllDepth)
 
         !% --- OPEN CHANNEL OVERFLOW
         !%     Compute the overflow lost for CC open channels above
@@ -137,6 +144,8 @@ module geometry
             end if
         end if
 
+        ! print *, 'in geometry DDDD',elemR(5,er_Depth), elemR(5,er_EllDepth)
+
         !% --- PREISSMAN SLOT VOLUME LIMIT CLOSED CONDUIT CC
         !%     limit the volume in closed element (CC) to the full volume
         !%     Note the excess volume has already been stored in the Preissman Slot
@@ -144,12 +153,16 @@ module geometry
             call geo_volumelimit_closed (thisP_Closed)
         end if
 
+        ! print *, 'in geometry EEEE',elemR(5,er_Depth), elemR(5,er_EllDepth)
+
         !% --- CROSS-SECTIONAL AREA
         !%     compute area from volume for CC
         !%     For closed conduits this is based on the volume limited by full volume.
         !%     For open channels the volume limit depends on if AllowChanneOverflowTF is false.
         elemR(thisP,er_Area) = llgeo_area_from_volume_pure(thisP,elemR(thisP,er_Volume))
         elemR(thisP,er_Area) = max(elemR(thisP,er_Area),setting%ZeroValue%Area)
+
+        ! print *, 'in geometry FFFF',elemR(5,er_Depth), elemR(5,er_EllDepth)
 
         !% --- TOPWIDTH CC
         !%     compute topwidth from depth for all CC
@@ -160,6 +173,8 @@ module geometry
         else
             call geo_topwidth_from_depth_by_element_CC (thisP, npackP)
         end if
+
+        ! print *, 'in geometry GGGG',elemR(5,er_Depth), elemR(5,er_EllDepth)
 
         !% --- PERIMETER AND HYDRAULIC RADIUS CC
         !%     compute hydraulic radius and perimeter
@@ -172,10 +187,14 @@ module geometry
             call geo_perimeter_and_hydradius_from_depth_by_element_CC (thisP, npackP)
         end if
 
+        ! print *, 'in geometry HHHH',elemR(5,er_Depth), elemR(5,er_EllDepth)
+
         !% --- ELLDEPTH MODIFIED HYDRAULIC DEPTH
         !%     the modified hydraulic depth "ell" is used for 
         !%     for Froude number computations on all CC elements
         call geo_elldepth_from_head_CC (thisP)
+
+        ! print *, 'in geometry IIII',elemR(5,er_Depth), elemR(5,er_EllDepth)
 
         !% ---- ADJUST SLOT 
         !%      make adjustments for slots on closed elements only
@@ -183,6 +202,8 @@ module geometry
         if (npackP_Closed > 0) then
             call slot_CC_adjustments (thisP_Closed)
         end if
+        
+        ! print *, 'in geometry JJJJ',elemR(5,er_Depth), elemR(5,er_EllDepth)
 
         !% --- check for crashpoint and stop here
         call util_crashstop(830984)
@@ -545,7 +566,7 @@ module geometry
             real(8) :: thisPerimeter, thisArea
             character(64) :: subroutine_name = "geo_sectionfactor_from_depth_singular"
         !%------------------------------------------------------------------  
-        ! print *, 'in ',trim(subroutine_name)    
+    
         ! print *, 'input depth ',inDepth
         thisArea      = geo_area_from_depth_singular      (eIdx, inDepth, ZeroValueArea)
         ! print *, '----- area     ',thisArea
@@ -573,7 +594,8 @@ module geometry
          real(8)              :: thisArea
         !%------------------------------------------------------------------
             grav => setting%Constant%gravity
-        !%------------------------------------------------------------------     
+        !%------------------------------------------------------------------   
+
         thisArea      = geo_area_from_depth_singular (eIdx, inDepth, ZeroValue)
         outvalue      = thisArea * sqrt(inDepth * grav)
 
@@ -1423,7 +1445,7 @@ module geometry
                         perimeter(tB)    = setting%ZeroValue%Topwidth + setting%ZeroValue%Depth
                         hydRadius(tB)    = setting%ZeroValue%Depth
                         dHdA(tB)         = oneR / setting%ZeroValue%Topwidth
-                        ellDepth(tB)     = setting%ZeroValue%Depth 
+                        ellDepth(tB)     = setting%ZeroValue%Depth * 0.99d0 
 
                     else
                         !% --- set lookup table names
@@ -1504,7 +1526,7 @@ module geometry
 
                                 ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure   &
                                                     (tBA, area(tBA), topwidth(tBA))
-                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth*0.99d0)
 
                             case (power_function) !% POSSIBLY LOOKUP
                                 print *, 'CODE ERROR power function x-section not finished'
@@ -1527,7 +1549,10 @@ module geometry
 
                                 ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure  &
                                                     (tBA, area(tBA), topwidth(tBA))
-                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+
+                                        !print *, 'ell depth ', ellDepth(tB)
+
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth*0.99d0)
 
                             case (trapezoidal) !% analytical
                                 ! if (ii > 98) util_utest_CLprint('IIIIc')
@@ -1546,7 +1571,7 @@ module geometry
                                 
                                 ellDepth(tBA)  = llgeo_hyddepth_from_area_and_topwidth_pure   &
                                                     (tBA, area(tBA), topwidth(tBA))
-                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth*0.99d0)
 
                             case (triangular) !% analytical
                                 ! if (ii > 98) util_utest_CLprint('IIIId')
@@ -1565,7 +1590,7 @@ module geometry
 
                                 ellDepth(tBA) = llgeo_hyddepth_from_area_and_topwidth_pure   &
                                                     (tBA, area(tBA), topwidth(tBA))
-                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth*0.99d0)
 
                             case (irregular)  !% lookup
                                 area(tB)     = irregular_geometry_from_depth_singular ( &
@@ -1587,7 +1612,7 @@ module geometry
 
                                 !% --- irregular must be continuously-increasing in width
                                 ! if (ii > 98) util_utest_CLprint('IIIIe-5')
-                                ellDepth(tB)  = geo_hyddepth_from_area_and_topwidth_singular (tB, area(tB), topwidth(tB), setting%ZeroValue%Depth) 
+                                ellDepth(tB)  = geo_hyddepth_from_area_and_topwidth_singular (tB, area(tB), topwidth(tB), setting%ZeroValue%Depth*0.99d0) 
 
                             !% --- CLOSED CONDUITS
                             !%     closed conduits typically have look-up functions for area, topwidth and hydraulic
@@ -1614,7 +1639,7 @@ module geometry
                                 perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth) 
                                                 
                                 ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
-                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth*0.99d0)
 
                             !% --- lookups with SectionFactor stored
                             case (catenary, gothic, semi_circular, semi_elliptical)   
@@ -1635,7 +1660,7 @@ module geometry
                                 perimeter(tB) = max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
 
                                 ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
-                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth*0.99d0)
 
                             !% --- lookup with sediment
                             case (filled_circular)  
@@ -1649,7 +1674,7 @@ module geometry
                                 hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
 
                                 ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
-                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth*0.99d0)
 
                             !% --- analytical closed-conduit cases
                             case (mod_basket)   !% analytical            
@@ -1663,7 +1688,7 @@ module geometry
                                 hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
 
                                 ellDepth(tBA) = llgeo_elldepth_pure (tBA)
-                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth*0.99d0)
 
                             case (rectangular_closed) !% analytical
                                 ! if (ii > 98) util_utest_CLprint('IIIIj')
@@ -1676,7 +1701,7 @@ module geometry
                                 hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
 
                                 ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
-                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth*0.99d0)
 
                             case (rect_round)  !% analytical         
                                 ! if (ii > 98) util_utest_CLprint('IIIIk')                         
@@ -1689,7 +1714,7 @@ module geometry
                                 hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
 
                                 ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
-                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth*0.99d0)
 
                             case (rect_triang) !% analytical           
                                 ! if (ii > 98) util_utest_CLprint('IIIIl')                        
@@ -1702,7 +1727,7 @@ module geometry
                                 hydRadius(tB) = max(hydRadius(tB),setting%ZeroValue%Depth)
 
                                 ellDepth(tBA) = llgeo_elldepth_pure (tBA) 
-                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth)
+                                ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth*0.99d0)
                         
                             case default
                             print *, 'CODE ERROR: geometry type unknown for # ', elemI(tB,ei_geometryType)
@@ -3394,7 +3419,7 @@ module geometry
             ellDepth(thisP) = min(depth(thisP), ellDepth(thisP))
         endwhere
 
-        ellDepth(thisP) = max(ellDepth(thisP),setting%ZeroValue%Depth)
+        ellDepth(thisP) = max(ellDepth(thisP),setting%ZeroValue%Depth*0.99d0)
 
         !%-------------------------------------------------------------------
             if (setting%Debug%File%geometry) &
@@ -3619,7 +3644,7 @@ module geometry
                 Atable => ASemiCircular
             case (semi_elliptical)
                 Atable => ASemiEllip
-            end select
+        end select
 
         select case (elemI(idx,ei_geometryType))
         !% ----open channels  
@@ -3701,18 +3726,18 @@ module geometry
         case (custom)
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            call util_crashpoint(332341)
 
         case (force_main)
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'in ',trim(subroutine_name)   
             print *, 'This should never be reached as a force_main is not a valid geometryType'
-            call util_crashpoint(33234)
+            call util_crashpoint(332342)
 
         case default
             print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            call util_crashpoint(332343)
 
         end select
            
@@ -4072,7 +4097,7 @@ module geometry
         case default
             print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
-            call util_crashpoint(33234)
+            call util_crashpoint(332344)
         end select
 
     end function geo_perimeter_from_depth_singular
