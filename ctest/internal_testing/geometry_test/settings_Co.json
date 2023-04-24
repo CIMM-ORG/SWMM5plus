@@ -10,7 +10,7 @@
         "disableInterpolationYN": false
     },
     "Discretization" : {
-        "NominalElemLength" : 500.00
+        "NominalElemLength" : 50.00
     },
     "Limiter" : {
         "BC" : {

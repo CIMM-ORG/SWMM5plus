@@ -3159,10 +3159,10 @@ module junction_elements
 
         repeatYN = .true.
 
-        ! print *, ' '
-        ! print *, '============FIX CONSERVATION'
-        ! print *, 'JUNCTION ',JMidx
-        ! print *, 'starting resid ',resid 
+        print *, ' '
+        print *, '============FIX CONSERVATION'
+        print *, 'JUNCTION ',JMidx
+        print *, 'starting resid ',resid 
 
         dQ = zeroR
         dH = zeroR
@@ -3189,7 +3189,7 @@ module junction_elements
             end if
         endif
 
-        ! print *, '0001  Resid',resid
+        print *, '0001  Resid',resid
             
         do while (repeatYN)
 
@@ -3330,7 +3330,7 @@ module junction_elements
                 end if
             end if
 
-            !print *, 'dQ : ', dQ
+            print *, 'dQ : ', dQ
 
         end do
 
@@ -3359,9 +3359,9 @@ module junction_elements
         !% --- recompute the residual
         resid = junction_conservation_residual (JMidx)
 
-            ! print *, 'NEW RESIDUAL ',resid 
+            print *, 'NEW RESIDUAL, overflow ',resid, Qoverflow
 
-            ! print *, abs(resid), localEpsilon
+            print *, abs(resid), localEpsilon
 
         if (abs(resid) > localEpsilon) then 
             print *, 'resid ',resid, ' at junction element ',JMidx
