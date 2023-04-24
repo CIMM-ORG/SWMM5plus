@@ -6,7 +6,6 @@ module catenary_conduit
     use define_keys
     use define_xsect_tables
     use xsect_tables
-    use utility, only: util_CLprint
 
     implicit none
 

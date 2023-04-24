@@ -13,7 +13,7 @@ module runge_kutta2
     use pack_mask_arrays
     use adjust
     use diagnostic_elements
-    use utility, only: util_CLprint, util_syncwrite
+    use utility, only: util_syncwrite
     use utility_crash
     use utility_unit_testing, only: util_utest_CLprint, util_utest_checkIsNan
 
@@ -31,12 +31,524 @@ module runge_kutta2
     public :: rk2_toplevel_ETM_3
     public :: rk2_toplevel_ETM_4
     public :: rk2_toplevel_ETM_5
+    public :: rk2_toplevel_ETM_6
     public :: rk2_toplevel_AC
     public :: rk2_toplevel_ETMAC
 
     contains
 !%==========================================================================
 !% PUBLIC
+!%==========================================================================
+!%
+    subroutine rk2_toplevel_ETM_6
+        !%------------------------------------------------------------------
+        !% Description:
+        !% single RK2 step for explicit time advance of SVE
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer :: istep, ii, kk, mm
+            integer, pointer :: Npack, thisp(:)
+
+            character(64) :: subroutine_name = 'rk2_toplevel_ETM_5'
+            real(8) :: ConsSum
+        !%------------------------------------------------------------------
+        !% Preliminaries
+        !% --- reset the overflow counter for this time level
+            elemR(:,er_VolumeOverFlow) = zeroR     
+            elemR(:,er_VolumeArtificialInflow) = zeroR   
+        !%-----------------------------------------------------------------
+
+            ! print *,' '
+            ! print *, ' '
+            ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
+ 
+        !%==================================    
+        !% --- Initial adjustments
+        istep = zeroI
+
+        !% --- setup for Diagnostic elements
+        if (N_diag > 0) then 
+            !% STEP A
+            !% --- update flowrates for diagnostic elements that are not adjacent to JB
+            !call diagnostic_by_type (ep_Diag_notJBadjacent, istep)  
+            !20230423 test using all DIAG
+            call diagnostic_by_type (ep_Diag, istep)  
+
+                ! call util_utest_CLprint ('------- BBB  after diagnostic')
+
+        !     !% STEP B
+        !     !% --- push the flowrate data to faces -- true is upstream, false is downstream
+        !     call face_push_elemdata_to_face (ep_Diag_notJBadjacent, fr_Flowrate, er_Flowrate, elemR, .true.)
+        !     call face_push_elemdata_to_face (ep_Diag_notJBadjacent, fr_Flowrate, er_Flowrate, elemR, .false.)
+
+        !         ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
+        end if
+
+       
+        ! if ((setting%Junction%UseJunctionMomentumTF) .and. (N_nJM > 0)) then
+        !     !% STEP E
+        !     !% --- provide junction outlet JB velocity estimate
+        !     call junction_main_velocity (ep_JM)
+
+        !         ! call util_utest_CLprint ('------- DDD  after junction_main_velocity')
+        ! end if
+
+        !% STEP F: all diag-notJB are updated on element and faces
+
+        !% --- JB element values to JB faces
+        !%     and CC JBadjacent data to face adjacent storage.
+        !%     Ensures consistency between diagnostic and JB
+        !%     requires cross-image communication
+        if (N_nJM > 0) then 
+            !% STEPS G- S
+            call junction_consistency (istep)
+
+                ! call util_utest_CLprint ('------- EEE  after junction_consistency')
+        end if
+
+        !%======================================
+        !% --- RK2 SOLUTION
+        do istep = 1,2
+            ! print *, ' '
+            ! print *, istep, '= iSTEP /////////////////////////////////////// ISTEP = ',istep
+            ! print *, ' '
+
+            !% --- set the faceR(:,deltaQ) to zero as it is an accumulator for
+            !%     changes both caused by face interpolation and changes caused
+            !%     by junction solution
+            if (N_nJM > 0) then 
+
+                !% STEP rkA
+                faceR(:,fr_DeltaQ) = zeroR
+                elemR(:,er_DeltaQ) = zeroR
+
+
+                !% --- store the junction dQdH used in Backwards Euler
+                Npack => npack_elemP(ep_JB)
+                if (Npack > 0) then     
+                    thisP => elemP(1:Npack,ep_JB)
+
+                    !% STEP rkB
+                    !% --- dQdH for both CC-adjacent and Diag-adjacent JB 
+                    call junction_branch_dQdH (thisP, Npack, istep)
+
+                        !if (istep == 1) 
+                        ! call util_utest_CLprint ('------- FFF  after junction_branch_dQdH')
+                end if
+            end if
+
+            !% STEP rkC
+            !% --- Half-timestep advance on CC for U and UVolume
+            call rk2_step_ETM_CC (istep)  
+
+                ! call util_utest_CLprint ('------- GGG  after rk2_step')
+
+
+
+            !% STEP rkD
+            !% --- Update all CC aux variables
+            !%     Note, these updates CANNOT depend on face values
+            call update_auxiliary_variables_CC (                  &
+                ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
+                .true., .false., dummyIdx)
+                
+                !if (istep == 1) 
+                ! call util_utest_CLprint ('------- HHH  after update_aux...CC step')
+
+            !% STEP rkE
+            !% --- zero and small depth adjustment for elements
+            call adjust_element_toplevel (CC)
+
+                !if (istep == 1) 
+                ! call util_utest_CLprint ('------- HHH.1  after adjust element CC')
+
+
+            !% --- 2nd step advance on junctions
+            if ((istep == 2) .and. (N_nJM > 0)) then 
+                Npack => npack_elemP(ep_JM)
+                thisP => elemP(1:Npack,ep_JM)
+                do mm=1,Npack
+
+                    elemR(thisp(mm),er_Volume) = elemR(thisp(mm),er_Volume_N0)
+                    do kk=1,max_branch_per_node
+                        if (elemSI(thisP(mm)+kk,esi_JunctionBranch_Exists) .ne. oneI) cycle
+                        if (mod(kk,2) == 0) then 
+                            !% --- downstream branch
+                            elemR(thisP(mm),er_Volume) = elemR(thisp(mm),er_Volume) &
+                                - faceR(elemI(thisP(mm)+kk,ei_Mface_dL),fr_Flowrate) * setting%Time%Hydraulics%Dt
+                        else 
+                            !% --- upstream branch
+                            elemR(thisP(mm),er_Volume) = elemR(thisp(mm),er_Volume) &
+                                + faceR(elemI(thisP(mm)+kk,ei_Mface_uL),fr_Flowrate) * setting%Time%Hydraulics%Dt
+                        end if
+                    end do
+
+                    select case (elemSI(thisP(mm),esi_JunctionMain_Type))
+                    case (NoStorage)
+                        print *, 'CODE ERROR: NoStorage type not handled as of 20230424'
+                        call util_crashpoint(55222238)
+                    case (ImpliedStorage)
+                        elemR(thisP(mm),er_Depth) = elemR(thisP(mm),er_Volume) &
+                            / elemSR(thisP(mm),esr_Storage_Plan_Area)
+                        elemR(thisp(mm),er_Head) = elemR(thisP(mm),er_Depth) + elemR(thisP(mm),er_Zbottom)
+                    case (TabularStorage,FunctionalStorage)
+                        print *, 'CODE ERROR: Tabular, functional storage types not handled as of 20230424'
+                        call util_crashpoint(729382083)
+                    case default
+                        print *, 'CODE ERROR: unexpected case default'
+                        call util_crashpoint(918732)
+                    end select
+                end do
+                call update_auxiliary_variables_JMJB ( .true.)
+            end if
+
+            if (N_nJM > 0) then 
+                !% STEP rkF
+                !% --- Sets JB/CC face interpweights are based on flow on both sides of face               
+                Npack => npack_elemP(ep_JB_CC_Adjacent)  
+                thisP => elemP(1:Npack,ep_JB_CC_Adjacent)
+                ! print *, 'Npack JB CC adjacent ', Npack
+                if (Npack > 0) then 
+                    call update_interpweights_JB (thisP, Npack, .false.)
+                end if
+                    !if (istep == 1) 
+                    ! call util_utest_CLprint ('------- JJJ  after update weights JB for JB/CC')
+
+                ! !% STEP rkG
+                ! !% --- Sets JB/Diag face interpweights for flow to minimum (which should be
+                ! !%     same for diagnostic)     
+                ! Npack => npack_elemP(ep_JB_Diag_Adjacent)
+                ! thisP => elemP(1:Npack,ep_JB_Diag_Adjacent)
+                ! if (Npack > 0) then 
+                !     call update_interpweights_JB (thisP, Npack, .true.)
+                ! end if
+
+                !     if (istep == 1) ! call util_utest_CLprint ('------- KKK  after update weights JB for JB/Diag')
+            end if
+
+            !% STEP rkH
+            !% --- interpolate all data to faces
+            !% NOTE 20230419 THIS IS DIFFERENT THAN IN JUNCTION_TOPLEVEL_3
+            sync all
+            call face_interpolation(fp_noBC_IorS, .true., .true., .true., .false., .true.) 
+
+                !if (istep == 1) 
+                ! call util_utest_CLprint ('------- LLL  after face interp')
+
+
+            !% STEP rkE.1 
+            call pack_CC_zeroDepth_interior_faces ()
+            sync all
+            call pack_CC_zeroDepth_shared_faces ()
+
+            call face_zeroDepth_geometry_CC_interior(fp_CC_downstream_is_zero_IorS)
+            call face_zeroDepth_geometry_CC_interior(fp_CC_upstream_is_zero_IorS)
+            call face_zeroDepth_geometry_CC_interior(fp_CC_bothsides_are_zero_IorS)
+
+                !if (istep == 1) 
+                ! ! call util_utest_CLprint ('------- LLL.01  after face zerodepth ')
+
+            call face_zeroDepth_geometry_CC_shared(fp_CC_downstream_is_zero_IorS)
+            call face_zeroDepth_geometry_CC_shared(fp_CC_upstream_is_zero_IorS)
+            call face_zeroDepth_geometry_CC_shared(fp_CC_bothsides_are_zero_IorS)
+
+                !if (istep == 1) 
+                ! ! call util_utest_CLprint ('------- LLL.02  after face zerodepth ')
+
+            call face_zeroDepth_flowrates_CC_interior(fp_CC_downstream_is_zero_IorS)
+            call face_zeroDepth_flowrates_CC_interior(fp_CC_upstream_is_zero_IorS)
+            call face_zeroDepth_flowrates_CC_interior(fp_CC_bothsides_are_zero_IorS)
+
+                !if (istep == 1) 
+                ! ! call util_utest_CLprint ('------- LLL.03  after face zerodepth ')
+
+            call face_zeroDepth_flowrates_CC_shared(fp_CC_downstream_is_zero_IorS)
+            call face_zeroDepth_flowrates_CC_shared(fp_CC_upstream_is_zero_IorS)
+            call face_zeroDepth_flowrates_CC_shared(fp_CC_bothsides_are_zero_IorS)
+
+                !if (istep == 1) 
+                ! ! call util_utest_CLprint ('------- LLL.04  after face zerodepth ')
+
+            call face_flowrate_for_openclosed_elem (ep_CCDiag)
+            !% HACK -- FOR SHARED WE NEED TO IDENTIFY ANY SHARED FACES THAT HAVE AN
+            !% UPSTREAM elemR(:,er_Setting) = 0.0 and set their face Q and V to zero.
+
+               !if (istep == 1) 
+            !    call util_utest_CLprint ('------- MMM  after face zerodepth ')
+
+            !    print *, ' '
+            !    print *, 'FC ',faceR(72,fr_Flowrate_Conservative), faceR(73,fr_Flowrate_Conservative)
+            !    print *, 'F  ',faceR(72,fr_Flowrate), faceR(73,fr_Flowrate)
+            !    print *, 'E  ',elemR(82,er_Flowrate), elemR(83,er_Flowrate)
+            !    print *, faceR(72,fr_Flowrate_Conservative) -faceR(73,fr_Flowrate_Conservative), faceR(72,fr_Flowrate) -faceR(73,fr_Flowrate)
+            !    print *, (elemR(81,er_Volume) - elemR(81,er_Volume_N0)) / setting%Time%Hydraulics%Dt
+            !    print *, ' '
+
+         
+            !%=========================================
+            !% BEGIN JUNCTION SOLUTION
+            if ((istep == 1) .and. (N_nJM > 0)) then 
+                !% --- Backwards-Euler junction computation for Head and flowrate changes
+                Npack => npack_elemP(ep_JM)   
+                thisP => elemP(1:Npack,ep_JM)
+                    !% STEPS J1 - J22
+                    call junction_calculation_4 (thisP, Npack, istep)
+
+                        ! call util_utest_CLprint ('------- NNN after junction calculation_4')
+
+                        ! print *, '  ==========='
+                        ! print *, 'conservation rate '
+                        ! print *, elemR(82,er_Flowrate) - elemR(83,er_Flowrate), (elemR(81,er_Volume) - elemR(81,er_Volume_N0))/setting%Time%Hydraulics%Dt
+                        ! print *, elemR(82,er_Flowrate) - elemR(83,er_Flowrate)  &
+                        !         - (elemR(81,er_Volume) - elemR(81,er_Volume_N0))/setting%Time%Hydraulics%Dt
+                        ! print *, '  ==========='
+
+                    !% STEP J23
+                    !% HACK --- PREISSMANN SLOT -- STEP J23.  May need something here or in junction_calculation_4
+
+                    !% HACK JUNCTION MASS CONSERVATION DELAYED UNTIL JUST BEFORE adjust_vflilter_CC IN OLD CODE
+
+                    !% HACK OLD CODE DID NOT HAVE A SECOND CALL TO JUNCITON MASS CONSERVATION
+                    !% WHICH WAS PROBABLY A PROBLEM!
+
+                        ! print *, ' '
+                        ! print *, 'FC ',faceR(72,fr_Flowrate_Conservative), faceR(73,fr_Flowrate_Conservative)
+                        ! print *, 'F  ',faceR(72,fr_Flowrate), faceR(73,fr_Flowrate)
+                        ! print *, 'E  ',elemR(82,er_Flowrate), elemR(83,er_Flowrate)
+                        ! print *, faceR(72,fr_Flowrate_Conservative) -faceR(73,fr_Flowrate_Conservative), faceR(72,fr_Flowrate) -faceR(73,fr_Flowrate)
+                        ! print *, (elemR(81,er_Volume) - elemR(81,er_Volume_N0)) / setting%Time%Hydraulics%Dt
+                        ! print *, ' '
+
+                    !% STEP J24
+                    !% --- for cases where dH is limited, reset JB flowrates for mass conservation
+                    call junction_mass_conservation (ep_JM, istep)
+
+                        ! call util_utest_CLprint ('------- OOO after junction_mass_conservation ')
+
+                        ! print *, '  ==========='
+                        ! print *, 'conservation rate '
+                        ! print *, elemR(82,er_Flowrate) - elemR(83,er_Flowrate), (elemR(81,er_Volume) - elemR(81,er_Volume_N0))/setting%Time%Hydraulics%Dt
+                        ! print *, elemR(82,er_Flowrate) - elemR(83,er_Flowrate)  &
+                        !         - (elemR(81,er_Volume) - elemR(81,er_Volume_N0))/setting%Time%Hydraulics%Dt
+                        ! print *, '  ==========='
+
+                        ! print *, ' '
+                        ! print *, 'FC ',faceR(72,fr_Flowrate_Conservative), faceR(73,fr_Flowrate_Conservative)
+                        ! print *, 'F  ',faceR(72,fr_Flowrate), faceR(73,fr_Flowrate)
+                        ! print *, 'E  ',elemR(82,er_Flowrate), elemR(83,er_Flowrate)
+                        ! print *, faceR(72,fr_Flowrate_Conservative) -faceR(73,fr_Flowrate_Conservative), faceR(72,fr_Flowrate) -faceR(73,fr_Flowrate)
+                        ! print *, (elemR(81,er_Volume) - elemR(81,er_Volume_N0)) / setting%Time%Hydraulics%Dt
+                        ! print *, ' '
+
+                    !% HACK --OLD CODE HAD UPDATE AUX_JMJB AND ADJUST ELEMENTS BEFORE MASS CONSERVATION
+
+                    !% STEP J25
+                    !% --- update auxiliary variable on JM and JB
+                    !%     true indicates flowrate interp on all JB are set to minimum.
+                    call update_auxiliary_variables_JMJB ( .true.)
+
+                        ! call util_utest_CLprint ('------- PPP  after update_aux ..JMJB')
+
+                        ! print *, ' '
+                        ! print *, 'FC ',faceR(72,fr_Flowrate_Conservative), faceR(73,fr_Flowrate_Conservative)
+                        ! print *, 'F  ',faceR(72,fr_Flowrate), faceR(73,fr_Flowrate)
+                        ! print *, 'E  ',elemR(82,er_Flowrate), elemR(83,er_Flowrate)
+                        ! print *, faceR(72,fr_Flowrate_Conservative) -faceR(73,fr_Flowrate_Conservative), faceR(72,fr_Flowrate) -faceR(73,fr_Flowrate)
+                        ! print *, (elemR(81,er_Volume) - elemR(81,er_Volume_N0)) / setting%Time%Hydraulics%Dt
+                        ! print *, ' '
+
+            end if   
+
+            !% STEP J26
+            !% --- adjust JB and JM for small or zero depth
+            call adjust_element_toplevel (JB)
+            call adjust_element_toplevel (JM)
+
+                ! call util_utest_CLprint ('------- QQQ  after adjust element JB JM')
+
+                ! print *, ' '
+                ! print *, 'FC ',faceR(72,fr_Flowrate_Conservative), faceR(73,fr_Flowrate_Conservative)
+                ! print *, 'F  ',faceR(72,fr_Flowrate), faceR(73,fr_Flowrate)
+                ! print *, 'E  ',elemR(82,er_Flowrate), elemR(83,er_Flowrate)
+                ! print *, faceR(72,fr_Flowrate_Conservative) -faceR(73,fr_Flowrate_Conservative), faceR(72,fr_Flowrate) -faceR(73,fr_Flowrate)
+                ! print *, (elemR(81,er_Volume) - elemR(81,er_Volume_N0)) / setting%Time%Hydraulics%Dt
+                ! print *, ' '
+
+            if ((istep == 1) .and. (N_nJM > 0)) then 
+                !% STEP J27
+                !% --- force the JB values to the faces for upstream (true)
+                !%     and downstream (false) branches.
+                !%     Forces elem  flowrate, deltaQ, and head to face
+                !%     also computes new depths and areas for faces
+                call face_force_JBadjacent_values (ep_JM, .true.)
+                call face_force_JBadjacent_values (ep_JM, .false.)
+
+                    ! call util_utest_CLprint ('------- RRR  after face_force_JBadjacent')
+
+                
+                ! print *, ' '
+                ! print *, 'FC ',faceR(72,fr_Flowrate_Conservative), faceR(73,fr_Flowrate_Conservative)
+                ! print *, 'F  ',faceR(72,fr_Flowrate), faceR(73,fr_Flowrate)
+                ! print *, 'E  ',elemR(82,er_Flowrate), elemR(83,er_Flowrate)
+                ! print *, faceR(72,fr_Flowrate_Conservative) -faceR(73,fr_Flowrate_Conservative), faceR(72,fr_Flowrate) -faceR(73,fr_Flowrate)
+                ! print *, (elemR(81,er_Volume) - elemR(81,er_Volume_N0)) / setting%Time%Hydraulics%Dt
+                ! print *, ' '
+
+            end if
+
+            sync all 
+
+            !% STEP J28
+            !%================================
+            !% --- HACK need to force face data on all JB faces for image containing JB
+            !%     element to the connected image. This is a direct transfer of face
+            !%     Data without transferring ghost element data or interpolatoin
+            !%================================
+
+
+            if ((istep == 1) .and. (N_nJM > 0)) then
+                !% STEP J29, J30
+                !% --- Adjust JB-adjacent CC elements using new face values
+                !%     This fixes flowrate, volume, and geometry for upstream (true)
+                !%     and downstream (false) branches. Calls update_auxiliary_data_CC
+                !%     for associated data
+
+                call junction_CC_for_JBadjacent (ep_CC_UpstreamOfJunction,   istep, .true.)
+                call junction_CC_for_JBadjacent (ep_CC_DownstreamOfJunction, istep, .false.)
+
+                    !if (istep == 1) 
+                    ! call util_utest_CLprint ('------- SSS  after junction_CC_for_JBadjacent')
+
+                    ! print *, ' '
+                    ! print *, 'FC ',faceR(72,fr_Flowrate_Conservative), faceR(73,fr_Flowrate_Conservative)
+                    ! print *, 'F  ',faceR(72,fr_Flowrate), faceR(73,fr_Flowrate)
+                    ! print *, 'E  ',elemR(82,er_Flowrate), elemR(83,er_Flowrate)
+                    ! print *, faceR(72,fr_Flowrate_Conservative) -faceR(73,fr_Flowrate_Conservative), faceR(72,fr_Flowrate) -faceR(73,fr_Flowrate)
+                    ! print *, (elemR(81,er_Volume) - elemR(81,er_Volume_N0)) / setting%Time%Hydraulics%Dt
+                    ! print *, ' '
+
+                ! if (N_diag > 0) then
+                ! CANNOT USE THIS BECAUSE YOU MIGHT HAVE JUNCTIONS ON BOTH SIDES OF
+                ! A DIAGNOSTIC WHICH MEANS YOU CANNOT RESET THE FAR FACE. INSTEAD WE
+                !% MUST CHANGE THE LOCAL JUNCTION TO MATCH THE DIAGNOSTIC.
+                !         !% --- set conservative fluxes for JB/Diag
+                !     !% --- Adjust JB-adjacent Diag elements and faces using new face values
+                !     !%     This fixes flowrate only. Note that this changes both JB/Diag
+                !     !%     faces and the non-JB face of the Diag element. This ensures that
+                !     !%     the JB face velocity from the junction solution is propagated through
+                !     !%     the entire Diag element to its opposite face.
+                !     call junction_Diag_for_JBadjacent (ep_Diag_UpstreamOfJunction,   istep, .true.)
+                !     call junction_Diag_for_JBadjacent (ep_Diag_DownstreamOfJunction, istep, .false.)
+
+                !         call util_utest_CLprint ('------- TTT  after junction_Diag_for_JBadjacent')
+
+                !         print *, ' '
+                !         print *, 'FC ',faceR(72,fr_Flowrate_Conservative), faceR(73,fr_Flowrate_Conservative)
+                !         print *, 'F  ',faceR(72,fr_Flowrate), faceR(73,fr_Flowrate)
+                !         print *, 'E  ',elemR(82,er_Flowrate), elemR(83,er_Flowrate)
+                !         print *, faceR(72,fr_Flowrate_Conservative) -faceR(73,fr_Flowrate_Conservative), faceR(72,fr_Flowrate) -faceR(73,fr_Flowrate)
+                !         print *, (elemR(81,er_Volume) - elemR(81,er_Volume_N0)) / setting%Time%Hydraulics%Dt
+                !         print *, ' '
+                ! end if
+
+                !% HACK OLD CODE HAD adjust_Face_toplevel () called here in junction_toplevel_3
+
+            end if
+            !% END JUNCTION SOLUTION
+            !%======================================
+
+            ! print *, ' '
+            ! print *, 'FC ',faceR(72,fr_Flowrate_Conservative), faceR(73,fr_Flowrate_Conservative)
+            ! print *, 'F  ',faceR(72,fr_Flowrate), faceR(73,fr_Flowrate)
+            ! print *, 'E  ',elemR(82,er_Flowrate), elemR(83,er_Flowrate)
+            ! print *, faceR(72,fr_Flowrate_Conservative) -faceR(73,fr_Flowrate_Conservative), faceR(72,fr_Flowrate) -faceR(73,fr_Flowrate)
+            ! print *, (elemR(81,er_Volume) - elemR(81,er_Volume_N0)) / setting%Time%Hydraulics%Dt
+            ! print *, ' '
+
+            !% HACK OLD CODE HAD CALL TO ALL face INTERPOLATION AFTER junction_toplevel_3, then 
+            !% call to adjust-face_toplevel(fp_noBC_IorS)
+
+
+            !% STEP rkJ
+            sync all
+
+            !% STEP rkK
+            !%================================  
+            !% HACK -- need to force flowrate data push from any fp_Diag face on the image 
+            !% containing the diagnostic element to the associated face on the image that
+            !% contains adjacent element (i.e., either CC or JB)
+            !%================================
+
+            ! if (N_diag > 0) then
+            !     !% STEP rkL
+            !     !% --- Adjust Velocities on all Diag faces. The real target for this
+            !     !%     is the faces of a Diag where the Diag is adjacent ot a JB and its 
+            !     !%     non-adjacent face has flowrate changed for mass conservation.
+            !     call face_velocities(fp_Diag_all, .true.)
+
+            !         if (istep == 1) ! call util_utest_CLprint ('------- VVV  after face velocities')
+            ! end if
+
+            !% STEP rkM
+            !% --- Filter flowrates to remove grid-scale checkerboard
+            call adjust_Vfilter_CC () !% brhADDED 20230418
+
+
+            !% HACK -- for better coding, change the rk2_store_conservative call to use the
+            !% correct fp_... column as the argument
+
+            if (istep == 1) then 
+
+                !% STEP rkN
+                !% -- the conservative fluxes from N to N_1 on CC are stored for CC and Diag
+                !%    that are NOT adjacent to JB
+                !call rk2_store_conservative_fluxes (CCDiag) 
+                call rk2_store_conservative_fluxes (ALL) 
+
+                    ! call util_utest_CLprint ('------- MMM  after  step 1 store conservative fluxes all')
+            end if
+
+            ! print *, ' '
+            ! print *, 'FC ',faceR(72,fr_Flowrate_Conservative), faceR(73,fr_Flowrate_Conservative)
+            ! print *, 'F  ',faceR(72,fr_Flowrate), faceR(73,fr_Flowrate)
+            ! print *, 'E  ',elemR(82,er_Flowrate), elemR(83,er_Flowrate)
+            ! print *, faceR(72,fr_Flowrate_Conservative) -faceR(73,fr_Flowrate_Conservative), faceR(72,fr_Flowrate) -faceR(73,fr_Flowrate)
+            ! print *, (elemR(81,er_Volume) - elemR(81,er_Volume_N0)) / setting%Time%Hydraulics%Dt
+            ! print *, ' '
+
+            !% NOTE CONSERVATIVE FLUX FOR JB IS FIXED IN junction_CC_for_JBadjacent
+            ! if ((N_nJM > 0) .and. (istep == 2)) then 
+            !     !% STEP rkO
+            !     !% --- store conservative fluxes on JB and Diag faces. Note that the CC/CC and
+            !     !%     CC/Diag faces have flowrates set in the first RK2 step. Here we are 
+            !     !%     getting the final correction since the volume in JM  at the end of the
+            !     !%     junction correction is set from er_Volume_N0 in junction_update_Qdependent_values
+            !     !%     and the volumes/flowrates in CC adjacent to JB and JBDiag have been adjusted
+            !     !%     for the JM/JB solution.
+            !     call rk2_store_conservative_fluxes (JBDiag) 
+
+            !         call util_utest_CLprint ('------- UUU  after step 2 store conservative flux JBDiag')
+            ! end if
+
+
+            ! !% STEP rkP
+            ! !% --- reset the overflow counter (we only save conservation in the 2nd step)
+            ! if (istep == 1) then 
+            !     elemR(:,er_VolumeOverFlow) = zeroR
+            !     elemR(:,er_VolumeArtificialInflow) = zeroR 
+            ! end if
+
+            !if (istep == 1) 
+            ! call util_utest_CLprint ('------- VVV end of RK step')
+
+
+        end do
+
+        ! call util_utest_CLprint ('========== ZZZ  end of RK2 ============================')
+
+    end subroutine rk2_toplevel_ETM_6
+!%
+!%==========================================================================
 !%==========================================================================
 !%
     subroutine rk2_toplevel_ETM_5

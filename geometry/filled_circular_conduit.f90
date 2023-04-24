@@ -7,7 +7,6 @@ module filled_circular_conduit
     use define_xsect_tables
     use circular_conduit, only: circular_get_normalized_depth_from_area_analytical
     use xsect_tables
-    use utility, only: util_CLprint
 
     implicit none
 

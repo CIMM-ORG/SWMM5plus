@@ -8,7 +8,7 @@ module face
     use geometry
     use jump
     use utility_profiler
-    use utility, only: util_sign_with_ones, util_CLprint, util_syncwrite
+    use utility, only: util_sign_with_ones, util_syncwrite
     use utility_crash, only: util_crashpoint
    ! use utility_unit_testing, only: util_utest_CLprint
 
@@ -317,14 +317,10 @@ module face
 
         if ((N_nBCup > 0) .or. (N_nJ1 > 0)) call face_interpolation_upBC(isBConly)
 
-            call util_CLprint ('    face after face_interpolation_upBC')
-
         !% brh20211211 MOVED -- this is an element update
         !rm if (N_nBClat > 0) call face_interpolation_latBC_byPack()
 
         if (N_nBCdn > 0) call face_interpolation_dnBC(isBConly)
-
-            call util_CLprint ('    face after face_interpolation_dnBC')
 
         !%-------------------------------------------------------------------
         !% Closing
@@ -371,7 +367,8 @@ module face
             call face_force_JBvalues (fr_Flowrate, er_Flowrate, ei_Mface, thisJM(mm), kstart) 
 
             !% ---add junction JB Delta Q values to face value caused by interpolation
-            call face_add_JBvalues (fr_DeltaQ, er_DeltaQ, ei_Mface, thisJM(mm), kstart) 
+            !call face_add_JBvalues (fr_DeltaQ, er_DeltaQ, ei_Mface, thisJM(mm), kstart) 
+            call face_force_JBvalues (fr_DeltaQ, er_DeltaQ, ei_Mface, thisJM(mm), kstart) 
 
 
             !% --- push JB head to adjacent face

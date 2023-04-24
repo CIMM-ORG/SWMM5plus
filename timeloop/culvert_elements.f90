@@ -7,7 +7,6 @@ module culvert_elements
     use define_settings, only: setting
     use geometry_lowlevel
     use xsect_tables
-    use utility, only: util_CLprint
     use utility_crash, only: util_crashpoint
 
 !%----------------------------------------------------------------------------- 

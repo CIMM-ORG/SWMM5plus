@@ -13,7 +13,6 @@ module pack_mask_arrays
     use define_keys
     use define_settings
     use utility_crash
-    use utility, only: util_CLprint
     
     implicit none
 

@@ -10,7 +10,6 @@ module diagnostic_elements
     use orifice_elements
     use outlet_elements
     use adjust
-    !use utility, only: util_CLprint
     use utility_profiler
     use utility_crash, only: util_crashpoint
     ! use utility_unit_testing, only: util_utest_CLprint
@@ -183,11 +182,16 @@ module diagnostic_elements
             !% replace with do concurrent if every procedure called in this loop can be PURE
             thisType => elemI(thisP(ii),ei_elementType)
 
-            !print *, 'in diagnostic by type ',ii, thisP(ii)
-            !print *, 'case ',reverseKey(thisType)
+            ! print *, ' '
+            ! print *, 'in diagnostic by type ',ii, thisP(ii)
+            ! print *, 'case ',reverseKey(thisType)
+            ! print *, ' '
 
             !% -- store the old flowrate for use in first step of an RK2
             FlowRateOld = FlowRate(thisP(ii))
+            
+            ! print *, 'flowrate old ',FlowRateOld 
+            ! print *, ' '
 
             select case (thisType)
                 
@@ -210,12 +214,18 @@ module diagnostic_elements
                 !return
             end select
 
+            ! print *, ' '
+            ! print *, 'flowrate here  ',Flowrate(thisP(ii))
+
             !% --- prevent an RK2 first step from setting the flowrate to zero
             !%     Otherwise the conservative flux is identically zero for the
             !%     entire time step
             if (((istep == oneI) .or. (istep == zeroI)) .and. (FlowRate(thisP(ii)) .eq. zeroR)) then
                 FlowRate(thisP(ii)) = onehalfR * (FlowRate(thisP(ii)) + FlowRateOld)
             end if
+
+            ! print *, ' '
+            ! print *, 'flowrate end  ',Flowrate(thisP(ii))
         end do
 
     end subroutine diagnostic_by_type

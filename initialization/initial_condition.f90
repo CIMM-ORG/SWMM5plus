@@ -53,7 +53,6 @@ module initial_condition
     use utility_interpolate
     use utility_key_default
     use utility_crash, only: util_crashpoint
-    !use utility, only: util_CLprint
    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
@@ -457,7 +456,6 @@ contains
 
         ! !% --- initialized the max face flowrate
         ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_flowrate_max...'
-        ! !call util_CLprint()
         ! call sleep(1)
         ! call face_flowrate_max_interior (fp_noBC_IorS)
         ! call face_flowrate_max_shared   (fp_noBC_IorS)
@@ -563,6 +561,9 @@ contains
 
         !% find the number of links in an image
         pLink = size(packed_link_idx)
+
+        !% --- initialize the diagnostic element counter
+        N_diag = 0
 
         ! !% allocate an array for packed comparison
         ! allocate(ePack(N_elem(this_image())), stat=allocation_status, errmsg=emsg)
@@ -1130,6 +1131,7 @@ contains
                     elemI(:,ei_HeqType)             = notused
                     elemYN(:,eYN_canSurcharge)      = link%YN(thisLink,lYN_weir_CanSurcharge)
                 endwhere
+                N_diag = N_diag + 1
 
             case (lOrifice)
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -1138,6 +1140,7 @@ contains
                     elemI(:,ei_HeqType)                = notused
                     elemYN(:,eYN_canSurcharge)         = .true.
                 endwhere
+                N_diag = N_diag + 1
 
             case (lPump)
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -1146,6 +1149,7 @@ contains
                     elemI(:,ei_HeqType)                = notused
                     elemYN(:,eYN_canSurcharge)         = .true.
                 endwhere
+                N_diag = N_diag + 1
 
             case (lOutlet)
                 where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
@@ -1154,6 +1158,7 @@ contains
                     elemI(:,ei_HeqType)                = notused
                     elemYN(:,eYN_canSurcharge)         = .true.
                 endwhere
+                !% --- outlets not counted in the diagnostic elements
 
             case default
 
@@ -3890,6 +3895,7 @@ contains
                 !% --- implied storage
                 elemSI(JMidx,esi_JunctionMain_Type)    = ImpliedStorage
                 setting%Junction%SurfaceArea_Minimum   = setting%SWMMinput%SurfaceArea_Minimum
+                !print *, 'JMidx ',JMidx, ' ',trim(reverseKey(elemSI(JMidx,esi_JunctionMain_Type)))
             else 
                 !% --- no storage
                 elemSI(JMidx,esi_JunctionMain_Type)    = NoStorage

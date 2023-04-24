@@ -9,7 +9,6 @@ module geometry_lowlevel
 
     use utility_profiler
     use utility_crash
-    use utility, only: util_CLprint, util_syncwrite
 
     implicit none
 

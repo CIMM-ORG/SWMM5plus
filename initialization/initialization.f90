@@ -169,10 +169,6 @@ contains
         call init_linknode_arrays ()
         call util_crashstop(31973)
 
-
-
-        !print *, 'TEST20230327   AAA',elemR(22,er_Head), elemR(22,er_Zbottom)
-
         !% --- initialize ForceMain settings (determines if FM is used)
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin Forcemain setting"
         call init_ForceMain_setting ()
@@ -186,21 +182,9 @@ contains
         call init_link_transect_array()
         call util_crashstop(42873)
 
-        !print *, 'TEST20230327   BBB',elemR(22,er_Head), elemR(22,er_Zbottom)
-
         !% --- initialize globals that are run-time dependent
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
         call init_globals()
-
-                !% OBSOLETE
-                !% --- allocate storage for subcatchment arrays
-                !% MOVED INTO init_LinkNode_Arrays 20230105
-                ! if (setting%Simulation%useHydrology) then 
-                !     if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin subcatchment allocation"
-                !     call util_allocate_subcatch()
-                ! else    
-                !     !% continue without hydrology    
-                ! end if
         
         !% --- store the SWMM-C curves in equivalent Fortran arrays
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
@@ -213,23 +197,22 @@ contains
             call init_profiles()
         end if
 
-        !print *, 'TEST20230327   CCC',elemR(22,er_Head), elemR(22,er_Zbottom)
-
         !% --- initialize culverts
         if (setting%Output%Verbose) print *, "begin initializing culverts"
         call init_culvert()
 
-        !% --- set water kinematic viscosity
+        !% --- kinematic viscosity for water
         call init_viscosity()
 
-        !%====== NOTE, AFTER THIS POINT WE HAVE INSERTED NEW NODES AND SPLINT LINKS ========
+        !%==================================================================================
+        !%                           PARTITIONING FOR PARALLEL                            
+        !%         AFTER THIS POINT WE HAVE INSERTED NEW NODES AND SPLINT LINKS    
+        !%==================================================================================
     
         !% --- break the link-node system into partitions for multi-processor operation
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
         call init_partitioning()
         call util_crashstop(5297)
-
-        !print *, 'TEST20230327   DDD',elemR(22,er_Head), elemR(22,er_Zbottom)
 
         !% HACK -- need to ensure that any phantom link defined is NOT a culvert.
         !% i.e., the original portion of the link from SWMM must be defined as the
@@ -253,21 +236,20 @@ contains
         end if  
         call util_crashstop(1973)
 
-        !%   NETWORK DEFINITION
+        !%==================================================================================
+        !%                    NETWORK DEFINITION ON EACH PROCESSOR IMAGE
+        !%==================================================================================
         !%   translate the link-node system into a finite-volume network
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin network define"
         call network_define_toplevel ()
         call util_crashstop(3293)
 
-        !print *, 'TEST20230327   EEE',elemR(22,er_Head), elemR(22,er_Zbottom)
-
         !%   LINK-ELEM DATA BROADCAST
+        !%   ensures that all images have the unique data they need from other images after
+        !%   partitioning and network definitoin
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin init linkarray broadcast"
         call init_linkarray_broadcast()
         call util_crashstop(550987)
-
-
-        !print *, 'TEST20230327   FFF',elemR(22,er_Head), elemR(22,er_Zbottom)
 
         !% --- initialize boundary and ghost elem arrays for inter image data transfer
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init boundary ghost"
@@ -299,9 +281,9 @@ contains
         end if
         call util_crashstop(320983)
 
-        
-
-        !% --- OUTPUT
+        !%==================================================================================
+        !%                                   OUTPUT SETUP
+        !%==================================================================================
         if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
 
 
@@ -336,28 +318,26 @@ contains
         end if    
         call init_report()
 
-        !call util_CLprint ('before IC toplevel')
-           !print *, 'zero depth ',setting%ZeroValue%Depth
-
-        ! print *, 'TEST20230327   GGG',elemR(22,er_Head), elemR(22,er_Zbottom)
-
         !%=======================================================================
-        !%---INITIAL CONDITIONS ON ELEMENTS
+        !%                     INITIAL CONDITIONS ON ELEMENTS
         !%=======================================================================
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init IC"
-        !call util_CLprint ('before init_IC_toplevel')
+
+        !% --- initial conditions
         call init_IC_toplevel ()       
         call util_crashstop(4429873)
 
-        ! print *, 'TEST20230327   HHH',elemR(22,er_Head), elemR(22,er_Zbottom)
+        !%-----------------------------------------------------------------------
+        !%        CAN CALL PACKED MAPS ep_... and fp_... AFTER THIS POINT
+        !%-----------------------------------------------------------------------
 
-        !% --- SET CRASH (BLOWUP) LIMITS
+        !% --- initialize blowup limits
         call util_crash_initialize
 
         !% --- allocate other temporary arrays (initialized to null)
         call util_allocate_temporary_arrays()
 
-        !% initialize volume conservation storage for debugging
+        !% --- initialize volume conservation storage for debugging
         elemR(:,er_VolumeConservation) = zeroR    
 
         !% --- setup the multi-level finite-volume output
@@ -391,16 +371,6 @@ contains
         end if
         call util_crashstop(103897)
 
-
-           ! ! call util_utest_CLprint ('at end of initialization')
-           !print *, 'zero depth ',setting%ZeroValue%Depth
-
-
-        ! print *, elemR(93,er_WaveSpeed), elemR(93,er_EllDepth) 
-        ! print *, elemR(93,er_Depth), elemR(93,er_Zbottom), elemR(93,er_Head)
-        ! stop 550987
-
-
         !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
         !% MOVED 20221223 brh to just above diagnostic_toplevel call in
         !% init_IC_toplevel so that controls for pumps are known before
@@ -416,8 +386,6 @@ contains
         !% --- wait for all processors before exiting to the time loop
         sync all
  
-        ! print *, 'TEST20230327   III',elemR(22,er_Head), elemR(22,er_Zbottom)
-        ! stop 229873
         !%------------------------------------------------------------------- 
         !% Closing
             if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_check_setup_conditions"
@@ -446,6 +414,7 @@ contains
 
             if (setting%Debug%File%initialization)  &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"   
+
     end subroutine initialize_toplevel
 !%
 !%==========================================================================

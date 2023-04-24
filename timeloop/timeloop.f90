@@ -211,8 +211,6 @@ contains
             nextHydrologyTime  = interface_get_NewRunoffTime()
         end if
 
-        !    call util_CLprint('in tl_initialize')
-
         !% get the initial dt and the next hydraulics time
         if (setting%Simulation%useHydraulics) then
             call tl_smallestBC_timeInterval ()
@@ -431,8 +429,6 @@ contains
     
                 end if         
     
-                !call util_CLprint ('before reporting')
-
                 ! print *, '7 nextHydrologyTime ', setting%Time%Hydrology%NextTime
                 ! print *, 'doHydraulicsStepYN',doHydraulicsStepYN
                 ! if (.not.doHydraulicsStepYN) then 
@@ -566,14 +562,10 @@ contains
             call util_crashpoint(4482333)
         end if
 
-        !call util_CLprint ('aaa before subcatch runon ---------------------------')
-
         !% --- set the runon flowrate (if any)
         if (any(subcatchYN(:,sYN_hasRunOn))) then
             call tl_subcatchment_set_runon_volume ()
         end if
-       
-        !call util_CLprint ('bbb before interface runon ---------------------------')
         
         ! print *, 'NewRunoffTime ',setting%Time%Hydrology%NextTime
         ! print *, 'Total Duration',setting%SWMMinput%TotalDuration
@@ -590,8 +582,6 @@ contains
             setting%Time%Hydrology%NextTime = interface_get_NewRunoffTime()  
             ! print *, 'setting next hydrology time in tl_hydrology = ',setting%Time%Hydrology%NextTime
 
-            !call util_CLprint ('ccc before get runoof ---------------------------')
-
             !% --- cycle through the subcatchments to get the runoff 
             !%     ii-1 required in arg as C arrays start from 0
            ! print *, 'in tl_hydrology getting runoff'
@@ -602,8 +592,6 @@ contains
         else 
             sRunoff(:) = zeroR
         end if
-
-        !call util_CLprint ('ddd after get runoff ---------------------------')
 
         !%------------------------------------------------------------------   
         !% --- wall clock tick
@@ -637,11 +625,6 @@ contains
             if (setting%Debug%File%timeloop) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
-                ! call util_CLprint ('top of tl_hydraulics')
-
-        !% ---check for where solver needs to switch in dual-solver model
-        !if (setting%Solver%SolverSelect == ETM_AC) call tl_solver_select()
-
         !% --- repack all the dynamic arrays
         call pack_dynamic_arrays()
 
@@ -649,45 +632,10 @@ contains
         !%     so that we can be confident of conservation computation. 
         faceR(:,fr_Flowrate_Conservative) = zeroR  
 
-        !% call the RK2 time-march, depending on the type of solver
-        ! select case (setting%Solver%SolverSelect)
-        ! case (ETM_AC)
-        !     !% dual-method, ETM for open channel, AC for surcharge
-        !     call rk2_toplevel_ETMAC() 
-        ! case (ETM)
-            ! print *, ' '
-            ! print *, ' '
-            ! print *, 'here calling rk2 toplevel------------------------------------------',this_image()
-            ! print *, ' '
-        !    call util_CLprint ()
-
-                !outstring = '    tl_hydraulics 111 '
-                !call util_syncwrite
-
-                ! print *, 'into rk2 ETM'
-            !% ETM with Preissmann slot for surcharge
-
-            call rk2_toplevel_ETM_5()
-            
-                ! print *, 'out of rk2_toplevel_ETM'
-                !outstring = '    tl_hydraulics 222 '
-                !call util_syncwrite
-
-            !call util_CLprint ()
-        ! case (AC)
-        !     !% AC for both open-channel and surcharge
-        !     call rk2_toplevel_AC()
-        ! case DEFAULT
-        !     print *, 'CODE ERROR setting.Solver.SolverSelect type unknown for # ', setting%Solver%SolverSelect
-        !     print *, 'which has key ',trim(reverseKey(setting%Solver%SolverSelect))
-        !     stop 497895
-        ! end select    
-
-            ! call util_CLprint ('before accumulate volume conservation')
+        !% call the RK2 time-march
+        call rk2_toplevel_ETM_6()
 
         call util_accumulate_volume_conservation () 
-
-        ! print *, 'end of ',trim(subroutine_name)
 
         !%-------------------------------------------------------------------
         !% closing

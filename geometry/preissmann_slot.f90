@@ -5,7 +5,6 @@ module preissmann_slot
     use define_keys
     use define_settings, only: setting
     use utility_crash
-    !use utility, only: util_CLprint
     ! use utility_unit_testing, only: util_utest_CLprint
 
 

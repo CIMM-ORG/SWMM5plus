@@ -4,7 +4,6 @@ module roadway_weir_elements
     use define_keys
     use define_indexes
     use define_settings, only: setting
-    use utility, only: util_CLprint
     use utility_crash, only: util_crashpoint
 
 

@@ -7,7 +7,6 @@ module weir_elements
     use common_elements
     use roadway_weir_elements
     use adjust
-    use utility, only: util_CLprint
     use utility_crash, only: util_crashpoint
 
     !%----------------------------------------------------------------------------- 
