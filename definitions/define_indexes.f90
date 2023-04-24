@@ -488,7 +488,7 @@ module define_indexes
         !enumerator :: ep_ALLtm = 1                      !% all time-marching elements
         !enumerator :: ep_CC_AC                      !% all CC elements that are AC
         !enumerator :: ep_CC_ACsurcharged            !% all CC elements that are AC
-        enumerator :: ep_CC                         !% all CC elements
+        enumerator :: ep_CC = 1                        !% all CC elements
         enumerator :: ep_CCDiag                     !% all CC or Diag elements
         enumerator :: ep_CCJB                       !% all CC or JB elements
         enumerator :: ep_CCJM                       !% all CC or JM elements
