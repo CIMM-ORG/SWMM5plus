@@ -1348,7 +1348,7 @@ contains
                     ! print *, 'rounding small    ',newDT   
             elseif ((newDT > onetenthR) .and. (newDT .le. oneR)) then
                 !% --- round down smaller dt to three decimal places
-                newDT = real(floor(newDT * onehundredR),) / onehundredR
+                newDT = real(floor(newDT * onehundredR),8) / onehundredR
                     ! print *, 'rounding smaller  ',newDT
             else 
                 !% do not round smaller values
