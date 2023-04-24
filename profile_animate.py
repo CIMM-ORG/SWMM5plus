@@ -48,7 +48,7 @@ nJm  = 3
 # select what unit to produce the animation to
 unit = 'CFS'
 # save animation
-save_animation = True
+save_animation = False
 # saved animation dpi
 _dpi = 100
 #-----------------------------------------------------------------------------------
