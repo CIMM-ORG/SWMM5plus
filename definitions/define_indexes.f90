@@ -1463,7 +1463,7 @@ module define_indexes
         enumerator :: fp_noBC_IorS = 1              !% faces except boundary and null,
         enumerator :: fp_CC_both_IorS               !% faces with CC on both sides.
         enumerator :: fp_Diag_IorS                  !% faces with adjacent diagnostic element
-        enumerator :: fp_JB_IorS                    !% facse with adjacent JB
+        enumerator :: fp_JB_IorS                    !% faces with adjacent JB
         
         !%--- DYNAMIC  defined for both interior and shared face arrays (...IorS)
         enumerator :: fp_CC_downstream_is_zero_IorS !% CC on both sides and downstream (only) is zero depth

@@ -371,42 +371,42 @@ module face
             call face_force_JBvalues (fr_DeltaQ, er_DeltaQ, ei_Mface, thisJM(mm), kstart) 
 
 
-            !% --- push JB head to adjacent face
-            call face_force_JBvalues (fr_Head_d, er_Head, ei_Mface, thisJM(mm), kstart) 
-            call face_force_JBvalues (fr_Head_u, er_Head, ei_Mface, thisJM(mm), kstart) 
+            ! !% --- push JB head to adjacent face
+            ! call face_force_JBvalues (fr_Head_d, er_Head, ei_Mface, thisJM(mm), kstart) 
+            ! call face_force_JBvalues (fr_Head_u, er_Head, ei_Mface, thisJM(mm), kstart) 
 
-            !% --- fix the face depth and area
-            do kk=kstart,max_branch_per_node,2
-                if (elemSI(thisJM(mm)+kk,esi_JunctionBranch_Exists).ne. oneI) cycle
+            ! !% --- fix the face depth and area
+            ! do kk=kstart,max_branch_per_node,2
+            !     if (elemSI(thisJM(mm)+kk,esi_JunctionBranch_Exists).ne. oneI) cycle
         
-                !% --- get the depth
-                faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_u) &
-                     = faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Head_u)  &
-                     - faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Zbottom)
+            !     !% --- get the depth
+            !     faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_u) &
+            !          = faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Head_u)  &
+            !          - faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Zbottom)
 
-                !% --- use zerovalue%depth if depth is small
-                faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_u) &
-                    = max(faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_u),0.99d0*setting%ZeroValue%Depth)  
+            !     !% --- use zerovalue%depth if depth is small
+            !     faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_u) &
+            !         = max(faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_u),0.99d0*setting%ZeroValue%Depth)  
 
-                !% --- store depth on other side of face
-                faceR(      elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_d) &
-                    = faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_u)
+            !     !% --- store depth on other side of face
+            !     faceR(      elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_d) &
+            !         = faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_u)
 
-                !% --- compute area 
-                if (faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_u) > setting%ZeroValue%Depth) then
+            !     !% --- compute area 
+            !     if (faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_u) > setting%ZeroValue%Depth) then
                     
-                    faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Area_u) &
-                        = geo_area_from_depth_singular (thisJM(mm)+kk,                                   &
-                                                        faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_u), &
-                                                        setting%ZeroValue%Area)
-                else 
-                    faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Area_u) = setting%ZeroValue%Area
-                end if
+            !         faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Area_u) &
+            !             = geo_area_from_depth_singular (thisJM(mm)+kk,                                   &
+            !                                             faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Depth_u), &
+            !                                             setting%ZeroValue%Area)
+            !     else 
+            !         faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Area_u) = setting%ZeroValue%Area
+            !     end if
 
-                !% --- store depth on other side of face
-                faceR(      elemI(thisJM(mm)+kk,ei_Mface),fr_Area_d) &
-                    = faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Area_u)
-            end do
+            !     !% --- store depth on other side of face
+            !     faceR(      elemI(thisJM(mm)+kk,ei_Mface),fr_Area_d) &
+            !         = faceR(elemI(thisJM(mm)+kk,ei_Mface),fr_Area_u)
+            ! end do
 
         end do
 

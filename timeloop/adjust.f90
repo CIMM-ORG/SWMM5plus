@@ -1814,13 +1814,15 @@ module adjust
 
         ! print *, ' '
         ! print *, 'in adjust '
-        ! print *, 'Q before ', elemFlow(54)
-        !print *, 'vCoef ',Vcoef(54)
+        ! print *, 'Q up     ',faceR(mapUp(112),fr_Flowrate)
+        ! print *, 'Q before ', elemFlow(112)
+        ! print *, 'Q dn     ',faceR(mapDn(112),fr_Flowrate)
+        ! print *, 'vCoef    ',Vcoef(112)
 
         !% find the cells that are deep enough to use the V filter
         Vvalue(thisP) = elemDepth(thisP) / (multiplier * smallDepth)
 
-        ! print *, 'VValue0',Vvalue(54)
+        ! print *, 'Vvalue0',Vvalue(112)
 
         where (Vvalue(thisP) > oneR)
             Vvalue(thisP) = oneR
@@ -1829,15 +1831,15 @@ module adjust
             Vcoef(thisP)  = zeroR
         endwhere
 
-        !  print *, 'VVlaue ',Vvalue(54)
-        ! print *, 'Vcoef2 ',Vcoef(54)
+        ! print *, 'VValue ',Vvalue(112)
+        ! print *, 'Vcoef2 ',Vcoef(112)
 
         !% --- eliminate cells that have no upstream inflow  !% TEST 20221021 brh
         where (faceR(mapUp(thisP),fr_Flowrate) .eq. zeroR)
             Vcoef(thisP) = zeroR
         end where
 
-        ! print *, 'Vcoef3 ',Vcoef(54)
+        ! print *, 'Vcoef3 ',Vcoef(112)
 
         !% --- Reducing V-filter when Qlateral is large  20220524brh
         !%     HACK the fraction below should be replaced with a coefficient
@@ -1855,26 +1857,33 @@ module adjust
                         *(util_sign_with_ones_or_zero(faceFlow(mapDn(thisP)) - elemFlow(thisP)))      &
                         * Vvalue(thisP)     
 
-        !  print *, 'Vvalue2', Vvalue(54)                
+        !  print *, 'Vvalue2', Vvalue(112)                
 
         where (Vvalue(thisP) .le. zeroR)
             Vcoef(thisP) = zeroR
         endwhere
 
-        ! print *, 'Vcoef4',Vcoef(54)
+        !% Don't use for supercrititical 20230425
+        where (elemR(thisP,er_FroudeNumber) .ge. oneR)
+            Vcoef(thisP) = zeroR 
+        end where
+
+        ! print *, 'Vcoef4',Vcoef(112)
 
         !% blend the element and face-average flow rates
         elemFlow(thisP)  =  (oneR - Vcoef(thisP)) * elemFlow(thisP) &
                 + Vcoef(thisP) * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
 
-        ! print *, faceflow(mapDn(54)), faceflow(mapUp(54))
-        ! print *, mapUp(54), faceR(mapUp(54),fr_flowrate)
-        ! print *, 'elemFlow ',elemFlow(54)      
+        ! print *, faceflow(mapDn(112)), faceflow(mapUp(112))
+        ! print *, mapUp(112), faceR(mapUp(112),fr_flowrate)
+        ! print *, 'elemFlow ',elemFlow(112)  
+        ! print *, mapDn(112), faceR(mapDn(112),fr_flowrate)
+            
 
         !% reset the velocity      
         elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
 
-        ! print *, 'elemVel ',elemVel(54)
+        ! print *, 'elemVel ',elemVel(112)
 
         ! where (Vvalue(thisP) > zeroR)
         !     !% simple linear interpolation
@@ -1885,7 +1894,7 @@ module adjust
         ! endwhere
                 
         !% reset for high velocity (typically due to small area)
-        where (abs(elemVel(thisP)) > vMax)
+        where ((abs(elemVel(thisP)) > vMax) .and. (Vcoef(thisP) > zeroR))
             elemVel(thisP)  = sign( 0.99d0 * vMax, elemVel(thisP) )
             elemFlow(thisP) = elemVel(thisP) * elemArea(thisP)
         endwhere 

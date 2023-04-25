@@ -42,7 +42,7 @@ module junction_elements
 
     real(8) :: coef1, coef2, coef3, coef4
 
-    integer :: printJM = 81 ! 6 !137 !51 ! 62 !% 51 ! 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
+    integer :: printJM = 101 !81 ! 6 !137 !51 ! 62 !% 51 ! 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
 
     contains
 !%==========================================================================
@@ -56,121 +56,121 @@ module junction_elements
         !%-----------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: istep
-    !         integer, pointer    :: Npack, thisP(:)
-    !         integer :: ii
-    !     !%-----------------------------------------------------------------
-    !     !% Preliminaries
-    !         if (npack_elemP(ep_JM) == 0) return
+        !         integer, pointer    :: Npack, thisP(:)
+        !         integer :: ii
+        !     !%-----------------------------------------------------------------
+        !     !% Preliminaries
+        !         if (npack_elemP(ep_JM) == 0) return
 
-    !         !% --- coefficients in orifice and weir eqquations for overflow
-    !         coef1 = twoR * Cbc * sqrt(setting%Constant%gravity * setting%Constant%pi)
-    !         coef2 = threehalfR * coef1
-    !         coef3 = twothirdR  * sqrt(twoR * setting%Constant%gravity)
-    !         coef4 = threehalfR * coef3        
-    !     !%-----------------------------------------------------------------
-    !     !%-----------------------------------------------------------------
+        !         !% --- coefficients in orifice and weir eqquations for overflow
+        !         coef1 = twoR * Cbc * sqrt(setting%Constant%gravity * setting%Constant%pi)
+        !         coef2 = threehalfR * coef1
+        !         coef3 = twothirdR  * sqrt(twoR * setting%Constant%gravity)
+        !         coef4 = threehalfR * coef3        
+        !     !%-----------------------------------------------------------------
+        !     !%-----------------------------------------------------------------
 
-    !     !% --- set the faceR(:,deltaQ) to zero as it is an accumulator for
-    !     !%     changes both caused by face interpolation and changes caused
-    !     !%     by junction solution
-    !     faceR(:,fr_DeltaQ) = zeroR
+        !     !% --- set the faceR(:,deltaQ) to zero as it is an accumulator for
+        !     !%     changes both caused by face interpolation and changes caused
+        !     !%     by junction solution
+        !     faceR(:,fr_DeltaQ) = zeroR
 
-    !     !% --- Ensures JB interpweights are based on flow on both sides of face
-    !     !%     This is needed so that when Q(JB) = 0 the adjacent element Q
-    !     !%     will be interpolated to the intervening face
+        !     !% --- Ensures JB interpweights are based on flow on both sides of face
+        !     !%     This is needed so that when Q(JB) = 0 the adjacent element Q
+        !     !%     will be interpolated to the intervening face
+                
+        !     Npack => npack_elemP(ep_JB)  
+        !     thisP => elemP(1:Npack,ep_JB)
+        !     call update_interpweights_JB (thisP, Npack, .false.)
+
+        !     !    ! call util_utest_CLprint ('------- DDD08 after update_interpweights_JB')  
             
-    !     Npack => npack_elemP(ep_JB)  
-    !     thisP => elemP(1:Npack,ep_JB)
-    !     call update_interpweights_JB (thisP, Npack, .false.)
+        !     ! print *, ' '
+        !     ! print *,  'resid ',junction_conservation_residual(printJM)
+        !     ! print *, ' '
 
-    !     !    ! call util_utest_CLprint ('------- DDD08 after update_interpweights_JB')  
+        !     !% --- interpolate latest flowrate (only) to face around JB
+        !     !%     Qyn only, skipJump and skipZeroAdjust
+        !     sync all
+        !     call face_interpolation(fp_JB_IorS, .false., .false., .true., .true., .true.) 
+
+        !         call util_utest_CLprint ('------- DDD09 after face_interpolation for JB') 
+
+        !         ! print *, ' '
+        !         ! print *,  'resid ',junction_conservation_residual(printJM)
+        !         ! print *, ' '
+
+        !     !% --- computes JM values for head, VolumeOverflow, Volume, 
+        !     !      and JB values  for head, dQdH, DeltaQ, flowrate, StorageRate, OverflowRate
+        !     Npack => npack_elemP(ep_JM)
+        !     thisP => elemP(1:Npack,ep_JM)
+
+        !    !call junction_calculation_3 (thisP, Npack, istep)
+        !     call junction_calculation_4 (thisP, Npack, istep)
+
+        !        call util_utest_CLprint ('------- DDD10 after junction_calculation') 
+
+        !         ! print *, ' '
+        !         ! print *,  'resid ',junction_conservation_residual(printJM)
+        !         ! print *, ' '
+
+        !     !% --- Update the JM and JB auxiliary variables 
+        !     !%     For JB this is geometry, Fr, C, interpwieghts
+        !     !%     For JM this is depth, storage_plan_area, elldepth
+        !     !%     .true. = force interp weights for Q to favor JB
+        !     call update_auxiliary_variables_JMJB ( .true.)
+
+        !        call util_utest_CLprint ('------- DDD11 after update_auxiliary_variables_JMJB') 
+        !         ! print *, ' '
+        !         ! print *,  'resid ',junction_conservation_residual(printJM)
+        !         ! print *, ' '
+
+        !     call adjust_element_toplevel (JB)
+        !     call adjust_element_toplevel (JM)
         
-    !     ! print *, ' '
-    !     ! print *,  'resid ',junction_conservation_residual(printJM)
-    !     ! print *, ' '
+        !        call util_utest_CLprint ('------- DDD12 after adjust element toplevel') 
+        !         ! print *, ' '
+        !         ! print *,  'resid ',junction_conservation_residual(printJM)
+        !         ! print *, ' '
 
-    !     !% --- interpolate latest flowrate (only) to face around JB
-    !     !%     Qyn only, skipJump and skipZeroAdjust
-    !     sync all
-    !     call face_interpolation(fp_JB_IorS, .false., .false., .true., .true., .true.) 
+        !     call face_force_JBadjacent_values (ep_JM, .true.)
 
-    !         call util_utest_CLprint ('------- DDD09 after face_interpolation for JB') 
+        !         call util_utest_CLprint ('------- DDD13a  after face_force_JB... in junction')
 
-    !         ! print *, ' '
-    !         ! print *,  'resid ',junction_conservation_residual(printJM)
-    !         ! print *, ' '
+        !     call face_force_JBadjacent_values (ep_JM, .false.)
 
-    !     !% --- computes JM values for head, VolumeOverflow, Volume, 
-    !     !      and JB values  for head, dQdH, DeltaQ, flowrate, StorageRate, OverflowRate
-    !     Npack => npack_elemP(ep_JM)
-    !     thisP => elemP(1:Npack,ep_JM)
+        !        call util_utest_CLprint ('------- DDD13b  after face_force_JB... in junction')
+        !         ! print *, ' '
+        !         ! print *, 'resid ',junction_conservation_residual(printJM)
+        !         ! print *, ' '
 
-    !    !call junction_calculation_3 (thisP, Npack, istep)
-    !     call junction_calculation_4 (thisP, Npack, istep)
+        !     if (num_images() > oneI) then 
+        !         print *, 'CODE ERROR: NEED UPDATE FOR FACE CHANGES DURING JB'
+        !         stop 598743
+        !     end if
 
-    !        call util_utest_CLprint ('------- DDD10 after junction_calculation') 
+        !    ! THIS REQURES FACE( fi_deltaQ) must be SET
 
-    !         ! print *, ' '
-    !         ! print *,  'resid ',junction_conservation_residual(printJM)
-    !         ! print *, ' '
+        !     !% --- Adjust JB adjacent elements using new face values
+        !     !%     Fixes flowrate, volume, and geometry
+        !     call junction_CC_for_JBadjacent (ep_CC_UpstreamOfJunction,   istep, .true.)
 
-    !     !% --- Update the JM and JB auxiliary variables 
-    !     !%     For JB this is geometry, Fr, C, interpwieghts
-    !     !%     For JM this is depth, storage_plan_area, elldepth
-    !     !%     .true. = force interp weights for Q to favor JB
-    !     call update_auxiliary_variables_JMJB ( .true.)
-
-    !        call util_utest_CLprint ('------- DDD11 after update_auxiliary_variables_JMJB') 
-    !         ! print *, ' '
-    !         ! print *,  'resid ',junction_conservation_residual(printJM)
-    !         ! print *, ' '
-
-    !     call adjust_element_toplevel (JB)
-    !     call adjust_element_toplevel (JM)
-       
-    !        call util_utest_CLprint ('------- DDD12 after adjust element toplevel') 
-    !         ! print *, ' '
-    !         ! print *,  'resid ',junction_conservation_residual(printJM)
-    !         ! print *, ' '
-
-    !     call face_force_JBadjacent_values (ep_JM, .true.)
-
-    !         call util_utest_CLprint ('------- DDD13a  after face_force_JB... in junction')
-
-    !     call face_force_JBadjacent_values (ep_JM, .false.)
-
-    !        call util_utest_CLprint ('------- DDD13b  after face_force_JB... in junction')
-    !         ! print *, ' '
-    !         ! print *, 'resid ',junction_conservation_residual(printJM)
-    !         ! print *, ' '
-
-    !     if (num_images() > oneI) then 
-    !         print *, 'CODE ERROR: NEED UPDATE FOR FACE CHANGES DURING JB'
-    !         stop 598743
-    !     end if
-
-    !    ! THIS REQURES FACE( fi_deltaQ) must be SET
-
-    !     !% --- Adjust JB adjacent elements using new face values
-    !     !%     Fixes flowrate, volume, and geometry
-    !     call junction_CC_for_JBadjacent (ep_CC_UpstreamOfJunction,   istep, .true.)
-
-    !     call util_utest_CLprint ('------- DDD14a  after junction_CC_forJBadjacent')
+        !     call util_utest_CLprint ('------- DDD14a  after junction_CC_forJBadjacent')
 
 
-    !     call junction_CC_for_JBadjacent (ep_CC_DownstreamOfJunction, istep, .false.)
+        !     call junction_CC_for_JBadjacent (ep_CC_DownstreamOfJunction, istep, .false.)
 
-    !        call util_utest_CLprint ('------- DDD14b  after junction_CC_forJBadjacent')
-    !         ! print *, ' '
-    !         ! print *, 'resid ',junction_conservation_residual(printJM)
-    !         ! print *, ' '
+        !        call util_utest_CLprint ('------- DDD14b  after junction_CC_forJBadjacent')
+        !         ! print *, ' '
+        !         ! print *, 'resid ',junction_conservation_residual(printJM)
+        !         ! print *, ' '
 
-    !     call adjust_face_toplevel(fp_noBC_IorS) !% CHANGING THIS TO fp_noBC_IorS CAUSED PROBLEMS!
+        !     call adjust_face_toplevel(fp_noBC_IorS) !% CHANGING THIS TO fp_noBC_IorS CAUSED PROBLEMS!
 
-    !        call util_utest_CLprint ('------- DDD15  after junction_face toplevel')
-    !         ! print *, ' ', printJM
-    !         ! print *, 'resid ',junction_conservation_residual(printJM)
-    !         ! print *, ' '
+        !        call util_utest_CLprint ('------- DDD15  after junction_face toplevel')
+        !         ! print *, ' ', printJM
+        !         ! print *, 'resid ',junction_conservation_residual(printJM)
+        !         ! print *, ' '
 
     end subroutine junction_toplevel_3
 !%
@@ -519,6 +519,8 @@ module junction_elements
             logical          :: isInflow
             integer          :: ii
 
+            real(8) :: tempfactor !% used for experiments only 20230425
+
         !%------------------------------------------------------------------
         !% Aliases
             crk  => setting%Solver%crk2(istep)
@@ -526,6 +528,7 @@ module junction_elements
             grav => setting%Constant%gravity
         !%------------------------------------------------------------------
 
+        !% --- cycle through branches to set dQdH
         do ii=1,Npack 
             JBidx => thisP(ii)
             JMidx => elemSI(JBidx,esi_JunctionBranch_Main_Index)
@@ -539,6 +542,7 @@ module junction_elements
                 fQ    => faceR(fidx,fr_Flowrate)
                 !bsign = +oneR
                 bsign = -oneR
+                tempfactor = 1.0d0
                 if (fQ .ge. 0) then 
                     isInflow = .true.
                 else 
@@ -552,6 +556,7 @@ module junction_elements
                 fQ    => faceR(fidx,fr_Flowrate)
                 !bsign = -oneR
                 bsign = +oneR
+                tempfactor = 10.0d0
                 if (fQ < 0) then 
                     isInflow = .true.
                 else 
@@ -568,70 +573,10 @@ module junction_elements
 
                 thisArea = fA + Tadj*(fH - Hadj)
                 if (thisArea > zeroR) then 
-                    elemSR(JBidx,esr_JunctionBranch_dQdH) = (bsign * grav * crk * dt / Ladj) * thisArea
+                    elemSR(JBidx,esr_JunctionBranch_dQdH) = tempfactor * (bsign * grav * crk * dt / Ladj) * thisArea
                 else 
-                    elemSR(JBidx,esr_JunctionBranch_dQdH) = (bsign * grav * crk * dt / Ladj) * fA
+                    elemSR(JBidx,esr_JunctionBranch_dQdH) = tempfactor * (bsign * grav * crk * dt / Ladj) * fA
                 end if
-
-               
-                
-                ! !% --- check for zero face area, and reset with JB area
-                ! if (fA .le. zeroR) then 
-                !     thisArea = elemR(JBidx,er_Area)
-                !     if (thisArea .le. zeroR) then 
-                !         !% --- if neither area is positive, set dQdH = 0 and go to next JB
-                !         elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR
-                !         ! print *,'      ZERO AREA '
-                !         ! print *, '     dQdH for JB ',JBidx,elemSR(JBidx,esr_JunctionBranch_dQdH)
-                !         ! print *, ' '
-                !         !cycle 
-                !     else 
-                !         !% continue using JB area
-                !     end if
-                ! else 
-                !     thisArea = fA
-                ! end if
-
-                ! print *, ' thisArea ',thisArea
-                ! !% --- dQdH for adjacent CC element
-                ! !% --- denominstor of the dQdH equation
-                ! denominator = thisArea * Ladj + bsign * twoR * crk * fQ * dt
-
-                ! print *, 'denominator ',denominator
-
-                ! !% --- handle small area by using JBidx area, or set dQdH = 0
-                ! if (denominator .le. zeroR) then 
-                !     if (elemR(JBidx,er_Area) > thisArea) then
-                !         !% --- use JB area for computation
-                !         thisArea = elemR(JBidx,er_Area)
-                !         !% --- reset denominator using JB area
-                !         denominator = thisArea * Ladj + bsign * twoR * crk * fQ * dt
-                !         !% --- check the sign again
-                !         if (denominator  .le. zeroR) then 
-                !             !% --- still negative, then dQdH is zero and go to next JB
-                !             elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR
-                !             !cycle
-                !         else 
-                !             !% --- continue with thisArea
-                !         end if
-                !     else 
-                !         !% --- no other non-zero area available, so set  dQdH is zero and go to next JB
-                !         elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR
-                !         !cycle
-                !     end if
-                ! else
-                !     !% --- continue with thisArea
-                ! end if
-
-                ! print *, 'first  term ', ((crk * dt * thisArea ) / denominator)
-                ! print *, 'second term ',( Tadj * ((fQ/thisArea)**2) - grav * Tadj * (fH - Hadj) - grav * thisArea )
-                ! print *, 'TfQ/A^2     ', Tadj * ((fQ/thisArea)**2)
-                ! print *, 'deta        ', grav * Tadj * (fH - Hadj)
-                ! print *, 'fH, Hadj    ', fH, Hadj
-
-                ! elemSR(JBidx,esr_JunctionBranch_dQdH) = bsign * ((crk * dt * thisArea ) / denominator) &
-                !      * ( Tadj * ((fQ/thisArea)**2) - grav * Tadj * (fH - Hadj) - grav * thisArea )
-                ! !cycle
 
             !% --- Diagnostic element adjacent to JB
             elseif (elemSI(JBidx,esi_JunctionBranch_Diag_adjacent)) then 
@@ -1313,6 +1258,7 @@ module junction_elements
                 !     print *, ' '
                 !     print *, '-----------------------------------------------'
                 !     print *, 'mm, JM ',mm, JMidx
+                !     print *, 'flowrate JB up ', elemR(JMidx+1,er_Flowrate)
                 !     ! print *, 'Aplan ',elemSR(JMidx,esr_Storage_Plan_Area)
                 !     ! print *, 'dt    ',setting%Time%Hydraulics%Dt
                 !     ! print *, 'Qlat  ',elemR(JMidx,er_FlowrateLateral)
@@ -1333,6 +1279,7 @@ module junction_elements
             call junction_branch_getface (elemR(:,er_Flowrate),fr_Flowrate,JMidx,ei_Mface_uL,1)
             call junction_branch_getface (elemR(:,er_Flowrate),fr_Flowrate,JMidx,ei_Mface_dL,2)
 
+    
             !% STEP J4
             !% --- compute net flowrate from branches (both CC and Diag)
             QnetBranches = junction_main_sumBranches (JMidx,er_Flowrate, elemR)
@@ -3159,10 +3106,10 @@ module junction_elements
 
         repeatYN = .true.
 
-        print *, ' '
-        print *, '============FIX CONSERVATION'
-        print *, 'JUNCTION ',JMidx
-        print *, 'starting resid ',resid 
+        ! print *, ' '
+        ! print *, '============FIX CONSERVATION'
+        ! print *, 'JUNCTION ',JMidx
+        ! print *, 'starting resid ',resid 
 
         dQ = zeroR
         dH = zeroR
@@ -3189,7 +3136,7 @@ module junction_elements
             end if
         endif
 
-        print *, '0001  Resid',resid
+        ! print *, '0001  Resid',resid
             
         do while (repeatYN)
 
@@ -3330,7 +3277,7 @@ module junction_elements
                 end if
             end if
 
-            print *, 'dQ : ', dQ
+            ! print *, 'dQ : ', dQ
 
         end do
 
@@ -3359,9 +3306,9 @@ module junction_elements
         !% --- recompute the residual
         resid = junction_conservation_residual (JMidx)
 
-            print *, 'NEW RESIDUAL, overflow ',resid, Qoverflow
+            ! print *, 'NEW RESIDUAL, overflow ',resid, Qoverflow
 
-            print *, abs(resid), localEpsilon
+            ! print *, abs(resid), localEpsilon
 
         if (abs(resid) > localEpsilon) then 
             print *, 'resid ',resid, ' at junction element ',JMidx

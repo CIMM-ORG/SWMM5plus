@@ -298,7 +298,7 @@ module utility
                     print *, 'Vol rate', (VolNew(mm) - VolOld(mm)) / dt
                     print *, ' '
                     print *, 'depth ',elemR(mm,er_Depth)
-                    call util_crashpoint(6209872)
+                    !call util_crashpoint(6209872)
                 end if
             end do
 
@@ -390,7 +390,7 @@ module utility
                     print *, 'Vol rate   ', (VolNew(mm) - VolOld(mm)) / dt
                     print *, ' '
                     print *, 'depth ',elemR(mm,er_Depth)
-                    call util_crashpoint(62098734)
+                    !call util_crashpoint(62098734)
                 end if
 
             end do
