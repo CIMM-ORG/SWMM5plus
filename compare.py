@@ -106,6 +106,7 @@ if(sys.argv[1] == '-h'):
     exit(1)
 
 has_output_path = False
+using_batch_output    = False
 
 # check all the output and settings file path
 if((len(sys.argv)%2) != 0):
@@ -126,30 +127,51 @@ if((len(sys.argv)%2) != 0):
         if(sys.argv[arg_id] == "-o"):
             output_path = arg
             has_output_path = True
+        if(sys.argv[arg_id] == "-b"):
+            using_batch_output = True
+
+            
 else:
     print("incorrect amount of arguments given")
     print("run python comparison_script.py -h for info on using the script")
     exit(1)
 
 # allow for different find of output paths
-if has_output_path:
-    output_dir = output_path+inp_name+"_comparison"
+if has_output_path and using_batch_output:
+    output_dir = output_path
+    output_dir_timestamped = output_dir+'/'
+    plot_dir = output_path+'/'+'plots'
+
+    out_path = output_path+'/' + inp_name+'.out'
+    rpt_path = output_path+'/' + inp_name+'.rpt'
+
+elif has_output_path and using_batch_output == False:
+    output_dir = output_path+inp_name+"_comp"
     output_dir_timestamped = output_dir+'/'+time_now+'/'
     plot_dir = output_dir_timestamped+'/'+inp_name+'_plots'
+    os.system('mkdir '+ output_dir)
+    os.system('cd ' + output_dir)
+    os.system('cd ' + output_dir+ '\n  mkdir '+time_now)
+    out_path = output_dir_timestamped + inp_name +'.out'
+    rpt_path = output_dir_timestamped + inp_name +'.rpt'
 else:
     #setting the output directory
-    output_dir = inp_name+"_comparison"
+    output_dir = inp_name+"_comp"
     output_dir_timestamped = output_dir+'/'+time_now+'/'
+    plot_dir = output_dir_timestamped+'/'+inp_name+'_plots'
+    os.system('mkdir '+ output_dir)
+    os.system('cd ' + output_dir)
+    os.system('cd ' + output_dir+ '\n  mkdir '+time_now)
+
+    out_path = output_dir_timestamped + inp_name +'.out'
+    rpt_path = output_dir_timestamped + inp_name +'.rpt'
 
 # creates new output_dir for the test_case and inside of it a timestamped version 
-os.system('mkdir '+ output_dir)
-os.system('cd ' + output_dir)
-os.system('cd ' + output_dir+ '\n  mkdir '+time_now)
+
 
 # setting the input, output and report paths needed for running SWMM5_C 
 # inp_path = cwd + '/' + sys.argv[1][::len(sys.argv)-1]
-out_path = output_dir_timestamped + inp_name +'.out'
-rpt_path = output_dir_timestamped + inp_name +'.rpt'
+
 
 # run the swmm5_C
 os.system('./swmm5_C '+inp_path+' '+rpt_path+' '+out_path)
@@ -161,6 +183,8 @@ os.environ["FOR_COARRAY_NUM_IMAGES"] = str(num_processors)
 
 if(settings_path==""):
     os.system('./SWMM -i ' + inp_path + ' -o ' + output_dir_timestamped)
+#if(using_batch_output):
+#    os.system('./SWMM -i ' + inp_path + ' -s ' + settings_path + ' -o '+ output_dir)
 else:
     os.system('./SWMM -i ' + inp_path + ' -s ' + settings_path + ' -o '+ output_dir_timestamped)
 
