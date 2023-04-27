@@ -234,8 +234,10 @@ module geometry
         !%     this slot adjustment is based on the head on the JB
         call slot_JB_computation (ep_JM)
 
+
         !% --- JM values
         call geo_assign_JM ()
+
 
         end subroutine geometry_toplevel_JMJB 
 !% 
@@ -1338,7 +1340,6 @@ module geometry
                 ! print *, ' '
                 ! print *, '===================================================='
                 ! print *, 'tM ',tM
-
               
                 !% cycle through the possible junction branches
                 do kk=1,max_branch_per_node
@@ -1758,25 +1759,25 @@ module geometry
                     if (area(tB) > setting%ZeroValue%Area) then 
                         velocity(tB) = flowrate(tB) / area(tB)
 
-                        !% -- set slightly larger depths to velocity consistent with FR=1
-                        if ((area(tB) < tenR * setting%ZeroValue%Area) .or. &
-                            (elldepth(tB) < tenR * setting%ZeroValue%Depth) ) then 
-                            velocity =sign(oneR,flowrate(tB)) * sqrt(grav * elldepth(tB))
-                        end if
+                        ! !% -- set slightly larger depths to velocity consistent with FR=1
+                        ! if ((area(tB) < tenR * setting%ZeroValue%Area) .or. &
+                        !     (elldepth(tB) < tenR * setting%ZeroValue%Depth) ) then 
+                        !     velocity(tB) =sign(oneR,flowrate(tB)) * sqrt(grav * elldepth(tB))
+                        ! end if
 
                     else
                         velocity(tB) = zeroR
                     end if
 
 
-                    if (velocity(tB) > setting%Limiter%Velocity%Maximum) then
-                        velocity(tB) = 0.99d0 * setting%Limiter%Velocity%Maximum 
-                        print *, ' '
-                        print *, 'SMALL VELOCITY JB -- AREA IS ',area(tB), setting%ZeroValue%Area
-                        print *, 'Depth is ',depth(tB), ellDepth(tB)
-                        print *, setting%ZeroValue%Depth
-                        print *, ' '
-                    end if
+                    ! if (velocity(tB) > setting%Limiter%Velocity%Maximum) then
+                    !     velocity(tB) = 0.99d0 * setting%Limiter%Velocity%Maximum 
+                    !     print *, ' '
+                    !     print *, 'SMALL VELOCITY JB -- AREA IS ',area(tB), setting%ZeroValue%Area
+                    !     print *, 'Depth is ',depth(tB), ellDepth(tB)
+                    !     print *, setting%ZeroValue%Depth
+                    !     print *, ' '
+                    ! end if
                             
                 end do
             end do

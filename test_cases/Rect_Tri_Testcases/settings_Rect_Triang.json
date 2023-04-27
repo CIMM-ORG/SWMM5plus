@@ -14,7 +14,7 @@
         },
         "Head" : {
             "ApplyYN" : false,
-            "Approach" : "vshape_surcharge_only",
+            "Approach" : "vshape_surcharge_CC",
             "Coef" : 1.0
         }
     },

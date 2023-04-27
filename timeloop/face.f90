@@ -371,11 +371,16 @@ module face
             call face_force_JBvalues (fr_DeltaQ, er_DeltaQ, ei_Mface, thisJM(mm), kstart) 
 
 
-            ! !% --- push JB head to adjacent face
+            !% 20230427 APPEARS TO WORK BETTER WITHOUT FORCING HEAD
+            !% INSTEAD THE INTERPOLATION WILL DOMINATE
+            !% ALSO CAUSED NONCONSERVATION ISSUES
+            !% --- push JB head to adjacent face
             ! call face_force_JBvalues (fr_Head_d, er_Head, ei_Mface, thisJM(mm), kstart) 
             ! call face_force_JBvalues (fr_Head_u, er_Head, ei_Mface, thisJM(mm), kstart) 
 
-            ! !% --- fix the face depth and area
+            !% --- fix the face depth and area
+            !% 20230427 CAUSES MASS CONSERVATION PROBLEMS IN CASE T007b_RO_Free-dx0010.inp
+            !% eventually leads to segmenation fault
             ! do kk=kstart,max_branch_per_node,2
             !     if (elemSI(thisJM(mm)+kk,esi_JunctionBranch_Exists).ne. oneI) cycle
         

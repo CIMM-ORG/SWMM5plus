@@ -1392,6 +1392,9 @@ module define_indexes
         enumerator :: fr_Length_Adjacent        !% length of adjacent upstream or downstream element
         enumerator :: fr_Zcrest_Adjacent
         enumerator :: fr_dQdH_Adjacent          !% dQdH of JB-adjacent diagnostic element
+        enumerator :: fr_Velocity_Adjacent      !% velocity of an adjacent CC element
+        enumerator :: fr_Froude_Adjacent        !% Froude number of adjacent element
+        enumerator :: fr_Depth_Adjacent         !% Depth of adjacent element
         enumerator :: fr_KJunction_MinorLoss    !% K factor for entrance/exit loss from element adjacent to nJM
         !enumerator :: fr_Length_u               !% length of upstream element
         !enumerator :: fr_Length_d               !% length of downstream element

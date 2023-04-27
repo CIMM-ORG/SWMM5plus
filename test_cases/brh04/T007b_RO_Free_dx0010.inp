@@ -16,7 +16,7 @@ START_TIME           00:00:00
 REPORT_START_DATE    06/14/2021
 REPORT_START_TIME    00:00:00
 END_DATE             06/14/2021
-END_TIME             11:48:00
+END_TIME             12:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -104,10 +104,10 @@ J0                FLOW             "630016810"               FLOW
 ;;-------------- ---------- ---------- ----------
 630016810                   0.0        0.0  ; / 4.353e-01 
 630016810                   0.01       0.0
-630016810                   0.05       4.0
-630016810                   1.0        4.0
-630016810                   1.10       4.0
-630016810                   23.9       4.0
+630016810                   0.05       8.0
+630016810                   1.0        8.0
+630016810                   1.10       0.0
+630016810                   23.9       0.0
 
 [REPORT]
 ;;Reporting Options
@@ -118,5 +118,5 @@ LINKS ALL
 [PROFILES]
 ;; Name    links (5 elements in a row)
 "profile_1" C1 C2 C3 C4 C5
-"profile_1" C1 C2 C3 C4 C5
+"profile_1" C6 C7 C8 C9 C10
 

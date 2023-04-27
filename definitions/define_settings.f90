@@ -109,9 +109,8 @@ module define_settings
     !% setting%Adjust%Head
     type AdjustHeadType
         logical :: ApplyYN = .true.
-        integer :: Approach = vshape_surcharge_only
+        integer :: Approach = vshape_all_CC !% options: vshape_surcharge_CC, vshape_freesurface_CC
         real(8) :: Coef = 1.0d0
-        real(8) :: FullDepthMultiplier = 1.0d0
     end type AdjustHeadType
 
     ! !% setting%Adjust%WidthDepth
@@ -1108,12 +1107,16 @@ contains
         call json%get('Adjust.Head.Approach', c, found)
         if (found) then 
             call util_lower_case(c)
-            if (c == 'vshape_surcharge_only') then
-                setting%Adjust%Head%approach = vshape_surcharge_only    
+            if (c == 'vshape_surcharge_CC') then
+                setting%Adjust%Head%approach = vshape_all_CC    
+            elseif (c == 'vshape_surcharge_CC') then
+                setting%Adjust%Head%approach = vshape_freesurface_CC 
+            elseif (c == 'vshape_surcharge_CC') then
+                    setting%Adjust%Head%approach = vshape_surcharge_CC 
             else
-                write(*,"(A)") 'Error - json file - settingAdjust.Head.Approach of ',trim(c)
+                write(*,"(A)") 'Error - json file - setting.Adjust.Head.Approach of ',trim(c)
                 write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '...vshape_surcharge_only '
+                write(*,"(A)") '...vshape_all_CC, vshape_freesurface_CC, vshape_surcharge_CC '
                 stop 566339
             end if
         end if

@@ -323,7 +323,6 @@ module update
             thisCol_JB             => col_elemP(ep_JB)
           
         !%------------------------------------------------------------------
-
         !% --- geometry for both JM and JB
         call geometry_toplevel_JMJB ()  
        
@@ -346,7 +345,6 @@ module update
             call update_wavespeed_element(thisP)
             call update_Froude_number_element (thisP) 
         end if
-
         
     end subroutine update_auxiliary_variables_JMJB
 ! !%
@@ -646,6 +644,8 @@ module update
         !% wavespeed at modified hydraulic depth (ell)
         wavespeed(thisP) = sqrt(grav * EllDepth(thisP))
 
+
+
         where (elemR(thisP,er_Depth) .le. setting%ZeroValue%Depth)
             w_uQ(thisP) = setting%Limiter%InterpWeight%Maximum
             w_dQ(thisP) = setting%Limiter%InterpWeight%Maximum
@@ -701,6 +701,14 @@ module update
             !% This shouldn't need limiters.
             w_uH(thisP) = onehalfR * length(thisP)
             w_dH(thisP) = onehalfR * length(thisP)
+
+    !% 20230427 TEST SPECIAL HANDLING OF JB ADJACENT -- simple linear
+                !% THIS FIX ALSO REQUIRED IN aux...JMJB
+            ! where (elemYN(thisP,eYN_isElementDownstreamOfJB))
+            !    ! w_uG(thisP) = setting%Limiter%InterpWeight%Minimum
+            !     w_uG(thisP) = onehalfR * length(thisP)
+            !     !w_dG(thisp) = w_dH(thisp)
+            ! endwhere
 
         endwhere
 
@@ -788,6 +796,13 @@ module update
             if (.not. isSlot(jB)) then
                 w_uG(jB) = - onehalfR * length(jB)  / (velocity(jB) - wavespeed(jB))
                 w_dG(jB) = + onehalfR * length(jB)  / (velocity(jB) + wavespeed(jB))
+
+!% TEST LINEAR INTERP 20230427
+                ! if (elemSI(jB,esi_JunctionBranch_IsUpstream .ne. oneI)) then
+                !     !w_dG(jB) = setting%Limiter%InterpWeight%Minimum
+                !     w_dG(jB) =  length(jB)
+                ! end if
+
             else
                 !% --- Preissmann slot
                 w_uG(jB) = - onehalfR * length(jB)  / (velocity(jB) - PCelerity(jB))

@@ -22,15 +22,15 @@ module lowlevel_rk2
 
     private
 
-    public :: ll_alternate_JB
+    !public :: ll_alternate_JB
     public :: ll_continuity_netflowrate_CC
     public :: ll_continuity_netflowrate_JM
     public :: ll_continuity_volume_ETM
-    public :: ll_continuity_volume_CCJM_AC_open
-    public :: ll_continuity_head_CCJM_AC_surcharged
-    public :: ll_continuity_add_gamma_CCJM_AC_open
-    public :: ll_continuity_add_source_CCJM_AC_open
-    public :: ll_continuity_add_source_CCJM_AC_surcharged
+    !public :: ll_continuity_volume_CCJM_AC_open
+    !public :: ll_continuity_head_CCJM_AC_surcharged
+    !public :: ll_continuity_add_gamma_CCJM_AC_open
+    !public :: ll_continuity_add_source_CCJM_AC_open
+    !public :: ll_continuity_add_source_CCJM_AC_surcharged
     public :: ll_momentum_Ksource_CC
     public :: ll_momentum_source_CC
     !public :: ll_momentum_lateral_source_CC
@@ -38,8 +38,8 @@ module lowlevel_rk2
     public :: ll_momentum_gammaFM_CC
     public :: ll_momentum_solve_CC
     public :: ll_momentum_velocity_CC
-    public :: ll_momentum_add_gamma_CC_AC
-    public :: ll_momentum_add_source_CC_AC
+    !public :: ll_momentum_add_gamma_CC_AC
+    !public :: ll_momentum_add_source_CC_AC
     public :: ll_minorloss_friction_gamma_CC
     public :: ll_enforce_flapgate_CC
     public :: ll_store_in_temporary
@@ -199,191 +199,6 @@ module lowlevel_rk2
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_continuity_volume_CCJM_AC_open (outCol,  thisCol, Npack, istep)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Solves continuity for volume in AC method with open channel flow
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: outCol,  thisCol, Npack, istep
-        integer, pointer :: thisP(:)
-        real(8), pointer :: Csource(:), VolumeM(:), Cgamma(:)
-        real(8), pointer :: crk, dtau
-        !%-----------------------------------------------------------------------------
-        ! thisP   => elemP(1:Npack,thisCol)
-        ! VolumeM => elemR(:,er_VolumeLastAC) !% last complete AC solve
-        ! Csource => elemR(:,er_SourceContinuity)
-        ! Cgamma  => elemR(:,er_GammaC)
-        ! crk     => setting%Solver%crk2(istep)
-        ! dtau    => setting%ACmethod%dtau
-        ! !%-----------------------------------------------------------------------------
-
-        ! elemR(thisP,outCol) = &
-        !       ( VolumeM(thisP) + crk * dtau * Csource(thisP) ) &
-        !       / (oneR + crk * dtau * Cgamma(thisP) )
-
-        ! !% reset the source
-        ! Csource(thisP) = zeroR      
-
-    end subroutine ll_continuity_volume_CCJM_AC_open
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine ll_continuity_head_CCJM_AC_surcharged (outCol, thisCol, Npack, istep)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Solves continuity for head in AC method with surcharged flow
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: outCol,  thisCol, Npack, istep
-        integer, pointer :: thisP(:)
-        real(8), pointer :: Csource(:),  Cgamma(:), eHeadM(:)
-        real(8), pointer :: crk, dtau
-        !%-----------------------------------------------------------------------------
-        ! thisP   => elemP(1:Npack,thisCol)
-        ! eHeadM  => elemR(:,er_HeadLastAC)
-        ! Csource => elemR(:,er_SourceContinuity)
-        ! Cgamma  => elemR(:, er_GammaC)
-        ! crk     => setting%Solver%crk2(istep)
-        ! dtau    => setting%ACmethod%dtau
-        ! !%-----------------------------------------------------------------------------
-
-        ! elemR(thisP ,outCol) = &
-        !       ( eHeadM(thisP) + crk * dtau * Csource(thisP ) ) &
-        !       / (oneR + crk * dtau * Cgamma(thisP ) )
-
-        ! !% reset the source
-        ! Csource(thisP) = zeroR      
-
-    end subroutine ll_continuity_head_CCJM_AC_surcharged
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine ll_continuity_add_source_CCJM_AC_open (outCol, thisCol, Npack)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !%
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: outCol,  thisCol, Npack
-        !%-----------------------------------------------------------------------------
-        !%
-
-        !% HACK -- needs revision for packing
-        ! subroutine addto_source_continuity_CCJM_AC_open &
-        !     (inoutCol, thisMaskCol)
-
-        ! integer, intent(in) :: inoutCol, thisMaskCol
-
-        ! real(8), pointer :: ell(:), area(:), dHdA(:), head(:)
-        ! real(8), pointer :: Qnet(:), volumeN0(:), volumeN1(:)
-        ! real(8), pointer :: Fr, a2, a3,
-        ! !%-------------------------------------------------
-        ! a2 => setting%ACmethod%ImplicitCoef%a2
-        ! a3 => setting%ACmethod%ImplicitCoef%a3
-        ! Fr => setting%ACmethod%Froude
-
-        ! Qnet => elemR(:,inoutCol) !% used and updated
-
-        ! ell => elemR(:,er_EllDepth)
-        ! area => elemR(:,er_Area)
-        ! dHdA => elemR(:,er_dHdA)
-        ! head => elemR(:,er_Head)
-
-        ! volumeN0 => elemR(:,Volume_N0)
-        ! volumeN1 => elemR(:,Volume_N1)
-
-        ! where elemM(:,thisMaskCol)
-        !     elemR(:,inoutCol) =  &
-        !         ell(:) *( Fr**twoR) / (area(:) * dHdA(:) + head(:))
-        !         (Qnet(:) - (a2/dt) * volumeN0(:) - (a3/dt) * volumeN1(:))
-        ! endwhere
-
-        print *, "inside ll_continuity_add_source_CCJM_AC_open stub"
-        stop 9366
-
-    end subroutine ll_continuity_add_source_CCJM_AC_open
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine ll_continuity_add_source_CCJM_AC_surcharged (outCol, thisCol, Npack)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Performs a single hydrology step
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: outCol,  thisCol, Npack
-        !%-----------------------------------------------------------------------------
-        !%
-                !% HACK needs to be rewritten for packing
-
-        ! subroutine addto_source_continuity_CCJM_AC_surcharged &
-        !     (inoutCol, thisMaskCol)
-
-        ! integer, intent(in) :: inoutCol, thisMaskCol
-
-        ! real(8), pointer :: ell(:), area(:), Qnet(:)
-        ! real(8), pointer :: Fr
-        ! !%-------------------------------------------------
-        ! Fr => setting%ACmethod%Froude
-
-        ! Qnet => elemR(:,inoutCol) !% used and updated
-
-        ! ell => elemR(:,er_EllDepth)
-        ! area => elemR(:,er_Area)
-
-        ! where elemM(:,thisMaskCol)
-        !     elemR(:,inoutCol) =  &
-        !         (ell(:) * (Fr**twoR) / area(:)) * Qnet(:)
-        ! endwhere
-
-        print *, "inside ll_continuity_add_source_CCMJM_AC_surcharged stub"
-        stop 84792
-
-    end subroutine ll_continuity_add_source_CCJM_AC_surcharged
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine ll_continuity_add_gamma_CCJM_AC_open (outCol, thisCol, Npack)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !%
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: outCol,  thisCol, Npack
-        !%-----------------------------------------------------------------------------
-        !%
-        ! subroutine gamma_continuity_CCJM_AC_open &
-        !     (er_outCol, thisMaskCol)
-
-        ! !% provides the gamma factor for continuity for the open-channel AC solution
-
-        ! integer, intent(in) :: outCol, thisMaskCol
-
-        ! real(8), pointer :: ell(:), area(:), dHdA(:), head(:)
-        ! real(8), pointer :: Fr, a1
-        ! !%-------------------------------------------------
-        ! a1 => setting%ACmethod%ImplicitCoef%a1
-        ! Fr => setting%ACmethod%Froude
-
-        ! ell => elemR(:,er_EllDepth)
-        ! area => elemR(:,er_Area)
-        ! dHdA => elemR(:,er_dHdA)
-        ! head => elemR(:,er_Head)
-
-        ! where elemM(:,thisMaskCol)
-        !     elemR(:,outCol) = &
-        !         ell(:) * (Fr**twoR) * a1  &
-        !         / ( dt * ( area(:) * dHdA(:) + head(:) ) )
-        ! endwhere
-
-        print *, "inside ll_continuity_add_gamma_CCJM_AC_open stub"
-        stop 29870
-
-    end subroutine ll_continuity_add_gamma_CCJM_AC_open
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine ll_momentum_Ksource_CC (outCol, thisCol, Npack)
         !%-----------------------------------------------------------------------------
         !% Description:
@@ -421,6 +236,27 @@ module lowlevel_rk2
         case (T00)
             elemR(thisP,outCol) = grav * ( &
                 ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) * eHead(thisP) )
+
+            ! elemR(thisP,outCol) = grav * ( &
+            !     ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
+            !     * onehalfR * ( fHup(idn(thisP)) + fHdn(iup(thisP)) )  )
+
+            ! elemR(thisP,outCol) = grav * ( &
+            !     ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
+            !     * ( onefourthR * ( fHup(idn(thisP)) + fHdn(iup(thisP)) )  &
+            !        +onehalfR   * eHead(thisP) &
+            !       ) )
+
+
+            ! elemR(thisP,outCol) = grav * ( &
+            !       ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
+            !       * (fHup(idn(thisP)) + fHdn(iup(thisP)) + eHead(thisP) &
+            !         ) / threeR )
+
+!% TEST 20230427
+            ! where (elemYN(thisP,eYN_isElementDownstreamOfJB))
+            !     elemR(thisP,outCol) = 1.1d0 * elemR(thisP,outCol)
+            ! endwhere
 
         case (T10)
             elemR(thisP,outCol) = grav * onehalfR *  ( &
@@ -590,47 +426,6 @@ module lowlevel_rk2
         if (setting%Debug%File%lowlevel_rk2) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine ll_momentum_source_CC
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    ! subroutine ll_momentum_lateral_source_CC (inoutCol, thisCol, Npack)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Adding lateral inflow source term to momentum
-    !     !% EXPERIMENTAL 20220524 -- DO NOT USE
-    !     !%------------------------------------------------------------------
-    !     !% Declarations
-    !         integer, intent(in) :: inoutCol, thisCol, Npack
-    !         real(8), pointer :: Qlat(:), Area(:)
-    !         integer, pointer :: thisP(:)
-    !         character(64)    :: subroutine_name = "ll_momentum_lateral_source_CC"
-    !     !%------------------------------------------------------------------
-    !     !% Preliminaries:
-    !     if (setting%Debug%File%lowlevel_rk2) &
-    !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    !     !%------------------------------------------------------------------
-    !     !% Aliases:
-    !         thisP    => elemP(1:Npack,thisCol)
-    !         Qlat     => elemR(:,er_FlowrateLateral)
-    !         Area     => elemR(:,er_Area)
-    !     !%------------------------------------------------------------------
-
-    !         print *, 'CODE ERROR: momentum lateral source sould not be used'
-    !         stop 559873
-
-    !    ! print *, ' before qlat source ',elemR(780,inoutCol)    
-
-    !     !% HACK the onehalfR should be replaced with a coefficient
-    !     elemR(thisP,inoutCol) = elemR(thisP,inoutCol) &
-    !         + (Qlat(thisP))**2 / Area(thisP)
-
-    !     !print *, ' after qlat source ',elemR(780,inoutCol)     
-    !     !%------------------------------------------------------------------
-    !     !% Closing:
-    !     if (setting%Debug%File%lowlevel_rk2) &
-    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    ! end subroutine ll_momentum_lateral_source_CC
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1084,7 +879,743 @@ module lowlevel_rk2
     end subroutine ll_interpolate_values
 !%
 !%==========================================================================
+
 !%==========================================================================
+!%
+    subroutine ll_get_dynamic_ManningsN (thisP, dpnorm_col) 
+        !%------------------------------------------------------------------
+        !% Description:
+        !% called to get the dynamic ManningsN for a set of points thisP(:)
+        !% the dpnorm_col is the location where the normalized pressured 
+        !% delta is stored.
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: thisP(:), dpnorm_col
+            real(8), pointer    :: dynamic_mn(:), mn(:), dp_norm(:)
+            real(8), pointer    :: length(:)
+            real(8), pointer    :: alpha, beta, dt, pi
+            integer :: ii
+            character(64) :: subroutine_name ='ll_get_dynamic_ManningsN'
+        !%------------------------------------------------------------------  
+        !% Aliases
+            pi           => setting%Constant%pi
+            dt           => setting%Time%Hydraulics%Dt
+            alpha        => setting%Solver%ManningsN%alpha
+            beta         => setting%Solver%ManningsN%beta
+            mn           => elemR(:,er_ManningsN)
+            dynamic_mn   => elemR(:,er_ManningsN_Dynamic)
+            dp_norm      => elemR(:,dpnorm_col)
+            length       => elemR(:,er_Length)
+            
+        !%------------------------------------------------------------------
+            
+       ! dynamic_mn(thisP) =  mn(thisP)
+        ! dynamic_mn(thisP) =  mn(thisP) &
+        !    +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
+
+
+        dynamic_mn(thisP) = mn(thisP)                                     &
+            * (oneR  + alpha                                              &
+                * sin(                                                    &
+                      max(zeroR, onehalfR * pi                                &
+                             * min( (dp_norm(thisP))/beta, oneR )  &
+                          )                                               &
+                    )                                                     &
+                ) 
+            
+
+        print *, 'DYNAMIC MANNINGS NCANNOT BE USED. PRODUCES PROBLEMS AT SMALL DEPTHS.'
+        stop 1093874   
+
+        ! do ii=1,size(thisP)
+        !     if (dynamic_mn(thisP(ii)) > mn(thisP(ii))) then 
+        !         print *, thisP(ii), dynamic_mn(thisP(ii)), dp_norm(thisP(ii))
+        !         !stop 3098745
+        !     end if
+        ! end do
+
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, mn(139), alpha, dt
+        ! print *, dp_norm(139)
+        ! print *, exp(dp_norm(139))
+
+        ! if (dynamic_mn(50) > 0.05d0) then
+        !     print *, dynamic_mn(50)
+        ! end if
+            
+        !% OTHER VERSIONS EXPERIMENTED WITH 20220802
+             ! dynamic_mn(thisP) =  mn(thisP) &
+           !     +  onehundredR *  (dt / volume**(oneninthR)) * (exp(dp_norm(thisP)) - oneR ) 
+
+           ! dynamic_mn(thisP) =  mn(thisP) &
+           !     +  onehundredR *  (dt / ((abs(eHead(thisP) - zBottom(thisP)))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR ) 
+
+    end subroutine ll_get_dynamic_ManningsN
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    ! subroutine ll_alternate_JB (whichTM, istep)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% At the start of this routine, the face values of the JB should
+    !     !% be identical to the elementvalues of the adjacent element. The
+    !     !% values existing on the JB are holdovers from the last term 
+    !     !% the relationship betweent hese face values and the JM are used 
+    !     !% to set the JB values
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !     !%------------------------------------------------------------------
+    !         integer, intent(in) :: whichTM, istep
+    !         integer, pointer    :: thisColP_JM, Npack
+    !         integer, pointer    :: thisP(:), BranchExists(:)
+    !         integer, pointer    :: iFaceUp(:), iFaceDn(:)
+    !         real(8), pointer    :: eHead(:), fHead_u(:), fHead_d(:)
+    !         real(8), pointer    :: eVelocity(:), fVelocity_u(:), fVelocity_d(:)
+    !         real(8), pointer    :: eFlow(:), fFlow(:)
+    !         real(8), pointer    :: eZbottom(:), fZbottom(:)
+    !         real(8), pointer    :: eDepth(:), fDepth_u(:), fDepth_d(:)
+    !         real(8), pointer    :: eArea(:), fArea_u(:), fArea_d(:)
+    !         real(8), pointer    :: eRH(:), eRough(:), eLength(:), eBottomSlope(:)
+    !         real(8), pointer    :: dt, grav, crk(:)
+    !         integer, pointer    :: tM, tFup, tFdn 
+
+    !         real(8) :: dHead,  eHeadU,  headloss, FrFace, gamma, fHead, fDepth
+    !         integer :: ii, kk, tB
+    !     !%------------------------------------------------------------------    
+    !     !% Aliases:
+    !         BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+    !         iFaceUp      => elemI(:,ei_Mface_uL)
+    !         iFaceDn      => elemI(:,ei_Mface_dL)
+    !         eHead        => elemR(:,er_Head)
+    !         fHead_u      => faceR(:,fr_Head_u)
+    !         fHead_d      => faceR(:,fr_Head_d)
+    !         eVelocity    => elemR(:,er_Velocity)
+    !         fVelocity_u  => faceR(:,fr_Velocity_u)
+    !         fVelocity_d  => faceR(:,fr_Velocity_d)
+    !         eFlow        => elemR(:,er_Flowrate)
+    !         fFlow        => faceR(:,fr_Flowrate)
+    !         eZbottom     => elemR(:,er_Zbottom)
+    !         fZbottom     => faceR(:,fr_Zbottom)
+    !         eDepth       => elemR(:,er_Depth)
+    !         fDepth_u     => faceR(:,fr_Depth_u)
+    !         fDepth_d     => faceR(:,fr_Depth_d)
+    !         eRH          => elemR(:,er_HydRadius)
+    !         eRough       => elemR(:,er_ManningsN)
+    !         eArea        => elemR(:,er_Area)
+    !         fArea_u      => faceR(:,fr_Area_u)
+    !         fArea_d      => faceR(:,fr_Area_d)
+    !         eLength      => elemR(:,er_Length)
+    !         eBottomSlope => elemR(:,er_BottomSlope)
+
+    !         crk          => setting%Solver%crk2
+    !         dt           => setting%Time%Hydraulics%Dt
+    !         grav         => setting%Constant%gravity
+
+    !     !%------------------------------------------------------------------
+    !     !% Preliminaries:
+    !         ! select case (whichTM)
+    !         ! case (ALLtm)
+    !         !     thisColP_JM            => col_elemP(ep_JM_ALLtm)
+    !         ! case (ETM)
+    !             thisColP_JM            => col_elemP(ep_JM)
+    !         ! case (AC)
+    !         !     thisColP_JM            => col_elemP(ep_JM_AC)
+    !         ! case default
+    !         !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+    !         !     print *, 'which has key ',trim(reverseKey(whichTM))
+    !         !     stop 7659
+    !         ! end select 
+    !     !%------------------------------------------------------------------
+    
+    !     Npack => npack_elemP(thisColP_JM)
+    !     if (Npack > 0) then
+    !         thisP => elemP(1:Npack,thisColP_JM)
+    !         do ii=1,Npack
+    !             tM => thisP(ii)
+                
+    !             ! print *, ' '
+    !             ! print *, 'JB ii ',ii
+
+    !             !% --- upstream branches
+    !             do kk=1,max_branch_per_node,2
+    !                 tB = tM + kk !% JB branchID 
+
+    !                 if (BranchExists(tB) == oneI) then 
+    !                     tFup => iFaceUp(tB)  !% index of upstream face
+                        
+    !                     !% --- provisional head difference
+    !                     dHead  = fHead_d(tFup) - eHead(tM)
+    !                     fHead  = fHead_d(tFup)
+
+    !                     ! print *, ' '
+    !                     ! print *, fHead_d(tFup), fZbottom(tFup), eZbottom(tB)
+    !                     ! print *, fDepth_d(tFup), fHead_d(tFup)- fZbottom(tFup)
+    !                     ! print *, ' '
+
+    !                     ! print *, 'provisional dHead ',dHead, fDepth_d(tFup)
+                        
+
+    !                     !% --- Check to see if a head based on uniform flow
+    !                     !%     in the upstream should be used for computations
+    !                     ! if (      (fFlow(tFup)      > zeroR) &
+    !                     !     .and. (dHead            > zeroR) &
+    !                     !     .and. (eBottomSlope(tB) > zeroR) &
+    !                     !     .and. (fHead_d(tFup)    > (fZbottom(tFup) + tenR * setting%ZeroValue%Depth))) then
+
+    !                     !     !% --- head at outlet assuming uniformly sloping water surface level
+    !                     !     eHeadU  = fHead_d(tFup) - eBottomSlope(tB) * eLength(tB)
+
+    !                     !     !% --- make sure eHeadU provides a significant depth
+    !                     !     if (eHeadU > (fZbottom(tFup) + onethousandR * setting%ZeroValue%Depth)) then 
+    !                     !         !% --- set values for head and depth based on uniform flow
+    !                     !         fHead  = eHeadU
+    !                     !     else
+    !                     !         !% --- revert to upstream face head and depth
+    !                     !         fHead  = fHead_d(tFup)
+    !                     !     end if
+    !                     ! else 
+    !                     !     !% --- use upstream face head and depth
+    !                     !     fHead  = fHead_d(tFup)
+
+    !                     ! end if
+    !                     !% --- reset the head difference
+    !                     ! dHead = fHead - eHead(tM)
+
+    !                     ! print *, 'final dHead ',dHead
+
+    !                     !% --- handle different head gradient directions
+    !                     if (dHead < zeroR) then
+    !                         !% --- head in JM is larger than upstream branch which implies reversed flow
+    !                         !%     handle different depth conditions
+    !                         if (eHead(tM) .le. (fZbottom(tFup) + setting%ZeroValue%Depth)) then
+    !                             !% --- JM head below the invert of the upstream conduit, so no flow 
+    !                             !%     Head on JB is the conduit face head
+    !                             eHead(tB)     = fHead_d(tFup) 
+    !                             eFlow(tB)     = zeroR
+    !                         else
+    !                             !% --- JM head above invert of the upstream conduit
+    !                             !%     expected flow from JM reversed into the upstream branch
+    !                             !%     handle different velocity conditions
+    !                             if (fFlow(tFup) > zeroR) then 
+    !                                 !% --- nominal flow against the head gradient is not allowed,
+    !                                 !%     set flux to zero and head to JM head
+    !                                 eHead(tB)     = eHead(tM)
+    !                                 eFlow(tB)     = zeroR
+    !                             else 
+    !                                 !% --- negative flow
+    !                                 !%     nominal flow and head gradient are into upstream (reversed)
+    !                                 !%     so use the head at JM for the JB head
+    !                                 eHead(tB)     = eHead(tM)
+    !                                 !%     estimate flowrate driven by head gradient from last value
+    !                                 !%     in JB
+    !                                 gamma = oneR &
+    !                                     +   crk(istep) * dt * grav          &
+    !                                     * abs(eFlow(tB)) * (eRough(tB)**2) &
+    !                                     / (eArea(tB) * eRH(tB)**(fourthirdsR))
+
+    !                                 !% --- note that the dHead is upstream - downstream, which is
+    !                                 !%     negative so flow will be negative
+    !                                 eFlow(tB) = (   eFlow(tB)                                                &
+    !                                                 + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
+    !                                             ) / gamma      
+                                    
+    !                                 !% --- use the larger magnitude (negative) of the downstream face flowrate of this flowrate
+    !                                 eFlow(tB)     = min(eFlow(tB),fFlow(tFup))
+    !                             end if
+    !                         end if
+
+    !                     elseif (dHead > zeroR) then 
+    !                         !% --- head outside is larger than JM
+    !                         !%     so expected flow into JM from upstream branch
+    !                         !%     handle different depth conditions 
+
+    !                         ! print *, 'conditions 1'
+    !                         ! print *, fHead_d(tFup), fZbottom(tFup)
+    !                         ! print *, ' '
+
+    !                         if (fHead .le. (fZbottom(tFup) + setting%ZeroValue%Depth)) then
+    !                             !% --- upstream head lower than invert of conduit at JM connection
+    !                             !%     so no flow into JM
+    !                             eHead(tB)     = fHead
+    !                             eFlow(tB)     = zeroR
+    !                         else 
+    !                             ! print *, 'conditions 2'
+    !                             ! print *, eHead(tM), fZbottom(tFup)
+    !                             !print *, 'slope ', elemR(tB,er_BottomSlope)
+    !                             !print *, ' '
+
+    !                             !% --- expected flow into JM from upstream branch
+    !                             !%     handle waterfall or nonwaterfall conditions
+    !                             if (eHead(tM) < fZbottom(tFup)) then 
+    !                                 !% --- low depth in JM causing waterfall into JM
+    !                                 if (fDepth_d(tFup) > setting%ZeroValue%Depth) then 
+    !                                     !% --- nonzero depth at face
+    !                                     !% --- compute Froude number on face
+    !                                     FrFace =  fVelocity_d(tFup) / (fDepth_d(tFup) * grav)
+    !                                     if (FrFace .ge. oneR) then 
+    !                                         !% --- supercritical flow
+    !                                         !%     use velocity and flowrate of face
+    !                                         !%     Head is smaller up face head or depth reduced by (HACK) 1/2
+    !                                         eHead(tB)     = min(fZbottom(tFup) + onehalfR * fDepth_d(tFup), fHead - onehalfR * fDepth_d(tFup))
+    !                                         !% --- adjustment if above HACK makes head too small
+    !                                         if (eHead(tB) < fZbottom(tFup)) then 
+    !                                             eHead(tB) = eHead(tB) + twoR * setting%ZeroValue%Depth
+    !                                         end if
+    !                                         eFlow(tB)     = fFlow(tFup)
+    !                                     elseif (FrFace < zeroR) then 
+    !                                         !% --- nominally reversed flow
+    !                                         !%     no flow allowed out, head approximated as just above Zbottom
+    !                                         !%     of conduit at connection to JM
+    !                                         eHead(tB)     = fZbottom(tFup) + twoR *setting%ZeroValue%Depth
+    !                                         eFlow(tB)     = zeroR
+    !                                     else
+    !                                         !% --- subctritical flow ending in waterfall
+    !                                         !% --- HACK -- instead of computing the
+    !                                         !%     critical depth we're just increasing
+    !                                         !%     the velocity to get the headloss
+    !                                         eVelocity(tB) = twoR * fVelocity_d(tFup)
+    !                                         headloss      = (eVelocity(tB)**2 )/ (twoR * grav)
+    !                                         eFlow(tB)     = fFlow(tFup)     
+    !                                         !% --- JB head is diminished by head loss, but at least 
+    !                                         !%     half of the head above the bottom of the conduit entrance
+    !                                         eHead(tB) = max(fHead - headloss, fZbottom(tFup) + onehalfR*fDepth_d(tFup))                                        
+    !                                     end if
+    !                                 else 
+    !                                     !% --- zero depth at face 
+    !                                     eHead(tB)     = fHead 
+    !                                     eFlow(tB)     = zeroR
+    !                                 end if
+    !                             else 
+    !                                 ! print *, 'conditions 3'
+    !                                 ! print *, fDepth_d(tFup), setting%ZeroValue%Depth 
+    !                                 ! print *, ' '
+
+    !                                 !% --- non waterfall case with hFace > hJM
+    !                                 !%     handle different depth conditions
+    !                                 if (fDepth_d(tFup) > setting%ZeroValue%Depth) then 
+    !                                     !% --- handle different velocity directions
+
+    !                                     ! print *, 'conditions 4'
+    !                                     ! print *, fVelocity_d(tFup)
+    !                                     ! print *, ' '
+
+    !                                     if (fVelocity_d(tFup) > zeroR) then 
+    !                                         !% --- velocity is nominal downstream direction
+    !                                         !% --- inflow from face
+    !                                         eFlow(tB)     = fFlow(tFup)
+    !                                         headloss      = (fVelocity_d(tFup)**2 )/ (twoR * grav)
+    !                                         !% --- head with limited head loss
+
+    !                                         ! print *, 'tfHead ',fHead, headloss, fZbottom(tFup)
+    !                                         ! print *,  fHead - headloss, fZbottom(tFup) + onehalfR*fDepth_d(tFup)
+    !                                         ! print *, ' '
+
+    !                                         eHead(tB) = max(fHead- headloss, fZbottom(tFup) + onehalfR*fDepth_d(tFup))
+    !                                     else 
+    !                                         !% --- outflow against the head gradient is not allowed
+    !                                         !%     use JM head for JB
+    !                                         eHead(tB)     = eHead(tM) 
+    !                                         eFlow(tB)     = zeroR
+    !                                     end if
+    !                                 else
+    !                                     !% --- zero depth at face 
+    !                                     eHead(tB)     = eHead(tM)
+    !                                     eFlow(tB)     = zeroR
+    !                                 end if
+    !                             end if
+    !                         end if    
+    !                     else
+    !                         !% --- head difference is identically zero
+    !                         eHead(tB)     = eHead(tM)
+    !                         eFlow(tB)     = zeroR 
+    !                     end if
+
+    !                     !% --- set depth 
+    !                     eDepth(tB) = max(eHead(tB) - eZbottom(tB), 0.99d0*setting%ZeroValue%Depth)
+
+    !                     ! print *, ' '
+    !                     ! print *, 'set depth ',fDepth_d(tFup), eDepth(tB)
+    !                     ! print *, ' '
+
+    !                     if ((fFlow(tB) > zeroR) .and. (fDepth_d(tFup) > onethousandR * setting%ZeroValue%Depth)) then 
+    !                         eDepth(tB) = min(eDepth(tB), fDepth_d(tFup))
+    !                     end if
+
+    !                     !% --- set other variables -- note the JB only needs the variables that
+    !                     !%     are used on the face, area, depth, flowrate, head, velocity.
+    !                     eArea(tB)  = geo_area_from_depth_singular(tB,eDepth(tB),setting%ZeroValue%Depth)
+    !                     if ((eFlow(tB) == zeroR) .or. (eArea(tB) .le. setting%ZeroValue%Depth)) then 
+    !                         eVelocity(tB) = zeroR
+    !                     else
+    !                         eVelocity(tB) = sign(max( abs(eFlow(tB)) / eArea(tB), setting%Limiter%Velocity%Maximum),eFlow(tB))
+    !                     end if
+                      
+    !                     !% --- push JB values back to faces
+    !                     fArea_d(tFup)     = eArea(tB)
+    !                     fArea_u(tFup)     = eArea(tB)
+    !                     fDepth_d(tFup)    = eDepth(tB)
+    !                     fDepth_u(tFup)    = eDepth(tB)
+    !                     fFlow(tFup)       = eFlow(tB)
+    !                     fHead_d(tFup)     = eHead(tB)
+    !                     fHead_u(tFup)     = eHead(tB)
+    !                     fVelocity_d(tFup) = eVelocity(tB)
+    !                     fVelocity_u(tFup) = eVelocity(tB)
+    !                 else 
+    !                     cycle
+    !                 end if
+    !             end do
+
+
+    !             !% --- downstream branches
+    !             do kk=2,max_branch_per_node,2
+    !                 tB = tM + kk !% JB branchID 
+
+    !                 if (BranchExists(tB) == oneI) then 
+    !                     tFdn => iFaceDn(tB)  !% index of upstream face
+
+    !                     !% --- provisional head difference
+    !                     dHead = eHead(tM) - fHead_u(tFdn) 
+    !                     fHead = fHead_u(tFdn)
+
+    !                     !% --- Check to see if a head based on uniform flow
+    !                     !%     from downstream to upstream in a reverse slope channel 
+    !                     !%     (an unlikely condition)
+    !                     ! if (      (fFlow(tFdn)     < zeroR) &
+    !                     !     .and. (dHead           < zeroR) &
+    !                     !     .and. (eBottomSlope(tB) < zeroR) &
+    !                     !     .and. (fHead_u(tFdn) > (fZbottom(tFdn))+ tenR*setting%ZeroValue%Depth)) then 
+                                
+    !                     !     !% --- expected head at outlet assuming uniformly sloping water surface level
+    !                     !     !%     note this is a reversed flow, since eBottomSlope < 0 this results
+    !                     !     !%     in a smaller head
+    !                     !     eHeadU  = fHead_u(tFdn) + eBottomSlope(tB) * eLength(tB)
+
+    !                     !     !% --- make sure eHeadU provides a significant depth
+    !                     !     if (eHeadU > (fZbottom(tFdn) + onethousandR * setting%ZeroValue%Depth)) then 
+    !                     !         !% --- set values for head and depth based on uniform flow
+    !                     !         fHead  = eHeadU
+    !                     !     else
+    !                     !         !% --- revert to upstream face head and depth
+    !                     !         fHead  = fHead_u(tFdn)
+    !                     !     end if
+    !                     ! else 
+    !                     !     !% --- use downstream face head and depth
+    !                     !     fHead  = fHead_u(tFdn)
+    !                     ! end if
+    !                     !% --- reset the head difference
+    !                     ! dHead = eHead(tM) - fHead
+
+    !                     ! print *, 'conditions A'
+    !                     ! print *, dHead, eHead(tM), fHead_u(tFdn)
+    !                     ! print *, ' '
+
+    !                     !% --- handle different head gradient directions
+    !                     if (dHead > zeroR) then
+    !                         !% --- head in JM is larger than upstream branch which implies standard flow
+    !                         !%     handle different depth conditions
+
+    !                         ! print *, 'conditions B'
+    !                         ! print *, eHead(tM), fZbottom(tFdn), eHead(tM)-(fZbottom(tFdn) + setting%ZeroValue%Depth)
+    !                         ! print *, ' '
+
+    !                         if (eHead(tM) .le. (fZbottom(tFdn) + setting%ZeroValue%Depth)) then
+    !                             !% --- JM head below the invert of the downstream conduit, so no flow 
+    !                             !%     Head on JB is the conduit face head
+    !                             eHead(tB)     = fHead 
+    !                             eFlow(tB)     = zeroR
+    !                         else
+
+    !                             ! print *, 'conditions C'
+    !                             ! print *, fFlow(tFdn)
+    !                             ! print *, ' '
+
+    !                             !% --- JM head above invert of the upstream conduit
+    !                             !%     expected flow from JM reversed into the upstream branch
+    !                             !%     handle different velocity conditions
+    !                             if (fFlow(tFdn) < zeroR) then 
+    !                                 !% --- nominal flow against the head gradient is not allowed,
+    !                                 !%     set flux to zero and head to JM head
+    !                                 eHead(tB)     = eHead(tM)
+    !                                 eFlow(tB)     = zeroR
+    !                             else 
+    !                                 !% --- nominal flow and head gradient are into downstream 
+    !                                 eHead(tB)     = eHead(tM)
+    !                                 !%     estimate flowrate driven by head gradient from last value
+    !                                 !%     in JB
+    !                                 gamma = oneR &
+    !                                     +   crk(istep) * dt * grav          &
+    !                                     * abs(eFlow(tB)) * (eRough(tB)**2) &
+    !                                     / (eArea(tB) * eRH(tB)**(fourthirdsR))
+
+    !                                 !% --- note that the dHead is upstream - downstream
+    !                                 eFlow(tB) = (   eFlow(tB)                                                &
+    !                                                 + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
+    !                                             ) / gamma      
+                                    
+    !                                 !% --- use the larger of the downstream face flowrate of this flowrate
+    !                                 eFlow(tB)     = max(eFlow(tB),fFlow(tFdn))
+    !                             end if
+    !                         end if
+
+    !                     elseif (dHead < zeroR) then 
+    !                         !% --- head outside is larger than JM
+    !                         !%     so expected flow into JM from downstream branch (reversed flow)
+    !                         !%     handle different depth conditions 
+    !                         if (fHead .le. (fZbottom(tFdn) + setting%ZeroValue%Depth)) then
+    !                             !% --- downstream head lower than invert of conduit at JM connection
+    !                             !%     so no flow into JM
+    !                             eHead(tB)     = fHead
+    !                             eFlow(tB)     = zeroR
+    !                         else 
+    !                             !% --- expected flow into JM from downstream branch
+    !                             !%     handle waterfall or nonwaterfall conditions
+    !                             if (eHead(tM) < fZbottom(tFdn)) then 
+    !                                 !% --- low depth in JM causing waterfall into JM
+    !                                 if (fDepth_u(tFdn) > setting%ZeroValue%Depth) then 
+    !                                     !% --- nonzero depth at face
+    !                                     !% --- compute Froude number on face
+    !                                     FrFace =  fVelocity_u(tFdn) / (fDepth_u(tFdn) * grav)
+    !                                     if (FrFace .le. oneR) then 
+    !                                         !% --- upstream supercritical flow
+    !                                         !%     use velocity and flowrate of face
+    !                                         !%     Head is smaller up face head or depth reduced by (HACK) 1/2
+    !                                         eHead(tB)     = min(fZbottom(tFdn) + onehalfR * fDepth_u(tFdn), fHead - onehalfR * fDepth_u(tFdn))
+    !                                         !% --- adjustment if above HACK makes head too small
+    !                                         if (eHead(tB) < fZbottom(tFdn)) then 
+    !                                             eHead(tB) = eHead(tB) + twoR * setting%ZeroValue%Depth
+    !                                         end if
+    !                                         eFlow(tB)     = fFlow(tFup)
+    !                                     elseif (FrFace > zeroR) then 
+    !                                         !% --- downstream flow not allowed with reversed head gradient
+    !                                         !%     no flow allowed out, head approximated as just above Zbottom
+    !                                         !%     of conduit at connection to JM
+    !                                         eHead(tB)     = fZbottom(tFdn) + twoR *setting%ZeroValue%Depth
+    !                                         eFlow(tB)     = zeroR
+    !                                     else
+    !                                         !% --- negative Froude number > -1
+    !                                         !%     subcritical flow upstream (reverse) ending in waterfall
+    !                                         !% --- HACK -- instead of computing the
+    !                                         !%     critical depth we're just increasing
+    !                                         !%     the velocity to get the headloss
+    !                                         eVelocity(tB) = twoR * fVelocity_u(tFdn)
+    !                                         headloss      = (eVelocity(tB)**2 ) / (twoR * grav)
+    !                                         eFlow(tB)     = fFlow(tFdn)     
+    !                                         !% --- JB head is diminished by head loss, but at least 
+    !                                         !%     half of the head above the bottom of the conduit entrance
+    !                                         eHead(tB) = max(fHead - headloss, fZbottom(tFdn) + onehalfR*fDepth_u(tFdn))                                      
+    !                                     end if
+    !                                 else 
+    !                                     !% --- zero depth at face 
+    !                                     eHead(tB)     = fHead 
+    !                                     eFlow(tB)     = zeroR
+    !                                 end if
+    !                             else 
+    !                                 !% --- non waterfall case with hface > hJM implying possible reverse flow
+    !                                 !%     handle different depth conditions
+    !                                 if (fDepth_u(tFdn) > setting%ZeroValue%Depth) then 
+    !                                     !% --- handle different velocity directions
+    !                                     if (fVelocity_u(tFdn) < zeroR) then 
+    !                                         !% --- velocity is nominal upstream direction
+    !                                         !% --- inflow from face
+    !                                         eFlow(tB)     = fFlow(tFdn)
+    !                                         headloss      = (fVelocity_u(tFdn)**2 ) / (twoR * grav)
+    !                                         !% --- head with limited head loss
+    !                                         eHead(tB) = max(fHead- headloss, fZbottom(tFdn) + onehalfR*fDepth_u(tFdn))
+    !                                     else 
+    !                                         !% --- outflow against the head gradient is not allowed
+    !                                         !%     use JM head for JB
+    !                                         eHead(tB)     = eHead(tM) 
+    !                                         eFlow(tB)     = zeroR
+    !                                     end if
+    !                                 else
+    !                                     !% --- zero depth at face 
+    !                                     eHead(tB)     = eHead(tM)
+    !                                     eFlow(tB)     = zeroR
+    !                                 end if
+    !                             end if
+    !                         end if    
+    !                     else
+    !                         !% --- head difference is identically zero
+    !                         eHead(tB)     = eHead(tM)
+    !                         eFlow(tB)     = zeroR 
+    !                     end if
+
+    !                     eDepth(tB) = max(eHead(tB) - eZbottom(tB), 0.99d0*setting%ZeroValue%Depth)
+    !                     if ((fFlow(tB) < zeroR) .and. (fDepth_u(tFdn) > onethousandR * setting%ZeroValue%Depth)) then 
+    !                         eDepth(tB) = min(eDepth(tB), fDepth_u(tFdn))
+    !                     end if
+
+    !                     !% --- set other variables -- note the JB only needs the variables that
+    !                     !%     are used on the face, area, depth, flowrate, head, velocity.
+    !                     eArea(tB)  = geo_area_from_depth_singular(tB,eDepth(tB),setting%ZeroValue%Depth)
+    !                     if ((eFlow(tB) == zeroR) .or. (eArea(tB) .le. setting%ZeroValue%Depth)) then 
+    !                         eVelocity(tB) = zeroR
+    !                     else
+    !                         eVelocity(tB) = sign(max( abs(eFlow(tB)) / eArea(tB), setting%Limiter%Velocity%Maximum),eFlow(tB))
+    !                     end if
+
+    !                     !% --- push JB values back to faces
+    !                     fArea_d(tFdn)     = eArea(tB)
+    !                     fArea_u(tFdn)     = eArea(tB)
+    !                     fDepth_d(tFdn)    = eDepth(tB)
+    !                     fDepth_u(tFdn)    = eDepth(tB)
+    !                     fFlow(tFdn)       = eFlow(tB)
+    !                     fHead_d(tFdn)     = eHead(tB)
+    !                     fHead_u(tFdn)     = eHead(tB)
+    !                     fVelocity_d(tFdn) = eVelocity(tB)
+    !                     fVelocity_u(tFdn) = eVelocity(tB)
+    !                 else 
+    !                     cycle 
+    !                 end if
+    !             end do
+    !         end do
+    !     end if
+    
+    !     !%------------------------------------------------------------------
+    !     !% Closing:
+
+    ! end subroutine ll_alternate_JB
+
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_enforce_zerodepth_velocity (VelCol, thisCol, Npack)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Enforces zero velocity on any element that is zerodepth, which
+        !% prevents artificially-large thin-layer velocities from affecting
+        !% face interpolation during filling of zerodepth
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: VelCol, thisCol, Npack
+            integer, pointer    :: thisP(:)
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases:
+            thisP => elemP(1:Npack,thisCol)
+        !%------------------------------------------------------------------
+        
+        where (elemYN(thisP,eYN_isZeroDepth))
+            elemR(thisP,VelCol) = zeroR
+        endwhere
+    
+        !%------------------------------------------------------------------
+        !% Closing:
+
+    end subroutine ll_enforce_zerodepth_velocity
+
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_continuity_volume_CCJM_AC_open (outCol,  thisCol, Npack, istep)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Solves continuity for volume in AC method with open channel flow
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: outCol,  thisCol, Npack, istep
+        integer, pointer :: thisP(:)
+        real(8), pointer :: Csource(:), VolumeM(:), Cgamma(:)
+        real(8), pointer :: crk, dtau
+        !%-----------------------------------------------------------------------------
+        ! thisP   => elemP(1:Npack,thisCol)
+        ! VolumeM => elemR(:,er_VolumeLastAC) !% last complete AC solve
+        ! Csource => elemR(:,er_SourceContinuity)
+        ! Cgamma  => elemR(:,er_GammaC)
+        ! crk     => setting%Solver%crk2(istep)
+        ! dtau    => setting%ACmethod%dtau
+        ! !%-----------------------------------------------------------------------------
+
+        ! elemR(thisP,outCol) = &
+        !       ( VolumeM(thisP) + crk * dtau * Csource(thisP) ) &
+        !       / (oneR + crk * dtau * Cgamma(thisP) )
+
+        ! !% reset the source
+        ! Csource(thisP) = zeroR      
+
+    end subroutine ll_continuity_volume_CCJM_AC_open
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_continuity_head_CCJM_AC_surcharged (outCol, thisCol, Npack, istep)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !% Solves continuity for head in AC method with surcharged flow
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: outCol,  thisCol, Npack, istep
+        integer, pointer :: thisP(:)
+        real(8), pointer :: Csource(:),  Cgamma(:), eHeadM(:)
+        real(8), pointer :: crk, dtau
+        !%-----------------------------------------------------------------------------
+        ! thisP   => elemP(1:Npack,thisCol)
+        ! eHeadM  => elemR(:,er_HeadLastAC)
+        ! Csource => elemR(:,er_SourceContinuity)
+        ! Cgamma  => elemR(:, er_GammaC)
+        ! crk     => setting%Solver%crk2(istep)
+        ! dtau    => setting%ACmethod%dtau
+        ! !%-----------------------------------------------------------------------------
+
+        ! elemR(thisP ,outCol) = &
+        !       ( eHeadM(thisP) + crk * dtau * Csource(thisP ) ) &
+        !       / (oneR + crk * dtau * Cgamma(thisP ) )
+
+        ! !% reset the source
+        ! Csource(thisP) = zeroR      
+
+    end subroutine ll_continuity_head_CCJM_AC_surcharged
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine ll_continuity_add_source_CCJM_AC_open (outCol, thisCol, Npack)
+        !%-----------------------------------------------------------------------------
+        !% Description:
+        !%
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: outCol,  thisCol, Npack
+        !%-----------------------------------------------------------------------------
+        !%
+
+        !% HACK -- needs revision for packing
+        ! subroutine addto_source_continuity_CCJM_AC_open &
+        !     (inoutCol, thisMaskCol)
+
+        ! integer, intent(in) :: inoutCol, thisMaskCol
+
+        ! real(8), pointer :: ell(:), area(:), dHdA(:), head(:)
+        ! real(8), pointer :: Qnet(:), volumeN0(:), volumeN1(:)
+        ! real(8), pointer :: Fr, a2, a3,
+        ! !%-------------------------------------------------
+        ! a2 => setting%ACmethod%ImplicitCoef%a2
+        ! a3 => setting%ACmethod%ImplicitCoef%a3
+        ! Fr => setting%ACmethod%Froude
+
+        ! Qnet => elemR(:,inoutCol) !% used and updated
+
+        ! ell => elemR(:,er_EllDepth)
+        ! area => elemR(:,er_Area)
+        ! dHdA => elemR(:,er_dHdA)
+        ! head => elemR(:,er_Head)
+
+        ! volumeN0 => elemR(:,Volume_N0)
+        ! volumeN1 => elemR(:,Volume_N1)
+
+        ! where elemM(:,thisMaskCol)
+        !     elemR(:,inoutCol) =  &
+        !         ell(:) *( Fr**twoR) / (area(:) * dHdA(:) + head(:))
+        !         (Qnet(:) - (a2/dt) * volumeN0(:) - (a3/dt) * volumeN1(:))
+        ! endwhere
+
+        print *, "inside ll_continuity_add_source_CCJM_AC_open stub"
+        stop 9366
+
+    end subroutine ll_continuity_add_source_CCJM_AC_open
+!%
+!%==========================================================================
+    !%==========================================================================
 !%   
     ! subroutine ll_flowrate_and_velocity_JB_2 (whichTM, istep)
         ! !%-----------------------------------------------------------------------------
@@ -1750,633 +2281,124 @@ module lowlevel_rk2
     ! end subroutine ll_flowrate_and_velocity_JB
 !%
 !%==========================================================================
-!%==========================================================================
+    !%==========================================================================
 !%
-    subroutine ll_get_dynamic_ManningsN (thisP, dpnorm_col) 
-        !%------------------------------------------------------------------
+    subroutine ll_continuity_add_source_CCJM_AC_surcharged (outCol, thisCol, Npack)
+        !%-----------------------------------------------------------------------------
         !% Description:
-        !% called to get the dynamic ManningsN for a set of points thisP(:)
-        !% the dpnorm_col is the location where the normalized pressured 
-        !% delta is stored.
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in) :: thisP(:), dpnorm_col
-            real(8), pointer    :: dynamic_mn(:), mn(:), dp_norm(:)
-            real(8), pointer    :: length(:)
-            real(8), pointer    :: alpha, beta, dt, pi
-            integer :: ii
-            character(64) :: subroutine_name ='ll_get_dynamic_ManningsN'
-        !%------------------------------------------------------------------  
-        !% Aliases
-            pi           => setting%Constant%pi
-            dt           => setting%Time%Hydraulics%Dt
-            alpha        => setting%Solver%ManningsN%alpha
-            beta         => setting%Solver%ManningsN%beta
-            mn           => elemR(:,er_ManningsN)
-            dynamic_mn   => elemR(:,er_ManningsN_Dynamic)
-            dp_norm      => elemR(:,dpnorm_col)
-            length       => elemR(:,er_Length)
-            
-        !%------------------------------------------------------------------
-            
-       ! dynamic_mn(thisP) =  mn(thisP)
-        ! dynamic_mn(thisP) =  mn(thisP) &
-        !    +  alpha *  (dt / ((length(thisP))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR )   
+        !% Performs a single hydrology step
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: outCol,  thisCol, Npack
+        !%-----------------------------------------------------------------------------
+        !%
+                !% HACK needs to be rewritten for packing
 
+        ! subroutine addto_source_continuity_CCJM_AC_surcharged &
+        !     (inoutCol, thisMaskCol)
 
-        dynamic_mn(thisP) = mn(thisP)                                     &
-            * (oneR  + alpha                                              &
-                * sin(                                                    &
-                      max(zeroR, onehalfR * pi                                &
-                             * min( (dp_norm(thisP))/beta, oneR )  &
-                          )                                               &
-                    )                                                     &
-                ) 
-            
+        ! integer, intent(in) :: inoutCol, thisMaskCol
 
-        print *, 'DYNAMIC MANNINGS NCANNOT BE USED. PRODUCES PROBLEMS AT SMALL DEPTHS.'
-        stop 1093874   
+        ! real(8), pointer :: ell(:), area(:), Qnet(:)
+        ! real(8), pointer :: Fr
+        ! !%-------------------------------------------------
+        ! Fr => setting%ACmethod%Froude
 
-        ! do ii=1,size(thisP)
-        !     if (dynamic_mn(thisP(ii)) > mn(thisP(ii))) then 
-        !         print *, thisP(ii), dynamic_mn(thisP(ii)), dp_norm(thisP(ii))
-        !         !stop 3098745
-        !     end if
-        ! end do
+        ! Qnet => elemR(:,inoutCol) !% used and updated
 
-        ! print *, 'in ',trim(subroutine_name)
-        ! print *, mn(139), alpha, dt
-        ! print *, dp_norm(139)
-        ! print *, exp(dp_norm(139))
+        ! ell => elemR(:,er_EllDepth)
+        ! area => elemR(:,er_Area)
 
-        ! if (dynamic_mn(50) > 0.05d0) then
-        !     print *, dynamic_mn(50)
-        ! end if
-            
-        !% OTHER VERSIONS EXPERIMENTED WITH 20220802
-             ! dynamic_mn(thisP) =  mn(thisP) &
-           !     +  onehundredR *  (dt / volume**(oneninthR)) * (exp(dp_norm(thisP)) - oneR ) 
+        ! where elemM(:,thisMaskCol)
+        !     elemR(:,inoutCol) =  &
+        !         (ell(:) * (Fr**twoR) / area(:)) * Qnet(:)
+        ! endwhere
 
-           ! dynamic_mn(thisP) =  mn(thisP) &
-           !     +  onehundredR *  (dt / ((abs(eHead(thisP) - zBottom(thisP)))**(onethirdR))) * (exp(dp_norm(thisP)) - oneR ) 
+        print *, "inside ll_continuity_add_source_CCMJM_AC_surcharged stub"
+        stop 84792
 
-    end subroutine ll_get_dynamic_ManningsN
+    end subroutine ll_continuity_add_source_CCJM_AC_surcharged
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine ll_alternate_JB (whichTM, istep)
-        !%------------------------------------------------------------------
+    subroutine ll_continuity_add_gamma_CCJM_AC_open (outCol, thisCol, Npack)
+        !%-----------------------------------------------------------------------------
         !% Description:
-        !% At the start of this routine, the face values of the JB should
-        !% be identical to the elementvalues of the adjacent element. The
-        !% values existing on the JB are holdovers from the last term 
-        !% the relationship betweent hese face values and the JM are used 
-        !% to set the JB values
-        !%------------------------------------------------------------------
-        !% Declarations:
-        !%------------------------------------------------------------------
-            integer, intent(in) :: whichTM, istep
-            integer, pointer    :: thisColP_JM, Npack
-            integer, pointer    :: thisP(:), BranchExists(:)
-            integer, pointer    :: iFaceUp(:), iFaceDn(:)
-            real(8), pointer    :: eHead(:), fHead_u(:), fHead_d(:)
-            real(8), pointer    :: eVelocity(:), fVelocity_u(:), fVelocity_d(:)
-            real(8), pointer    :: eFlow(:), fFlow(:)
-            real(8), pointer    :: eZbottom(:), fZbottom(:)
-            real(8), pointer    :: eDepth(:), fDepth_u(:), fDepth_d(:)
-            real(8), pointer    :: eArea(:), fArea_u(:), fArea_d(:)
-            real(8), pointer    :: eRH(:), eRough(:), eLength(:), eBottomSlope(:)
-            real(8), pointer    :: dt, grav, crk(:)
-            integer, pointer    :: tM, tFup, tFdn 
+        !%
+        !%-----------------------------------------------------------------------------
+        integer, intent(in) :: outCol,  thisCol, Npack
+        !%-----------------------------------------------------------------------------
+        !%
+        ! subroutine gamma_continuity_CCJM_AC_open &
+        !     (er_outCol, thisMaskCol)
 
-            real(8) :: dHead,  eHeadU,  headloss, FrFace, gamma, fHead, fDepth
-            integer :: ii, kk, tB
-        !%------------------------------------------------------------------    
-        !% Aliases:
-            BranchExists => elemSI(:,esi_JunctionBranch_Exists)
-            iFaceUp      => elemI(:,ei_Mface_uL)
-            iFaceDn      => elemI(:,ei_Mface_dL)
-            eHead        => elemR(:,er_Head)
-            fHead_u      => faceR(:,fr_Head_u)
-            fHead_d      => faceR(:,fr_Head_d)
-            eVelocity    => elemR(:,er_Velocity)
-            fVelocity_u  => faceR(:,fr_Velocity_u)
-            fVelocity_d  => faceR(:,fr_Velocity_d)
-            eFlow        => elemR(:,er_Flowrate)
-            fFlow        => faceR(:,fr_Flowrate)
-            eZbottom     => elemR(:,er_Zbottom)
-            fZbottom     => faceR(:,fr_Zbottom)
-            eDepth       => elemR(:,er_Depth)
-            fDepth_u     => faceR(:,fr_Depth_u)
-            fDepth_d     => faceR(:,fr_Depth_d)
-            eRH          => elemR(:,er_HydRadius)
-            eRough       => elemR(:,er_ManningsN)
-            eArea        => elemR(:,er_Area)
-            fArea_u      => faceR(:,fr_Area_u)
-            fArea_d      => faceR(:,fr_Area_d)
-            eLength      => elemR(:,er_Length)
-            eBottomSlope => elemR(:,er_BottomSlope)
+        ! !% provides the gamma factor for continuity for the open-channel AC solution
 
-            crk          => setting%Solver%crk2
-            dt           => setting%Time%Hydraulics%Dt
-            grav         => setting%Constant%gravity
+        ! integer, intent(in) :: outCol, thisMaskCol
 
-        !%------------------------------------------------------------------
-        !% Preliminaries:
-            ! select case (whichTM)
-            ! case (ALLtm)
-            !     thisColP_JM            => col_elemP(ep_JM_ALLtm)
-            ! case (ETM)
-                thisColP_JM            => col_elemP(ep_JM)
-            ! case (AC)
-            !     thisColP_JM            => col_elemP(ep_JM_AC)
-            ! case default
-            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
-            !     print *, 'which has key ',trim(reverseKey(whichTM))
-            !     stop 7659
-            ! end select 
-        !%------------------------------------------------------------------
-    
-        Npack => npack_elemP(thisColP_JM)
-        if (Npack > 0) then
-            thisP => elemP(1:Npack,thisColP_JM)
-            do ii=1,Npack
-                tM => thisP(ii)
-                
-                ! print *, ' '
-                ! print *, 'JB ii ',ii
+        ! real(8), pointer :: ell(:), area(:), dHdA(:), head(:)
+        ! real(8), pointer :: Fr, a1
+        ! !%-------------------------------------------------
+        ! a1 => setting%ACmethod%ImplicitCoef%a1
+        ! Fr => setting%ACmethod%Froude
 
-                !% --- upstream branches
-                do kk=1,max_branch_per_node,2
-                    tB = tM + kk !% JB branchID 
+        ! ell => elemR(:,er_EllDepth)
+        ! area => elemR(:,er_Area)
+        ! dHdA => elemR(:,er_dHdA)
+        ! head => elemR(:,er_Head)
 
-                    if (BranchExists(tB) == oneI) then 
-                        tFup => iFaceUp(tB)  !% index of upstream face
-                        
-                        !% --- provisional head difference
-                        dHead  = fHead_d(tFup) - eHead(tM)
-                        fHead  = fHead_d(tFup)
+        ! where elemM(:,thisMaskCol)
+        !     elemR(:,outCol) = &
+        !         ell(:) * (Fr**twoR) * a1  &
+        !         / ( dt * ( area(:) * dHdA(:) + head(:) ) )
+        ! endwhere
 
-                        ! print *, ' '
-                        ! print *, fHead_d(tFup), fZbottom(tFup), eZbottom(tB)
-                        ! print *, fDepth_d(tFup), fHead_d(tFup)- fZbottom(tFup)
-                        ! print *, ' '
+        print *, "inside ll_continuity_add_gamma_CCJM_AC_open stub"
+        stop 29870
 
-                        ! print *, 'provisional dHead ',dHead, fDepth_d(tFup)
-                        
-
-                        !% --- Check to see if a head based on uniform flow
-                        !%     in the upstream should be used for computations
-                        ! if (      (fFlow(tFup)      > zeroR) &
-                        !     .and. (dHead            > zeroR) &
-                        !     .and. (eBottomSlope(tB) > zeroR) &
-                        !     .and. (fHead_d(tFup)    > (fZbottom(tFup) + tenR * setting%ZeroValue%Depth))) then
-
-                        !     !% --- head at outlet assuming uniformly sloping water surface level
-                        !     eHeadU  = fHead_d(tFup) - eBottomSlope(tB) * eLength(tB)
-
-                        !     !% --- make sure eHeadU provides a significant depth
-                        !     if (eHeadU > (fZbottom(tFup) + onethousandR * setting%ZeroValue%Depth)) then 
-                        !         !% --- set values for head and depth based on uniform flow
-                        !         fHead  = eHeadU
-                        !     else
-                        !         !% --- revert to upstream face head and depth
-                        !         fHead  = fHead_d(tFup)
-                        !     end if
-                        ! else 
-                        !     !% --- use upstream face head and depth
-                        !     fHead  = fHead_d(tFup)
-
-                        ! end if
-                        !% --- reset the head difference
-                        ! dHead = fHead - eHead(tM)
-
-                        ! print *, 'final dHead ',dHead
-
-                        !% --- handle different head gradient directions
-                        if (dHead < zeroR) then
-                            !% --- head in JM is larger than upstream branch which implies reversed flow
-                            !%     handle different depth conditions
-                            if (eHead(tM) .le. (fZbottom(tFup) + setting%ZeroValue%Depth)) then
-                                !% --- JM head below the invert of the upstream conduit, so no flow 
-                                !%     Head on JB is the conduit face head
-                                eHead(tB)     = fHead_d(tFup) 
-                                eFlow(tB)     = zeroR
-                            else
-                                !% --- JM head above invert of the upstream conduit
-                                !%     expected flow from JM reversed into the upstream branch
-                                !%     handle different velocity conditions
-                                if (fFlow(tFup) > zeroR) then 
-                                    !% --- nominal flow against the head gradient is not allowed,
-                                    !%     set flux to zero and head to JM head
-                                    eHead(tB)     = eHead(tM)
-                                    eFlow(tB)     = zeroR
-                                else 
-                                    !% --- negative flow
-                                    !%     nominal flow and head gradient are into upstream (reversed)
-                                    !%     so use the head at JM for the JB head
-                                    eHead(tB)     = eHead(tM)
-                                    !%     estimate flowrate driven by head gradient from last value
-                                    !%     in JB
-                                    gamma = oneR &
-                                        +   crk(istep) * dt * grav          &
-                                        * abs(eFlow(tB)) * (eRough(tB)**2) &
-                                        / (eArea(tB) * eRH(tB)**(fourthirdsR))
-
-                                    !% --- note that the dHead is upstream - downstream, which is
-                                    !%     negative so flow will be negative
-                                    eFlow(tB) = (   eFlow(tB)                                                &
-                                                    + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
-                                                ) / gamma      
-                                    
-                                    !% --- use the larger magnitude (negative) of the downstream face flowrate of this flowrate
-                                    eFlow(tB)     = min(eFlow(tB),fFlow(tFup))
-                                end if
-                            end if
-
-                        elseif (dHead > zeroR) then 
-                            !% --- head outside is larger than JM
-                            !%     so expected flow into JM from upstream branch
-                            !%     handle different depth conditions 
-
-                            ! print *, 'conditions 1'
-                            ! print *, fHead_d(tFup), fZbottom(tFup)
-                            ! print *, ' '
-
-                            if (fHead .le. (fZbottom(tFup) + setting%ZeroValue%Depth)) then
-                                !% --- upstream head lower than invert of conduit at JM connection
-                                !%     so no flow into JM
-                                eHead(tB)     = fHead
-                                eFlow(tB)     = zeroR
-                            else 
-                                ! print *, 'conditions 2'
-                                ! print *, eHead(tM), fZbottom(tFup)
-                                !print *, 'slope ', elemR(tB,er_BottomSlope)
-                                !print *, ' '
-
-                                !% --- expected flow into JM from upstream branch
-                                !%     handle waterfall or nonwaterfall conditions
-                                if (eHead(tM) < fZbottom(tFup)) then 
-                                    !% --- low depth in JM causing waterfall into JM
-                                    if (fDepth_d(tFup) > setting%ZeroValue%Depth) then 
-                                        !% --- nonzero depth at face
-                                        !% --- compute Froude number on face
-                                        FrFace =  fVelocity_d(tFup) / (fDepth_d(tFup) * grav)
-                                        if (FrFace .ge. oneR) then 
-                                            !% --- supercritical flow
-                                            !%     use velocity and flowrate of face
-                                            !%     Head is smaller up face head or depth reduced by (HACK) 1/2
-                                            eHead(tB)     = min(fZbottom(tFup) + onehalfR * fDepth_d(tFup), fHead - onehalfR * fDepth_d(tFup))
-                                            !% --- adjustment if above HACK makes head too small
-                                            if (eHead(tB) < fZbottom(tFup)) then 
-                                                eHead(tB) = eHead(tB) + twoR * setting%ZeroValue%Depth
-                                            end if
-                                            eFlow(tB)     = fFlow(tFup)
-                                        elseif (FrFace < zeroR) then 
-                                            !% --- nominally reversed flow
-                                            !%     no flow allowed out, head approximated as just above Zbottom
-                                            !%     of conduit at connection to JM
-                                            eHead(tB)     = fZbottom(tFup) + twoR *setting%ZeroValue%Depth
-                                            eFlow(tB)     = zeroR
-                                        else
-                                            !% --- subctritical flow ending in waterfall
-                                            !% --- HACK -- instead of computing the
-                                            !%     critical depth we're just increasing
-                                            !%     the velocity to get the headloss
-                                            eVelocity(tB) = twoR * fVelocity_d(tFup)
-                                            headloss      = (eVelocity(tB)**2 )/ (twoR * grav)
-                                            eFlow(tB)     = fFlow(tFup)     
-                                            !% --- JB head is diminished by head loss, but at least 
-                                            !%     half of the head above the bottom of the conduit entrance
-                                            eHead(tB) = max(fHead - headloss, fZbottom(tFup) + onehalfR*fDepth_d(tFup))                                        
-                                        end if
-                                    else 
-                                        !% --- zero depth at face 
-                                        eHead(tB)     = fHead 
-                                        eFlow(tB)     = zeroR
-                                    end if
-                                else 
-                                    ! print *, 'conditions 3'
-                                    ! print *, fDepth_d(tFup), setting%ZeroValue%Depth 
-                                    ! print *, ' '
-
-                                    !% --- non waterfall case with hFace > hJM
-                                    !%     handle different depth conditions
-                                    if (fDepth_d(tFup) > setting%ZeroValue%Depth) then 
-                                        !% --- handle different velocity directions
-
-                                        ! print *, 'conditions 4'
-                                        ! print *, fVelocity_d(tFup)
-                                        ! print *, ' '
-
-                                        if (fVelocity_d(tFup) > zeroR) then 
-                                            !% --- velocity is nominal downstream direction
-                                            !% --- inflow from face
-                                            eFlow(tB)     = fFlow(tFup)
-                                            headloss      = (fVelocity_d(tFup)**2 )/ (twoR * grav)
-                                            !% --- head with limited head loss
-
-                                            ! print *, 'tfHead ',fHead, headloss, fZbottom(tFup)
-                                            ! print *,  fHead - headloss, fZbottom(tFup) + onehalfR*fDepth_d(tFup)
-                                            ! print *, ' '
-
-                                            eHead(tB) = max(fHead- headloss, fZbottom(tFup) + onehalfR*fDepth_d(tFup))
-                                        else 
-                                            !% --- outflow against the head gradient is not allowed
-                                            !%     use JM head for JB
-                                            eHead(tB)     = eHead(tM) 
-                                            eFlow(tB)     = zeroR
-                                        end if
-                                    else
-                                        !% --- zero depth at face 
-                                        eHead(tB)     = eHead(tM)
-                                        eFlow(tB)     = zeroR
-                                    end if
-                                end if
-                            end if    
-                        else
-                            !% --- head difference is identically zero
-                            eHead(tB)     = eHead(tM)
-                            eFlow(tB)     = zeroR 
-                        end if
-
-                        !% --- set depth 
-                        eDepth(tB) = max(eHead(tB) - eZbottom(tB), 0.99d0*setting%ZeroValue%Depth)
-
-                        ! print *, ' '
-                        ! print *, 'set depth ',fDepth_d(tFup), eDepth(tB)
-                        ! print *, ' '
-
-                        if ((fFlow(tB) > zeroR) .and. (fDepth_d(tFup) > onethousandR * setting%ZeroValue%Depth)) then 
-                            eDepth(tB) = min(eDepth(tB), fDepth_d(tFup))
-                        end if
-
-                        !% --- set other variables -- note the JB only needs the variables that
-                        !%     are used on the face, area, depth, flowrate, head, velocity.
-                        eArea(tB)  = geo_area_from_depth_singular(tB,eDepth(tB),setting%ZeroValue%Depth)
-                        if ((eFlow(tB) == zeroR) .or. (eArea(tB) .le. setting%ZeroValue%Depth)) then 
-                            eVelocity(tB) = zeroR
-                        else
-                            eVelocity(tB) = sign(max( abs(eFlow(tB)) / eArea(tB), setting%Limiter%Velocity%Maximum),eFlow(tB))
-                        end if
-                      
-                        !% --- push JB values back to faces
-                        fArea_d(tFup)     = eArea(tB)
-                        fArea_u(tFup)     = eArea(tB)
-                        fDepth_d(tFup)    = eDepth(tB)
-                        fDepth_u(tFup)    = eDepth(tB)
-                        fFlow(tFup)       = eFlow(tB)
-                        fHead_d(tFup)     = eHead(tB)
-                        fHead_u(tFup)     = eHead(tB)
-                        fVelocity_d(tFup) = eVelocity(tB)
-                        fVelocity_u(tFup) = eVelocity(tB)
-                    else 
-                        cycle
-                    end if
-                end do
-
-
-                !% --- downstream branches
-                do kk=2,max_branch_per_node,2
-                    tB = tM + kk !% JB branchID 
-
-                    if (BranchExists(tB) == oneI) then 
-                        tFdn => iFaceDn(tB)  !% index of upstream face
-
-                        !% --- provisional head difference
-                        dHead = eHead(tM) - fHead_u(tFdn) 
-                        fHead = fHead_u(tFdn)
-
-                        !% --- Check to see if a head based on uniform flow
-                        !%     from downstream to upstream in a reverse slope channel 
-                        !%     (an unlikely condition)
-                        ! if (      (fFlow(tFdn)     < zeroR) &
-                        !     .and. (dHead           < zeroR) &
-                        !     .and. (eBottomSlope(tB) < zeroR) &
-                        !     .and. (fHead_u(tFdn) > (fZbottom(tFdn))+ tenR*setting%ZeroValue%Depth)) then 
-                                
-                        !     !% --- expected head at outlet assuming uniformly sloping water surface level
-                        !     !%     note this is a reversed flow, since eBottomSlope < 0 this results
-                        !     !%     in a smaller head
-                        !     eHeadU  = fHead_u(tFdn) + eBottomSlope(tB) * eLength(tB)
-
-                        !     !% --- make sure eHeadU provides a significant depth
-                        !     if (eHeadU > (fZbottom(tFdn) + onethousandR * setting%ZeroValue%Depth)) then 
-                        !         !% --- set values for head and depth based on uniform flow
-                        !         fHead  = eHeadU
-                        !     else
-                        !         !% --- revert to upstream face head and depth
-                        !         fHead  = fHead_u(tFdn)
-                        !     end if
-                        ! else 
-                        !     !% --- use downstream face head and depth
-                        !     fHead  = fHead_u(tFdn)
-                        ! end if
-                        !% --- reset the head difference
-                        ! dHead = eHead(tM) - fHead
-
-                        ! print *, 'conditions A'
-                        ! print *, dHead, eHead(tM), fHead_u(tFdn)
-                        ! print *, ' '
-
-                        !% --- handle different head gradient directions
-                        if (dHead > zeroR) then
-                            !% --- head in JM is larger than upstream branch which implies standard flow
-                            !%     handle different depth conditions
-
-                            ! print *, 'conditions B'
-                            ! print *, eHead(tM), fZbottom(tFdn), eHead(tM)-(fZbottom(tFdn) + setting%ZeroValue%Depth)
-                            ! print *, ' '
-
-                            if (eHead(tM) .le. (fZbottom(tFdn) + setting%ZeroValue%Depth)) then
-                                !% --- JM head below the invert of the downstream conduit, so no flow 
-                                !%     Head on JB is the conduit face head
-                                eHead(tB)     = fHead 
-                                eFlow(tB)     = zeroR
-                            else
-
-                                ! print *, 'conditions C'
-                                ! print *, fFlow(tFdn)
-                                ! print *, ' '
-
-                                !% --- JM head above invert of the upstream conduit
-                                !%     expected flow from JM reversed into the upstream branch
-                                !%     handle different velocity conditions
-                                if (fFlow(tFdn) < zeroR) then 
-                                    !% --- nominal flow against the head gradient is not allowed,
-                                    !%     set flux to zero and head to JM head
-                                    eHead(tB)     = eHead(tM)
-                                    eFlow(tB)     = zeroR
-                                else 
-                                    !% --- nominal flow and head gradient are into downstream 
-                                    eHead(tB)     = eHead(tM)
-                                    !%     estimate flowrate driven by head gradient from last value
-                                    !%     in JB
-                                    gamma = oneR &
-                                        +   crk(istep) * dt * grav          &
-                                        * abs(eFlow(tB)) * (eRough(tB)**2) &
-                                        / (eArea(tB) * eRH(tB)**(fourthirdsR))
-
-                                    !% --- note that the dHead is upstream - downstream
-                                    eFlow(tB) = (   eFlow(tB)                                                &
-                                                    + crk(istep) * dt * grav * eArea(tB) * dHead / eLength(tB) &
-                                                ) / gamma      
-                                    
-                                    !% --- use the larger of the downstream face flowrate of this flowrate
-                                    eFlow(tB)     = max(eFlow(tB),fFlow(tFdn))
-                                end if
-                            end if
-
-                        elseif (dHead < zeroR) then 
-                            !% --- head outside is larger than JM
-                            !%     so expected flow into JM from downstream branch (reversed flow)
-                            !%     handle different depth conditions 
-                            if (fHead .le. (fZbottom(tFdn) + setting%ZeroValue%Depth)) then
-                                !% --- downstream head lower than invert of conduit at JM connection
-                                !%     so no flow into JM
-                                eHead(tB)     = fHead
-                                eFlow(tB)     = zeroR
-                            else 
-                                !% --- expected flow into JM from downstream branch
-                                !%     handle waterfall or nonwaterfall conditions
-                                if (eHead(tM) < fZbottom(tFdn)) then 
-                                    !% --- low depth in JM causing waterfall into JM
-                                    if (fDepth_u(tFdn) > setting%ZeroValue%Depth) then 
-                                        !% --- nonzero depth at face
-                                        !% --- compute Froude number on face
-                                        FrFace =  fVelocity_u(tFdn) / (fDepth_u(tFdn) * grav)
-                                        if (FrFace .le. oneR) then 
-                                            !% --- upstream supercritical flow
-                                            !%     use velocity and flowrate of face
-                                            !%     Head is smaller up face head or depth reduced by (HACK) 1/2
-                                            eHead(tB)     = min(fZbottom(tFdn) + onehalfR * fDepth_u(tFdn), fHead - onehalfR * fDepth_u(tFdn))
-                                            !% --- adjustment if above HACK makes head too small
-                                            if (eHead(tB) < fZbottom(tFdn)) then 
-                                                eHead(tB) = eHead(tB) + twoR * setting%ZeroValue%Depth
-                                            end if
-                                            eFlow(tB)     = fFlow(tFup)
-                                        elseif (FrFace > zeroR) then 
-                                            !% --- downstream flow not allowed with reversed head gradient
-                                            !%     no flow allowed out, head approximated as just above Zbottom
-                                            !%     of conduit at connection to JM
-                                            eHead(tB)     = fZbottom(tFdn) + twoR *setting%ZeroValue%Depth
-                                            eFlow(tB)     = zeroR
-                                        else
-                                            !% --- negative Froude number > -1
-                                            !%     subcritical flow upstream (reverse) ending in waterfall
-                                            !% --- HACK -- instead of computing the
-                                            !%     critical depth we're just increasing
-                                            !%     the velocity to get the headloss
-                                            eVelocity(tB) = twoR * fVelocity_u(tFdn)
-                                            headloss      = (eVelocity(tB)**2 ) / (twoR * grav)
-                                            eFlow(tB)     = fFlow(tFdn)     
-                                            !% --- JB head is diminished by head loss, but at least 
-                                            !%     half of the head above the bottom of the conduit entrance
-                                            eHead(tB) = max(fHead - headloss, fZbottom(tFdn) + onehalfR*fDepth_u(tFdn))                                      
-                                        end if
-                                    else 
-                                        !% --- zero depth at face 
-                                        eHead(tB)     = fHead 
-                                        eFlow(tB)     = zeroR
-                                    end if
-                                else 
-                                    !% --- non waterfall case with hface > hJM implying possible reverse flow
-                                    !%     handle different depth conditions
-                                    if (fDepth_u(tFdn) > setting%ZeroValue%Depth) then 
-                                        !% --- handle different velocity directions
-                                        if (fVelocity_u(tFdn) < zeroR) then 
-                                            !% --- velocity is nominal upstream direction
-                                            !% --- inflow from face
-                                            eFlow(tB)     = fFlow(tFdn)
-                                            headloss      = (fVelocity_u(tFdn)**2 ) / (twoR * grav)
-                                            !% --- head with limited head loss
-                                            eHead(tB) = max(fHead- headloss, fZbottom(tFdn) + onehalfR*fDepth_u(tFdn))
-                                        else 
-                                            !% --- outflow against the head gradient is not allowed
-                                            !%     use JM head for JB
-                                            eHead(tB)     = eHead(tM) 
-                                            eFlow(tB)     = zeroR
-                                        end if
-                                    else
-                                        !% --- zero depth at face 
-                                        eHead(tB)     = eHead(tM)
-                                        eFlow(tB)     = zeroR
-                                    end if
-                                end if
-                            end if    
-                        else
-                            !% --- head difference is identically zero
-                            eHead(tB)     = eHead(tM)
-                            eFlow(tB)     = zeroR 
-                        end if
-
-                        eDepth(tB) = max(eHead(tB) - eZbottom(tB), 0.99d0*setting%ZeroValue%Depth)
-                        if ((fFlow(tB) < zeroR) .and. (fDepth_u(tFdn) > onethousandR * setting%ZeroValue%Depth)) then 
-                            eDepth(tB) = min(eDepth(tB), fDepth_u(tFdn))
-                        end if
-
-                        !% --- set other variables -- note the JB only needs the variables that
-                        !%     are used on the face, area, depth, flowrate, head, velocity.
-                        eArea(tB)  = geo_area_from_depth_singular(tB,eDepth(tB),setting%ZeroValue%Depth)
-                        if ((eFlow(tB) == zeroR) .or. (eArea(tB) .le. setting%ZeroValue%Depth)) then 
-                            eVelocity(tB) = zeroR
-                        else
-                            eVelocity(tB) = sign(max( abs(eFlow(tB)) / eArea(tB), setting%Limiter%Velocity%Maximum),eFlow(tB))
-                        end if
-
-                        !% --- push JB values back to faces
-                        fArea_d(tFdn)     = eArea(tB)
-                        fArea_u(tFdn)     = eArea(tB)
-                        fDepth_d(tFdn)    = eDepth(tB)
-                        fDepth_u(tFdn)    = eDepth(tB)
-                        fFlow(tFdn)       = eFlow(tB)
-                        fHead_d(tFdn)     = eHead(tB)
-                        fHead_u(tFdn)     = eHead(tB)
-                        fVelocity_d(tFdn) = eVelocity(tB)
-                        fVelocity_u(tFdn) = eVelocity(tB)
-                    else 
-                        cycle 
-                    end if
-                end do
-            end do
-        end if
-    
-        !%------------------------------------------------------------------
-        !% Closing:
-
-    end subroutine ll_alternate_JB
-
-!%==========================================================================
-!%==========================================================================
+    end subroutine ll_continuity_add_gamma_CCJM_AC_open
 !%
-    subroutine ll_enforce_zerodepth_velocity (VelCol, thisCol, Npack)
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Enforces zero velocity on any element that is zerodepth, which
-        !% prevents artificially-large thin-layer velocities from affecting
-        !% face interpolation during filling of zerodepth
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in) :: VelCol, thisCol, Npack
-            integer, pointer    :: thisP(:)
-        !%------------------------------------------------------------------
-        !% Preliminaries:
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
-        !% Aliases:
-            thisP => elemP(1:Npack,thisCol)
-        !%------------------------------------------------------------------
-        
-        where (elemYN(thisP,eYN_isZeroDepth))
-            elemR(thisP,VelCol) = zeroR
-        endwhere
-    
-        !%------------------------------------------------------------------
-        !% Closing:
+!%==========================================================================
+    !%==========================================================================
+!%
+    ! subroutine ll_momentum_lateral_source_CC (inoutCol, thisCol, Npack)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Adding lateral inflow source term to momentum
+    !     !% EXPERIMENTAL 20220524 -- DO NOT USE
+    !     !%------------------------------------------------------------------
+    !     !% Declarations
+    !         integer, intent(in) :: inoutCol, thisCol, Npack
+    !         real(8), pointer :: Qlat(:), Area(:)
+    !         integer, pointer :: thisP(:)
+    !         character(64)    :: subroutine_name = "ll_momentum_lateral_source_CC"
+    !     !%------------------------------------------------------------------
+    !     !% Preliminaries:
+    !     if (setting%Debug%File%lowlevel_rk2) &
+    !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%------------------------------------------------------------------
+    !     !% Aliases:
+    !         thisP    => elemP(1:Npack,thisCol)
+    !         Qlat     => elemR(:,er_FlowrateLateral)
+    !         Area     => elemR(:,er_Area)
+    !     !%------------------------------------------------------------------
 
-    end subroutine ll_enforce_zerodepth_velocity
+    !         print *, 'CODE ERROR: momentum lateral source sould not be used'
+    !         stop 559873
 
+    !    ! print *, ' before qlat source ',elemR(780,inoutCol)    
+
+    !     !% HACK the onehalfR should be replaced with a coefficient
+    !     elemR(thisP,inoutCol) = elemR(thisP,inoutCol) &
+    !         + (Qlat(thisP))**2 / Area(thisP)
+
+    !     !print *, ' after qlat source ',elemR(780,inoutCol)     
+    !     !%------------------------------------------------------------------
+    !     !% Closing:
+    !     if (setting%Debug%File%lowlevel_rk2) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end subroutine ll_momentum_lateral_source_CC
+!%
 !%==========================================================================
 !%==========================================================================
 !%

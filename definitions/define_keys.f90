@@ -199,7 +199,9 @@
         !% MISC keys
         enumerator :: doesnotexist          !% used in various places to indicate something doesn't exist
         enumerator :: vshape                !% type of adjustment
-        enumerator :: vshape_surcharge_only !% type of adjustment
+        enumerator :: vshape_all_CC         !% all CC elements adjusted
+        enumerator :: vshape_freesurface_CC !% only freesurface elements adjusted
+        enumerator :: vshape_surcharge_CC   !% type of adjustment
         enumerator :: FroudeNumber          !% data types for limiter BC approachs
         ! data types for Partitioing Algorithm type (setting%Partitioning%PartitioningMethod)
         enumerator :: Default
@@ -524,7 +526,9 @@
         reverseKey(OverflowOrifice) = 'OverflowOrifice'
         reverseKey(doesnotexist) = 'doesnotexist'
         reverseKey(vshape) = 'vshape'
-        reverseKey(vshape_surcharge_only) = 'vshape_surcharge_only'
+        reverseKey(vshape_all_CC) = 'vshape_all_CC'
+        reverseKey(vshape_freesurface_CC) = 'vshape_freesurface_CC'
+        reverseKey(vshape_surcharge_CC) = 'vshape_surcharge_CC'
         reverseKey(FroudeNumber) = 'FroudeNumber'
         reverseKey(Default) = 'Default'
         reverseKey(BQuick) = 'BQuick'
@@ -834,7 +838,9 @@
         write(*,'(A," = ",i4)') trim(reverseKey(vnotch_weir)) , vnotch_weir
         write(*,'(A," = ",i4)') trim(reverseKey(VolumeValue)) , VolumeValue
         write(*,'(A," = ",i4)') trim(reverseKey(vshape)) , vshape
-        write(*,'(A," = ",i4)') trim(reverseKey(vshape_surcharge_only)) , vshape_surcharge_only
+        write(*,'(A," = ",i4)') trim(reverseKey(vshape_all_CC)) , vshape_surcharge_CC
+        write(*,'(A," = ",i4)') trim(reverseKey(vshape_freesurface_CC)) , vshape_freesurface_CC
+        write(*,'(A," = ",i4)') trim(reverseKey(vshape_surcharge_CC)) , vshape_surcharge_CC
         write(*,'(A," = ",i4)') trim(reverseKey(weir)) , weir
         write(*,'(A," = ",i4)') trim(reverseKey(WeirCurve)) , WeirCurve
         !%------------------------------------------------------------------

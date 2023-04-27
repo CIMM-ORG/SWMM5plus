@@ -36,6 +36,8 @@ module adjust
     public :: adjust_zero_and_small_depth_face
     public :: adjust_Vfilter_CC
 
+    !public :: adjust_Vshaped_head_CC
+
     public :: adjust_limit_by_zerovalues  !% used in geometry
     public :: adjust_limit_by_zerovalues_singular  !% used in geometry
     public :: adjust_limit_velocity_max_CC
@@ -313,42 +315,72 @@ module adjust
         !% Description:
         !% Performs ad-hoc adjustments that may be needed for stability
         !%------------------------------------------------------------------
-            character(64) :: subroutine_name = 'adjust_Vfilter_CC'
+            integer, pointer :: thisP(:), Npack
+            real(8), pointer :: vMax
+
+            character(64)    :: subroutine_name = 'adjust_Vfilter_CC'
         !%------------------------------------------------------------------
-            !if (crashYN) return
+            vMax       => setting%Limiter%Velocity%Maximum
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------   
-                
-        !% ad hoc adjustments to flowrate 
-        if (setting%Adjust%Flowrate%ApplyYN) then   
-            !print *, 'Adjusting flowrate'
-            select case (setting%Adjust%Flowrate%Approach)
-            case (vshape)
-                !% suppress v-shape over face/element/face
-                call adjust_Vshaped_flowrate ()
-            case default
-                print *, 'CODE ERROR: unknown setting.Adjust.Flowrate.Approach #',setting%Adjust%Flowrate%Approach
-                print *, 'which has key ',trim(reverseKey(setting%Adjust%Flowrate%Approach))
-                !stop 
-                call util_crashpoint( 4973)
-                !return
-            end select
-        end if
-        
-        !% ad hoc adjustments to head
-        if (setting%Adjust%Head%ApplyYN) then          
+
+        Npack => npack_elemP(ep_CC)      
+        if (Npack < 1) return 
+        thisP => elemP(1:Npack,ep_CC)
+
+        ! !% --- ad hoc adjustments to flowrate 
+        ! if (setting%Adjust%Flowrate%ApplyYN) then   
+        !     select case (setting%Adjust%Flowrate%Approach)
+        !         case (vshape)
+        !             !% --- suppress v-shape over face/element/face
+        !             call adjust_Vshaped_flowrate (thisP)
+        !         case default
+        !             print *, 'CODE ERROR: unknown setting.Adjust.Flowrate.Approach #',setting%Adjust%Flowrate%Approach
+        !             print *, 'which has key ',trim(reverseKey(setting%Adjust%Flowrate%Approach))
+        !             !stop 
+        !             call util_crashpoint( 4973)
+        !             !return
+        !     end select
+        ! else 
+        !     !% --- no flow adjustment
+        ! end if
+
+        ! if ((setting%Adjust%Flowrate%ApplyYN) .or. (setting%Adjust%Head%ApplyYN) ) then
+        !     where (elemR(thisP,er_Area) > setting%ZeroValue%Area)
+        !         elemR(thisP,er_Velocity) = elemR(thisP,er_Flowrate) / elemR(thisP,er_Area)   
+        !     elsewhere 
+        !         elemR(thisP,er_Velocity) = zeroR
+        !     endwhere                    
+        !     !% reset for high velocity (typically due to small area)
+        !     where (abs(elemR(thisP,er_Velocity)) > vMax) 
+        !         elemR(thisP,er_Velocity)  = sign( 0.99d0 * vMax, elemR(thisP,er_Velocity) )
+        !         !elemFlow(thisP) = elemVel(thisP) * elemArea(thisP)
+        !     endwhere 
+        ! end if
+
+        !% --- ad hoc adjustments to head
+        !%     done before velocity adjust so that area change alters velocity
+        if (setting%Adjust%Head%ApplyYN) then   
             select case (setting%Adjust%Head%Approach)
-            case (vshape_surcharge_only)
-                call adjust_Vshaped_head_surcharged ()
-            case default
-                print *,  'CODE ERROR: unknown setting.Adjust.Head.Approach #',setting%Adjust%Head%Approach
-                print *, 'which has key ',trim(reverseKey(setting%Adjust%Head%Approach))
-                !stop 
-                call util_crashpoint( 9073)
-                !return
+                case (vshape_all_CC)
+                    call adjust_Vshaped_head_CC(thisP,0,.false.)
+                case (vshape_freesurface_CC)
+                    call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.false.)
+                case (vshape_surcharge_CC)
+                    call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.true.)
+                    print *,  'CODE ERROR: unknown setting.Adjust.Head.Approach #',setting%Adjust%Head%Approach
+                    print *, 'which has key ',trim(reverseKey(setting%Adjust%Head%Approach))
+                    !stop 
+                    call util_crashpoint( 9073)
+                    !return
             end select
+        else 
+            !% --- nohead adjustment
         end if
+ 
+                
+ 
         
         if (setting%Debug%File%adjust) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1741,14 +1773,15 @@ module adjust
 !% PRIVATE
 !%==========================================================================   
 !%  
-    subroutine adjust_Vshaped_flowrate ()
+    subroutine adjust_Vshaped_flowrate (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Removes V-shape between faces and element center by averaging
         !% the face fluxes
-        !%------------------------------------------------------------------   
-            integer, pointer :: thisCol, Npack
-            integer, pointer :: thisP(:), mapUp(:), mapDn(:)
+        !%------------------------------------------------------------------ 
+            integer, intent(in) :: thisP(:)  
+            !integer, pointer :: thisCol, Npack
+            integer, pointer :: mapUp(:), mapDn(:)
             real(8), pointer :: coef, vMax, Qlateral(:), Vcoef(:)
             real(8), pointer :: faceFlow(:), elemFlow(:), elemVel(:)
             real(8), pointer ::  w_uQ(:), w_dQ(:), elemArea(:), Vvalue(:)
@@ -1767,7 +1800,7 @@ module adjust
             ! case (ALLtm)
             !     thisCol => col_elemP(ep_CC_ALLtm)
             ! case (ETM)
-                thisCol => col_elemP(ep_CC)
+             !   thisCol => col_elemP(ep_CC)
             ! case (AC)
             !     thisCol => col_elemP(ep_CC_AC)
             ! case default
@@ -1780,11 +1813,7 @@ module adjust
 
             coef => setting%Adjust%Flowrate%Coef
             if (coef .le. zeroR) return
-
-            Npack => npack_elemP(thisCol)
-            if (Npack .le. 0) return
-            
-            thisP    => elemP(1:Npack,thisCol)
+        
             mapUp    => elemI(:,ei_Mface_uL)
             mapDn    => elemI(:,ei_Mface_dL)   
             faceFlow => faceR(:,fr_Flowrate)  
@@ -1863,10 +1892,10 @@ module adjust
             Vcoef(thisP) = zeroR
         endwhere
 
-        !% Don't use for supercrititical 20230425
-        where (elemR(thisP,er_FroudeNumber) .ge. oneR)
-            Vcoef(thisP) = zeroR 
-        end where
+        !% Don't use for supercritical 20230425
+        ! where (elemR(thisP,er_FroudeNumber) .ge. oneR)
+        !     Vcoef(thisP) = zeroR 
+        ! end where
 
         ! print *, 'Vcoef4',Vcoef(112)
 
@@ -1874,30 +1903,35 @@ module adjust
         elemFlow(thisP)  =  (oneR - Vcoef(thisP)) * elemFlow(thisP) &
                 + Vcoef(thisP) * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
 
+
+        !% TRIAL 20230427 -- so that area does not matter
+        elemVel(thisP)  =  (oneR - Vcoef(thisP)) * elemVel(thisP) &
+                + Vcoef(thisP) * onehalfR * (faceR(mapDn(thisP),fr_Velocity_u) + faceR(mapUp(thisP),fr_Velocity_d))
+
         ! print *, faceflow(mapDn(112)), faceflow(mapUp(112))
         ! print *, mapUp(112), faceR(mapUp(112),fr_flowrate)
         ! print *, 'elemFlow ',elemFlow(112)  
         ! print *, mapDn(112), faceR(mapDn(112),fr_flowrate)
             
 
-        !% reset the velocity      
-        elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
+        ! !% reset the velocity      
+        ! elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
 
-        ! print *, 'elemVel ',elemVel(112)
+        ! ! print *, 'elemVel ',elemVel(112)
 
-        ! where (Vvalue(thisP) > zeroR)
-        !     !% simple linear interpolation
-        !     elemFlow(thisP)  =  (oneR - coef) * elemFlow(thisP) &
-        !         + coef * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
-        !     !% reset the velocity      
-        !     elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
-        ! endwhere
+        ! ! where (Vvalue(thisP) > zeroR)
+        ! !     !% simple linear interpolation
+        ! !     elemFlow(thisP)  =  (oneR - coef) * elemFlow(thisP) &
+        ! !         + coef * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
+        ! !     !% reset the velocity      
+        ! !     elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
+        ! ! endwhere
                 
-        !% reset for high velocity (typically due to small area)
-        where ((abs(elemVel(thisP)) > vMax) .and. (Vcoef(thisP) > zeroR))
-            elemVel(thisP)  = sign( 0.99d0 * vMax, elemVel(thisP) )
-            elemFlow(thisP) = elemVel(thisP) * elemArea(thisP)
-        endwhere 
+        ! !% reset for high velocity (typically due to small area)
+        ! where ((abs(elemVel(thisP)) > vMax) .and. (Vcoef(thisP) > zeroR))
+        !     elemVel(thisP)  = sign( 0.99d0 * vMax, elemVel(thisP) )
+        !     elemFlow(thisP) = elemVel(thisP) * elemArea(thisP)
+        ! endwhere 
         
         ! print *, 'elemVel2 ',elemVel(54)
         ! print *, 'eleFlow2 ',elemFlow(54)
@@ -1913,127 +1947,206 @@ module adjust
 !%==========================================================================  
 !%==========================================================================  
 !%
-    subroutine adjust_Vshaped_head_surcharged ()
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Applies V-filter to surcharged head 
-        !% HACK: ONLY APPLIES FOR PREISSMANN SLOT
-        !%------------------------------------------------------------------
-        !% Declarations
-            integer, pointer :: thisCol, Npack
-            integer, pointer :: thisP(:), mapUp(:), mapDn(:)
-            real(8), pointer :: coef, multiplier, smallDepth
-            real(8), pointer :: elemCrown(:), Vvalue(:), Zbottom(:) !, elemEllMax(:)
-            real(8), pointer :: faceHeadUp(:), faceHeadDn(:), elemHead(:), elemVel(:)
-            real(8), pointer :: w_uH(:), w_dH(:)
-            logical, pointer :: isSlot(:)  !% Preissman Slot logical
-            character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
-        !%-------------------------------------------------------------------
-        !% Preliminaries      
-            if (setting%Debug%File%adjust) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-------------------------------------------------------------------
-        !% Aliases:
-            ! select case (whichTM)
-            ! case (ALLtm)
-            !     !thisCol => col_elemP(ep_CC_ALLtm_ACsurcharged)
-            !     print *, 'ALGORITHM DEVELOPMENT NEEDED FOR ALLtm with AC'
-            !     call util_crashpoint(9587934)
-            ! case (ETM)
-                thisCol => col_elemP(ep_CC_Closed_Elements)
-            ! case (AC)
-            !     !thisCol => col_elemP(ep_CC_ACsurcharged)
-            !     print *, 'ALGORITHM DEVLEOPMENT NEEDED FOR AC'
-            !     call util_crashpoint(558723)
-            ! case default
-            !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
-            !     print *, 'which has key ',trim(reverseKey(whichTM))
-            !     !stop 
-            !     call util_crashpoint( 23943)
-            !     return
-            ! end select 
+    ! subroutine adjust_Vshaped_head_surcharged ()
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Applies V-filter to surcharged head 
+    !     !% HACK: ONLY APPLIES FOR PREISSMANN SLOT
+    !     !%------------------------------------------------------------------
+    !     !% Declarations
+    !         integer, pointer :: thisCol, Npack
+    !         integer, pointer :: thisP(:), mapUp(:), mapDn(:)
+    !         real(8), pointer :: coef, multiplier, smallDepth
+    !         real(8), pointer :: elemCrown(:), Vvalue(:), Zbottom(:) !, elemEllMax(:)
+    !         real(8), pointer :: faceHeadUp(:), faceHeadDn(:), elemHead(:), elemVel(:)
+    !         real(8), pointer :: w_uH(:), w_dH(:)
+    !         logical, pointer :: isSlot(:)  !% Preissman Slot logical
+    !         character(64) :: subroutine_name = 'adjust_Vshaped_head_surcharged'
+    !     !%-------------------------------------------------------------------
+    !     !% Preliminaries      
+    !         if (setting%Debug%File%adjust) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%-------------------------------------------------------------------
+    !     !% Aliases:
+    !         ! select case (whichTM)
+    !         ! case (ALLtm)
+    !         !     !thisCol => col_elemP(ep_CC_ALLtm_ACsurcharged)
+    !         !     print *, 'ALGORITHM DEVELOPMENT NEEDED FOR ALLtm with AC'
+    !         !     call util_crashpoint(9587934)
+    !         ! case (ETM)
+    !             thisCol => col_elemP(ep_CC_Closed_Elements)
+    !         ! case (AC)
+    !         !     !thisCol => col_elemP(ep_CC_ACsurcharged)
+    !         !     print *, 'ALGORITHM DEVLEOPMENT NEEDED FOR AC'
+    !         !     call util_crashpoint(558723)
+    !         ! case default
+    !         !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
+    !         !     print *, 'which has key ',trim(reverseKey(whichTM))
+    !         !     !stop 
+    !         !     call util_crashpoint( 23943)
+    !         !     return
+    !         ! end select 
 
-            !% coefficient for the blending adjustment (between 0.0 and 1.0)
-            !% if coef == 1 then the V-shape element flowrate is replaced by 
-            !% average of its faces.
-            coef => setting%Adjust%Head%Coef
+    !         !% coefficient for the blending adjustment (between 0.0 and 1.0)
+    !         !% if coef == 1 then the V-shape element flowrate is replaced by 
+    !         !% average of its faces.
+    !         coef => setting%Adjust%Head%Coef
             
-            if (coef .le. zeroR) return     
-            Npack => npack_elemP(thisCol)
-            if (Npack .le. 0) return
+    !         if (coef .le. zeroR) return     
+    !         Npack => npack_elemP(thisCol)
+    !         if (Npack .le. 0) return
 
-            thisP      => elemP(1:Npack,thisCol)
-            mapUp      => elemI(:,ei_Mface_uL)
-            mapDn      => elemI(:,ei_Mface_dL)    
-            faceHeadUp => faceR(:,fr_Head_u)  
-            faceHeadDn => faceR(:,fr_Head_d)          
-            elemHead   => elemR(:,er_Head)    
-            elemCrown  => elemR(:,er_Zcrown)
-            !elemEllMax => elemR(:,er_FullEllDepth)
-            w_uH       => elemR(:,er_InterpWeight_uH)
-            w_dH       => elemR(:,er_InterpWeight_dH)
-            Vvalue     => elemR(:,er_Temp01)
-            Zbottom    => elemR(:,er_Zbottom)
-            isSlot     => elemYN(:,eYN_isPSsurcharged)  !% Preissman slot
+    !         thisP      => elemP(1:Npack,thisCol)
+    !         mapUp      => elemI(:,ei_Mface_uL)
+    !         mapDn      => elemI(:,ei_Mface_dL)    
+    !         faceHeadUp => faceR(:,fr_Head_u)  
+    !         faceHeadDn => faceR(:,fr_Head_d)          
+    !         elemHead   => elemR(:,er_Head)    
+    !         elemCrown  => elemR(:,er_Zcrown)
+    !         !elemEllMax => elemR(:,er_FullEllDepth)
+    !         w_uH       => elemR(:,er_InterpWeight_uH)
+    !         w_dH       => elemR(:,er_InterpWeight_dH)
+    !         Vvalue     => elemR(:,er_Temp01)
+    !         Zbottom    => elemR(:,er_Zbottom)
+    !         isSlot     => elemYN(:,eYN_isPSsurcharged)  !% Preissman slot
 
-            multiplier => setting%Adjust%Head%FullDepthMultiplier
+    !         multiplier => setting%Adjust%Head%FullDepthMultiplier
 
+    !     !%-------------------------------------------------------------------
+    !     !% --- For Preissman Slot, find the cells that are surcharged
+    !     where (isSlot(thisP))
+    !         Vvalue(thisP) = oneR
+    !     elsewhere
+    !         Vvalue(thisP) = zeroR 
+    !     endwhere
+
+    !     !% identify the V-shape locations
+    !     Vvalue(thisP) =  (util_sign_with_ones_or_zero(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
+    !                     *(util_sign_with_ones_or_zero(faceHeadUp(mapDn(thisP)) - elemHead(thisP)))      &
+    !                     * Vvalue(thisP)   
+                
+    !     !% adjust where needed
+    !     where (Vvalue(thisP) > zeroR)    
+    !         !% simple linear interpolation
+    !         elemHead(thisP)  =  (oneR - coef) * elemHead(thisP) &
+    !            + coef * onehalfR * (faceHeadUp(mapDn(thisP)) + faceHeadDn(mapUp(thisP)))
+
+    !     endwhere 
+
+    !     !%-============================================================
+    !     !% test 20220731
+    !     !% --- for fully engaged preissmann slot -- use regular V-filter
+    !     ! where ( isfSlot(mapUp(thisP)) .and. isfSlot(mapDn(thisP)) .and. (elemR(thisP,er_SlotDepth) > zeroR) )
+    !     !     Vvalue(thisP) = oneR
+    !     ! elsewhere
+    !     !     Vvalue(thisP) = zeroR 
+    !     ! endwhere
+
+    !     ! !% identify the V-shape locations
+    !     ! Vvalue(thisP) =  (util_sign_with_ones_or_zero(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
+    !     !                 *(util_sign_with_ones_or_zero(faceHeadUp(mapDn(thisP)) - elemHead(thisP)))      &
+    !     !                 * Vvalue(thisP)   
+                
+    !     ! !% adjust where needed
+    !     ! where (Vvalue(thisP) > zeroR)    
+    !     !     !% simple linear interpolation
+    !     !     elemHead(thisP)  =  (oneR - coef) * elemHead(thisP) &
+    !     !        + coef * onehalfR * (faceHeadUp(mapDn(thisP)) + faceHeadDn(mapUp(thisP)))
+    !     ! endwhere   
+
+    !     ! !% --- for cells where depth is below Zcrown, set the head to the minimum of neighbors
+    !     ! where ( isfSlot(mapUp(thisP)) .and. isfSlot(mapDn(thisP)) .and. (elemR(thisP,er_SlotDepth) .le. zeroR) )
+    !     !     Vvalue(thisP) = oneR
+    !     ! elsewhere
+    !     !     Vvalue(thisP) = zeroR 
+    !     ! endwhere
+    !     ! !% --- for these cells use the minimum of adjacent heads
+    !     ! where (Vvalue(thisP) > zeroR)
+    !     !     elemHead(thisP) = min(faceHeadUp(mapDn(thisP)),faceHeadDn(mapUp(thisP))) 
+    !     ! end where
+
+    !     if (setting%Debug%File%adjust) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
+    ! end subroutine adjust_Vshaped_head_surcharged
+!%    
+!%==========================================================================  
+!%==========================================================================  
+!%
+    subroutine adjust_Vshaped_head_CC (thisP, eYNcol, eYNvalue)
         !%-------------------------------------------------------------------
-        !% --- For Preissman Slot, find the cells that are surcharged
-        where (isSlot(thisP))
-            Vvalue(thisP) = oneR
-        elsewhere
-            Vvalue(thisP) = zeroR 
-        endwhere
+        !% Description:
+        !% Adjusts head for V-shaped conditions and fix depth/area. 
+        !% Note that this breaks the 2-way relationship between depth and volume
+        !% That is, after this point the depth and head are the "effective"
+        !% values and not the average values associated with the volume.
+        !% The eYNcolumn is a column in the elemYN that is used for screening
+        !% which elements will be adjusted (typically, this is eYN_isSurcharged)
+        !% If eYNcol = 0 then no screening is used. If a valid eYNcol is
+        !% provided, then the eYNvalue is used to determine whether the .false.
+        !% or the .true. elements are adjusted.
+        !%-------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisP(:), eYNcol
+            logical, intent(in) :: eYNvalue
+            integer, pointer ::  fUp(:), fDn(:)
+            real(8), pointer :: coef, fHup(:), fHdn(:), eHead(:), Vvalue(:)
+            real(8), pointer :: fAup(:), fAdn(:), eArea(:)
+        !%-------------------------------------------------------------------
+        !% Preliminaries
+        !%-------------------------------------------------------------------
+        !% Aliases
+            coef     => setting%Adjust%Head%Coef
+            fUp      => elemI(:,ei_Mface_uL)
+            fDn      => elemI(:,ei_Mface_dL)    
+            fHup     => faceR(:,fr_Head_u)  
+            fHdn     => faceR(:,fr_Head_d)  
+            fAup     => faceR(:,fr_Area_u)  
+            fAdn     => faceR(:,fr_Area_d)            
+            eHead    => elemR(:,er_Head)    
+            eArea    => elemR(:,er_Area)    
+            Vvalue   => elemR(:,er_Temp01)
+        !%-------------------------------------------------------------------
 
-        !% identify the V-shape locations
-        Vvalue(thisP) =  (util_sign_with_ones_or_zero(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
-                        *(util_sign_with_ones_or_zero(faceHeadUp(mapDn(thisP)) - elemHead(thisP)))      &
+        !% --- discriminator that determines which cells are adjusted.
+        Vvalue = zeroR 
+
+        if (eYNcol == 0) then 
+            !% --- check all elements in thisP
+            Vvalue(thisP) = oneR
+        else
+            !% --- use the logical set to limit the checked elements
+            where (elemYN(thisP,eYNcol) == eYNvalue)
+                Vvalue(thisP) = oneR
+            endwhere
+        end if
+
+        if (sum(Vvalue) == zeroR) return 
+
+        !% --- identify the V-shape locations (Vvalue = 1)
+        Vvalue(thisP) =  (util_sign_with_ones_or_zero(fHdn(fUp(thisP)) - eHead(thisP)))      &
+                        *(util_sign_with_ones_or_zero(fHup(fDn(thisP)) - eHead(thisP)))      &
                         * Vvalue(thisP)   
                 
-        !% adjust where needed
+        !% --- adjust where needed
         where (Vvalue(thisP) > zeroR)    
-            !% simple linear interpolation
-            elemHead(thisP)  =  (oneR - coef) * elemHead(thisP) &
-               + coef * onehalfR * (faceHeadUp(mapDn(thisP)) + faceHeadDn(mapUp(thisP)))
+            !% --- simple linear combination depending on coef
+            !%     note if coef==1 then this becomes the average of the face values
+            eHead(thisP)  =  (oneR - coef) * eHead(thisP) &
+               + coef * onehalfR * (fHup(fDn(thisP)) + fHdn(fUp(thisP)))
 
-        endwhere 
+            !% --- adjust depth
+            elemR(thisP,er_Depth) = eHead(thisP) - elemR(thisP,er_Zbottom) 
+            
+            !% --- adjust area as a average rather than trying to use geometry
+            eArea(thisP)  = (oneR - coef) * eArea(thisP)                    &
+                + coef * onehalfR * (fAup(fDn(thisP)) + fAdn(fUp(thisP)))
 
-        !%-============================================================
-        !% test 20220731
-        !% --- for fully engaged preissmann slot -- use regular V-filter
-        ! where ( isfSlot(mapUp(thisP)) .and. isfSlot(mapDn(thisP)) .and. (elemR(thisP,er_SlotDepth) > zeroR) )
-        !     Vvalue(thisP) = oneR
-        ! elsewhere
-        !     Vvalue(thisP) = zeroR 
-        ! endwhere
+            !% --- NOTE: volume is NOT adjusted.
+        end where
 
-        ! !% identify the V-shape locations
-        ! Vvalue(thisP) =  (util_sign_with_ones_or_zero(faceHeadDn(mapUp(thisP)) - elemHead(thisP)))      &
-        !                 *(util_sign_with_ones_or_zero(faceHeadUp(mapDn(thisP)) - elemHead(thisP)))      &
-        !                 * Vvalue(thisP)   
-                
-        ! !% adjust where needed
-        ! where (Vvalue(thisP) > zeroR)    
-        !     !% simple linear interpolation
-        !     elemHead(thisP)  =  (oneR - coef) * elemHead(thisP) &
-        !        + coef * onehalfR * (faceHeadUp(mapDn(thisP)) + faceHeadDn(mapUp(thisP)))
-        ! endwhere   
+      
+    end subroutine adjust_Vshaped_head_CC
 
-        ! !% --- for cells where depth is below Zcrown, set the head to the minimum of neighbors
-        ! where ( isfSlot(mapUp(thisP)) .and. isfSlot(mapDn(thisP)) .and. (elemR(thisP,er_SlotDepth) .le. zeroR) )
-        !     Vvalue(thisP) = oneR
-        ! elsewhere
-        !     Vvalue(thisP) = zeroR 
-        ! endwhere
-        ! !% --- for these cells use the minimum of adjacent heads
-        ! where (Vvalue(thisP) > zeroR)
-        !     elemHead(thisP) = min(faceHeadUp(mapDn(thisP)),faceHeadDn(mapUp(thisP))) 
-        ! end where
-
-        if (setting%Debug%File%adjust) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
-    end subroutine adjust_Vshaped_head_surcharged
 !%    
 !%==========================================================================  
 !%==========================================================================  
