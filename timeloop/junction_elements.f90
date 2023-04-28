@@ -1171,7 +1171,8 @@ module junction_elements
         !% Solves for the junction head and flows based on linear approach
         !%-----------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: thisJM(:), Npack, istep
+            integer, intent(in) :: Npack, istep
+            integer, dimension(Npack), intent(in) :: thisJM 
             integer             :: JMidx, mm, ii
 
             real(8), pointer :: Qstorage(:), Qoverflow(:), Qlateral(:)
@@ -1192,10 +1193,11 @@ module junction_elements
         do mm=1,Npack
             JMidx = thisJM(mm)
 
+           ! print *, 'here '
                 ! if (JMidx==printJM) then
                 !     print *, ' '
                 !     print *, '-----------------------------------------------'
-                !     print *, 'mm, JM ',mm, JMidx
+               !     print *, 'mm, JM ',mm, JMidx
                 !     print *, 'flowrate JB up ', elemR(JMidx+1,er_Flowrate)
                 !     ! print *, 'Aplan ',elemSR(JMidx,esr_Storage_Plan_Area)
                 !     ! print *, 'dt    ',setting%Time%Hydraulics%Dt

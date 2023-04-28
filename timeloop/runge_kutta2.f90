@@ -47,7 +47,7 @@ module runge_kutta2
         !%------------------------------------------------------------------
         !% Declarations:
             integer :: istep, ii, kk, mm
-            integer, pointer :: Npack, thisp(:), fup, fdn
+            integer, pointer :: Npack, thisP(:), fup(:), fdn(:)
 
             character(64) :: subroutine_name = 'rk2_toplevel_ETM_5'
             real(8) :: ConsSum
@@ -60,7 +60,7 @@ module runge_kutta2
 
             ! print *,' '
             ! print *, ' '
-            !call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
+            ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
  
         !%==================================    
         !% --- Initial adjustments
@@ -286,6 +286,7 @@ module runge_kutta2
             !% HACK -- FOR SHARED WE NEED TO IDENTIFY ANY SHARED FACES THAT HAVE AN
             !% UPSTREAM elemR(:,er_Setting) = 0.0 and set their face Q and V to zero.
 
+
                !if (istep == 1) 
                 ! call util_utest_CLprint ('------- MMM  after face zerodepth ')
          
@@ -425,15 +426,41 @@ module runge_kutta2
             !     call face_velocities(fp_Diag_all, .true.)
 
             !         if (istep == 1) ! ! ! ! ! call util_utest_CLprint ('------- VVV  after face velocities')
+
             ! end if
+
+            !% 20230428 FACE FROUDE NUMBER
+            Npack => npack_faceP(fp_noBC_IorS)
+            thisP => faceP(1:Npack,fp_noBC_IorS)
+            where (faceR(thisP,fr_Depth_u) > setting%ZeroValue%Depth)
+                faceR(thisP,fr_FroudeNumber_u) = faceR(thisP,fr_Velocity_u) / sqrt(setting%Constant%gravity * faceR(thisP,fr_Area_u))
+            endwhere
+            where (faceR(thisP,fr_Depth_d) > setting%ZeroValue%Depth)
+                faceR(thisP,fr_FroudeNumber_d) = faceR(thisP,fr_Velocity_d) / sqrt(setting%Constant%gravity * faceR(thisP,fr_Area_d))
+            endwhere
 
                 ! call util_utest_CLprint ('------- VVV.01  before adjust Vfilter CC')
 
+            Npack => npack_elemP(ep_CC)    
+            thisP => elemP(1:Npack,ep_CC)
+            fup   => elemI(:,ei_Mface_uL)
+            fdn   => elemI(:,ei_Mface_dL)
+            where ( (faceR(fup(thisP),fr_FroudeNumber_d) < oneR) .and. &
+                    (faceR(fdn(thisP),fr_FroudeNumber_u) < oneR) .and. &
+                    (elemR(thisP,er_FroudeNumber)        > oneR) )
+                elemR(thisP,er_Head)      = onehalfR * (faceR(fup(thisP),fr_Head_d)      + faceR(fdn(thisP),fr_Head_u))    
+                ! elemR(thisP,er_Area)      = onehalfR * (faceR(fup(thisP),fr_Area_d)      + faceR(fdn(thisP),fr_Area_u))    
+                !elemR(thisP,er_Depth)     = onehalfR * (faceR(fup(thisP),fr_Depth_d)     + faceR(fdn(thisP),fr_Depth_u))
+                ! elemR(thisP,er_Velocity)  = onehalfR * (faceR(fup(thisP),fr_Velocity_d)  + faceR(fdn(thisP),fr_Velocity_u))    
+            endwhere
+
             !% STEP rkM
             !% --- Filter flowrates to remove grid-scale checkerboard
-            !call adjust_Vfilter_CC () !% brhADDED 20230418
+            call adjust_Vfilter_CC () !% brhADDED 20230418
+
+
             
-                 ! call util_utest_CLprint ('------- VVV.02  after adjust Vfilter CC')
+                !  call util_utest_CLprint ('------- VVV.02  after adjust Vfilter CC')
 
 
             !% HACK -- for better coding, change the rk2_store_conservative call to use the

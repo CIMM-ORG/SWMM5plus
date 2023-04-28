@@ -329,55 +329,55 @@ module adjust
         if (Npack < 1) return 
         thisP => elemP(1:Npack,ep_CC)
 
-        ! !% --- ad hoc adjustments to flowrate 
-        ! if (setting%Adjust%Flowrate%ApplyYN) then   
-        !     select case (setting%Adjust%Flowrate%Approach)
-        !         case (vshape)
-        !             !% --- suppress v-shape over face/element/face
-        !             call adjust_Vshaped_flowrate (thisP)
-        !         case default
-        !             print *, 'CODE ERROR: unknown setting.Adjust.Flowrate.Approach #',setting%Adjust%Flowrate%Approach
-        !             print *, 'which has key ',trim(reverseKey(setting%Adjust%Flowrate%Approach))
-        !             !stop 
-        !             call util_crashpoint( 4973)
-        !             !return
-        !     end select
-        ! else 
-        !     !% --- no flow adjustment
-        ! end if
-
-        ! if ((setting%Adjust%Flowrate%ApplyYN) .or. (setting%Adjust%Head%ApplyYN) ) then
-        !     where (elemR(thisP,er_Area) > setting%ZeroValue%Area)
-        !         elemR(thisP,er_Velocity) = elemR(thisP,er_Flowrate) / elemR(thisP,er_Area)   
-        !     elsewhere 
-        !         elemR(thisP,er_Velocity) = zeroR
-        !     endwhere                    
-        !     !% reset for high velocity (typically due to small area)
-        !     where (abs(elemR(thisP,er_Velocity)) > vMax) 
-        !         elemR(thisP,er_Velocity)  = sign( 0.99d0 * vMax, elemR(thisP,er_Velocity) )
-        !         !elemFlow(thisP) = elemVel(thisP) * elemArea(thisP)
-        !     endwhere 
-        ! end if
-
-        !% --- ad hoc adjustments to head
-        !%     done before velocity adjust so that area change alters velocity
-        if (setting%Adjust%Head%ApplyYN) then   
-            select case (setting%Adjust%Head%Approach)
-                case (vshape_all_CC)
-                    call adjust_Vshaped_head_CC(thisP,0,.false.)
-                case (vshape_freesurface_CC)
-                    call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.false.)
-                case (vshape_surcharge_CC)
-                    call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.true.)
-                    print *,  'CODE ERROR: unknown setting.Adjust.Head.Approach #',setting%Adjust%Head%Approach
-                    print *, 'which has key ',trim(reverseKey(setting%Adjust%Head%Approach))
+        !% --- ad hoc adjustments to flowrate 
+        if (setting%Adjust%Flowrate%ApplyYN) then   
+            select case (setting%Adjust%Flowrate%Approach)
+                case (vshape)
+                    !% --- suppress v-shape over face/element/face
+                    call adjust_Vshaped_flowrate (thisP)
+                case default
+                    print *, 'CODE ERROR: unknown setting.Adjust.Flowrate.Approach #',setting%Adjust%Flowrate%Approach
+                    print *, 'which has key ',trim(reverseKey(setting%Adjust%Flowrate%Approach))
                     !stop 
-                    call util_crashpoint( 9073)
+                    call util_crashpoint( 4973)
                     !return
             end select
         else 
-            !% --- nohead adjustment
+            !% --- no flow adjustment
         end if
+
+        if ((setting%Adjust%Flowrate%ApplyYN) .or. (setting%Adjust%Head%ApplyYN) ) then
+            where (elemR(thisP,er_Area) > setting%ZeroValue%Area)
+                elemR(thisP,er_Velocity) = elemR(thisP,er_Flowrate) / elemR(thisP,er_Area)   
+            elsewhere 
+                elemR(thisP,er_Velocity) = zeroR
+            endwhere                    
+            !% reset for high velocity (typically due to small area)
+            where (abs(elemR(thisP,er_Velocity)) > vMax) 
+                elemR(thisP,er_Velocity)  = sign( 0.99d0 * vMax, elemR(thisP,er_Velocity) )
+                !elemFlow(thisP) = elemVel(thisP) * elemArea(thisP) !% THIS PROBABLY ISN'T NEEDED 20230428
+            endwhere 
+        end if
+
+        !% --- ad hoc adjustments to head
+        ! !%     done before velocity adjust so that area change alters velocity
+        ! if (setting%Adjust%Head%ApplyYN) then   
+        !     select case (setting%Adjust%Head%Approach)
+        !         case (vshape_all_CC)
+        !             call adjust_Vshaped_head_CC(thisP,0,.false.)
+        !         case (vshape_freesurface_CC)
+        !             call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.false.)
+        !         case (vshape_surcharge_CC)
+        !             call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.true.)
+        !             print *,  'CODE ERROR: unknown setting.Adjust.Head.Approach #',setting%Adjust%Head%Approach
+        !             print *, 'which has key ',trim(reverseKey(setting%Adjust%Head%Approach))
+        !             !stop 
+        !             call util_crashpoint( 9073)
+        !             !return
+        !     end select
+        ! else 
+        !     !% --- nohead adjustment
+        ! end if
  
                 
  

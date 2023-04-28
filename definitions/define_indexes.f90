@@ -1383,6 +1383,8 @@ module define_indexes
         enumerator :: fr_Flowrate_Conservative  !% the effective flow rate over the time step N to N+1
         enumerator :: fr_FlowrateMax            !% maximum flowrate based on upstream volume/timestep
         enumerator :: fr_FlowrateMin            !% minimum flowrate (negative maximum) based on downstream volume/timestep
+        enumerator :: fr_FroudeNumber_d            !% EXPERIMENTAL 20230428
+        enumerator :: fr_FroudeNumber_u            !% EXPERIMENTAL 20230428
         !enumerator :: fr_Flowrate_Max           !% maximum flowrate based on upstream element
         enumerator :: fr_GammaM                 !% gamma momentum source term
         enumerator :: fr_Head_u                 !% piezometric head on upstream side of face
