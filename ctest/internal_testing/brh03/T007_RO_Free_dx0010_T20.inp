@@ -63,7 +63,7 @@ J9               12          0          0.0        1000.0         0
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-Out1             10.0          FREE                      NO                   
+Out1             10.0          FREE                      YES                   
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   

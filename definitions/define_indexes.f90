@@ -1353,7 +1353,8 @@ module define_indexes
         enumerator ::  fi_link_idx_BIPquick         !% face connected to a BQ link element 
         enumerator ::  fi_node_idx_SWMM             !% if the face is originated from a node, then the SWMM idx
         enumerator ::  fi_link_idx_SWMM             !% face connected to a SWMM link element 
-        enumerator ::  fi_zeroDepth                 !% 0 is no zerodepth, -1 is zerodepth upstream, +1 is zerodepth downstream, +2 is both
+        !enumerator ::  fi_zeroDepth                 !% 0 is no zerodepth, -1 is zerodepth upstream, +1 is zerodepth downstream, +2 is both
+
         !% HACK: THESE MIGHT NEED TO BE RESTORED
         ! enumerator ::  fi_Melem_uG                 !% map to element upstream (global index)
         ! enumerator ::  fi_Melem_dG                 !% map to element upstream (global index)
@@ -1474,6 +1475,9 @@ module define_indexes
         enumerator :: fp_CC_downstream_is_zero_IorS !% CC on both sides and downstream (only) is zero depth
         enumerator :: fp_CC_upstream_is_zero_IorS   !% CC on both sides and upstream (only) is zero depth
         enumerator :: fp_CC_bothsides_are_zero_IorS !% CC on both sides and both sides are zero depth
+        enumerator :: fp_JB_downstream_is_zero_IorS !% JB on one side and downstream (only) is zero depth
+        enumerator :: fp_JB_upstream_is_zero_IorS   !% JB on one sides and upstream (only) is zero depth
+        enumerator :: fp_JB_bothsides_are_zero_IorS !% JB on one side and both sides are zero depth
         enumerator :: fp_JumpDn_IorS                 !% face with hydraulic jump from nominal downstream to upstream
         enumerator :: fp_JumpUp_IorS                 !% face with hydraulic jump from nominal upstream to downstream
    

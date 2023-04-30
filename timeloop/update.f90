@@ -29,6 +29,8 @@ module update
     public :: update_element_velocity_from_flowrate
     !public :: update_element_energyHead_CC
     !public :: update_Froude_number_junction_branch
+    public :: update_Froude_number_element
+    public :: update_wavespeed_element
 
     contains
 !%==========================================================================
@@ -323,6 +325,9 @@ module update
             thisCol_JB             => col_elemP(ep_JB)
           
         !%------------------------------------------------------------------
+
+        print *, 'OBSOLETE update_auxiliary_variables_JMJB'    
+        stop 35098723
         !% --- geometry for both JM and JB
         call geometry_toplevel_JMJB ()  
        

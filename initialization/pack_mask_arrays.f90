@@ -27,6 +27,8 @@ module pack_mask_arrays
     public :: pack_small_or_zero_depth_elements
     public :: pack_CC_zeroDepth_interior_faces
     public :: pack_CC_zeroDepth_shared_faces
+    public :: pack_JB_zeroDepth_interior_faces
+    public :: pack_JB_zeroDepth_shared_faces
 
 contains
 !
@@ -4547,6 +4549,9 @@ contains
                     .and. &
                     (.not. elemYN(:,eYN_isZeroDepth))     )
             end if
+
+
+            
         end if
 
 
@@ -4686,19 +4691,20 @@ contains
         !%------------------------------------------------------------------
         !% Description
         !% Dynamic pack for faces that have zero depth elements on one or
-        !% both sides
+        !% both sides.
+
+        !%  OBSOLETE fi_zerodepth
+        !% This also sets values for the faceI(:,fi_zeroDepth) array to
+        !% -1 or +1 for upstream or downstream value
+        !% note the default of faceI(:,fi_zeroDepth) = 0.0 must be
+        !% set before this procedure is called
         !%------------------------------------------------------------------
         !% Declarations
-            !integer, intent(in) :: facePcol
-            integer, pointer :: ptype, npack !, npackAll
+            integer, pointer :: ptype, npack 
             integer, pointer :: eUp(:), eDn(:),  fCC(:)
             integer :: ii
         !%------------------------------------------------------------------
         !% Aliases:
-            !% --- all the interior non-shared faces
-            !npackAll => npack_faceP(fp_noBC_IorS)
-            !fAll     => faceP(1:npackAll,fp_noBC_IorS)
-
             !% --- all the interior faces with CC on both sides
             fCC      => faceP(1:npack_faceP(fp_CC_both_IorS),fp_CC_both_IorS)
             !% --- upstream elements
@@ -4706,11 +4712,6 @@ contains
             !% --- downstream elements
             eDn      => faceI(:,fi_Melem_dL)
         !%------------------------------------------------------------------
-
-        !% --- reset the face zerodepth array 
-        !%     note, this affects shared faces, so this must be done before
-        !%     the call to pack_CC_zerodepth_shared_faces
-        faceI(:,fi_zeroDepth) = zeroI  !% default to no zerodepth
 
         !%===================
         !% ---- fp_CC_upstream_is_zero_IorS (CC on both sides)
@@ -4728,7 +4729,7 @@ contains
                             (.not. elemYN(eDn(fCC),eYN_isZeroDepth))      &
                         )
                 !% -1 indicates zerodepth upstream of face        
-                faceI(faceP(1:npack,ptype),fi_zeroDepth) = -oneI        
+               ! faceI(faceP(1:npack,ptype),fi_zeroDepth) = -oneI        
             end if
 
         !%=========================
@@ -4748,7 +4749,7 @@ contains
                         )
 
                 !% +1 indicates zerodepth downstream of face
-                faceI(faceP(1:npack,ptype),fi_zeroDepth) = oneI       
+               ! faceI(faceP(1:npack,ptype),fi_zeroDepth) = oneI       
             end if  
 
         !%================
@@ -4767,11 +4768,100 @@ contains
                                 elemYN(eUp(fCC),eYN_isZeroDepth)       &
                         )
                 !% +2 indicates zerodepth both upstream and downstream        
-                faceI(faceP(1:npack,ptype),fi_zeroDepth) = twoI        
+               ! faceI(faceP(1:npack,ptype),fi_zeroDepth) = twoI        
             end if  
 
     end subroutine pack_CC_zeroDepth_interior_faces
- !%
+!%
+!%==========================================================================
+!%==========================================================================
+!%      
+    subroutine pack_JB_zeroDepth_interior_faces ()
+        !%------------------------------------------------------------------
+        !% Description
+        !% Dynamic pack for JB-adjacent faces that have zero depth elements 
+        !% on one or both sides
+
+        !% OBSOLETE fi_zeroDepth
+        !% This also sets values for the faceI(:,fi_zeroDepth) array to
+        !% -1 or +1 for upstream or downstream value
+        !% note the default of faceI(:,fi_zeroDepth) = 0.0 must be
+        !% set before this procedure is called
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, pointer :: ptype, npack 
+            integer, pointer :: eUp(:), eDn(:),  fJB(:)
+            integer :: ii
+        !%------------------------------------------------------------------
+        !% Aliases:
+            !% --- all the interior faces with JBCC
+            fJB      => faceP(1:npack_faceP(fp_JB_IorS),fp_JB_IorS)
+            !% --- upstream elements
+            eUp      => faceI(:,fi_Melem_uL)
+            !% --- downstream elements
+            eDn      => faceI(:,fi_Melem_dL)
+        !%------------------------------------------------------------------
+
+        !%===================
+        !% ---- fp_JB_upstream_is_zero_IorS
+            ptype => col_faceP(fp_JB_upstream_is_zero_IorS)
+            npack => npack_faceP(ptype)
+            npack = count(                                                &
+                                   elemYN(eUp(fJB),eYN_isZeroDepth)       &
+                            .and.                                         &
+                            (.not. elemYN(eDn(fJB),eYN_isZeroDepth))      &
+                        ) 
+            if (npack > 0) then 
+                faceP(1:npack,ptype) = pack(fJB ,                         &
+                                elemYN(eUp(fJB),eYN_isZeroDepth)       &
+                            .and.                                          &
+                            (.not. elemYN(eDn(fJB),eYN_isZeroDepth))      &
+                        )
+                !% -1 indicates zerodepth upstream of face        
+               ! faceI(faceP(1:npack,ptype),fi_zeroDepth) = -oneI        
+            end if
+
+        !%=========================
+        !% ---- fp_JB_downstream_is_zero_IorS 
+            ptype => col_faceP(fp_JB_downstream_is_zero_IorS)
+            npack => npack_faceP(ptype)
+            npack = count(                                                 &
+                                elemYN(eDn(fJB),eYN_isZeroDepth)       &
+                            .and.                                          &
+                            (.not. elemYN(eUp(fJB),eYN_isZeroDepth))      &
+                        ) 
+            if (npack > 0) then 
+                faceP(1:npack,ptype) = pack(fJB ,                         &
+                                elemYN(eDn(fJB),eYN_isZeroDepth)       &
+                            .and.                                          &
+                            (.not. elemYN(eUp(fJB),eYN_isZeroDepth))      &
+                        )
+
+                !% +1 indicates zerodepth downstream of face
+               ! faceI(faceP(1:npack,ptype),fi_zeroDepth) = oneI       
+            end if  
+
+        !%================
+        !% ---- fp_JB_bothsides_are_zero_IorS 
+            ptype => col_faceP(fp_JB_bothsides_are_zero_IorS)
+            npack => npack_faceP(ptype)
+            npack = count(                                                 &
+                                elemYN(eDn(fJB),eYN_isZeroDepth)       &
+                            .and.                                          &
+                                elemYN(eUp(fJB),eYN_isZeroDepth)       &
+                        ) 
+            if (npack > 0) then 
+                faceP(1:npack,ptype) = pack(fJB ,                         &
+                                elemYN(eDn(fJB),eYN_isZeroDepth)       &
+                            .and.                                          &
+                                elemYN(eUp(fJB),eYN_isZeroDepth)       &
+                        )
+                !% +2 indicates zerodepth both upstream and downstream        
+                !faceI(faceP(1:npack,ptype),fi_zeroDepth) = twoI        
+            end if  
+
+    end subroutine pack_JB_zeroDepth_interior_faces 
+!%
 !%==========================================================================
 !%==========================================================================
 !%   
@@ -5555,7 +5645,7 @@ contains
                             npack_up_zero = npack_up_zero + oneI
                             facePS(npack_up_zero,ptype_up_zero) = thisP
                             !% -1 indicates zerodepth upstream of face        
-                            faceI(thisP,fi_zeroDepth) = -oneI  
+                            !faceI(thisP,fi_zeroDepth) = -oneI  
 
                         !% --- zero depth on downstream element
                         else if ((.not. elemYN(gup,eYN_isZeroDepth)[c_image]) .and.  &
@@ -5564,7 +5654,7 @@ contains
                                 npack_dn_zero = npack_dn_zero + oneI
                                 facePS(npack_dn_zero,ptype_dn_zero) = thisP
                                 !% +1 indicates zerodepth downstream of face
-                                faceI(thisP,fi_zeroDepth)= oneI  
+                                !faceI(thisP,fi_zeroDepth)= oneI  
                         
                         !% --- zero depth on both elements        
                         else if ((elemYN(gup,eYN_isZeroDepth)[c_image]) .and.  &
@@ -5573,7 +5663,7 @@ contains
                                 npack_both_zero = npack_both_zero + oneI
                                 facePS(npack_both_zero,ptype_both_zero) = thisP
                                 !% +2 indicates zerodepth both upstream and downstream        
-                                faceI(thisP,fi_zeroDepth) = twoI  
+                               !faceI(thisP,fi_zeroDepth) = twoI  
                         else 
                             !% zero depth element not found
                         end if
@@ -5587,7 +5677,7 @@ contains
                             npack_up_zero = npack_up_zero + oneI
                             facePS(npack_up_zero,ptype_up_zero) = thisP
                             !% -1 indicates zerodepth upstream of face        
-                            faceI(thisP,fi_zeroDepth) = -oneI   
+                            !faceI(thisP,fi_zeroDepth) = -oneI   
                         
                         !% --- zero depth on downstream element
                         else if ((.not. elemYN(eup,eYN_isZeroDepth)         ) .and.  &
@@ -5596,7 +5686,7 @@ contains
                                 npack_dn_zero = npack_dn_zero + oneI
                                 facePS(npack_dn_zero,ptype_dn_zero) = thisP
                                 !% +1 indicates zerodepth downstream of face
-                                faceI(thisP,fi_zeroDepth)= oneI
+                                !faceI(thisP,fi_zeroDepth)= oneI
                         
                         !% --- zero depth on both elements   
                         else if ((elemYN(eup,eYN_isZeroDepth)         ) .and.  &
@@ -5605,7 +5695,7 @@ contains
                                 npack_both_zero = npack_both_zero + oneI
                                 facePS(npack_both_zero,ptype_both_zero) = thisP
                                 !% +2 indicates zerodepth both upstream and downstream        
-                                faceI(thisP,fi_zeroDepth) = twoI
+                                !faceI(thisP,fi_zeroDepth) = twoI
                         else 
                         !% --- no zero depth element found
                         end if
@@ -5620,6 +5710,16 @@ contains
             end if
 
     end subroutine pack_CC_zeroDepth_shared_faces
+
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine pack_JB_zeroDepth_shared_faces ()
+
+       ! print *, 'stub routine for pack_JB_zeroDepth_shared_faces'
+
+    end subroutine pack_JB_zeroDepth_shared_faces
 !%
 !%==========================================================================
 !%==========================================================================

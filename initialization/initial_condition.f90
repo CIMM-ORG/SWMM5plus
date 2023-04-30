@@ -42,7 +42,7 @@ module initial_condition
     ! use trapezoidal_channel, only: trapezoidal_area_from_depth
     ! use triangular_channel, only: triangular_area_from_depth
     use storage_geometry
-    use preissmann_slot, only: slot_initialize
+    use preissmann_slot, only: slot_initialize, slot_jb_computation
     use adjust
     use xsect_tables
     use control_hydraulics, only: control_init_monitoring_and_action_from_EPASWMM
@@ -355,7 +355,36 @@ contains
         ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
 
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables JM'
-        call update_auxiliary_variables_JMJB (.false.)
+        !call update_auxiliary_variables_JMJB (.false.)
+        Npack => npack_elemP(ep_JM)
+        if (Npack > 0) then
+            thisP => elemP(1:Npack,ep_JM)
+            !% --- junction plan area
+            call geo_plan_area_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
+            !% --- junction depth 
+            call geo_depth_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
+            !% --- junction head
+            elemR(thisP,er_Head) = llgeo_head_from_depth_pure(thisP,elemR(thisP,er_Depth))
+            call geo_assign_JB (ep_JM)
+            call slot_JB_computation (ep_JM)
+        end if
+        
+        !% --- Froude number, wavespeed, and interpwights on JB
+        Npack => npack_elemP(ep_JB)
+        if (Npack > 0) then 
+            thisP => elemP(1:Npack, ep_JB)
+            call update_Froude_number_element (thisP) 
+            call update_wavespeed_element(thisP)
+            call update_interpweights_JB (thisP, Npack, .false.)
+        end if
+
+        !% --- wave speed, Froude number on JM
+        Npack => npack_elemP(ep_JM)
+        if (Npack > 0) then
+            thisP => elemP(1:Npack, ep_JM)
+            call update_wavespeed_element(thisP)
+            call update_Froude_number_element (thisP) 
+        end if
 
         ! print *, 'TEST20230327 CCCC'
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)

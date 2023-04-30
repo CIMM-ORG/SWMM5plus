@@ -1093,19 +1093,130 @@ enable_testing()
 
 
 
+# # # Passed 20230430
+# add_test(NAME T007_RO_Free_dx0010_NJ2
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0010_NJ2.inp -s ./ctest/internal_testing/brh03/settings_10_NJ2.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
-
-# # Passed 20230424
+# # Passed 20230430
 # add_test(NAME T007_RO_Free_dx0010
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0010.inp -s ./ctest/internal_testing/brh03/settings_10.json -o ./ctest/outbrh3/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230427
+# # passed 20230430
+# add_test(NAME T007_RO_Free_dx0010_T20
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0010_T20.inp -s ./ctest/internal_testing/brh03/settings_10_T20.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230430
+# add_test(NAME T007_RO_Free_dx0100_NJ2
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0100_NJ2.inp -s ./ctest/internal_testing/brh03/settings_100_NJ2.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230430
+# add_test(NAME T007_RO_Free_dx0100
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0100.inp -s ./ctest/internal_testing/brh03/settings_100.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230430
+# add_test(NAME T007_RO_Free_dx0100_T20
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0100_T20.inp -s ./ctest/internal_testing/brh03/settings_100_T20.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230430
+# add_test(NAME T007_RO_Free_dx0250_NJ2
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0250_NJ2.inp -s ./ctest/internal_testing/brh03/settings_250_NJ2.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230430
+# add_test(NAME T007_RO_Free_dx0250
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0250.inp -s ./ctest/internal_testing/brh03/settings_250.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230430
+# add_test(NAME T007_RO_Free_dx0250_T20
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0250_T20.inp -s ./ctest/internal_testing/brh03/settings_250_T20.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230428
+add_test(NAME T007_RO_Free_dx0333
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh03/settings_333.json -o ./ctest/outbrh3/
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+# # passed 20230428
+# add_test(NAME T007_RO_Free_dx0333_T20
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0333_T20.inp -s ./ctest/internal_testing/brh03/settings_333_T20.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+# add_test(NAME T007a_RO_Free_dx0010_NJ2
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0010_NJ2.inp -s ./ctest/internal_testing/brh03/settings_10_NJ2.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Passed 20230428
 # add_test(NAME T007a_RO_Free_dx0010
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0010.inp -s ./ctest/internal_testing/brh03/settings_10.json -o ./ctest/outbrh3/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
+
+# # Passed 20230428
+# add_test(NAME T007a_RO_Free_dx0010_T20
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0010_T20.inp -s ./ctest/internal_testing/brh03/settings_10_T20.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# add_test(NAME T007a_RO_Free_dx0100
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0100.inp -s ./ctest/internal_testing/brh03/settings_100.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# add_test(NAME T007a_RO_Free_dx0100_T20
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0100_T20.inp -s ./ctest/internal_testing/brh03/settings_100_T20.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+# add_test(NAME T007a_RO_Free_dx0250_NJ2
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0250_NJ2.inp -s ./ctest/internal_testing/brh03/settings_250_NJ2.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# add_test(NAME T007a_RO_Free_dx0250
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0250.inp -s ./ctest/internal_testing/brh03/settings_250.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# add_test(NAME T007a_RO_Free_dx0250_T20
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0250_T20.inp -s ./ctest/internal_testing/brh03/settings_250_T20.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# add_test(NAME T007a_RO_Free_dx0333
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh03/settings_333.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# add_test(NAME T007a_RO_Free_dx0333_T20
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0333_T20.inp -s ./ctest/internal_testing/brh03/settings_333_T20.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+
+
+
 
 # # Passed 20230427
 # add_test(NAME T007_RO_Free_dx0010_NJ2
@@ -1125,13 +1236,17 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
+# # Passed 20230428, but has flowrate spikes
+# add_test(NAME T007_RO_Free_dx0250
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0250.inp -s ./ctest/internal_testing/brh03/settings_250.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
-add_test(NAME T007_RO_Free_dx0250
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0250.inp -s ./ctest/internal_testing/brh03/settings_250.json -o ./ctest/outbrh3/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
-
-
+# 
+# add_test(NAME T007_RO_Free_dx0250_T20
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007_RO_Free_dx0250_T20.inp -s ./ctest/internal_testing/brh03/settings_250_T20.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
 # # FAILED 20230427 SEG FAULT Passed 20230424
 # add_test(NAME T007_RO_Free_dx0333

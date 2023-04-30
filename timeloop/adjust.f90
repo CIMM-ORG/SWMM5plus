@@ -69,11 +69,13 @@ module adjust
 
             ! ! call util_utest_CLprint ('        ADJUST yyy00 before zero...')
 
+
     !% --- CC ELEMENT AD HOC ADJUSTMENTS    
     !% --- identify zero depths (.true. is zero depth)
     call adjust_zero_or_small_depth_identify_NEW(elementType,.true.)
 
         ! ! call util_utest_CLprint ('        ADJUST yyy01 after zero depth identify')
+
 
     if (setting%SmallDepth%useMomentumCutoffYN) then    
         !% --- identify small depths (.false. is small depth)
@@ -94,6 +96,7 @@ module adjust
 
     !% --- adjust head, flowrate, and auxiliary values at zero depth
     call adjust_zerodepth_element_values (elementType) 
+
 
             ! ! call util_utest_CLprint ('        ADJUST yyy04 after zero depth element values')
 
@@ -766,7 +769,7 @@ module adjust
         elemR(thisP,er_Area)         = setting%ZeroValue%Area
         elemR(thisP,er_dHdA)         = oneR / setting%ZeroValue%TopWidth
         elemR(thisP,er_EllDepth)     = setting%ZeroValue%Depth * 0.99d0
-        !elemR(thisP,er_Flowrate)     = zeroR ! 20230409 brh -- allow a flowrate, but not velocity NEEDED FOR JB
+        elemR(thisP,er_Flowrate)     = zeroR ! TCOMMENTING CAUSED PROBLEMS 20230409 brh -- allow a flowrate, but not velocity NEEDED FOR JB
         elemR(thisP,er_FroudeNumber) = zeroR
         elemR(thisP,er_Perimeter)    = setting%ZeroValue%TopWidth + setting%ZeroValue%Depth
         elemR(thisP,er_HydRadius)    = setting%ZeroValue%Area / (setting%ZeroValue%TopWidth + setting%ZeroValue%Depth)

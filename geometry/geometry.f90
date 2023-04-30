@@ -51,6 +51,8 @@ module geometry
     !public :: geometry_toplevel
     public :: geometry_toplevel_CC
     public :: geometry_toplevel_JMJB
+    public :: geo_assign_JB
+    public :: geo_JM_depth_area_from_volume
     public :: geo_common_initialize
     public :: geo_sectionfactor_from_depth_singular
     public :: geo_Qcritical_from_depth_singular
@@ -64,6 +66,12 @@ module geometry
     !public :: geo_elldepth_pure
     !public :: geometry_table_initialize
     public :: geo_depth_from_volume_by_type_allCC
+    public :: geo_depth_from_head
+    !public :: geo_depth_from_volume_by_type_JM
+    public :: geo_ZeroDepth_from_depth
+
+    public :: geo_plan_area_from_volume_JM
+    public :: geo_depth_from_volume_JM
 
     contains
 !%==========================================================================
@@ -222,6 +230,8 @@ module geometry
         !% Declarations
         !%------------------------------------------------------------------
 
+        print *, 'OBSOLETE geometry_toplevel_JMJB'
+        stop 298372
         !% --- JB VALUES
         !%    assign the non-volume geometry on junction branches JB based on JM head
         !%    Values limited by full volume. Volume assigned is area * length
@@ -236,7 +246,11 @@ module geometry
 
 
         !% --- JM values
-        call geo_assign_JM ()
+       ! call geo_JM_depth_area_from_volume ()
+        !% --- new junction plan area
+        call geo_plan_area_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
+        !% --- ne junction depth 
+        call geo_depth_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
 
 
         end subroutine geometry_toplevel_JMJB 
@@ -1084,7 +1098,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_depth_from_volume_by_type_JM (elemPGx, npack_elemPGx, col_elemPGx)
+    subroutine geo_depth_from_volume_JM (elemPGx, npack_elemPGx, col_elemPGx)
         !%------------------------------------------------------------------
         !% Description:
         !% This solves nonsurcharged CCJMJB elements because of PGx arrays
@@ -1127,12 +1141,13 @@ module geometry
 
         !% --- note that NoStorage junctions have no volume
 
-    end subroutine geo_depth_from_volume_by_type_JM
-!%
+    end subroutine geo_depth_from_volume_JM
+ !%
 !%==========================================================================
+
 !%==========================================================================
 !%
-    subroutine geo_plan_area_from_volume_by_type_JM (elemPGx, npack_elemPGx, col_elemPGx)
+    subroutine geo_plan_area_from_volume_JM (elemPGx, npack_elemPGx, col_elemPGx)
         !%------------------------------------------------------------------
         !% Description:
         !% This calculates plan area for nonsurcharged JM elements because of PGx arrays
@@ -1163,9 +1178,9 @@ module geometry
         end if
 
         !% --- JM with implied geometry
-        !%     plan area is fixed
+        !%     no action: plan area is fixed
 
-    end subroutine geo_plan_area_from_volume_by_type_JM    
+    end subroutine geo_plan_area_from_volume_JM    
 !%
 !%==========================================================================
 !%==========================================================================
@@ -1378,6 +1393,9 @@ module geometry
                         
                         ! print *, 'HEAD A', head(tB)
                         ! print *,'Velocity ',velocity(tB)
+
+                        head(tB) = head(tM)
+
                     else
                         !% for main head below the branch bottom entrance we assign a
                         !% Froude number of one on an inflow to the junction main. Note
@@ -1796,7 +1814,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_assign_JM ()
+    subroutine geo_JM_depth_area_from_volume ()
         !%------------------------------------------------------------------
         !% Description:
         !% Assigns depths and storage data for JM
@@ -1809,54 +1827,56 @@ module geometry
         !%     Note that head, depth, and volume may be slightly inconsistent
         !%     
         !%------------------------------------------------------------------
-        !% Declarations
-
+        !% Declarations"
             integer, pointer    :: thisCol, Npack, thisP(:)
             integer, pointer    :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
         !%------------------------------------------------------------------
-            !% Aliases
-            !% --- set packed column for updated elements
-                elemPGx                => elemPGetm(:,:)
-                npack_elemPGx          => npack_elemPGetm(:)
-                col_elemPGx            => col_elemPGetm(:)
+        !% Aliases
+        !% --- set packed column for updated elements
+            elemPGx                => elemPGetm(:,:)
+            npack_elemPGx          => npack_elemPGetm(:)
+            col_elemPGx            => col_elemPGetm(:)
+        !%------------------------------------------------------------------    
 
-        !% --- update the plan area and depths for functional storage
-        !    print *, 'functional storage'
+        print *, 'OBSOLETE'
+        stop 29387043
+        !% --- functional storage
         thisCol => col_elemPGx(epg_JM_functionalStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             thisP => elemPGx(1:Npack, thisCol)
             call storage_plan_area_from_volume (thisP, Npack)
-            elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
+            call storage_functional_depth_from_volume (thisP, Npack)
+
+            elemR(thisP,er_Depth) = min(elemR(thisP,er_Depth),   &
                                         elemR(thisP,er_FullDepth))
+
             elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth) 
+
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)                           
         end if
 
-        !% --- update the plan area  and depths for tabular storage
-        !    print *, 'tabular storage'
+        !% --- tabular storage
         thisCol => col_elemPGx(epg_JM_tabularStorage)
-        !print *, 'thisCol ',thisCol
         Npack   => npack_elemPGx(thisCol)
-        !print *, 'npack ',Npack
-        !print *, elemPGx(1:Npack, thisCol)
         if (Npack > 0) then
             thisP => elemPGx(1:Npack, thisCol)
             call storage_plan_area_from_volume (thisP, Npack)
+            call storage_tabular_depth_from_volume (thisP, Npack)
             elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
                                         elemR(thisP,er_FullDepth))
             elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth) 
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)  
         end if
 
-        !% --- set plan area  and depths for implied storage to zero
-            !print *, 'implied storage'
+        !% --- For implies storage with fixed plan area
         thisCol => col_elemPGx(epg_JM_impliedStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
             thisP => elemPGx(1:Npack, thisCol)
-            !% --- note that esr_Storage_Plan_Area is zero and never changes
-            !elemSR(thisP,esr_Storage_Plan_Area) = zeroR !% zero implied storage area
+            where (elemSR(thisP,esr_Storage_Plan_Area) > zeroR)
+                elemR(thisP,er_Depth) = elemR(thisP,er_Volume) / elemSR(thisP,esr_Storage_Plan_Area)
+            endwhere
             elemR(thisP,er_Depth) = min(elemR(thisP,er_Head) - elemR(thisP,er_Zbottom), &
                                         elemR(thisP,er_FullDepth))
             elemR(thisP,er_Depth) = max(elemR(thisP,er_Depth),0.99d0*setting%ZeroValue%Depth)
@@ -1875,7 +1895,7 @@ module geometry
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)  
         end if
 
-    end subroutine geo_assign_JM
+    end subroutine geo_JM_depth_area_from_volume
 !%
 !%==========================================================================
 !%==========================================================================
@@ -4231,6 +4251,79 @@ module geometry
         ! print *, ' '
 
     end subroutine geo_ZeroDepth_from_volume
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine geo_ZeroDepth_from_depth (thisP)    
+        !%------------------------------------------------------------------
+        !% Description:
+        !% ensures that if depth <= zeroDepth the depth is reset to 99% 
+        !% of zerodepth
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, target, intent(in) :: thisP(:)
+            real(8), pointer :: depth(:)
+        !%------------- -----------------------------------------------------
+        !% Aliases
+            depth       => elemR(:,er_Depth)
+        !%------------- ----------------------------------------------------
+
+        where (depth(thisP).le. setting%ZeroValue%Depth)
+            depth(thisP) = setting%ZeroValue%Depth * 0.99d0
+        end where
+
+    end subroutine  geo_ZeroDepth_from_depth
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine geo_depth_from_head (epCol, Npack)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Computes depth from given head with 99% of Zerodepth as a minimum
+        !% for a packed array of elements
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: epCol, Npack
+            integer, pointer    :: thisP(:)
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (Npack < 1) return 
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisP => elemP(1:Npack,epCol)
+        !%------------------------------------------------------------------
+
+        elemR(thisP,er_Depth) = elemR(thisP,er_Head)                     &
+             - (elemR(thisP,er_Zbottom) + elemR(thisP,er_SedimentDepth))
+             
+        where (elemR(thisP,er_Depth) .le. setting%ZeroValue%Depth)
+            elemR(thisP,er_Depth) = 0.99d0* setting%ZeroValue%Depth
+        endwhere
+
+    end subroutine geo_depth_from_head
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function geo_depth_from_head_singular (Eidx)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Computes depth from a given head with 99% of Zerodepth as
+        !% minimum for a single element
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: Eidx
+        !%------------------------------------------------------------------
+
+        geo_depth_from_head_singular                                                           &
+            = max(                                                                             &
+                elemR(Eidx,er_Head) - (elemR(Eidx,er_Zbottom) + elemR(Eidx,er_SedimentDepth)), &
+                0.99d0 * setting%ZeroValue%Depth                                               &
+            )
+
+    end function geo_depth_from_head_singular
 !%
 !%==========================================================================
 !%==========================================================================

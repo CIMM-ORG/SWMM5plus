@@ -7,10 +7,11 @@ module face
     use adjust
     use geometry
     use jump
+    use pack_mask_arrays, only: pack_CC_zeroDepth_interior_faces, pack_CC_zeroDepth_shared_faces
     use utility_profiler
     use utility, only: util_sign_with_ones, util_syncwrite
     use utility_crash, only: util_crashpoint
-   ! use utility_unit_testing, only: util_utest_CLprint
+   !use utility_unit_testing, only: util_utest_CLprint
 
 
     implicit none
@@ -33,11 +34,17 @@ module face
     public :: face_force_JBadjacent_values
     public :: face_velocities
 
-    public :: face_zeroDepth_geometry_CC_interior
-    public :: face_zeroDepth_geometry_CC_shared
-    public :: face_zeroDepth_flowrates_CC_interior
-    public :: face_zeroDepth_flowrates_CC_shared
+
     public :: face_flowrate_for_openclosed_elem
+
+    public :: face_zeroDepth
+
+    !% --- these later will be private
+    public :: face_zeroDepth_geometry_interior
+    public :: face_zeroDepth_geometry_shared
+    public :: face_zeroDepth_flowrates_interior
+    public :: face_zeroDepth_flowrates_shared
+
     
     ! public :: face_FluxCorrection_interior
     ! public :: face_flowrate_max_interior
@@ -46,6 +53,48 @@ module face
     contains
 !%==========================================================================
 !% PUBLIC
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine face_zeroDepth (fp_downstream, fp_upstream, fp_bothsides)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% sets zero depth geometry values on faces depending on the
+        !%  adjacent elements
+        !% For CC
+        !%  arguments are fp_CC_downstream_is_zero_IorS,
+        !%  fp_CC_upstream_is_zero_IorS, fp_CC_bothsides_are_zero_IorS
+        !% For JB
+        !%  rguments are fp_JB_downstream_is_zero_IorS,
+        !%  fp_JB_upstream_is_zero_IorS, fp_JB_bothsides_are_zero_IorS
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: fp_downstream, fp_upstream, fp_bothsides
+        !%------------------------------------------------------------------
+
+        !% --- geometry (interior)
+        call face_zeroDepth_geometry_interior(fp_downstream)
+        call face_zeroDepth_geometry_interior(fp_upstream)
+        call face_zeroDepth_geometry_interior(fp_bothsides)
+
+        !% --- geometry (shared)
+        call face_zeroDepth_geometry_shared(fp_downstream)
+        call face_zeroDepth_geometry_shared(fp_upstream)
+        call face_zeroDepth_geometry_shared(fp_bothsides)
+
+        !% --- flowrate (interior)
+        call face_zeroDepth_flowrates_interior(fp_downstream)
+        call face_zeroDepth_flowrates_interior(fp_upstream)
+        call face_zeroDepth_flowrates_interior(fp_bothsides)
+
+        !% --- flowrate (shared)
+        call face_zeroDepth_flowrates_shared(fp_downstream)
+        call face_zeroDepth_flowrates_shared(fp_upstream)
+        call face_zeroDepth_flowrates_shared(fp_bothsides)
+        
+    end subroutine face_zeroDepth
+!%
+!%==========================================================================
 !%==========================================================================
 !%    
     subroutine face_push_elemdata_to_face (thisPCol, frCol, erCol, elemXR, UpstreamFaceTF)
@@ -241,7 +290,7 @@ module face
         !     call adjust_face_for_zero_setting ()
         ! end if
 
-            ! call util_utest_CLprint ('    XXX02 face after adjust face for zero setting')
+          !!!  ! call util_utest_CLprint ('    XXX02 face after adjust face for zero setting')
 
         !% REMOVE THIS FROM HERE 20230420
         ! if (.not. skipZeroAdjust) then
@@ -250,11 +299,11 @@ module face
 
         !     call face_zerodepth_interior(fp_elem_downstream_is_zero)
 
-        !         call util_utest_CLprint ('    XXX03 face after face_zerodepth_interior 1')
+        !         ! call util_utest_CLprint ('    XXX03 face after face_zerodepth_interior 1')
 
         !     call face_zerodepth_interior(fp_elem_upstream_is_zero)
                 
-        !         call util_utest_CLprint ('    XXX04 face after face_zerodepth_interior 2')
+        !         ! call util_utest_CLprint ('    XXX04 face after face_zerodepth_interior 2')
 
         !         ! print *, ' '
         !         ! print *, 'in zero depth interior bothsides are zero index AAAA'
@@ -265,9 +314,6 @@ module face
         !         ! print *, ' '
 
         !     !call face_zerodepth_interior(fp_elem_bothsides_are_zero)
-
-        !     !    call util_utest_CLprint ('    XXX05 face after face_zerodepth_interior 3')
-
         ! end if
 
         !% --- face reconstruction of all the shared faces
@@ -278,17 +324,6 @@ module face
         call face_interpolate_bc (isBConly)
 
             ! call util_utest_CLprint ('    XXX07 face after face_interpolate_BC')
-
-        ! !% --- control of faces for zero depth conditions
-        !     call face_zerodepth_interior(fp_CC_downstream_is_zero_IorS)
-        !     call face_zerodepth_interior(fp_CC_upstream_is_zero_IorS)
-        !     call face_zerodepth_interior(fp_CC_bothsides_are_zero_IorS)
-
-        ! !% --- for shared
-        !     call face_zerodepth_shared(fp_CC_downstream_is_zero_IorS)
-        !     call face_zerodepth_shared(fp_CC_upstream_is_zero_IorS)
-        !     call face_zerodepth_shared(fp_CC_bothsides_are_zero_IorS)
-
 
         !%-------------------------------------------------------------------
         !% Closing
@@ -2098,22 +2133,26 @@ module face
     end subroutine face_add_JBvalues
 !%    
 !%==========================================================================    
-    !%==========================================================================
+!%==========================================================================
 !%   
-    subroutine face_zeroDepth_geometry_CC_interior (facePcol)
+    subroutine face_zeroDepth_geometry_interior (facePcol)
         !% -----------------------------------------------------------------
         !% Description:
         !% sets the face geoemtry values for interior faces with neighbor elements
-        !% that are zero depth (only faces with CC both sides)
-        !% facePcol must be one of fp_CC_downstream_is_zero_IorS,
-        !% fp_CC_upstream_is_zero_IorS, fp_CC_bothsides_are_zero_IorS
+        !% that are zero depth
+        !% For CC
+        !%  facePcol must be one of fp_CC_downstream_is_zero_IorS,
+        !%  fp_CC_upstream_is_zero_IorS, fp_CC_bothsides_are_zero_IorS
+        !% For JB
+        !%  facePcol must be one of fp_JB_downstream_is_zero_IorS,
+        !%  fp_JB_upstream_is_zero_IorS, fp_JB_bothsides_are_zero_IorS
         !% -----------------------------------------------------------------
         !% Declarations
-        integer, intent(in) :: facePcol
-
-        integer, pointer :: npack, thisP(:), edn(:), eup(:), mm
-        integer :: ii
+            integer, intent(in) :: facePcol
+            integer, pointer :: npack, thisP(:), edn(:), eup(:), mm
+            integer :: ii
         !% -----------------------------------------------------------------
+        !% Preliminaries
         !% -----------------------------------------------------------------
         npack => npack_faceP(facePCol)
         if (npack < 1) return
@@ -2123,10 +2162,25 @@ module face
         eup   => faceI(:,fi_Melem_uL)
 
         select case (facePcol)
-        case (fp_CC_downstream_is_zero_IorS)
-            !% ---- head is the smaller of the recent face value or the upstream element value
-            faceR(thisP,fr_Head_u) = min(faceR(thisP,fr_Head_u), elemR(eup,er_Head))
+        case (fp_CC_downstream_is_zero_IorS, fp_JB_downstream_is_zero_IorS)
+
+            ! print *, ' '
+            ! print *, 'here AA ',faceR(5,fr_Head_u), elemR(eup(5),er_Head)
+            ! print *, 'here zbt',faceR(5,fr_Zbottom),  elemR(eup(5),er_Depth)
+            ! print *, 'here    ', elemR(eup(5),er_Depth) + faceR(5,fr_Zbottom)
+            ! print *, ' '
+
+            !% ---- head is the smaller of the recent face value, the upstream element value,
+            !%      or the depth upstream applied to the face zbottom (new 20230430brh)
+            faceR(thisP,fr_Head_u) = min(faceR(thisP,fr_Head_u), elemR(eup(thisP),er_Head), elemR(eup(thisP),er_Depth) + faceR(thisP,fr_Zbottom))
+            !% --- store on downstream face
             faceR(thisP,fr_Head_d) = faceR(thisP,fr_Head_u)
+
+            ! print *, ' '
+            ! print *, 'here BB ',faceR(5,fr_Head_d)
+            ! print *, ' '
+            ! print *, 'thisP',thisP, eup(thisP)
+            ! print *, min(faceR(5,fr_Head_u),elemR(4,er_Head),elemR(4,er_Depth)+faceR(5,fr_Zbottom))
 
             !% --- depth is the computed depth from head or zeroDepth
             faceR(thisP,fr_Depth_u) = max(faceR(thisP,fr_Head_u) - faceR(thisP,fr_Zbottom), 0.99d0 * setting%ZeroValue%Depth)
@@ -2143,9 +2197,10 @@ module face
                 faceR(mm,fr_Area_d) = faceR(mm,fr_Area_u)
             end do
 
-        case (fp_CC_upstream_is_zero_IorS)
+        case (fp_CC_upstream_is_zero_IorS,fp_JB_upstream_is_zero_IorS)
             !% --- head is the smaller of the recent value or the downstream element value
-            faceR(thisP,fr_Head_d) = min(faceR(thisP,fr_Head_d), elemR(edn,er_Head))
+            !% or the depth upstream applied to the face zbottom (new 20230430brh)
+            faceR(thisP,fr_Head_d) = min(faceR(thisP,fr_Head_d), elemR(edn(thisP),er_Head), elemR(edn(thisP),er_Depth)+ faceR(thisP,fr_Zbottom))
             faceR(thisP,fr_Head_u) = faceR(thisP,fr_Head_d)
 
             !% --- depth is the computed depth from head or zeroDepth
@@ -2163,7 +2218,7 @@ module face
                 faceR(mm,fr_Area_u) = faceR(mm,fr_Area_d)
             end do
 
-        case (fp_CC_bothsides_are_zero_IorS)
+        case (fp_CC_bothsides_are_zero_IorS,fp_JB_bothsides_are_zero_IorS)
             faceR(thisP,fr_Depth_u) = 0.99d0 * setting%ZeroValue%Depth
             faceR(thisP,fr_Depth_d) = 0.99d0 * setting%ZeroValue%Depth
             faceR(thisP,fr_Head_u) = faceR(thisP,fr_Depth_u) + faceR(thisP,fr_Zbottom)
@@ -2176,59 +2231,68 @@ module face
             call util_crashpoint(619873)
         end select
 
-    end subroutine face_zeroDepth_geometry_CC_interior
+    end subroutine face_zeroDepth_geometry_interior
 !%  
 !%========================================================================== 
 !%==========================================================================
 !%   
-    subroutine face_zeroDepth_geometry_CC_shared (facePScol)
+    subroutine face_zeroDepth_geometry_shared (facePScol)
         !% -----------------------------------------------------------------
         !% Description:
         !% sets the face geoemtry values for shared faces with neighbor elements
-        !% that are zero depth (only faces with CC both sides)
-        !% facePcol must be one of fp_CC_downstream_is_zero_IorS,
-        !% fp_CC_upstream_is_zero_IorS, fp_CC_bothsides_are_zero_IorS
+        !% that are zero depth 
+        !% For CC
+        !%  facePcol must be one of fp_CC_downstream_is_zero_IorS,
+        !%  fp_CC_upstream_is_zero_IorS, fp_CC_bothsides_are_zero_IorS
+        !% For JB
+        !%  facePcol must be one of fp_JB_downstream_is_zero_IorS,
+        !%  fp_JB_upstream_is_zero_IorS, fp_JB_bothsides_are_zero_IorS
         !% -----------------------------------------------------------------
         !% Declarations
-    integer, intent(in) :: facePScol
+            integer, intent(in) :: facePScol
+            integer, pointer :: npack, thisP(:), edn(:), eup(:)
+        !% -----------------------------------------------------------------
+        
+            npack => npack_facePS(facePSCol)
+            if (npack < 1) return
+            
+        !% -----------------------------------------------------------------
+        print *, 'NEED CODE FOR SHARED face_zeroDepth_geometry_shared'
+        stop 5098723
 
-    integer, pointer :: npack, thisP(:), edn(:), eup(:)
-    !% -----------------------------------------------------------------
-    !% -----------------------------------------------------------------
-    npack => npack_facePS(facePSCol)
-    if (npack < 1) return
-
-    print *, 'NEED CODE FOR SHARED adjust_zeroDepth_face_geometry_CC_shared'
-    stop 5098723
-
-    end subroutine face_zeroDepth_geometry_CC_shared
+    end subroutine face_zeroDepth_geometry_shared
 !%  
 !%========================================================================== 
-    !%==========================================================================
+!%==========================================================================
 !%
-    subroutine face_zeroDepth_flowrates_CC_interior (facePcol)
+    subroutine face_zeroDepth_flowrates_interior (facePcol)
         !% -----------------------------------------------------------------
         !% Description:
         !% sets the face flux values for interior faces with neighbor elements
-        !% that are zero depth (only faces with CC both sides)
-        !% facePcol must be one of fp_CC_downstream_is_zero_IorS,
-        !% fp_CC_upstream_is_zero_IorS, fp_CC_bothsides_are_zero_IorS
+        !% that are zero depth 
+        !% For CC
+        !%  facePcol must be one of fp_CC_downstream_is_zero_IorS,
+        !%  fp_CC_upstream_is_zero_IorS, fp_CC_bothsides_are_zero_IorS
+        !% For JB
+        !%  facePcol must be one of fp_JB_downstream_is_zero_IorS,
+        !%  fp_JB_upstream_is_zero_IorS, fp_JB_bothsides_are_zero_IorS
         !% -----------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: facePcol
-
             integer, pointer :: npack, thisP(:), edn(:), eup(:)
         !% -----------------------------------------------------------------
+        !% Preliminaries
+            npack => npack_faceP(facePCol)
+            if (npack < 1) return
         !% -----------------------------------------------------------------
-        npack => npack_faceP(facePCol)
-        if (npack < 1) return
-        
-        thisP => faceP(1:npack,facePcol)
-        edn   => faceI(:,fi_Melem_dL)
-        eup   => faceI(:,fi_Melem_uL)
+        !% Aliases
+            thisP => faceP(1:npack,facePcol)
+            edn   => faceI(:,fi_Melem_dL)
+            eup   => faceI(:,fi_Melem_uL)
+        !% -----------------------------------------------------------------
 
         select case (facePcol)
-        case (fp_CC_downstream_is_zero_IorS)
+        case (fp_CC_downstream_is_zero_IorS,fp_JB_downstream_is_zero_IorS)
             !% --- use the downstream flow from the upstream element (or zero if upstream flow)
             where (elemR(eup(thisP),er_Flowrate) .ge. zeroR)
                 faceR(thisP,fr_Flowrate) = elemR(eup(thisP),er_Flowrate)
@@ -2236,7 +2300,7 @@ module face
                 faceR(thisP,fr_Flowrate) = zeroR
             endwhere
 
-        case (fp_CC_upstream_is_zero_IorS)
+        case (fp_CC_upstream_is_zero_IorS,fp_JB_upstream_is_zero_IorS)
             !% --- use the upstream flow from the downstream element (or zero if downstream flow)
             where (elemR(edn(thisP),er_Flowrate) .le. zeroR)
                 faceR(thisP,fr_Flowrate) = elemR(edn(thisP),er_Flowrate)
@@ -2244,7 +2308,7 @@ module face
                 faceR(thisP,fr_Flowrate) = zeroR
             endwhere
 
-        case (fp_CC_bothsides_are_zero_IorS)
+        case (fp_CC_bothsides_are_zero_IorS,fp_JB_bothsides_are_zero_IorS)
             faceR(thisP,fr_Flowrate)   = zeroR
             faceR(thisP,fr_Velocity_d) = zeroR 
             faceR(thisP,fr_Velocity_u) = zeroR
@@ -2275,51 +2339,53 @@ module face
 
             ! call util_utest_CLprint ('------- LLL.02E  in face zerodepth ')
 
-    end subroutine face_zeroDepth_flowrates_CC_interior
+    end subroutine face_zeroDepth_flowrates_interior
 !%  
 !%========================================================================== 
 !%==========================================================================
 !%    
-    subroutine face_zeroDepth_flowrates_CC_shared (facePcol)
+    subroutine face_zeroDepth_flowrates_shared (facePcol)
         !% -----------------------------------------------------------------
         !% Description:
         !% sets the face flux values for shared faces with neighbor elements
-        !% that are zero depth (only faces with CC both sides)
-        !% facePcol must be one of fp_CC_downstream_is_zero_IorS,
-        !% fp_CC_upstream_is_zero_IorS, fp_CC_bothsides_are_zero_IorS
+        !% that are zero depth 
+        !% For CC
+        !%  facePcol must be one of fp_CC_downstream_is_zero_IorS,
+        !%  fp_CC_upstream_is_zero_IorS, fp_CC_bothsides_are_zero_IorS
+        !% For JB
+        !%  facePcol must be one of fp_JB_downstream_is_zero_IorS,
+        !%  fp_JB_upstream_is_zero_IorS, fp_JB_bothsides_are_zero_IorS
         !% -----------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: facePcol
             integer, pointer    :: npack
-
         !% -----------------------------------------------------------------
-        npack => npack_facePS(facePCol)
-        if (npack < 1) return
+            npack => npack_facePS(facePCol)
+            if (npack < 1) return
 
-        print *, 'NEED CODE FOR SHARED adjust_zeroDepth_face_flowrate_CC_shared'
-        stop 5098723
-
+            print *, 'NEED CODE FOR SHAREDface_zeroDepth_flowrates_shared'
+            stop 50987232
+        !% -----------------------------------------------------------------
         select case (facePcol)
-        case (fp_CC_downstream_is_zero_IorS)
+
+        case (fp_CC_downstream_is_zero_IorS,fp_JB_downstream_is_zero_IorS)
             !% --- use the downstream flow from the upstream element (or zero if upstream flow)
             !faceR(thisP,fr_Flowrate) = max(elemR(eup,er_Flowrate),zeroR)
 
-        case (fp_CC_upstream_is_zero_IorS)
+        case (fp_CC_upstream_is_zero_IorS,fp_JB_upstream_is_zero_IorS)
             !% --- us the upstream flow from the downstream element (or zero if downstream flow)
             !faceR(thisP,fr_Flowrate) = min(elemR(edn,er_Flowrate),zeroR)
 
-        case (fp_CC_bothsides_are_zero_IorS)
+        case (fp_CC_bothsides_are_zero_IorS,fp_JB_bothsides_are_zero_IorS)
             ! faceR(thisP,fr_Flowrate)   = zeroR
             ! faceR(thisP,fr_Velocity_d) = zeroR 
             ! faceR(thisP,fr_Velocity_u) = zeroR
         case default
             print *, 'CODE ERROR: unexpected case default'
-            call util_crashpoint(619873)
-        end select
+            call util_crashpoint(6198732)
+        end select        
 
-        
-
-    end subroutine face_zeroDepth_flowrates_CC_shared
+    end subroutine face_zeroDepth_flowrates_shared
 !%  
 !%========================================================================== 
 !%==========================================================================

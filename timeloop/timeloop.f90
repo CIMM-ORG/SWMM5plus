@@ -633,7 +633,7 @@ contains
         faceR(:,fr_Flowrate_Conservative) = zeroR  
 
         !% call the RK2 time-march
-        call rk2_toplevel_ETM_6()
+        call rk2_toplevel_ETM_7()
 
         call util_accumulate_volume_conservation () 
 
@@ -1118,11 +1118,11 @@ contains
             if (timeLeft .le. dtTol) timeLeft = oldDT
 
             !% --- get the CFL if a single step is taken using only CC elements
-            if (setting%SmallDepth%useMomentumCutoffYN) then
-                thisCFL = tl_get_max_CFL_CC(ep_CC_NOTsmalldepth,timeleft)  
-            else
-                thisCFL = tl_get_max_CFL_CC(ep_CC_NOTzerodepth,timeleft)
-            end if
+            !if (setting%SmallDepth%useMomentumCutoffYN) then
+            !    thisCFL = tl_get_max_CFL_CC(ep_CC_NOTsmalldepth,timeleft)  
+            !else
+                thisCFL = tl_get_max_CFL_CC(ep_CCJM_NOTzerodepth,timeleft)
+            !end if
 
             ! print *, 'thisCFL to reach hydrology step ',thisCFL
 
@@ -1157,11 +1157,11 @@ contains
                     !% --- negligible time left, don't bother with it, go back to the old dt
                     newDT = oldDT
                     !% --- check that resetting to oldDT didn't cause a problem with CC elements
-                    if (setting%SmallDepth%useMomentumCutoffYN) then
-                        thisCFL = tl_get_max_CFL_CC(ep_CC_NOTsmalldepth,newDT)
-                    else 
-                        thisCFL = tl_get_max_CFL_CC(ep_CC_NOTzerodepth,newDT)
-                    end if
+                    !if (setting%SmallDepth%useMomentumCutoffYN) then
+                    !    thisCFL = tl_get_max_CFL_CC(ep_CCJM_NOTsmalldepth,newDT)
+                    !else 
+                        thisCFL = tl_get_max_CFL_CC(ep_CCJM_NOTzerodepth,newDT)
+                    !end if
                     if (thisCFL > maxCFL) then 
                         !% --- if CFL too large, set the time step based on the target CFL
                         newDT = newDT * targetCFL / thisCFL
@@ -1208,11 +1208,11 @@ contains
                         ! print *, 'newDT after limiting by increaseFactor',newDT
 
                         !% --- check that the newDT didn't cause a CFL violation
-                        if (setting%SmallDepth%useMomentumCutoffYN) then
-                            thisCFL = tl_get_max_CFL_CC(ep_CC_NOTsmalldepth,newDT)
-                        else
-                            thisCFL = tl_get_max_CFL_CC(ep_CC_NOTzerodepth,newDT)
-                        end if
+                        ! if (setting%SmallDepth%useMomentumCutoffYN) then
+                        !     thisCFL = tl_get_max_CFL_CC(ep_CC_NOTsmalldepth,newDT)
+                        ! else
+                            thisCFL = tl_get_max_CFL_CC(ep_CCJM_NOTzerodepth,newDT)
+                        ! end if
                         if (thisCFL > maxCFL) then 
                             !% --- if CFL to large, set the time step based on the target CFL
                             newDT = newDT * targetCFL / thisCFL
@@ -1247,11 +1247,11 @@ contains
             neededSteps = 3 !% forces rounding check
 
             !% --- allowing hydrology and hydraulics to occur at different times
-            if (setting%SmallDepth%useMomentumCutoffYN) then
-                thisCFL = tl_get_max_CFL_CC(ep_CC_NOTsmalldepth,oldDT)
-            else 
-                thisCFL = tl_get_max_CFL_CC(ep_CC_NOTzerodepth,oldDT)
-            end if
+            ! if (setting%SmallDepth%useMomentumCutoffYN) then
+            !     thisCFL = tl_get_max_CFL_CC(ep_CC_NOTsmalldepth,oldDT)
+            ! else 
+                thisCFL = tl_get_max_CFL_CC(ep_CCJM_NOTzerodepth,oldDT)
+            ! end if
         
                 ! print *, ' '
                 ! print *, 'baseline CFL, minCFL, this step: '
@@ -1282,7 +1282,7 @@ contains
                         !% --- increase the time step and reset the checkStep Counter
                             !    print *, 'lowCFL'
                         newDT = OldDT * targetCFL / thisCFL 
-                        thisCFL = tl_get_max_CFL_CC(ep_CC_NOTzerodepth,newDT)
+                        thisCFL = tl_get_max_CFL_CC(ep_CCJM_NOTzerodepth,newDT)
                     else
                         !% -- for maxCFLlow < thisCFL < maxCFL do nothing
                     end if
@@ -1391,11 +1391,11 @@ contains
         
         !% find the cfl for reporting
        ! cfl_max = tl_get_max_CFL_CC(ep_CCJBJM_NOTsmalldepth,newDT)
-        if (setting%SmallDepth%useMomentumCutoffYN) then 
-            cfl_max = tl_get_max_CFL_CC(ep_CCJM_NOTsmalldepth,newDT)
-        else 
+        ! if (setting%SmallDepth%useMomentumCutoffYN) then 
+        !     cfl_max = tl_get_max_CFL_CC(ep_CCJM_NOTsmalldepth,newDT)
+        ! else 
             cfl_max = tl_get_max_CFL_CC(ep_CCJM_NOTzerodepth,newDT)
-        end if
+        ! end if
         call co_max(cfl_max)
 
 
@@ -1842,6 +1842,9 @@ contains
             !stop 298734
 
     end function tl_get_max_CFL_CC   
+ !%
+!%==========================================================================
+!%==========================================================================
 !%
 !%==========================================================================
 !%==========================================================================
