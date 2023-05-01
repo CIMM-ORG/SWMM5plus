@@ -1408,15 +1408,15 @@ contains
                 print*, 'dt = ', newDT, 'minDt = ',  setting%Limiter%Dt%Minimum
                 if (setting%SmallDepth%useMomentumCutoffYN) then
                     print*, 'max velocity  ', maxval( &
-                        elemR(elemP(1:npack_elemP(ep_CC_NOTsmalldepth),ep_CC_NOTsmalldepth),er_Velocity) )
+                        elemR(elemP(1:npack_elemP(ep_CCJM_NOTzerodepth),ep_CCJM_NOTzerodepth),er_Velocity) )
                     print*, 'max wavespeed ', maxval( &
-                        elemR(elemP(1:npack_elemP(ep_CC_NOTsmalldepth),ep_CC_NOTsmalldepth),er_WaveSpeed) )
+                        elemR(elemP(1:npack_elemP(ep_CCJM_NOTzerodepth),ep_CCJM_NOTzerodepth),er_WaveSpeed) )
                     print*, 'warning: the dt value is smaller than the user supplied min dt value'
                 else
                     print*, 'max velocity  ', maxval( &
-                        elemR(elemP(1:npack_elemP(ep_CC_NOTzerodepth),ep_CC_NOTzerodepth),er_Velocity) )
+                        elemR(elemP(1:npack_elemP(ep_CCJM_NOTzerodepth),ep_CCJM_NOTzerodepth),er_Velocity) )
                     print*, 'max wavespeed ', maxval( &
-                        elemR(elemP(1:npack_elemP(ep_CC_NOTzerodepth),ep_CC_NOTzerodepth),er_WaveSpeed) )
+                        elemR(elemP(1:npack_elemP(ep_CCJM_NOTzerodepth),ep_CCJM_NOTzerodepth),er_WaveSpeed) )
                     print*, 'warning: the dt value is smaller than the user supplied min dt value'
                 end if
                 !stop 1123938
@@ -1808,7 +1808,7 @@ contains
                 !% --- choose between maximum of the advective+wavespeed CFL or the 
                 !%     Preissmann Slot celerity
                 outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
-                                maxval((abs(PCelerity(thisP))) * thisDT / length(thisP)))
+                                maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * thisDT / length(thisP)))
                 ! print *, 'CFL options ', &
                 !     maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
                 !     maxval((abs(PCelerity(thisP))) * thisDT / length(thisP))              

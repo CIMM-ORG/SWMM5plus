@@ -363,6 +363,8 @@ contains
             call geo_plan_area_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
             !% --- junction depth 
             call geo_depth_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
+            !% --- junction modified hydraulic depth
+            elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
             !% --- junction head
             elemR(thisP,er_Head) = llgeo_head_from_depth_pure(thisP,elemR(thisP,er_Depth))
             call geo_assign_JB (ep_JM)
