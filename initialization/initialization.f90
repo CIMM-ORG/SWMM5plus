@@ -1894,12 +1894,11 @@ contains
 
             if(line .eq. "[PROFILES]") then
                 
-                ! print *, 'profiles found'
-                ! print *, "offset_profile set:", offset_profile
-
-                read(thisUnit, "(A)", iostat = read_status) line
+                
+                
                 read(thisUnit, "(A)", iostat = read_status) line
                 offset_profile = FTELL(thisUnit)
+                !read(thisUnit, "(A)", iostat = read_status) line
                 ! print *, "offset_profile set:", offset_profile
                 max_profiles_N = 0
 
@@ -1946,8 +1945,7 @@ contains
 
         max_links_profile_N = (max_links_profile_N*2) + 1 
 
-
-        if(max_links_profile_N .eq. 1) then
+        if(max_links_profile_N .eq. 0) then
             print *, "...no profiles found"
             return
         end if
@@ -1972,6 +1970,7 @@ contains
         do  
             !% reading in the first profile  
             read(thisUnit, "(A)", iostat = read_status) line
+            
             
             if (read_status /= 0 ) then
                 exit
@@ -2021,8 +2020,9 @@ contains
                         if(jj > 2) then
 
                             if(link%I(kk,li_Mnode_u) .neqv. output_profile_ids(ii,(jj*2)-1)) then
+                               
                                 print *, "Error with provides profiles not being continous"
-                                print *, "Link:", kk, "is not connected to Link:", output_profile_ids(ii,jj-1)
+                                print *, "Link:: ", link%names(kk)%str, " is not connected to Link:: ", link%names(output_profile_ids(ii,(jj*2)-1))%str
                                 stop 558704
                             end if
 
