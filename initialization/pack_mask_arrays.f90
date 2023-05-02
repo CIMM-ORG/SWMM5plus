@@ -5621,6 +5621,10 @@ contains
                 npack_dn_zero   => npack_facePS(col_facePS(ptype_dn_zero))
                 ptype_both_zero => col_facePS(fp_CC_bothsides_are_zero_IorS)
                 npack_both_zero => npack_facePS(col_facePS(ptype_both_zero))
+                !% initialize the npacks
+                npack_up_zero   = 0
+                npack_dn_zero   = 0
+                npack_both_zero = 0
 
             if (N_shared_faces > 0) then
 
