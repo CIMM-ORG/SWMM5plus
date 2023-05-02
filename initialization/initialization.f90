@@ -1901,8 +1901,8 @@ contains
                 
                 
                 read(thisUnit, "(A)", iostat = read_status) line
+                read(thisUnit, "(A)", iostat = read_status) line
                 offset_profile = FTELL(thisUnit)
-                !read(thisUnit, "(A)", iostat = read_status) line
                 ! print *, "offset_profile set:", offset_profile
                 max_profiles_N = 0
 
