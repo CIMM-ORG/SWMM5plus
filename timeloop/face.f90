@@ -91,7 +91,7 @@ module face
         call face_zeroDepth_flowrates_shared(fp_downstream)
         call face_zeroDepth_flowrates_shared(fp_upstream)
         call face_zeroDepth_flowrates_shared(fp_bothsides)
-        
+        stop 2123131
     end subroutine face_zeroDepth
 !%
 !%==========================================================================
@@ -317,7 +317,7 @@ module face
         ! end if
 
         !% --- face reconstruction of all the shared faces
-        call face_interpolation_shared (faceCol, Gyn, Hyn, Qyn, skipJump)
+        call face_interpolation_shared (faceCol, Gyn, Hyn, Qyn, .true.)
 
             ! call util_utest_CLprint ('    XXX06 face after face interpolation_shared')
 
@@ -1126,9 +1126,9 @@ module face
             fFlowSet = [fr_Flowrate, fr_Preissmann_Number]
             eFlowSet = [er_Flowrate, er_Preissmann_Number]
 
-            print *,'  '
-            print *, ' NEED the shared routine for fr_DeltaQ '
-            stop 2098734
+            ! print *,'  '
+            ! print *, ' NEED the shared routine for fr_DeltaQ '
+            ! stop 2098734
 
             call face_interp_shared_set &
                 (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
@@ -2236,7 +2236,7 @@ module face
 !%========================================================================== 
 !%==========================================================================
 !%   
-    subroutine face_zeroDepth_geometry_shared (facePScol)
+    subroutine face_zeroDepth_geometry_shared (facePcol)
         !% -----------------------------------------------------------------
         !% Description:
         !% sets the face geoemtry values for shared faces with neighbor elements
@@ -2249,16 +2249,102 @@ module face
         !%  fp_JB_upstream_is_zero_IorS, fp_JB_bothsides_are_zero_IorS
         !% -----------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: facePScol
-            integer, pointer :: npack, thisP(:), edn(:), eup(:)
+            integer, intent(in) :: facePcol
+            integer, pointer :: npack, thisP, edn, eup, GUp, GDn, ci
+            logical, pointer :: isGhostUp, isGhostDn
+            integer :: ii, Ifidx
         !% -----------------------------------------------------------------
-        
-            npack => npack_facePS(facePSCol)
-            if (npack < 1) return
+        !% -----------------------------------------------------------------
+        !% Preliminaries
+        !% -----------------------------------------------------------------
+        npack => npack_facePS(facePCol)
+        if (npack < 1) return
+
+        !% sync all processors before the start of the subroutine
+        sync all
+        do ii = 1,Npack
+            !%-----------------------------------------------------------------
+            !% Aliases
+            thisP           => facePS(ii,facePCol)
+            ci              => faceI(thisP,fi_Connected_image)
+            eup             => faceI(thisP,fi_Melem_uL)
+            edn             => faceI(thisP,fi_Melem_dL)
+            GUp             => faceI(thisP,fi_GhostElem_uL)
+            GDn             => faceI(thisP,fi_GhostElem_dL)
+            isGhostUp       => faceYN(thisP,fYN_isUpGhost)
+            isGhostDn       => faceYN(thisP,fYN_isDnGhost)
             
+            select case (facePcol)
+            case (fp_CC_downstream_is_zero_IorS, fp_JB_downstream_is_zero_IorS)
+
+                if (.not. isGhostUp) then
+                    !% --- head is the smaller of the recent value or the downstream element value
+                    !% or the depth upstream applied to the face zbottom (new 20230430brh)
+                    faceR(thisP,fr_Head_u) = min(faceR(thisP,fr_Head_u), elemR(eup,er_Head), elemR(eup,er_Depth) + faceR(thisP,fr_Zbottom)) 
+
+                    faceR(thisP,fr_Head_d) = faceR(thisP,fr_Head_u)
+                    faceR(thisP,fr_Depth_u) = max(faceR(thisP,fr_Head_u) - faceR(thisP,fr_Zbottom), 0.99d0 * setting%ZeroValue%Depth)
+                    faceR(thisP,fr_Depth_d) = faceR(thisP,fr_Depth_u)
+
+                    if (faceR(thisP,fr_Depth_u) > setting%ZeroValue%Depth) then 
+                        faceR(thisP,fr_Area_u) = geo_area_from_depth_singular(eup,faceR(thisP,fr_Depth_u),setting%ZeroValue%Area)
+                    else
+                        faceR(thisP,fr_Area_u) = setting%ZeroValue%Area
+                    end if
+                    faceR(thisP,fr_Area_d) = faceR(thisP,fr_Area_u) 
+
+                    !% find the index of the indentical face in the connected image
+                    Ifidx = elemI(GDn,ei_Mface_uL)[ci]
+
+                    !% the face values should be identical apart from the newly adjusted values
+                    !% transfer the whole data column to the indetical array 
+                    faceR(Ifidx,:)[ci] = faceR(thisP,:)
+                
+                end if
+
+            case (fp_CC_upstream_is_zero_IorS,fp_JB_upstream_is_zero_IorS)
+                if (.not. isGhostDn) then
+                    !% --- head is the smaller of the recent value or the downstream element value
+                !% or the depth upstream applied to the face zbottom (new 20230430brh)
+                faceR(thisP,fr_Head_d) = min(faceR(thisP,fr_Head_d), elemR(edn,er_Head), elemR(edn,er_Depth)+ faceR(thisP,fr_Zbottom))
+                faceR(thisP,fr_Head_u) = faceR(thisP,fr_Head_d)
+
+                !% --- depth is the computed depth from head or zeroDepth
+                faceR(thisP,fr_Depth_d) = max(faceR(thisP,fr_Head_d) - faceR(thisP,fr_Zbottom), 0.99d0 * setting%ZeroValue%Depth)
+                faceR(thisP,fr_Depth_u) = faceR(thisP,fr_Depth_d)
+                
+                if (faceR(thisP,fr_Depth_d) > setting%ZeroValue%Depth) then 
+                    faceR(thisP,fr_Area_d) = geo_area_from_depth_singular(edn,faceR(thisP,fr_Depth_d),setting%ZeroValue%Area)
+                else
+                    faceR(thisP,fr_Area_d) = setting%ZeroValue%Area
+                end if
+                faceR(thisP,fr_Area_u) = faceR(thisP,fr_Area_d)
+
+                !% find the index of the indentical face in the connected image
+                Ifidx = elemI(GUp,ei_Mface_dL)[ci]
+
+                !% the face values should be identical apart from the newly adjusted values
+                !% transfer the whole data column to the indetical array 
+                faceR(Ifidx,:)[ci] = faceR(thisP,:)
+
+                end if
+            
+            case (fp_CC_bothsides_are_zero_IorS,fp_JB_bothsides_are_zero_IorS)
+                faceR(thisP,fr_Depth_u) = 0.99d0 * setting%ZeroValue%Depth
+                faceR(thisP,fr_Depth_d) = 0.99d0 * setting%ZeroValue%Depth
+                faceR(thisP,fr_Head_u) = faceR(thisP,fr_Depth_u) + faceR(thisP,fr_Zbottom)
+                faceR(thisP,fr_Head_d) = faceR(thisP,fr_Depth_d) + faceR(thisP,fr_Zbottom)
+                faceR(thisP,fr_Area_u) = setting%ZeroValue%Area
+                faceR(thisP,fr_Area_d) = setting%ZeroValue%Area
+
+            end select
+        
+        end do 
+
+        sync all
         !% -----------------------------------------------------------------
         print *, 'NEED CODE FOR SHARED face_zeroDepth_geometry_shared'
-        stop 5098723
+        ! stop 5098723
 
     end subroutine face_zeroDepth_geometry_shared
 !%  
@@ -2363,8 +2449,8 @@ module face
             npack => npack_facePS(facePCol)
             if (npack < 1) return
 
-            print *, 'NEED CODE FOR SHAREDface_zeroDepth_flowrates_shared'
-            stop 50987232
+            ! print *, 'NEED CODE FOR SHAREDface_zeroDepth_flowrates_shared'
+            ! stop 50987232
         !% -----------------------------------------------------------------
         select case (facePcol)
 

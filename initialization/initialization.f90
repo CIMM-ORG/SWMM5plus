@@ -1117,33 +1117,37 @@ contains
                     ! if (linkDn < nullvalueI) print *, 'linkDn ',trim( link%Names(linkDn)%str)
                     ! print *, ' '
                     
+                !% --- phantom nodes will always be a nJ2
+                if  (node%YN(ii,nYN_is_phantom_node)) then
+                    !% --- no action: retain nJ2
+                    write(*,*) 'retain nJ2 for a phantom node'
 
                 !% --- special channels and conduits that allow nJ2
-                if  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)                &
-                        .or.                                                       &
-                        (link%I(linkDn,li_link_type) .eq. lChannel)                &
-                      )                                                            &
-                      .and.                                                        &
-                      (node%R(ii,nr_PondedArea) == zeroR)                          &
-                      .and.                                                        &
-                      (  (node%R(ii,nr_SurchargeExtraDepth) == zeroR)              & 
-                          .or.                                                     &
-                         (node%R(ii,nr_SurchargeExtraDepth)                        &
-                           == setting%Junction%InfiniteExtraDepthValue)            &
-                         .or.                                                      &
-                         (node%R(ii,nr_SurchargeExtraDepth)                        &
-                            == setting%Junction%InfiniteExtraDepthValue*0.3048d0)) & 
-                    ) then
-                    !% nJ2 OPEN CHANNEL FACE
-                    !% --- if either link is an open channel AND the ponded area
-                    !%     is zero then the junction is an nJ2 face where any
-                    !%     overflow is handled by adjacent channel (i.e. lost). Otherwise 
-                    !%     reverts to nJm element with its own overflow/ponding. 
-                    !%     Note that if ponding is OFF but the ponded area
-                    !%     is defined, then the element is treated as nJm with
-                    !%     overflow above the Surcharge Extra Depth
+                elseif  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)                &
+                            .or.                                                       &
+                            (link%I(linkDn,li_link_type) .eq. lChannel)                &
+                          )                                                            &
+                          .and.                                                        &
+                          (node%R(ii,nr_PondedArea) == zeroR)                          &
+                          .and.                                                        &
+                          (  (node%R(ii,nr_SurchargeExtraDepth) == zeroR)              & 
+                              .or.                                                     &
+                             (node%R(ii,nr_SurchargeExtraDepth)                        &
+                               == setting%Junction%InfiniteExtraDepthValue)            &
+                             .or.                                                      &
+                             (node%R(ii,nr_SurchargeExtraDepth)                        &
+                                == setting%Junction%InfiniteExtraDepthValue*0.3048d0)) & 
+                        ) then
+                        !% nJ2 OPEN CHANNEL FACE
+                        !% --- if either link is an open channel AND the ponded area
+                        !%     is zero then the junction is an nJ2 face where any
+                        !%     overflow is handled by adjacent channel (i.e. lost). Otherwise 
+                        !%     reverts to nJm element with its own overflow/ponding. 
+                        !%     Note that if ponding is OFF but the ponded area
+                        !%     is defined, then the element is treated as nJm with
+                        !%     overflow above the Surcharge Extra Depth
 
-                    !% --- no action: retain nJ2
+                        !% --- no action: retain nJ2
                         write(*,*) 'retain nJ2 as open channel face'
 
                 elseif ( (link%I(linkUp,li_link_type) .ne. lChannel)         &
