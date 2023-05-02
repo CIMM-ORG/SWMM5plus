@@ -78,6 +78,8 @@ module face
         call face_zeroDepth_geometry_interior(fp_bothsides)
 
         !% --- geometry (shared)
+        !% sync all processors before the start of the subroutine
+        sync all
         call face_zeroDepth_geometry_shared(fp_downstream)
         call face_zeroDepth_geometry_shared(fp_upstream)
         call face_zeroDepth_geometry_shared(fp_bothsides)
@@ -91,6 +93,8 @@ module face
         call face_zeroDepth_flowrates_shared(fp_downstream)
         call face_zeroDepth_flowrates_shared(fp_upstream)
         call face_zeroDepth_flowrates_shared(fp_bothsides)
+        !% sync all processors before the start of the subroutine
+        sync all
 
     end subroutine face_zeroDepth
 !%
@@ -2260,8 +2264,6 @@ module face
         npack => npack_facePS(facePCol)
         if (npack < 1) return
 
-        !% sync all processors before the start of the subroutine
-        sync all
         do ii = 1,Npack
             !%-----------------------------------------------------------------
             !% Aliases
@@ -2340,9 +2342,6 @@ module face
             end select
         
         end do 
-
-        !% HACK: not sure if we need this sync
-        sync all
 
     end subroutine face_zeroDepth_geometry_shared
 !%  
@@ -2449,8 +2448,6 @@ module face
             npack => npack_facePS(facePCol)
             if (npack < 1) return
         
-        !% sync all processors before the start of the subroutine
-        sync all
         do ii = 1,Npack
             !%-----------------------------------------------------------------
             !% Aliases
@@ -2510,9 +2507,6 @@ module face
                 call util_crashpoint(6198732)
             end select        
         end do
-
-        !% not sure if we need this sync
-        sync all
 
     end subroutine face_zeroDepth_flowrates_shared
 !%  
