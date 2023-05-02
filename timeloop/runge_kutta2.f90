@@ -108,6 +108,10 @@ module runge_kutta2
                     faceR(fAdj(thisP),fr_Flowrate)   = elemR(thisP,er_Flowrate)
                     faceR(fAdj(thisP),fr_Velocity_u) = elemR(thisP,er_Flowrate) / faceR(fAdj(thisP),fr_Area_u)
                     faceR(fAdj(thisP),fr_Velocity_d) = elemR(thisP,er_Flowrate) / faceR(fAdj(thisP),fr_Area_d)
+                    !% check if any shared face has been diverged
+                    where (faceYN(fAdj(thisP),fYN_isSharedFace))
+                        faceYN(fAdj(thisP),fYN_isSharedFaceDiverged) = .true.
+                    end where
                 endwhere
             end if
             Npack => npack_elemP(ep_CC_DownstreamOfJunction)
@@ -118,6 +122,10 @@ module runge_kutta2
                     faceR(fAdj(thisP),fr_Flowrate) = elemR(thisP,er_Flowrate)
                     faceR(fAdj(thisP),fr_Velocity_u) = elemR(thisP,er_Flowrate) / faceR(fAdj(thisP),fr_Area_u)
                     faceR(fAdj(thisP),fr_Velocity_d) = elemR(thisP,er_Flowrate) / faceR(fAdj(thisP),fr_Area_d)
+                    !% check if any shared face has been diverged
+                    where (faceYN(fAdj(thisP),fYN_isSharedFace))
+                        faceYN(fAdj(thisP),fYN_isSharedFaceDiverged) = .true.
+                    end where
                 endwhere
             end if
         end if
@@ -334,6 +342,18 @@ module runge_kutta2
                 ! call util_utest_CLprint ('------- GGG after push JB flowrates to face')
         end if
 
+        !% ==============================================================
+        !% --- face sync (saz05022023)
+        !%     sync all the images first. then copy over the data between
+        !%     shared-identical faces. then sync all images again
+        sync all
+
+        call face_shared_face_sync (fp_noBC_IorS)
+
+        sync all
+        !% 
+        !% ==============================================================
+        
         !% --- store the junction dQdH used in Backwards Euler
         if (N_nJM > 0) then  
             
@@ -528,8 +548,20 @@ module runge_kutta2
 
                         ! call util_utest_CLprint ('------- SSS  after face_force_JBadjacent')
                 end if
+                
+                !sync all  !% cannot be in an if N_nJM statement
+                !% ==============================================================
+                !% --- face sync (saz05022023)
+                !%     sync all the images first. then copy over the data between
+                !%     shared-identical faces. then sync all images again
+                sync all
 
-                sync all  !% cannot be in an if N_nJM statement
+                call face_shared_face_sync (fp_noBC_IorS)
+
+                sync all
+                !% 
+                !% ==============================================================
+
                 !%================================
                 !% --- HACK need to force face data on all JB faces for image containing JB
                 !%     element to the connected image. This is a direct transfer of face

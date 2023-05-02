@@ -1436,6 +1436,7 @@ module define_indexes
        ! enumerator :: fYN_isAC_adjacent = 1
         enumerator :: fYN_isInteriorFace = 1
         enumerator :: fYN_isSharedFace
+        enumerator :: fYN_isSharedFaceDiverged
         enumerator :: fYN_isUpGhost
         enumerator :: fYN_isDnGhost
         enumerator :: fYN_isnull

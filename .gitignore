@@ -13,6 +13,7 @@
 *.[0-9]*
 *.txt
 *_output
+make_bash.sh
 
 # Dependencies
 cmake*

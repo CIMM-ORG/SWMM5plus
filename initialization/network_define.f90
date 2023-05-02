@@ -76,6 +76,7 @@ contains
         !call init_network_conmon_elements()
 
         sync all
+        ! critical
         !% print result
         if (setting%Debug%File%network_define) then
             print*
@@ -90,10 +91,9 @@ contains
             !     elemI(jj,ei_link_Gidx_SWMM),elemI(jj,ei_node_Gidx_BIPquick),elemI(jj,ei_node_Gidx_SWMM)
             ! end do
             print*
-            print*, 'b)   ei_Lidx      ei_Type      Mface_uL    Mface_dL     elem_length     Zbottom'
+            print*, 'b)   ei_Lidx      ei_Type      Mface_uL    Mface_dL   '
             do jj = 1,N_elem(this_image())
-                print*, elemI(jj,ei_Lidx), elemI(jj,ei_elementType), elemI(jj,ei_Mface_uL), elemI(jj,ei_Mface_dL), &
-                elemR(jj,er_Length), elemR(jj,er_Zbottom)
+                print*, elemI(jj,ei_Lidx), reverseKey(elemI(jj,ei_elementType)), elemI(jj,ei_Mface_uL), elemI(jj,ei_Mface_dL)
             end do
             print*, '.......................Faces.............................'
             print*, 'c)     fi_Lidx     fi_Gidx    elem_uL     elem_dL   C_image    Ifidx'
@@ -102,11 +102,11 @@ contains
                 faceI(jj,fi_Melem_dL),faceI(jj,fi_Connected_image), faceI(jj,fi_Identical_Lidx)
             end do
             print*
-            print*, 'd)     fi_Lidx     GElem_up    GElem_dn     node_BQ   node_SWMM    link_BQ   link_SWMM'
+            print*, 'd)     fi_Lidx     GElem_up    GElem_dn    node_SWMM    link_SWMM'
             do jj = 1,N_face(this_image())
                 print*, faceI(jj,fi_Lidx),faceI(jj,fi_GhostElem_uL),&
-                faceI(jj,fi_GhostElem_dL),faceI(jj,fi_node_idx_BIPquick),faceI(jj, fi_node_idx_SWMM),&
-                faceI(jj,fi_link_idx_BIPquick),faceI(jj,fi_link_idx_SWMM)
+                faceI(jj,fi_GhostElem_dL),faceI(jj, fi_node_idx_SWMM),&
+                faceI(jj,fi_link_idx_SWMM)
             end do
 
             ! print*
@@ -126,6 +126,7 @@ contains
             print*
             !call execute_command_line('')
         end if
+        ! end critical
         !    stop 49870
 
         if (setting%Profile%useYN) call util_profiler_stop (pfc_init_network_define_toplevel)
