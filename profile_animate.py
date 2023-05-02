@@ -46,11 +46,9 @@ nJm  = 3
 #-----------------------------------------------------------------------------------
 # USER SETTING CONTROL
 # select what unit to produce the animation to
-unit = 'CFS'
+unit = 'CMS'
 # save animation
 save_animation = False
-# saved animation dpi
-_dpi = 100
 #-----------------------------------------------------------------------------------
 # profile name given by arg
 arg_profile_name = ""
@@ -181,9 +179,6 @@ for profile_name_test in all_attribute_names:
         profile = h5_file.attrs[profile_name_test][0,:].astype('U13')
 
     # say we have a profile like below from the hdf file
-
-
-    
 
     element_head     = []
     element_length   = []
@@ -361,7 +356,7 @@ for profile_name_test in all_attribute_names:
     else:
         min_zbottom = np.min(element_zbottom[np.nonzero(element_zbottom)])
     # buffer for plotting and labels
-    buffer = 0.2 * (abs(max_zrown)-abs(min_zbottom))
+    buffer = 0.1 * (abs(max_head)-abs(min_zbottom))
 
 
     # transpormation for plotting
@@ -377,15 +372,13 @@ for profile_name_test in all_attribute_names:
             ax.plot(xval[element_rank==indx], element_zbottom[element_rank==indx], '-k') 
             # plot the crown elevation
             ax.plot(xval[element_rank==indx], element_zcrown[element_rank==indx], '-k') 
-            # plot vlines to seperate the links
-            ax.axvline(x=np.cumsum(feature_length)[indx],color='b',linestyle='-',linewidth=0.15)
 
             # calculations fro link labels
             feature_zbottom = 0.5 * (min(element_zbottom[element_rank==indx])
                                     +max(element_zbottom[element_rank==indx]))
             # link labels
-            ax.text(xval_feature[indx],feature_zbottom-buffer,feature,
-                    rotation=90,ha='center',va='bottom', fontsize='small')
+            ax.text(xval_feature[indx],feature_zbottom-0.5*buffer,feature,
+                    rotation=90,ha='center',va='top', fontsize='small')
 
         elif feature_type[indx] == nJ2:
             # find the index of the J2 face
@@ -393,17 +386,22 @@ for profile_name_test in all_attribute_names:
             if indx == 0:
                 # store the index of the elem d/s 
                 J_plot_idx = np.array(J_idx+1)
+                vline_xval = xval[J_plot_idx]
             elif indx == profile.shape[0]-1:
                 # store the index of the elem u/s 
                 J_plot_idx = np.array(J_idx-1)
+                vline_xval = xval[J_plot_idx]
             else:
                 # store the index of the elem u/s, elem d/s 
                 J_plot_idx = np.array([J_idx-1,J_idx+1])
+                vline_xval = sum(xval[J_plot_idx]) / 2.
 
             # plot the zbottom of the junction by combining elem u/s, JM and elem d/s zbottom
             ax.plot(xval[J_plot_idx], element_zbottom[J_plot_idx],'-k')
             # plot the zcrown  of the junction by combining elem u/s, JM and elem d/s zbottom
             ax.plot(xval[J_plot_idx], element_zcrown[J_plot_idx],'-k')
+            # plot vlines to distinguish nodes
+            ax.axvline(x=vline_xval,color='b',linestyle='-',linewidth=0.15)
 
         # plot junction geometry
         elif feature_type[indx] == nJm:
@@ -425,6 +423,9 @@ for profile_name_test in all_attribute_names:
                 # plot another horizontal line to close up the JM
                 plt.hlines(y=element_zcrown[J_idx],xmin=xval[J_idx],xmax=xval[J_idx+1], color='black')
 
+                # plot vlines to distinguish nodes
+                ax.axvline(x=xval[J_idx+1],color='b',linestyle='-',linewidth=0.15)
+
             # JM at the end of the profile
             elif indx == profile.shape[0]-1:
                 # plot horizontoal lines to represent zbottom   
@@ -439,6 +440,9 @@ for profile_name_test in all_attribute_names:
 
                 # plot another horizontal line to close up the JM
                 plt.hlines(y=element_zcrown[J_idx],xmin=xval[J_idx-1],xmax=xval[J_idx], color='black')
+
+                # plot vlines to distinguish nodes
+                ax.axvline(x=xval[J_idx-1],color='b',linestyle='-',linewidth=0.15)
 
             # JM at the middle of the profile
             else:
@@ -460,6 +464,9 @@ for profile_name_test in all_attribute_names:
                 # plot another horizontal line to close up the JM
                 plt.hlines(y=element_zcrown[J_idx],xmin=xval[J_idx-1],xmax=xval[J_idx+1], color='black')
 
+                # plot vlines to distinguish nodes
+                ax.axvline(x=xval[J_idx],color='b',linestyle='-',linewidth=0.15)
+
                 # node labels
     #             ax.text(xval_feature[indx],feature_zbottom[indx]-buffer,feature_name[indx],
     #                 rotation=90,ha='center',va='top', fontsize='small')
@@ -473,7 +480,7 @@ for profile_name_test in all_attribute_names:
     plt.xlabel('Length along the profile '+Yunit)
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
-    plt.ylim(min_zbottom-buffer,max_zrown+buffer)
+    plt.ylim(min_zbottom-buffer,max_head+buffer)
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
     plt.tight_layout()

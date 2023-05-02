@@ -262,7 +262,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% Aliases
-            face_idx    => faceI(:,fi_Gidx)
+            face_idx    => node%I(:,ni_face_idx)
             node_idx    => faceI(:,fi_node_idx_SWMM)
             isNodeOut   => node%YN(:,nYN_isOutput)
             isFaceOut   => faceYN(:,fYN_isFaceOut)
@@ -270,21 +270,46 @@ contains
         !% --- Translate the node%YN to the faceYN
         !% --- HACK brute force with do loop
         !% --- note that each image has a different number of faces
-        do ii =1,N_face(this_image())
-            !% --- check for valid nodes
-            !% --- this should only be nJ1, nJ2, nBCup and nBCdn nodes
-            !% --- (note that nJm nodes are already handled with elements)
-            if (node_idx(ii) .ne. nullvalueI) then
-                !% --- check that node is an output node
-                if (isNodeOut(node_idx(ii))) then
+        
+        ! do ii =1,N_face(this_image())
+        !     print*, ii, 'ii'
+        !     print*, node_idx(ii), '  node_idx(ii)'
+        !     if (node_idx(ii) .ne. nullvalueI) print*, node%Names(node_idx(ii))%str, 'node name'
+           
+        !     !% --- check for valid nodes
+        !     !% --- this should only be nJ1, nJ2, nBCup and nBCdn nodes
+        !     !% --- (note that nJm nodes are already handled with elements)
+        !     if (node_idx(ii) .ne. nullvalueI) then
+        !         !% --- check that node is an output node
+        !         print*, isNodeOut(node_idx(ii)), 'isNodeOut(node_idx(ii))'
+        !         if (isNodeOut(node_idx(ii))) then
+        !             !% --- check that this node has a SWMM name
+        !             if (.not. (node%Names(node_idx(ii))%str == "")) then
+        !                 !% --- assign face output
+        !                 isFaceOut(ii) = .true.
+        !                 print*, 'This node has output'
+        !                 print*
+        !             end if
+        !         end if
+        !     end if
+        ! end do
+
+        !% saz 05012023 output bug fix
+        do ii = 1, N_node
+            if ((node%I(ii,ni_P_image) == this_image())         &
+                    .and.                                       &
+                (node%I(ii,ni_node_type) /= nJm)) then
+                
+                if (isNodeOut(ii)) then
                     !% --- check that this node has a SWMM name
-                    if (.not. (node%Names(node_idx(ii))%str == "")) then
+                    if (.not. (node%Names(ii)%str == "")) then
                         !% --- assign face output
-                        isFaceOut(ii) = .true.
+                        isFaceOut(face_idx(ii)) = .true.
                     end if
                 end if
             end if
-        end do
+        end do 
+
         !%------------------------------------------------------------------
         !% Closing
         if (setting%Debug%File%output) &

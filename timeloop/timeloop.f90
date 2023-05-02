@@ -1816,7 +1816,7 @@ contains
                 !% --- choose between maximum of the advective+wavespeed CFL or the 
                 !%     Preissmann Slot celerity
                 outvalue = max (maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
-                                maxval((abs(PCelerity(thisP))) * thisDT / length(thisP)))
+                                maxval((abs(velocity(thisP)) + abs(PCelerity(thisP))) * thisDT / length(thisP)))
                 ! print *, 'CFL options ', &
                 !     maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP)), &
                 !     maxval((abs(PCelerity(thisP))) * thisDT / length(thisP))              

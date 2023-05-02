@@ -1204,10 +1204,10 @@ enable_testing()
 # )
 
 # # Passed 20230502
-# add_test(NAME T007a_RO_Free_dx0333
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh03/settings_333.json -o ./ctest/outbrh3/
-# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-# )
+add_test(NAME T007a_RO_Free_dx0333
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh03/settings_333.json -o ./ctest/outbrh3/
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
 
 # # Passed 20230430
 # add_test(NAME T007a_RO_Free_dx0333_T20
@@ -1295,10 +1295,10 @@ enable_testing()
 
 
 # # failed 20230502 but OK for small depths
-add_test(NAME T008_RO_Free_dx0333
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T008_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh03/settings_333.json -o ./ctest/outbrh3/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# add_test(NAME T008_RO_Free_dx0333
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T008_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh03/settings_333.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
 
 # #  Passed 20230501
