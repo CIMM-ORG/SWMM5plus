@@ -287,6 +287,7 @@ module utility
             do ii=1,size(thisP)
                 mm = thisP(ii)
                 if ((abs(tempCons(mm)) > 1.d-4) .and. (elemR(mm,er_Depth) > twoR * setting%ZeroValue%Depth)) then 
+                ! if  (abs(tempCons(mm)) > 1.d-4)  then 
                     print *, ' '
                     print *, 'Volume conservation issue Conduit/Channel cell ',mm
                     print *, 'Q in    ',fQ(fup(mm))
@@ -379,6 +380,7 @@ module utility
                 tempCons(mm) = tempCons(mm) + Qbranches
                 
                 if ((abs(tempCons(mm)) > 1.d-4) .and. (elemR(mm,er_Depth) > twoR * setting%ZeroValue%Depth)) then
+                ! if (abs(tempCons(mm)) > 1.d-4) then    
                     print *, ' '
                     print *, 'Volume conservation issue Junction ',mm
                     print *, 'tempCons   ',tempCons(mm)

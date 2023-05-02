@@ -219,10 +219,12 @@ module adjust
         !% Aliases:   
         !%------------------------------------------------------------------
      
+            print *, 'obsolete'
+            stop 529873
               ! call util_utest_CLprint('-------------0000')
 
         if (isReset) then
-            call adjust_zerodepth_identify_all ()
+            !call adjust_zerodepth_identify_all ()
            
             if (setting%SmallDepth%useMomentumCutoffYN) then
                 call adjust_smalldepth_identify_all ()
@@ -625,6 +627,9 @@ module adjust
             isSmallDepth => elemYN(:,eYN_isSmallDepth)
         !%------------------------------------------------------------------
 
+            print *, 'OBSOLETE'
+            stop 2908734
+
         isZeroDepth = .false.
 
         where (eDepth .le. depth0 )
@@ -681,6 +686,11 @@ module adjust
                 thisDepth  = .false.
             endwhere
         endwhere
+
+        ! print *, ' '
+        ! print *, 'in adjust_zero...'
+        ! print *, elemR(611,er_Depth)
+        ! print *, ' '
 
     end subroutine adjust_zero_or_small_depth_identify_NEW
 !%  

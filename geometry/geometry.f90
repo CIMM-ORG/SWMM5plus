@@ -66,6 +66,7 @@ module geometry
     !public :: geo_elldepth_pure
     !public :: geometry_table_initialize
     public :: geo_depth_from_volume_by_type_allCC
+    public :: geo_depth_from_volume_by_element_CC
     public :: geo_depth_from_head
     !public :: geo_depth_from_volume_by_type_JM
     public :: geo_ZeroDepth_from_depth
@@ -106,7 +107,7 @@ module geometry
             call slot_CC_ETM (thisP_Closed)
         end if
 
-        ! print *, 'in geometry AAAA',elemR(5,er_Depth), elemR(5,er_EllDepth)
+        ! print *, 'in geometry AAAA',elemR(72,er_Depth), elemR(72,er_EllDepth)
 
         !% --- DEPTH
         !%     compute the depth on all elements of CC based on geometry.
@@ -118,7 +119,7 @@ module geometry
             call geo_depth_from_volume_by_element_CC (thisP, npackP)
         end if
 
-        ! print *, 'in geometry BBBB',elemR(5,er_Depth), elemR(5,er_EllDepth)
+        ! print *, 'in geometry BBBB',elemR(72,er_Depth), elemR(72,er_EllDepth)
 
         !% --- ZERO DEPTH CC
         !%     reset all zero or near-zero depths in CC

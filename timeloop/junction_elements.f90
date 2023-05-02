@@ -513,12 +513,12 @@ module junction_elements
         do mm=1,Npack
             JMidx = thisJM(mm)
 
-            !    if (JMidx==printJM) then
-            !         do ii=1,max_branch_per_node
-            !             if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
-            !             print *, '  dQdH for JB=', JMidx+ii,elemSR(JMidx+ii,esr_JunctionBranch_dQdH)
-            !         end do
-            !     end if
+                ! if (JMidx==printJM) then
+                !     do ii=1,max_branch_per_node
+                !         if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
+                !         print *, '  dQdH for JB=', JMidx+ii,elemSR(JMidx+ii,esr_JunctionBranch_dQdH)
+                !     end do
+                ! end if
 
                 ! if (JMidx==printJM) then
                 !     do ii=1,max_branch_per_node
@@ -805,7 +805,7 @@ module junction_elements
             real(8), pointer :: fA, fH, fQ, fZ
             real(8), pointer :: Ladj, Tadj, Hadj, headJM
             real(8), pointer ::  crk, dt, grav
-            real(8), pointer :: VelAdj , FrAdj, Dadj
+            real(8), pointer :: VelAdj , FrAdj, Dadj, ZBadj
             real(8)          :: bsign, denominator, thisArea, FrFactor
             logical          :: isInflow, isDownstream
             integer          :: ii
@@ -861,6 +861,10 @@ module junction_elements
                     isInflow = .false.
                 end if
 
+                ! print *, ' '
+                ! print *, 'in dqdh ',isInflow, JBidx, fidx
+                ! print *, ' '
+
             end if
             !% --- adjacent element data
             Ladj  => faceR(fidx,fr_Length_Adjacent)
@@ -868,14 +872,18 @@ module junction_elements
             Hadj  => faceR(fidx,fr_Head_Adjacent)
             VelAdj=> faceR(fidx,fr_Velocity_Adjacent)
             Dadj  => faceR(fidx,fr_Depth_Adjacent)
+            ZBadj => faceR(fidx,fr_Zcrest_Adjacent)
 
 
             !% --- CC elements adjacent to JB
             if (elemSI(JBidx,esi_JunctionBranch_CC_adjacent) == oneI) then 
 
                 if (isDownstream) then 
+
+                    ! print *, 'FrAdj ',FrAdj
+
                     if (FrAdj .ge. oneR) then  
-                        !% --- supercritical outflow  
+                        !% --- supercritical outflow  (HACK NEEDS BETTER TESTING BEFORE USING)
                         !elemSR(JBidx,esr_JunctionBranch_dQdH) =  VelAdj * Tadj * FrAdj  TEST MOD 20230430brh
                         elemSR(JBidx,esr_JunctionBranch_dQdH) = crk * grav * dt * fA / Ladj
                     elseif (FrAdj .le. -oneR) then 
@@ -886,14 +894,38 @@ module junction_elements
                         elemSR(JBidx,esr_JunctionBranch_dQdH) = crk * grav * dt * fA / Ladj
                     end if
 
+                    ! print *, 'dqdh AA ',elemSR(JBidx,esr_JunctionBranch_dQdH)
+
                     !% --- handle waterfall inflow elements
                     if ((isInflow) .and. (headJM < fZ)) then 
                         elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR
                     end if
 
+                    ! print *, 'dqdh BB ',elemSR(JBidx,esr_JunctionBranch_dQdH)
+
+                    !% --- handle uphill outflow
+                    if ((.not. isInflow) .and. (headJM < Hadj)) then 
+                        elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR 
+                    end if
+
+                    ! print *, 'dqdh CC ',elemSR(JBidx,esr_JunctionBranch_dQdH)
+                    ! print *, JBidx, isInflow, headJM, Hadj
+                    ! print *,' '
+
+                    !% --- limit by 1/4 volume of JM
+                    !%     Qmax = (1/4) V / dt;  V = Aplan * Depth
+                    !%     Q/H = 1/4 (Aplan * Depth) / (dt * Depth) = (1/4) Aplan / dt
+                    elemSR(JBidx,esr_JunctionBranch_dQdH) &
+                         = min (elemSR(JBidx, esr_JunctionBranch_dQdH),  &
+                                elemSR(JMidx, esr_Storage_Plan_Area) * onefourthR / dt)
+
+                    ! print *, 'dqdh DD ',elemSR(JBidx,esr_JunctionBranch_dQdH)
+                    ! print *, JBidx, isInflow, headJM, Hadj
+                    ! print *,' '
+
                 else
                     if (FrAdj .le. -oneR) then 
-                        !% --- supercritical outflow
+                        !% --- supercritical outflow (HACK NEEDS BETTER TESTING BEFORE USING)
                         !elemSR(JBidx,esr_JunctionBranch_dQdH) = VelAdj * Tadj * abs(FrAdj)  TEST MOD 20230430brh
                         elemSR(JBidx,esr_JunctionBranch_dQdH) = - crk* grav * dt * fA / Ladj
                     elseif (FrAdj .ge. +oneR) then 
@@ -908,6 +940,19 @@ module junction_elements
                     if ((isInflow) .and. (headJM < fZ)) then 
                         elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR
                     end if
+
+                    !% --- handle uphill outflow
+                    if ((.not. isInflow) .and. (headJM < Hadj)) then 
+                        elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR 
+                    end if
+
+                    !% --- limit dQdH by 1/4 volume of JM
+                    !%     Qmax = (1/4) V / dt;  V = Aplan * Depth
+                    !%     Q/H = 1/4 (Aplan * Depth) / (dt * Depth) = (1/4) Aplan / dt
+                    !%     note upstream branch dQdH < 0
+                    elemSR(JBidx,esr_JunctionBranch_dQdH) &
+                         = max ( elemSR(JBidx, esr_JunctionBranch_dQdH),  &
+                                -elemSR(JMidx, esr_Storage_Plan_Area) * onefourthR / dt)
 
                 end if
 
