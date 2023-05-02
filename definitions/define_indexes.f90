@@ -1349,6 +1349,7 @@ module define_indexes
         enumerator ::  fi_BoundaryElem_uL           !% map to upstream boundary/ghost element in the boundary/ghost array
         enumerator ::  fi_BoundaryElem_dL           !% map to dwonstream boundary/ghost element in the boundary/ghost array
         enumerator ::  fi_Connected_image           !% image number a shared face connected to
+        enumerator ::  fi_Identical_Lidx            !% local face index of the identical face in the other connected image
         enumerator ::  fi_node_idx_BIPquick         !% if the face is originated from a node, then the BQ idx
         enumerator ::  fi_link_idx_BIPquick         !% face connected to a BQ link element 
         enumerator ::  fi_node_idx_SWMM             !% if the face is originated from a node, then the SWMM idx

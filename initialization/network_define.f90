@@ -76,7 +76,6 @@ contains
         !call init_network_conmon_elements()
 
         sync all
-
         !% print result
         if (setting%Debug%File%network_define) then
             print*
@@ -97,10 +96,10 @@ contains
                 elemR(jj,er_Length), elemR(jj,er_Zbottom)
             end do
             print*, '.......................Faces.............................'
-            print*, 'c)     fi_Lidx     fi_Gidx    elem_uL     elem_dL   C_image'
+            print*, 'c)     fi_Lidx     fi_Gidx    elem_uL     elem_dL   C_image    Ifidx'
             do jj = 1,N_face(this_image())
                 print*, faceI(jj,fi_Lidx),faceI(jj,fi_Gidx),faceI(jj,fi_Melem_uL), &
-                faceI(jj,fi_Melem_dL),faceI(jj,fi_Connected_image)
+                faceI(jj,fi_Melem_dL),faceI(jj,fi_Connected_image), faceI(jj,fi_Identical_Lidx)
             end do
             print*
             print*, 'd)     fi_Lidx     GElem_up    GElem_dn     node_BQ   node_SWMM    link_BQ   link_SWMM'
@@ -127,8 +126,7 @@ contains
             print*
             !call execute_command_line('')
         end if
-
-          !  stop 49870
+        !    stop 49870
 
         if (setting%Profile%useYN) call util_profiler_stop (pfc_init_network_define_toplevel)
 
@@ -1886,6 +1884,9 @@ contains
                 (faceI(ii,fi_node_idx_BIPquick)[targetImage] == nIdx )   .and. &
                 (faceI(ii,fi_link_idx_BIPquick)[targetImage] == branchIdx)) then
 
+                !% set the local index of the indetical face
+                faceI(ii,fi_Identical_Lidx)[targetImage] = fLidx
+
                 !% find the local ghost element index of the connected image
                 if (faceYN(ii,fYN_isUpGhost)[targetImage]) then
                     faceI(ii,fi_GhostElem_uL)[targetImage] = eUp
@@ -2029,11 +2030,13 @@ contains
 
             if ((faceI(ii,fi_Connected_image)[targetImage]   == image) .and. &
                 (faceI(ii,fi_node_idx_BIPquick)[targetImage] == nIdx)) then
+                
+                !% set the local index of the indetical face
+                faceI(ii,fi_Identical_Lidx)[targetImage] = fLidx
 
                 !% find the local ghost element index of the connected image
                 if (faceYN(ii,fYN_isUpGhost)[targetImage]) then
-                    faceI(ii,fi_GhostElem_uL)[targetImage] = eUp
-
+                    faceI(ii,fi_GhostElem_uL)[targetImage]   = eUp
                 elseif (faceYN(ii,fYN_isDnGhost)[targetImage]) then
                     faceI(ii,fi_GhostElem_dL)[targetImage] = eDn
                 end if
