@@ -149,18 +149,34 @@ module storage_geometry
         !% Declarations:
             integer, target, intent(in) :: thisP(:), Npack
             real(8), pointer :: depth(:), fulldepth(:), pArea(:), volume(:)
+            real(8), pointer :: slotVolume(:), slotDepth(:), slotArea(:)
+            real(8), pointer :: fullVolume(:)
+            logical, pointer :: isSlot(:)
         !%-------------------------------------------------------------------
         !% Aliases
             depth     => elemR(:,er_Depth)
             fulldepth => elemR(:,er_FullDepth)
+            fullVolume=> elemR(:,er_FullVolume)
             pArea     => elemSR(:,esr_Storage_Plan_Area)
             volume    => elemR(:,er_Volume)
+            slotVolume=> elemR(:,er_SlotVolume)
+            slotDepth => elemR(:,er_SlotDepth)
+            slotArea  => elemR(:,er_SlotArea)
+            isSlot    => elemYN(:,eYN_isPSsurcharged)
         !%-------------------------------------------------------------------
 
         depth(thisP) = volume(thisP) / pArea(thisP)
 
         !% --- limit depth to the full depth of the element
         depth(thisP) = min(depth(thisP),fulldepth(thisP))
+
+        ! !% --- Preissmann Slot
+        ! where (depth(thisP) > fulldepth(thisP))
+        !     slotVolume(thisP) = volume(thisP) - fullvolume(thisP)
+        !     depth(thisP)      = fulldepth(thisP)
+        !     slotDepth(thisP)  = slotVolume(thisP) / slotArea(thisP)
+        !     isSlot(thisP)     = .true.
+        ! endwhere
 
         !print *, 'INSTORAGE ',volume(thisP)
        

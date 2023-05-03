@@ -99,14 +99,14 @@ module runge_kutta2
             !% --- update flowrates for aa diagnostic elements
             call diagnostic_by_type (ep_Diag, istep)  
 
-                ! call util_utest_CLprint ('------- BBB  after diagnostic')
+                ! ! call util_utest_CLprint ('------- BBB  after diagnostic')
 
             !% STEP B
             !% --- push the diagnostic flowrate data to faces -- true is upstream, false is downstream
             call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .true.)
             call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .false.)
 
-                ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
+                ! ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
         end if
 
         !% --- push inflows on CC upstream of JB to face
@@ -400,7 +400,7 @@ module runge_kutta2
             !% --- Half-timestep advance on CC for U and UVolume
             call rk2_step_ETM_CC (istep)  
 
-                ! call util_utest_CLprint ('------- III  after rk2_step')
+                ! ! call util_utest_CLprint ('------- III  after rk2_step')
 
             !% --- Update all CC aux variables
             !%     Note, these updates CANNOT depend on face values
@@ -437,11 +437,21 @@ module runge_kutta2
                         call junction_main_volume_advance (ep_JM, Npack)
                         !% --- new junction plan area
                         call geo_plan_area_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
-                        !% --- ne junction depth 
+                        !print *, 'plan area ',elemSR(thisP(1),esr_Storage_Plan_Area)
+
+
+                        !% --- new junction depth 
+                        !% NOTE: THIS USES storage_implied_depth_from_volume
+                        !% that limits depth based on fulldepth
                         call geo_depth_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
+                    
                         !% --- new JM head
                         elemR(thisP,er_Head) = llgeo_head_from_depth_pure (thisP,elemR(thisP,er_Depth))
                         elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
+
+                        !% NEED PREISSMANN SLOT STUFF HERE (OR BELOW?) TO GET CORRECT HEAD
+                        !% QUESTION: SHOULD ELLDEPTH BE DEPTH OR HEAD - ZBOTTOM?
+
                         !% --- adjust JM for small or zero depth
                         call adjust_element_toplevel (JM)
                         !% --- assign JB values based on new JM head
@@ -489,7 +499,7 @@ module runge_kutta2
                             !20230423 test using all DIAG
                             call diagnostic_by_type (ep_Diag, istep) 
 
-                            ! call util_utest_CLprint ('------- NNN  after update aux JMJB 2nd step ')
+                            ! ! call util_utest_CLprint ('------- NNN  after update aux JMJB 2nd step ')
                     end if
                 end if
             end if
@@ -613,7 +623,7 @@ module runge_kutta2
                     !     call junction_Diag_for_JBadjacent (ep_Diag_UpstreamOfJunction,   istep, .true.)
                     !     call junction_Diag_for_JBadjacent (ep_Diag_DownstreamOfJunction, istep, .false.)
     
-                    !         ! ! ! ! call util_utest_CLprint ('------- UUU  after junction_Diag_for_JBadjacent')
+                    !         ! ! ! ! ! call util_utest_CLprint ('------- UUU  after junction_Diag_for_JBadjacent')
                     ! end if
 
                     !% --- update various packs of zeroDepth faces
@@ -626,19 +636,19 @@ module runge_kutta2
                     call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &
                         fp_JB_upstream_is_zero_IorS,fp_JB_bothsides_are_zero_IorS)
 
-                        ! call util_utest_CLprint ('------- TTT.01  after face zerodepth for JB')
+                        ! ! call util_utest_CLprint ('------- TTT.01  after face zerodepth for JB')
 
                 end if
             end if
             !% END JUNCTION SOLUTION
             !%=========================================
 
-                ! call util_utest_CLprint ('------- VVV.01  before adjust Vfilter CC')
+                ! ! call util_utest_CLprint ('------- VVV.01  before adjust Vfilter CC')
 
             !% --- Filter flowrates to remove grid-scale checkerboard
             call adjust_Vfilter_CC ()
 
-                ! call util_utest_CLprint ('------- VVV.02  after adjust Vfilter CC')
+                ! ! call util_utest_CLprint ('------- VVV.02  after adjust Vfilter CC')
 
             if (istep == 1) then 
                 !% -- the conservative fluxes from N to N_1 on CC are stored for CC and Diag
@@ -646,7 +656,7 @@ module runge_kutta2
                 !call rk2_store_conservative_fluxes (CCDiag) 
                 call rk2_store_conservative_fluxes (ALL) 
 
-                    ! call util_utest_CLprint ('------- WWW  after  step 1 store conservative fluxes all')
+                    ! ! call util_utest_CLprint ('------- WWW  after  step 1 store conservative fluxes all')
             end if
 
                 ! call util_utest_CLprint ('------- YYY end of RK step')
@@ -707,7 +717,7 @@ module runge_kutta2
 
             ! print *,' '
             ! print *, ' '
-            ! ! ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
+            ! ! ! ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
  
         !%==================================    
         !% --- Initial adjustments
@@ -721,14 +731,14 @@ module runge_kutta2
             !20230423 test using all DIAG
             call diagnostic_by_type (ep_Diag, istep)  
 
-                ! ! ! call util_utest_CLprint ('------- BBB  after diagnostic')
+                ! ! ! ! call util_utest_CLprint ('------- BBB  after diagnostic')
 
         !     !% STEP B
         !     !% --- push the flowrate data to faces -- true is upstream, false is downstream
         !     call face_push_elemdata_to_face (ep_Diag_notJBadjacent, fr_Flowrate, er_Flowrate, elemR, .true.)
         !     call face_push_elemdata_to_face (ep_Diag_notJBadjacent, fr_Flowrate, er_Flowrate, elemR, .false.)
 
-        !         ! ! ! ! ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
+        !         ! ! ! ! ! ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
         end if
 
        
@@ -737,7 +747,7 @@ module runge_kutta2
         !     !% --- provide junction outlet JB velocity estimate
             ! call junction_main_velocity (ep_JM)
 
-            !     ! ! ! call util_utest_CLprint ('------- DDD  after junction_main_velocity')
+            !     ! ! ! ! call util_utest_CLprint ('------- DDD  after junction_main_velocity')
         ! end if
 
         !% STEP F: all diag-notJB are updated on element and faces
@@ -750,7 +760,7 @@ module runge_kutta2
             !% STEPS G- S
             call junction_consistency (istep)
 
-                ! ! ! call util_utest_CLprint ('------- EEE  after junction_consistency')
+                ! ! ! ! call util_utest_CLprint ('------- EEE  after junction_consistency')
         end if
 
         !%======================================
@@ -780,7 +790,7 @@ module runge_kutta2
                     call junction_branch_dQdH (thisP, Npack, istep)
 
                         !if (istep == 1) 
-                        ! ! ! call util_utest_CLprint ('------- FFF  after junction_branch_dQdH')
+                        ! ! ! ! call util_utest_CLprint ('------- FFF  after junction_branch_dQdH')
                 end if
             end if
 
@@ -788,7 +798,7 @@ module runge_kutta2
             !% --- Half-timestep advance on CC for U and UVolume
             call rk2_step_ETM_CC (istep)  
 
-                ! ! ! call util_utest_CLprint ('------- GGG  after rk2_step')
+                ! ! ! ! call util_utest_CLprint ('------- GGG  after rk2_step')
 
             !% STEP rkD
             !% --- Update all CC aux variables
@@ -798,14 +808,14 @@ module runge_kutta2
                 .true., .false., dummyIdx)
                 
                 !if (istep == 1) 
-                ! ! ! call util_utest_CLprint ('------- HHH  after update_aux...CC step')
+                ! ! ! ! call util_utest_CLprint ('------- HHH  after update_aux...CC step')
 
             !% STEP rkE
             !% --- zero and small depth adjustment for elements
             call adjust_element_toplevel (CC)
 
                 !if (istep == 1) 
-                ! ! ! call util_utest_CLprint ('------- HHH.1  after adjust element CC')
+                ! ! ! ! call util_utest_CLprint ('------- HHH.1  after adjust element CC')
 
 
             !% --- 2nd step advance on junctions
@@ -847,11 +857,11 @@ module runge_kutta2
                     end select
                 end do
 
-                    ! ! ! call util_utest_CLprint ('------- HHH.2  after JM 2nd step ')
+                    ! ! ! ! call util_utest_CLprint ('------- HHH.2  after JM 2nd step ')
 
                 call update_auxiliary_variables_JMJB ( .true.)
 
-                    ! ! ! call util_utest_CLprint ('------- HHH.3  after update aux JMJB 2nd step ')
+                    ! ! ! ! call util_utest_CLprint ('------- HHH.3  after update aux JMJB 2nd step ')
 
                 ! if (N_diag > 0) then 
                 !     !% STEP A
@@ -872,7 +882,7 @@ module runge_kutta2
                     call update_interpweights_JB (thisP, Npack, .false.)
                 end if
                     !if (istep == 1) 
-                    ! ! ! call util_utest_CLprint ('------- JJJ  after update weights JB for JB/CC')
+                    ! ! ! ! call util_utest_CLprint ('------- JJJ  after update weights JB for JB/CC')
 
                 ! !% STEP rkG
                 ! !% --- Sets JB/Diag face interpweights for flow to minimum (which should be
@@ -883,7 +893,7 @@ module runge_kutta2
                 !     call update_interpweights_JB (thisP, Npack, .true.)
                 ! end if
 
-                !     if (istep == 1) ! ! ! ! ! call util_utest_CLprint ('------- KKK  after update weights JB for JB/Diag')
+                !     if (istep == 1) ! ! ! ! ! ! call util_utest_CLprint ('------- KKK  after update weights JB for JB/Diag')
             end if
 
             !% STEP rkH
@@ -893,7 +903,7 @@ module runge_kutta2
             call face_interpolation(fp_noBC_IorS, .true., .true., .true., .false., .true.) 
 
                 !if (istep == 1) 
-                ! ! ! call util_utest_CLprint ('------- LLL  after face interp')
+                ! ! ! ! call util_utest_CLprint ('------- LLL  after face interp')
 
 
             !% STEP rkE.1 
@@ -906,28 +916,28 @@ module runge_kutta2
             call face_zeroDepth_geometry_interior(fp_CC_bothsides_are_zero_IorS)
 
                 !if (istep == 1) 
-                ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.01  after face zerodepth ')
+                ! ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.01  after face zerodepth ')
 
             call face_zeroDepth_geometry_shared(fp_CC_downstream_is_zero_IorS)
             call face_zeroDepth_geometry_shared(fp_CC_upstream_is_zero_IorS)
             call face_zeroDepth_geometry_shared(fp_CC_bothsides_are_zero_IorS)
 
                 !if (istep == 1) 
-                ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.02  after face zerodepth ')
+                ! ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.02  after face zerodepth ')
 
             call face_zeroDepth_flowrates_interior(fp_CC_downstream_is_zero_IorS)
             call face_zeroDepth_flowrates_interior(fp_CC_upstream_is_zero_IorS)
             call face_zeroDepth_flowrates_interior(fp_CC_bothsides_are_zero_IorS)
 
                 !if (istep == 1) 
-                ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.03  after face zerodepth ')
+                ! ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.03  after face zerodepth ')
 
             call face_zeroDepth_flowrates_shared(fp_CC_downstream_is_zero_IorS)
             call face_zeroDepth_flowrates_shared(fp_CC_upstream_is_zero_IorS)
             call face_zeroDepth_flowrates_shared(fp_CC_bothsides_are_zero_IorS)
 
                 !if (istep == 1) 
-                ! ! ! call util_utest_CLprint ('------- LLL.04  after face zerodepth ')
+                ! ! ! ! call util_utest_CLprint ('------- LLL.04  after face zerodepth ')
 
             call face_flowrate_for_openclosed_elem (ep_CCDiag)
             !% HACK -- FOR SHARED WE NEED TO IDENTIFY ANY SHARED FACES THAT HAVE AN
@@ -935,7 +945,7 @@ module runge_kutta2
 
 
                !if (istep == 1) 
-                ! ! ! call util_utest_CLprint ('------- MMM  after face zerodepth ')
+                ! ! ! ! call util_utest_CLprint ('------- MMM  after face zerodepth ')
          
             !%=========================================
             !% BEGIN JUNCTION SOLUTION
@@ -947,7 +957,7 @@ module runge_kutta2
                     !% STEPS J1 - J22
                     call junction_calculation_4 (thisP, Npack, istep)
 
-                        ! ! ! call util_utest_CLprint ('------- NNN after junction calculation_4')
+                        ! ! ! ! call util_utest_CLprint ('------- NNN after junction calculation_4')
 
                     !% STEP J23
                     !% HACK --- PREISSMANN SLOT -- STEP J23.  May need something here or in junction_calculation_4
@@ -956,7 +966,7 @@ module runge_kutta2
                     !% --- for cases where dH is limited, reset JB flowrates for mass conservation
                    call junction_mass_conservation (ep_JM, istep)
 
-                        ! ! ! call util_utest_CLprint ('------- OOO after junction_mass_conservation ')
+                        ! ! ! ! call util_utest_CLprint ('------- OOO after junction_mass_conservation ')
 
                     !% HACK --OLD CODE HAD UPDATE AUX_JMJB AND ADJUST ELEMENTS BEFORE MASS CONSERVATION
 
@@ -965,7 +975,7 @@ module runge_kutta2
                     !%     true indicates flowrate interp on all JB are set to minimum.
                     call update_auxiliary_variables_JMJB ( .true.)
 
-                        ! ! ! call util_utest_CLprint ('------- PPP  after update_aux ..JMJB')
+                        ! ! ! ! call util_utest_CLprint ('------- PPP  after update_aux ..JMJB')
 
             end if   
 
@@ -974,7 +984,7 @@ module runge_kutta2
             call adjust_element_toplevel (JB)
             call adjust_element_toplevel (JM)
 
-                ! ! ! call util_utest_CLprint ('------- QQQ  after adjust element JB JM')
+                ! ! ! ! call util_utest_CLprint ('------- QQQ  after adjust element JB JM')
 
             if ((istep == 1) .and. (N_nJM > 0)) then 
             ! if (N_nJM > 0) then 
@@ -986,7 +996,7 @@ module runge_kutta2
                 call face_force_JBadjacent_values (ep_JM, .true.)
                 call face_force_JBadjacent_values (ep_JM, .false.)
 
-                    ! ! ! call util_utest_CLprint ('------- RRR  after face_force_JBadjacent')
+                    ! ! ! ! call util_utest_CLprint ('------- RRR  after face_force_JBadjacent')
 
             end if
 
@@ -1012,7 +1022,7 @@ module runge_kutta2
                 call junction_CC_for_JBadjacent (ep_CC_DownstreamOfJunction, istep, .false.)
 
                     !if (istep == 1) 
-                    ! ! ! call util_utest_CLprint ('------- SSS  after junction_CC_for_JBadjacent')
+                    ! ! ! ! call util_utest_CLprint ('------- SSS  after junction_CC_for_JBadjacent')
 
                 ! if (N_diag > 0) then
                 ! CANNOT USE THIS BECAUSE YOU MIGHT HAVE JUNCTIONS ON BOTH SIDES OF
@@ -1027,7 +1037,7 @@ module runge_kutta2
                 !     call junction_Diag_for_JBadjacent (ep_Diag_UpstreamOfJunction,   istep, .true.)
                 !     call junction_Diag_for_JBadjacent (ep_Diag_DownstreamOfJunction, istep, .false.)
 
-                !         ! ! ! ! call util_utest_CLprint ('------- TTT  after junction_Diag_for_JBadjacent')
+                !         ! ! ! ! ! call util_utest_CLprint ('------- TTT  after junction_Diag_for_JBadjacent')
                 ! end if
 
                 !% HACK OLD CODE HAD adjust_Face_toplevel () called here in junction_toplevel_3
@@ -1072,7 +1082,7 @@ module runge_kutta2
             !     !%     non-adjacent face has flowrate changed for mass conservation.
             !     call face_velocities(fp_Diag_all, .true.)
 
-            !         if (istep == 1) ! ! ! ! ! call util_utest_CLprint ('------- VVV  after face velocities')
+            !         if (istep == 1) ! ! ! ! ! ! call util_utest_CLprint ('------- VVV  after face velocities')
 
             ! end if
 
@@ -1086,7 +1096,7 @@ module runge_kutta2
                 faceR(thisP,fr_FroudeNumber_d) = faceR(thisP,fr_Velocity_d) / sqrt(setting%Constant%gravity * faceR(thisP,fr_Area_d))
             endwhere
 
-                ! ! ! call util_utest_CLprint ('------- VVV.01  before adjust Vfilter CC')
+                ! ! ! ! call util_utest_CLprint ('------- VVV.01  before adjust Vfilter CC')
 
             Npack => npack_elemP(ep_CC)    
             thisP => elemP(1:Npack,ep_CC)
@@ -1107,7 +1117,7 @@ module runge_kutta2
 
 
             
-                !  ! ! ! call util_utest_CLprint ('------- VVV.02  after adjust Vfilter CC')
+                !  ! ! ! ! call util_utest_CLprint ('------- VVV.02  after adjust Vfilter CC')
 
 
             !% HACK -- for better coding, change the rk2_store_conservative call to use the
@@ -1121,7 +1131,7 @@ module runge_kutta2
                 !call rk2_store_conservative_fluxes (CCDiag) 
                 call rk2_store_conservative_fluxes (ALL) 
 
-                    ! ! ! call util_utest_CLprint ('------- MMM  after  step 1 store conservative fluxes all')
+                    ! ! ! ! call util_utest_CLprint ('------- MMM  after  step 1 store conservative fluxes all')
             end if
 
             !% NOTE CONSERVATIVE FLUX FOR JB IS FIXED IN junction_CC_for_JBadjacent
@@ -1135,7 +1145,7 @@ module runge_kutta2
             !     !%     for the JM/JB solution.
             !     call rk2_store_conservative_fluxes (JBDiag) 
 
-            !         ! ! ! ! call util_utest_CLprint ('------- UUU  after step 2 store conservative flux JBDiag')
+            !         ! ! ! ! ! call util_utest_CLprint ('------- UUU  after step 2 store conservative flux JBDiag')
             ! end if
 
 
@@ -1147,12 +1157,12 @@ module runge_kutta2
             ! end if
 
             !if (istep == 1) 
-            ! ! ! call util_utest_CLprint ('------- VVV end of RK step')
+            ! ! ! ! call util_utest_CLprint ('------- VVV end of RK step')
 
 
         end do
 
-        ! ! ! call util_utest_CLprint ('========== ZZZ  end of RK2 ============================')
+        ! ! ! ! call util_utest_CLprint ('========== ZZZ  end of RK2 ============================')
 
         ! tval = maxval(elemR(2:(N_elem(1)-1),er_Flowrate)) 
         ! if (tval(1) > oneR) then
@@ -1188,7 +1198,7 @@ module runge_kutta2
 
             print *,' '
             print *, ' '
-            ! ! ! ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
+            ! ! ! ! ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
  
         !%==================================    
         !% --- Initial adjustments
@@ -1200,14 +1210,14 @@ module runge_kutta2
         !     !% --- update flowrates for diagnostic elements that are not adjacent to JB
         !     call diagnostic_by_type (ep_Diag_notJBadjacent, istep)  
 
-        !         ! ! ! ! ! call util_utest_CLprint ('------- BBB  after diagnostic')
+        !         ! ! ! ! ! ! call util_utest_CLprint ('------- BBB  after diagnostic')
 
         !     !% STEP B
         !     !% --- push the flowrate data to faces -- true is upstream, false is downstream
         !     call face_push_elemdata_to_face (ep_Diag_notJBadjacent, fr_Flowrate, er_Flowrate, elemR, .true.)
         !     call face_push_elemdata_to_face (ep_Diag_notJBadjacent, fr_Flowrate, er_Flowrate, elemR, .false.)
 
-        !         ! ! ! ! ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
+        !         ! ! ! ! ! ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
         ! end if
 
        
@@ -1216,7 +1226,7 @@ module runge_kutta2
         !     !% --- provide junction outlet JB velocity estimate
         !     call junction_main_velocity (ep_JM)
 
-        !         ! ! ! ! ! call util_utest_CLprint ('------- DDD  after junction_main_velocity')
+        !         ! ! ! ! ! ! call util_utest_CLprint ('------- DDD  after junction_main_velocity')
         ! end if
 
         !% STEP F: all diag-notJB are updated on element and faces
@@ -1229,7 +1239,7 @@ module runge_kutta2
             !% STEPS G- S
             call junction_consistency (istep)
 
-                ! ! ! ! ! call util_utest_CLprint ('------- EEE  after junction_consistency')
+                ! ! ! ! ! ! call util_utest_CLprint ('------- EEE  after junction_consistency')
         end if
 
         !%======================================
@@ -1258,7 +1268,7 @@ module runge_kutta2
                     call junction_branch_dQdH (thisP, Npack, istep)
 
                         !if (istep == 1) 
-                        ! ! ! ! ! call util_utest_CLprint ('------- FFF  after junction_branch_dQdH')
+                        ! ! ! ! ! ! call util_utest_CLprint ('------- FFF  after junction_branch_dQdH')
                 end if
             end if
 
@@ -1266,7 +1276,7 @@ module runge_kutta2
             !% --- Half-timestep advance on CC for U and UVolume
             call rk2_step_ETM_CC (istep)  
 
-                ! ! ! ! ! call util_utest_CLprint ('------- GGG  after rk2_step')
+                ! ! ! ! ! ! call util_utest_CLprint ('------- GGG  after rk2_step')
 
             !% STEP rkD
             !% --- Update all CC aux variables
@@ -1276,14 +1286,14 @@ module runge_kutta2
                 .true., .false., dummyIdx)
                 
                 !if (istep == 1) 
-                ! ! ! ! ! call util_utest_CLprint ('------- HHH  after update_aux...CC step')
+                ! ! ! ! ! ! call util_utest_CLprint ('------- HHH  after update_aux...CC step')
 
             !% STEP rkE
             !% --- zero and small depth adjustment for elements
             call adjust_element_toplevel (CC)
 
                 !if (istep == 1) 
-                ! ! ! ! ! call util_utest_CLprint ('------- HHH.1  after adjust element CC')
+                ! ! ! ! ! ! call util_utest_CLprint ('------- HHH.1  after adjust element CC')
 
             if (N_nJM > 0) then 
                 !% STEP rkF
@@ -1296,7 +1306,7 @@ module runge_kutta2
                 end if
 
                     !if (istep == 1) 
-                    ! ! ! ! ! call util_utest_CLprint ('------- JJJ  after update weights JB for JB/CC')
+                    ! ! ! ! ! ! call util_utest_CLprint ('------- JJJ  after update weights JB for JB/CC')
 
                 ! !% STEP rkG
                 ! !% --- Sets JB/Diag face interpweights for flow to minimum (which should be
@@ -1307,7 +1317,7 @@ module runge_kutta2
                 !     call update_interpweights_JB (thisP, Npack, .true.)
                 ! end if
 
-                !     if (istep == 1) ! ! ! ! ! call util_utest_CLprint ('------- KKK  after update weights JB for JB/Diag')
+                !     if (istep == 1) ! ! ! ! ! ! call util_utest_CLprint ('------- KKK  after update weights JB for JB/Diag')
             end if
 
             !% STEP rkH
@@ -1317,7 +1327,7 @@ module runge_kutta2
             call face_interpolation(fp_noBC_IorS, .true., .true., .true., .false., .true.) 
 
                 !if (istep == 1) 
-                ! ! ! ! ! call util_utest_CLprint ('------- LLL  after face interp')
+                ! ! ! ! ! ! call util_utest_CLprint ('------- LLL  after face interp')
 
 
             !% STEP rkE.1 
@@ -1330,35 +1340,35 @@ module runge_kutta2
             call face_zeroDepth_geometry_interior(fp_CC_bothsides_are_zero_IorS)
 
                 !if (istep == 1) 
-                ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.01  after face zerodepth ')
+                ! ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.01  after face zerodepth ')
 
             call face_zeroDepth_geometry_shared(fp_CC_downstream_is_zero_IorS)
             call face_zeroDepth_geometry_shared(fp_CC_upstream_is_zero_IorS)
             call face_zeroDepth_geometry_shared(fp_CC_bothsides_are_zero_IorS)
 
                 !if (istep == 1) 
-                ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.02  after face zerodepth ')
+                ! ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.02  after face zerodepth ')
 
             call face_zeroDepth_flowrates_interior(fp_CC_downstream_is_zero_IorS)
             call face_zeroDepth_flowrates_interior(fp_CC_upstream_is_zero_IorS)
             call face_zeroDepth_flowrates_interior(fp_CC_bothsides_are_zero_IorS)
 
                 !if (istep == 1) 
-                ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.03  after face zerodepth ')
+                ! ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.03  after face zerodepth ')
 
             call face_zeroDepth_flowrates_shared(fp_CC_downstream_is_zero_IorS)
             call face_zeroDepth_flowrates_shared(fp_CC_upstream_is_zero_IorS)
             call face_zeroDepth_flowrates_shared(fp_CC_bothsides_are_zero_IorS)
 
                 !if (istep == 1) 
-                ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.04  after face zerodepth ')
+                ! ! ! ! ! ! ! call util_utest_CLprint ('------- LLL.04  after face zerodepth ')
 
             call face_flowrate_for_openclosed_elem (ep_CCDiag)
             !% HACK -- FOR SHARED WE NEED TO IDENTIFY ANY SHARED FACES THAT HAVE AN
             !% UPSTREAM elemR(:,er_Setting) = 0.0 and set their face Q and V to zero.
 
                !if (istep == 1) 
-            !    ! ! ! ! call util_utest_CLprint ('------- MMM  after face zerodepth ')
+            !    ! ! ! ! ! call util_utest_CLprint ('------- MMM  after face zerodepth ')
 
             !%=========================================
             !% BEGIN JUNCTION SOLUTION
@@ -1369,7 +1379,7 @@ module runge_kutta2
                 !% STEPS J1 - J22
                 call junction_calculation_4 (thisP, Npack, istep)
 
-                    ! ! ! ! ! call util_utest_CLprint ('------- NNN after junction calculation_4')
+                    ! ! ! ! ! ! call util_utest_CLprint ('------- NNN after junction calculation_4')
 
                 !% STEP J23
                 !% HACK --- PREISSMANN SLOT -- STEP J23.  May need something here or in junction_calculation_4
@@ -1384,7 +1394,7 @@ module runge_kutta2
                 !% --- for cases where dH is limited, reset JB flowrates for mass conservation
                 call junction_mass_conservation (ep_JM, istep)
 
-                    ! ! ! ! ! call util_utest_CLprint ('------- OOO after junction_mass_conservation ')
+                    ! ! ! ! ! ! call util_utest_CLprint ('------- OOO after junction_mass_conservation ')
 
                 !% HACK --OLD CODE HAD UPDATE AUX_JMJB AND ADJUST ELEMENTS BEFORE MASS CONSERVATION
 
@@ -1393,14 +1403,14 @@ module runge_kutta2
                 !%     true indicates flowrate interp on all JB are set to minimum.
                 call update_auxiliary_variables_JMJB ( .true.)
 
-                    ! ! ! ! ! call util_utest_CLprint ('------- PPP  after update_aux ..JMJB')
+                    ! ! ! ! ! ! call util_utest_CLprint ('------- PPP  after update_aux ..JMJB')
 
                 !% STEP J26
                 !% --- adjust JB and JM for small or zero depth
                 call adjust_element_toplevel (JB)
                 call adjust_element_toplevel (JM)
 
-                    ! ! ! ! ! call util_utest_CLprint ('------- QQQ  after adjust element JB JM')
+                    ! ! ! ! ! ! call util_utest_CLprint ('------- QQQ  after adjust element JB JM')
 
                 !% STEP J27
                 !% --- force the JB values to the faces for upstream (true)
@@ -1410,7 +1420,7 @@ module runge_kutta2
                 call face_force_JBadjacent_values (ep_JM, .true.)
                 call face_force_JBadjacent_values (ep_JM, .false.)
 
-                    ! ! ! ! ! call util_utest_CLprint ('------- RRR  after face_force_JBadjacent')
+                    ! ! ! ! ! ! call util_utest_CLprint ('------- RRR  after face_force_JBadjacent')
 
             end if
 
@@ -1437,7 +1447,7 @@ module runge_kutta2
                 call junction_CC_for_JBadjacent (ep_CC_DownstreamOfJunction, istep, .false.)
 
                     !if (istep == 1) 
-                    ! ! ! ! ! call util_utest_CLprint ('------- SSS  after junction_CC_for_JBadjacent')
+                    ! ! ! ! ! ! call util_utest_CLprint ('------- SSS  after junction_CC_for_JBadjacent')
 
                 ! if (N_diag > 0) then
                 !     !% --- Adjust JB-adjacent Diag elements and faces using new face values
@@ -1448,7 +1458,7 @@ module runge_kutta2
                 !     call junction_Diag_for_JBadjacent (ep_Diag_UpstreamOfJunction,   istep, .true.)
                 !     call junction_Diag_for_JBadjacent (ep_Diag_DownstreamOfJunction, istep, .false.)
 
-                !         if (istep == 1) ! ! ! ! ! call util_utest_CLprint ('------- TTT  after junction_Diag_for_JBadjacent')
+                !         if (istep == 1) ! ! ! ! ! ! call util_utest_CLprint ('------- TTT  after junction_Diag_for_JBadjacent')
                 ! end if
 
                 !% HACK OLD CODE HAD adjust_Face_toplevel () called here in junction_toplevel_3
@@ -1479,7 +1489,7 @@ module runge_kutta2
             !     !%     non-adjacent face has flowrate changed for mass conservation.
             !     call face_velocities(fp_Diag_all, .true.)
 
-            !         if (istep == 1) ! ! ! ! ! call util_utest_CLprint ('------- VVV  after face velocities')
+            !         if (istep == 1) ! ! ! ! ! ! call util_utest_CLprint ('------- VVV  after face velocities')
             ! end if
 
             !% STEP rkM
@@ -1499,7 +1509,7 @@ module runge_kutta2
             !     !%    that are NOT adjacent to JB
             !     call rk2_store_conservative_fluxes (CCDiag) 
 
-            !         if (istep == 1) ! ! ! ! ! call util_utest_CLprint ('------- MMM  after  step 1 store consertave fluxes CCDiag')
+            !         if (istep == 1) ! ! ! ! ! ! call util_utest_CLprint ('------- MMM  after  step 1 store consertave fluxes CCDiag')
             ! end if
 
             ! if ((N_nJM > 0) .and. (istep == 2)) then 
@@ -1512,7 +1522,7 @@ module runge_kutta2
             !     !%     for the JM/JB solution.
             !     call rk2_store_conservative_fluxes (JBDiag) 
 
-            !         if (istep == 1) ! ! ! ! ! call util_utest_CLprint ('------- UUU  after step 2 store conservative flux JBDiag')
+            !         if (istep == 1) ! ! ! ! ! ! call util_utest_CLprint ('------- UUU  after step 2 store conservative flux JBDiag')
             ! end if
 
 
@@ -1524,11 +1534,11 @@ module runge_kutta2
             ! end if
 
             !if (istep == 1) 
-            ! ! ! ! ! call util_utest_CLprint ('------- VVV end of RK step')
+            ! ! ! ! ! ! call util_utest_CLprint ('------- VVV end of RK step')
 
         end do
 
-        ! ! ! ! ! call util_utest_CLprint ('========== ZZZ  end of RK2 ============================')
+        ! ! ! ! ! ! call util_utest_CLprint ('========== ZZZ  end of RK2 ============================')
 
     end subroutine rk2_toplevel_ETM_5
 !%
@@ -1560,7 +1570,7 @@ module runge_kutta2
         istep = oneI
 
             !print *, ' '
-         ! ! ! ! ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
+         ! ! ! ! ! ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
             !print *, 'TEST20230327   GGG',elemR(22,er_Head), elemR(22,er_Zbottom)
             !stop 709873
 
@@ -1585,13 +1595,13 @@ module runge_kutta2
         call junction_face_terms_linear (ep_JB, istep)    
         call util_crashstop(6228745)
 
-            ! ! ! ! ! call util_utest_CLprint ('------- BBB  after junction_face_terms')
+            ! ! ! ! ! ! call util_utest_CLprint ('------- BBB  after junction_face_terms')
 
         !% --- Half-timestep advance on CC for U and UVolume
         call rk2_step_ETM_CC (istep)   
         call util_crashstop(7399287)
 
-            ! ! ! ! ! call util_utest_CLprint ('------- CCC  after rk2_step_ETM_cc')
+            ! ! ! ! ! ! call util_utest_CLprint ('------- CCC  after rk2_step_ETM_cc')
         
         !% --- Update all CC aux variables
         !%     Note, these updates CANNOT depend on face values
@@ -1599,18 +1609,18 @@ module runge_kutta2
             ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
             .true., .false., dummyIdx)
 
-            ! ! ! ! ! call util_utest_CLprint ('------- DDD  after update_auxiliary_variables_CC')
+            ! ! ! ! ! ! call util_utest_CLprint ('------- DDD  after update_auxiliary_variables_CC')
     
         call adjust_element_toplevel (CC)
         call util_crashstop (80298733)
 
-                ! ! ! ! ! call util_utest_CLprint ('------- EEE after adjust element ... CC')
+                ! ! ! ! ! ! call util_utest_CLprint ('------- EEE after adjust element ... CC')
 
         !% --- Implicit junction for JB flowrate and head
         call junction_toplevel_3 (istep)
         call util_crashstop (11284298)
     
-            ! ! ! ! ! call util_utest_CLprint ('------- FFF  after junction_toplevel')  
+            ! ! ! ! ! ! call util_utest_CLprint ('------- FFF  after junction_toplevel')  
             
             ! print *, ' '
             ! print *,  'resid ',junction_conservation_residual(13)
@@ -1627,7 +1637,7 @@ module runge_kutta2
         ! print *, ' face flowrate debug'
         ! print *, elemR(78,er_Flowrate), faceR(73, fr_Flowrate), elemR(80,er_Flowrate)
 
-            ! ! ! ! ! call util_utest_CLprint ('------- GGG  after face_interpolation')
+            ! ! ! ! ! ! call util_utest_CLprint ('------- GGG  after face_interpolation')
 
             ! print *, ' '
             ! print *,  'resid ',junction_conservation_residual(13)
@@ -1635,7 +1645,7 @@ module runge_kutta2
 
         call adjust_face_toplevel (fp_noBC_IorS)    
             
-            ! ! ! ! ! call util_utest_CLprint ('------- HHH  after face ad hoc adjustments')
+            ! ! ! ! ! ! call util_utest_CLprint ('------- HHH  after face ad hoc adjustments')
 
             ! print *, ' '
             ! print *,  'resid ',junction_conservation_residual(13)
@@ -1645,7 +1655,7 @@ module runge_kutta2
         call diagnostic_toplevel (ep_Diag, fp_Diag_IorS, istep)  
         call util_crashstop(982373)
 
-            ! ! ! ! ! call util_utest_CLprint ('-------III after diagnostic_toplevel')
+            ! ! ! ! ! ! call util_utest_CLprint ('-------III after diagnostic_toplevel')
 
             ! print *, ' '
             ! print *,  'resid ',junction_conservation_residual(13)
@@ -1657,31 +1667,31 @@ module runge_kutta2
         call junction_mass_conservation (ep_JM, istep)
         call util_crashstop(602984)
 
-            ! ! ! ! ! call util_utest_CLprint ('-------JJJ after junction_mass_conservation')
+            ! ! ! ! ! ! call util_utest_CLprint ('-------JJJ after junction_mass_conservation')
 
         !% --- fix flowrates in diagnostic elements adjacent to JB
         ! call diagnostic_fix_JB_adjacent ()
         !call util_crashstop(998734)
 
-            ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-------JJJ01 after diagnostic_fix_JB_adjacent')
+            ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-------JJJ01 after diagnostic_fix_JB_adjacent')
 
         !% --- RK2 solution step -- check culverts
         !%     HACK: Can this be included in diagnostic?
         !%     NEED CHECKING FOR JUNCTIONS
         ! call culvert_toplevel() NEED TO REWORK  20230317
         ! call util_crashstop(669753)
-        ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- JJJ02  after culvert_toplevel')
+        ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- JJJ02  after culvert_toplevel')
 
         !% --- RK2 solution step  -- make ad hoc adjustments
         call adjust_Vfilter_CC () !% this is useful in reducing flow oscillations
         call util_crashstop(139871)
 
-            ! ! ! ! ! call util_utest_CLprint ('------- JJJ03  after adjust_Vfilter_CC')
+            ! ! ! ! ! ! call util_utest_CLprint ('------- JJJ03  after adjust_Vfilter_CC')
         
         !% -- the conservative fluxes from N to N_1 are the values just before the second RK2 step
         call rk2_store_conservative_fluxes (ALL) 
 
-            ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- JJJ04  after rk2_store_conservative_fluxes')
+            ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- JJJ04  after rk2_store_conservative_fluxes')
 
         !% --- reset the overflow counter (we only save conservation in the 2nd step)
         elemR(:,er_VolumeOverFlow) = zeroR
@@ -1701,13 +1711,13 @@ module runge_kutta2
         call junction_face_terms_linear (ep_JB, istep) 
         call util_crashstop(6281287)  
 
-            ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- MMM  after junction_face_terms')
+            ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- MMM  after junction_face_terms')
 
         !% -- Full-timestep advance on CC for U and UVolume
         call rk2_step_ETM_CC (istep)
         call util_crashstop(3298744)
 
-            ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- NNN  after rk2_step_ETM_cc')
+            ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- NNN  after rk2_step_ETM_cc')
 
         !% --- update all CC aux variables
         !%     Note, these updates CANNOT depend on face values
@@ -1716,18 +1726,18 @@ module runge_kutta2
             .true., .false., dummyIdx)
         call util_crashstop(2969983)
 
-           ! ! ! ! ! ! call util_utest_CLprint ('------- OOO after update_auxiliary_variables_CC')
+           ! ! ! ! ! ! ! call util_utest_CLprint ('------- OOO after update_auxiliary_variables_CC')
 
         call adjust_element_toplevel (CC)
         call util_crashstop(2508773)    
 
-            ! ! ! ! ! ! ! call util_utest_CLprint ('------- PPP  after adjust... CC')
+            ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- PPP  after adjust... CC')
 
         !% --- Implicit junction for JB flowrate and head
         call junction_toplevel_3 (istep)
         call util_crashstop (11287322)
 
-            ! ! ! ! ! ! ! call util_utest_CLprint ('------- RRR  after junction_toplevel')
+            ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- RRR  after junction_toplevel')
 
 
 
@@ -1735,19 +1745,19 @@ module runge_kutta2
         !% values at time n+1 and do not affect either the conservative fluxes from
         !% time n->n+1 or the volume at n+1
 
-            ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-------RRR022 after store conservative fluxes')
+            ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-------RRR022 after store conservative fluxes')
 
 
         sync all
         call face_interpolation(fp_noBC_IorS,.true.,.true.,.true.,.false.,.false.)
         call util_crashstop(72129873)
 
-            ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- SSS  after face_interpolation')
+            ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- SSS  after face_interpolation')
 
        call adjust_face_toplevel (fp_noBC_IorS)
        call util_crashstop(5098723)
 
-            ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- SSS02  after face ad hoc adjumstents')
+            ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- SSS02  after face ad hoc adjumstents')
 
         !% --- update diagnostic elements and faces
         call diagnostic_toplevel (ep_Diag, fp_Diag_IorS, istep)
@@ -1822,19 +1832,19 @@ module runge_kutta2
                 ! end if
             !end if
 
-            ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- TTT  after diagnostic_toplevel')
+            ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- TTT  after diagnostic_toplevel')
 
         ! !% --- ensure mass conservation at junctions
         ! call junction_mass_conservation (ep_JM, istep)
         ! call util_crashstop(6209845)
 
-        !     ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-------UUU after junction_mass_conservation')
+        !     ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-------UUU after junction_mass_conservation')
 
         ! !% --- fix flowrates in diagnostic elements adjacent to JB
         ! call diagnostic_fix_JB_adjacent ()
         ! call util_crashstop(998734)
 
-        !     ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-------UUU01 after diagnostic_fix_JB_adjacent')
+        !     ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-------UUU01 after diagnostic_fix_JB_adjacent')
 
 
 
@@ -1844,18 +1854,18 @@ module runge_kutta2
         ! call culvert_toplevel()     NEED TO REWORK  20230317
         ! call util_crashstop(669743)
 
-            !!! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- UUU02  after culvert_toplevel')
+            !!! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- UUU02  after culvert_toplevel')
 
         !% --- RK2 solution step  -- make ad hoc adjustments
         call adjust_Vfilter_CC () !% this is useful in lateral flow induced oscillations
         call util_crashstop(13987)
 
-            ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- VVV after adjust_Vfilter_CC')
+            ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- VVV after adjust_Vfilter_CC')
 
         !% --- check zero and small depths that might be changed by Vfilter
         call adjust_element_toplevel (CC)
 
-             ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- WWW after zero/small adjusts')
+             ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- WWW after zero/small adjusts')
 
         !% --- accumulate the volume overflow
         elemR(:,er_VolumeOverFlowTotal)                                                    &
@@ -1865,7 +1875,7 @@ module runge_kutta2
              = elemR(:,er_VolumeArtificialInflowTotal)+ elemR(:,er_VolumeArtificialInflow)
 ! 
 
-            ! ! ! ! ! ! ! call util_utest_CLprint ('------- ZZZ end of RK2')
+            ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- ZZZ end of RK2')
 
     end subroutine rk2_toplevel_ETM_4
 !%
@@ -1895,7 +1905,7 @@ module runge_kutta2
         ! istep = oneI
 
         !     print *, ' '
-        !      !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
+        !      !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
 
         ! !% --- NOTE: Dynamic manning's n not included in this routine.
 
@@ -1908,102 +1918,102 @@ module runge_kutta2
         ! !% --- store the junction face terms for time n
         ! call junction_face_terms (fp_JB_IorS, istep)    
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- BBB  after junction_face_terms')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- BBB  after junction_face_terms')
 
         ! !% --- RK2 solution step -- single time advance step
         ! !%     CC advanced for continuity and momentum
         ! call rk2_step_ETM_CC (istep)   
         ! call util_crashstop(7399287)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC  after rk2_step_ETM_cc')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC  after rk2_step_ETM_cc')
         
         ! !% --- RK2 solution step -- update all CC aux variables
         ! !%     Note, these updates CANNOT depend on face values
         ! call update_auxiliary_variables_CC (whichTM)
         ! call util_crashstop(29687984)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD  after update_auxiliary_variables_CC')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD  after update_auxiliary_variables_CC')
 
         ! !% --- identify zero depths (.true. is zero depth)
         ! call adjust_zero_or_small_depth_identify_NEW(CC,.true.)
-        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD01  after adjusts')
+        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD01  after adjusts')
         ! !% --- identify small depths (.false. is small depth)
         ! call adjust_zero_or_small_depth_identify_NEW(CC,.false.)
-        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD02  after adjusts')
+        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD02  after adjusts')
         ! !% --- create packed arrays
         ! call pack_small_and_zero_depth_elements (whichTM, CC)
-        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD03  after adjusts')
+        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD03  after adjusts')
         ! !% --- set the zero depths
         ! call adjust_zerodepth_element_values (whichTM, CC) 
-        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD04  after adjusts')
+        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD04  after adjusts')
         ! !% --- faces that have zero depth on one side or another
         ! call pack_CC_zeroDepth_interior_faces (fp_notJB_interior)
-        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD05  after adjusts')
+        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD05  after adjusts')
         ! !% --- apply limiters to fluxes and velocity
         ! !%     (.false. so that smalldepth fluxes are not set to zero)
         ! call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
-        !     ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD06  after adjusts')
+        !     ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD06  after adjusts')
         ! call adjust_limit_velocity_max_CC (whichTM) 
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- EEE  after adjusts')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- EEE  after adjusts')
 
         ! !% HACK --- rethink this -- should interp weights for junction Q always be to outside element?
         ! !% --- adjust interpweights to force adjacent element Q, psiL, and energyhead
         ! !%     onto the JB face
         ! call junction_force_Qinterpweights (ep_JM_ETM)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- FFF  after junction_force_Qinterpweights')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- FFF  after junction_force_Qinterpweights')
 
         ! !% --- face interpolation without JB
         ! sync all
         ! call face_interpolation(fp_notJB_interior,whichTM,.false.,.false.,.false.)
         ! call util_crashstop(72112342)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- GGG  after face_interpolation')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- GGG  after face_interpolation')
 
         ! !% --- flux adjustments (.true. so that conservative fluxes are altered)
         ! call adjust_smalldepth_face_fluxes_CC (.true.)
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- GGG01  after face_adjustment')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- GGG01  after face_adjustment')
         ! call adjust_zerodepth_face_fluxes_CC  (.true.)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- GGG02  after face_adjustment')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- GGG02  after face_adjustment')
 
         ! !% --- RK2 solution step -- compute implicit junction
         ! call junction_toplevel_3 (whichTM, istep)
         ! call util_crashstop (11284298)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- HHH  after junction_toplevel')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- HHH  after junction_toplevel')
 
         ! !% --- set JM and JB variables (resets the Q interpweights)
         ! call update_auxiliary_variables_JMJB(whichTM)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- III  after update_aux...JM')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- III  after update_aux...JM')
 
         ! !% --- identify zero depths
         ! call adjust_zero_or_small_depth_identify_NEW(JB,.true.)
-        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-----III01  after zero depth...JB')
+        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-----III01  after zero depth...JB')
         ! call adjust_zero_or_small_depth_identify_NEW(JM,.true.)
-        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- III02  after zero depth...JM')
+        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- III02  after zero depth...JM')
         ! !% --- identify small depths
         ! call adjust_zero_or_small_depth_identify_NEW(JB,.false.)
-        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- III03  after small depth...JB')
+        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- III03  after small depth...JB')
         ! call adjust_zero_or_small_depth_identify_NEW(JM,.false.)
-        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- III4  after small depth...JM')
+        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- III4  after small depth...JM')
         ! !% --- packing
         ! call pack_CC_zeroDepth_interior_faces (fp_notJB_interior)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- JJJ  after adjust...JB JM')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- JJJ  after adjust...JB JM')
 
         ! !% --- interpolation to get the non-flow values on faces of junction
         ! call face_interpolation(fp_JB_IorS,whichTM,.true.,.true.,.true.)  
         
-        !          !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- KKK  after JB face interpolation ==========================================')
+        !          !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- KKK  after JB face interpolation ==========================================')
 
         ! !% --- update diagnostic elements and faces where NOT JB (ensures mass conservation)
         ! call diagnostic_toplevel (ep_Diag_notJBadjacent,fp_Diag_NotJB_interior,istep)  
         ! call util_crashstop(982373)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-------LLL after diagnostic_toplevel')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-------LLL after diagnostic_toplevel')
 
         ! !% --- RK2 solution step -- check culverts
         ! !%     HACK: Can this be included in diagnostic?
@@ -2011,18 +2021,18 @@ module runge_kutta2
         ! ! call culvert_toplevel() NEED TO REWORK  20230317
         ! ! call util_crashstop(669753)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- MMM  after culvert_toplevel')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- MMM  after culvert_toplevel')
 
         ! !% --- RK2 solution step  -- make ad hoc adjustments
         ! call adjust_Vfilter_CC (whichTM) !% this is useful in lateral flow induced oscillations
         ! call util_crashstop(139871)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- NNN  after adjust_Vfilter_CC')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- NNN  after adjust_Vfilter_CC')
         
         ! !% -- the conservative fluxes from N to N_1 are the values just before the second RK2 step
         ! call rk2_store_conservative_fluxes (whichTM)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- OOO  after rk2_store_conservative_fluxes')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- OOO  after rk2_store_conservative_fluxes')
 
         ! !% --- reset the overflow counter (we only save conservation in the 2nd step)
         ! elemR(:,er_VolumeOverFlow) = zeroR
@@ -2037,19 +2047,19 @@ module runge_kutta2
         ! !% --- store the junction face terms for time n
         ! call junction_face_terms (fp_JB_IorS, istep)    
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- PPP  after junction_face_terms')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- PPP  after junction_face_terms')
 
         ! call rk2_step_ETM_CC (istep)
         ! call util_crashstop(3298744)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- QQQ  after rk2_step_ETM_cc')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- QQQ  after rk2_step_ETM_cc')
 
         ! !% --- update all CC aux variables
         ! !%     Note, these updates CANNOT depend on face values
         ! call update_auxiliary_variables_CC (whichTM)
         ! call util_crashstop(2969983)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- RRR  after update_auxiliary_variables_CC')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- RRR  after update_auxiliary_variables_CC')
 
         ! !% --- identify zero depths
         ! call adjust_zero_or_small_depth_identify_NEW(CC,.true.)
@@ -2066,37 +2076,37 @@ module runge_kutta2
         ! call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
         ! call adjust_limit_velocity_max_CC (whichTM) 
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- SSS  after adjusts')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- SSS  after adjusts')
 
         ! !% --- update the JB faces to force adjacent element Q
         ! call junction_force_Qinterpweights (ep_JM_ETM)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- SSS01  after junction_force_Qinterpweights')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- SSS01  after junction_force_Qinterpweights')
 
         ! !% --- face interpolation without JB
         ! sync all
         ! call face_interpolation(fp_notJB_interior,whichTM,.false.,.false.,.false.)
         ! call util_crashstop(72129873)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- TTT  after face_interpolation')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- TTT  after face_interpolation')
 
         ! !% --- flux adjusments with .false. so that conservative fluxes are not altered
         ! call adjust_smalldepth_face_fluxes_CC (whichTM,.false.)
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- TTT01  after adjust smalldepth face flux')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- TTT01  after adjust smalldepth face flux')
         ! call adjust_zerodepth_face_fluxes_CC  (whichTM,.false.)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- TTT02  after adjust zerodepth face flux')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- TTT02  after adjust zerodepth face flux')
 
         ! !% --- RK2 solution step -- compute implicit junction
         ! call junction_toplevel_3 (whichTM, istep)
         ! call util_crashstop (112873)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- UUU  after junction_toplevel')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- UUU  after junction_toplevel')
 
         ! !% --- set JM and JB variables (resets the Q interpweights)
         ! call update_auxiliary_variables_JMJB (whichTM)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- VVV after update_aux...JM')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- VVV after update_aux...JM')
 
         ! !% --- identify zero depths
         ! call adjust_zero_or_small_depth_identify_NEW(JB,.true.)
@@ -2106,13 +2116,13 @@ module runge_kutta2
         ! call adjust_zero_or_small_depth_identify_NEW(JM,.false.)
         ! call pack_CC_zeroDepth_interior_faces (fp_JB_IorS)
 
-        !      !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- VVV01 after adjust...JM')
+        !      !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- VVV01 after adjust...JM')
 
         ! !% --- interpolation to get the non-flow values on faces of junction
         ! !%     skipQ = true
         ! call face_interpolation(fp_JB_IorS,whichTM,.true.,.false.,.true.)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- WWW after face interp for JB')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- WWW after face interp for JB')
 
         ! !% --- update diagnostic elements and faces
         !     !% -- IMPORTANT -- if diagnostic changes a face flowrate for a junction we need to
@@ -2122,20 +2132,20 @@ module runge_kutta2
         ! call diagnostic_toplevel (ep_Diag, fp_Diag_IorS, istep)
         ! call util_crashstop(982332)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- XXX  after diagnostic_toplevel')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- XXX  after diagnostic_toplevel')
 
         ! !% --- RK2 solution step -- check culverts
         ! !%     HACK: Can this be included in diagnostic?
         ! ! call culvert_toplevel()     NEED TO REWORK  20230317
         ! ! call util_crashstop(669743)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- YYY  after culvert_toplevel')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- YYY  after culvert_toplevel')
 
         ! !% --- RK2 solution step  -- make ad hoc adjustments
         ! call adjust_Vfilter_CC (whichTM) !% this is useful in lateral flow induced oscillations
         ! call util_crashstop(13987)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- ZZZ after adjust_Vfilter_CC')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- ZZZ after adjust_Vfilter_CC')
 
         ! !% --- check zero and small depths that might be changed by Vfilter
         ! !% --- identify zero depths
@@ -2153,13 +2163,13 @@ module runge_kutta2
         ! call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
         ! call adjust_limit_velocity_max_CC (whichTM) 
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- ZZZ01 after zero/small adjusts')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- ZZZ01 after zero/small adjusts')
 
         ! !% --- accumulate the volume overflow
         ! elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
         ! elemR(:,er_VolumeArtificialInflowTotal) = elemR(:,er_VolumeArtificialInflowTotal) + elemR(:,er_VolumeArtificialInflow)
 
-        !    !  !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- ZZZ02 end of RK2')
+        !    !  !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- ZZZ02 end of RK2')
 
     end subroutine rk2_toplevel_ETM_3
 !%
@@ -2187,7 +2197,7 @@ module runge_kutta2
         ! !%-----------------------------------------------------------------
 
         !         ! print *, ' '
-        !         !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
+        !         !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
 
         ! !% --- NOTE: Dynamic manning's n not included in this routine.
 
@@ -2203,37 +2213,37 @@ module runge_kutta2
         ! call rk2_step_ETM_CC (istep)   
         ! call util_crashstop(739874)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- BBB  after rk2_step_ETM_cc')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- BBB  after rk2_step_ETM_cc')
         
         ! !% --- RK2 solution step -- update all CC aux variables
         ! !%     Note, these updates CANNOT depend on face values
         ! call update_auxiliary_variables_CC (whichTM)
         ! call util_crashstop(2968722)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC  after update_auxiliary_variables_CC')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC  after update_auxiliary_variables_CC')
 
         ! !% --- identify zero depths (.true. is zero depth)
         ! call adjust_zero_or_small_depth_identify_NEW(CC,.true.)
-        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC01  after adjusts')
+        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC01  after adjusts')
         ! !% --- identify small depths (.false. is small depth)
         ! call adjust_zero_or_small_depth_identify_NEW(CC,.false.)
-        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC02  after adjusts')
+        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC02  after adjusts')
         ! !% --- create packed arrays
         ! call pack_small_and_zero_depth_elements (whichTM, CC)
-        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC03  after adjusts')
+        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC03  after adjusts')
         ! !% --- set the zero depths
         ! call adjust_zerodepth_element_values (whichTM, CC) 
-        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC04  after adjusts')
+        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC04  after adjusts')
         ! !% --- faces that have zero depth on one side or another
         ! call pack_CC_zeroDepth_interior_faces (fp_noBC_IorS)
-        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC05  after adjusts')
+        !     ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC05  after adjusts')
         ! !% --- apply limiters to fluxes and velocity
         ! !%     (.false. so that smalldepth fluxes are not set to zero)
         ! call adjust_smalldepth_element_fluxes_CC (whichTM, .false.)
-        !     ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC06  after adjusts')
+        !     ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- CCC06  after adjusts')
         ! call adjust_limit_velocity_max_CC (whichTM) 
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD  after adjusts')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- DDD  after adjusts')
 
 
         ! !% --- update the psi CC elements adjacent to junction
@@ -2250,7 +2260,7 @@ module runge_kutta2
         ! !%     onto the JB face
         ! call junction_force_Qinterpweights (ep_JM_ETM)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- EEE  after junction_force_Qinterpweights')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- EEE  after junction_force_Qinterpweights')
 
         ! !% --- RK2 solution step  -- all face interpolation
         ! !%     junction JB faces get adjacent element Q values
@@ -2258,40 +2268,40 @@ module runge_kutta2
         ! call face_interpolation(fp_noBC_IorS,whichTM,.false.,.false.,.false.)
         ! call util_crashstop(72129873)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- FFF  after face_interpolation')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- FFF  after face_interpolation')
 
         ! !% --- flux adjustments (.true. so that conservative fluxes are altered)
         ! call adjust_smalldepth_face_fluxes_CC (whichTM,.true.)
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- FFF01  after face_adjustment')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- FFF01  after face_adjustment')
         ! call adjust_zerodepth_face_fluxes_CC  (whichTM,.true.)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- FFF02  after face_adjustment')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- FFF02  after face_adjustment')
 
         ! !% --- RK2 solution step -- compute implicit junction
         ! call junction_toplevel (whichTM, istep)
         ! call util_crashstop (112875)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- GGG  after junction_toplevel')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- GGG  after junction_toplevel')
 
         ! !% --- set JM and JB variables (resets the Q interpweights)
         ! call update_auxiliary_variables_JMJB (whichTM)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- HHH  after update_aux...JM')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- HHH  after update_aux...JM')
 
         ! !% --- identify zero depths
         ! call adjust_zero_or_small_depth_identify_NEW(JB,.true.)
-        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-------HHH01  after zero depth...JB')
+        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('-------HHH01  after zero depth...JB')
         ! call adjust_zero_or_small_depth_identify_NEW(JM,.true.)
-        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- HHH02  after zero depth...JM')
+        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- HHH02  after zero depth...JM')
         ! !% --- identify small depths
         ! call adjust_zero_or_small_depth_identify_NEW(JB,.false.)
-        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- HHH03  after small depth...JB')
+        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- HHH03  after small depth...JB')
         ! call adjust_zero_or_small_depth_identify_NEW(JM,.false.)
-        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- HHH04  after small depth...JM')
+        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- HHH04  after small depth...JM')
         ! !% --- packing
         ! call pack_CC_zeroDepth_interior_faces (fp_noBC_IorS)
 
-        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- HHH05  after adjust...JB JM')
+        !     ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- HHH05  after adjust...JB JM')
 
         ! !% --- interpolation to get the non-flow values on faces of junction
         ! !%     skipQ = true
@@ -2302,7 +2312,7 @@ module runge_kutta2
 
         ! call face_interpolation(fp_JB_IorS,whichTM,.true.,.true.,.true.)    
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- III  after JB face interpolation ==========================================')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- III  after JB face interpolation ==========================================')
 
         ! !% --- RK2 solution step  -- update diagnostic elements and faces
         ! !%     (.true. as this is RK first step)
@@ -2315,25 +2325,25 @@ module runge_kutta2
         ! !call diagnostic_toplevel (.true.)  TEMPORARY CUTOUT 20230210 CAUSING PROBLEMS ON JUNCTIONS DOWNSTREAM FACES
         ! !call util_crashstop(982332)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- JJJ  after diagnostic_toplevel')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- JJJ  after diagnostic_toplevel')
 
         ! !% --- RK2 solution step -- check culverts
         ! !%     HACK: Can this be included in diagnostic?
         ! call culvert_toplevel()
         ! call util_crashstop(669743)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- KKK  after culvert_toplevel')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- KKK  after culvert_toplevel')
 
         ! !% --- RK2 solution step  -- make ad hoc adjustments
         ! call adjust_Vfilter_CC (whichTM) !% this is useful in lateral flow induced oscillations
         ! call util_crashstop(13987)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- LLL  after adjust_Vfilter_CC')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- LLL  after adjust_Vfilter_CC')
         
         ! !% -- the conservative fluxes from N to N_1 are the values just before the second RK2 step
         ! call rk2_store_conservative_fluxes (whichTM)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- MMM  after rk2_store_conservative_fluxes')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- MMM  after rk2_store_conservative_fluxes')
 
         ! !% --- reset the overflow counter (we only save conservation in the 2nd step)
         ! elemR(:,er_VolumeOverFlow) = zeroR
@@ -2347,14 +2357,14 @@ module runge_kutta2
         ! call rk2_step_ETM_CC (istep)
         ! call util_crashstop(3298744)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- NNN  after rk2_step_ETM_cc')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- NNN  after rk2_step_ETM_cc')
 
         ! !% --- RK2 solution step -- update all CC aux variables
         ! !%     Note, these updates CANNOT depend on face values
         ! call update_auxiliary_variables_CC (whichTM)
         ! call util_crashstop(2968722)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- OOO  after update_auxiliary_variables_CC')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- OOO  after update_auxiliary_variables_CC')
 
         ! !% --- identify zero depths
         ! call adjust_zero_or_small_depth_identify_NEW(CC,.true.)
@@ -2383,7 +2393,7 @@ module runge_kutta2
         ! !% --- update the JB faces to force adjacent element Q, psiL, and energyhead
         ! call junction_force_Qinterpweights (ep_JM_ETM)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- PPP  after adjusts')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- PPP  after adjusts')
 
         ! !% --- RK2 solution step  -- all face interpolation
         ! !%     junction JB faces get adjacent element Q values
@@ -2391,13 +2401,13 @@ module runge_kutta2
         ! call face_interpolation(fp_noBC_IorS,whichTM,.false.,.false.,.false.)
         ! call util_crashstop(72129873)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- QQQ  after face_interpolation')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- QQQ  after face_interpolation')
 
         ! !% --- flux adjusments with .false. so that conservative fluxes are not altered
         ! call adjust_smalldepth_face_fluxes_CC (whichTM,.false.)
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- QQQ01  after adjust smalldepth face flux')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- QQQ01  after adjust smalldepth face flux')
         ! call adjust_zerodepth_face_fluxes_CC  (whichTM,.false.)
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- QQQ02  after adjust zerodepth face flux')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- QQQ02  after adjust zerodepth face flux')
 
             
 
@@ -2405,7 +2415,7 @@ module runge_kutta2
         ! call junction_toplevel (whichTM, istep)
         ! call util_crashstop (112873)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- RRR  after junction_toplevel')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- RRR  after junction_toplevel')
 
         ! !% --- set JM and JB variables (resets the Q interpweights)
         ! call update_auxiliary_variables_JMJB (whichTM)
@@ -2418,13 +2428,13 @@ module runge_kutta2
         ! call adjust_zero_or_small_depth_identify_NEW(JM,.false.)
         ! call pack_CC_zeroDepth_interior_faces (fp_noBC_IorS)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- SSS after update_aux...JM')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- SSS after update_aux...JM')
 
         ! !% --- interpolation to get the non-flow values on faces of junction
         ! !%     skipQ = true
         ! call face_interpolation(fp_JB_IorS,whichTM,.true.,.false.,.true.)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- TTT after face interp for JB')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- TTT after face interp for JB')
 
         ! !% --- RK2 solution step  -- update diagnostic elements and faces
         ! !%     (.false. as this is RK second step)
@@ -2433,20 +2443,20 @@ module runge_kutta2
         ! ! call diagnostic_toplevel (.false.)  TEMPORARY CUTOUT 20230210 CAUSING PROBLEMS ON JUNCTIONS DOWNSTREAM FACES
         ! ! call util_crashstop(982332)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- UUU  after diagnostic_toplevel')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- UUU  after diagnostic_toplevel')
 
         ! !% --- RK2 solution step -- check culverts
         ! !%     HACK: Can this be included in diagnostic?
         ! call culvert_toplevel()
         ! call util_crashstop(669743)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- VVV  after culvert_toplevel')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- VVV  after culvert_toplevel')
 
         ! !% --- RK2 solution step  -- make ad hoc adjustments
         ! call adjust_Vfilter_CC (whichTM) !% this is useful in lateral flow induced oscillations
         ! call util_crashstop(13987)
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- WWW  after adjust_Vfilter_CC')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- WWW  after adjust_Vfilter_CC')
 
         ! !% --- check zero and small depths that might be changed by Vfilter
         ! !% --- identify zero depths
@@ -2470,7 +2480,7 @@ module runge_kutta2
         
 
 
-        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- ZZZ end of RK2')
+        !     !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- ZZZ end of RK2')
 
     end subroutine rk2_toplevel_ETM_2        
 !%
@@ -2509,8 +2519,8 @@ module runge_kutta2
         !     ! stop 498733
 
         !     !print *, ' '
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CheckIsNan ()
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CheckIsNan ()
 
         !     !stop 409879
             
@@ -2535,13 +2545,13 @@ module runge_kutta2
         ! istep=1
         ! call rk2_step_ETM(istep)
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('BBB after volume/momentum step 1---------------------------')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('BBB after volume/momentum step 1---------------------------')
    
         ! !% --- RK2 solution step -- update all non-diagnostic aux variables
         ! !%     Note, these updates CANNOT depend on face values
         ! call update_auxiliary_variables(whichTM)
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('CCC  after update aux step 1-----------------------')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('CCC  after update aux step 1-----------------------')
 
         ! !% --- set the flagged zero and small depth cells (allow depth to change)
         ! !%     This does not reset the zero/small depth packing as we allow negative
@@ -2550,13 +2560,13 @@ module runge_kutta2
         ! call adjust_zero_and_small_depth_elem (whichTM, .true., .false.)
         ! call util_crashstop(340927)
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('DDD  after adjust zero/small elem-----------------')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('DDD  after adjust zero/small elem-----------------')
 
         ! !% --- RK2 solution step  -- all face interpolation
         ! sync all
         ! call face_interpolation(fp_noBC_IorS,whichTM,.false.,.false.,.false.)
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('EEE  after face interpolation step 1---------------')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('EEE  after face interpolation step 1---------------')
 
         !     ! if (setting%Time%Step == 15) then
         !     !     print *, ' '
@@ -2568,20 +2578,20 @@ module runge_kutta2
         ! call adjust_zero_and_small_depth_face (whichTM, .true.)
         ! call util_crashstop(440223)
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('FFF  after zero/small face step 1-----------------')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('FFF  after zero/small face step 1-----------------')
 
         ! !% --- RK2 solution step  -- update diagnostic elements and faces
         ! call diagnostic_toplevel (.true.)
         ! call util_crashstop(402873)
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('GGG  after diagnostic step 1')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('GGG  after diagnostic step 1')
 
         ! !% --- RK2 solution step -- set the JB as a function of the face and JM values
         ! if (setting%Junction%Method .eq. Explicit2) then 
         !     call ll_alternate_JB (whichTM,istep)
         ! end if
 
-        ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('GGG01  after after ll_alternate_JB')
+        ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('GGG01  after after ll_alternate_JB')
 
         ! !% --- RK2 solution step -- check culverts
         ! call culvert_toplevel()
@@ -2591,12 +2601,12 @@ module runge_kutta2
         ! call adjust_Vfilter_CC (whichTM) ! brh20220211 this is useful in lateral flow induced oscillations
         ! call util_crashstop(13987)
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('HHH  after Vfilter step 1 -------------------------')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('HHH  after Vfilter step 1 -------------------------')
         
         ! !% -- the conservative fluxes from N to N_1 are the values just before the second RK2 step
         ! call rk2_store_conservative_fluxes (whichTM)
 
-        !      ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('III  after consQ store step 1 ----------------------')
+        !      ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('III  after consQ store step 1 ----------------------')
 
         ! !% --- reset the overflow counter (we only save conservation in the 2nd step)
         ! elemR(:,er_VolumeOverFlow) = zeroR
@@ -2611,13 +2621,13 @@ module runge_kutta2
         ! istep=2
         ! call rk2_step_ETM (istep)
         
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('JJJ  after volume rk2 step 2 -----------------------')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('JJJ  after volume rk2 step 2 -----------------------')
 
         ! !% --- RK2 solution step -- update non-diagnostic auxiliary variables
         ! !%     Note, these updates CANNOT depend on face values
         ! call update_auxiliary_variables(whichTM)  
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('KKK  after update aux step 2 --------------------------')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('KKK  after update aux step 2 --------------------------')
 
         ! !% --- set the flagged zero and small depth cells (allow depth to change)
         ! !%     This DOES reset the packing 20221227brh
@@ -2625,32 +2635,32 @@ module runge_kutta2
         ! call adjust_zero_and_small_depth_elem (whichTM, .true., .false.)
         ! call util_crashstop(12973)
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('LLL  after zero/small elem step 2 -------------------')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('LLL  after zero/small elem step 2 -------------------')
 
         ! !% --- RK2 solution step -- update all faces
         ! sync all
         ! call face_interpolation(fp_noBC_IorS,whichTM,.false.,.false.,.false.)
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('MMM  after face interp step 2 --------------------------')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('MMM  after face interp step 2 --------------------------')
 
         ! !% --- set the zero and small depth fluxes
         ! !%     ifixQcons = false to prevent conservation issues (cannot change Qcons after 2nd RK2 step)
         ! call adjust_zero_and_small_depth_face (whichTM, .false.)
 
-        !      ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('NNN  after zero/small face step 2 ---------------------')
+        !      ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('NNN  after zero/small face step 2 ---------------------')
 
         ! !% --- RK2 solution step -- update diagnostic elements and faces
         ! call diagnostic_toplevel (.false.)
         ! call util_crashstop(662398)
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('OOO  after diagnostic step 2')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('OOO  after diagnostic step 2')
 
         ! !% --- RK2 solution step -- set the JB as a function of the face and JM values
         ! if (setting%Junction%Method .eq. Explicit2) then 
         !     call ll_alternate_JB (whichTM,istep)
         ! end if
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('OOO_01  after ll_alternae_JB step 2')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('OOO_01  after ll_alternae_JB step 2')
 
         ! !% --- RK2 solution step -- check culverts
         ! call culvert_toplevel()
@@ -2662,21 +2672,21 @@ module runge_kutta2
         ! call util_crashstop(449872)
         ! ! print *, 'vfilter after ',elemR(54,er_Flowrate)
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('PPP  after Vfilter step 2-----------------------------')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('PPP  after Vfilter step 2-----------------------------')
 
         ! !% --- ensures that the Vfilter hasn't affected the zero/small depth cells        
         ! call adjust_zero_and_small_depth_elem (whichTM, .true., .false.)
         ! call util_crashstop(64987)
 
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('QQQ  after zero/small elem step 2 (2nd time)')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('QQQ  after zero/small elem step 2 (2nd time)')
 
         ! !% --- accumulate the volume overflow
         ! elemR(:,er_VolumeOverFlowTotal) = elemR(:,er_VolumeOverFlowTotal) + elemR(:,er_VolumeOverFlow)
         ! elemR(:,er_VolumeArtificialInflowTotal) = elemR(:,er_VolumeArtificialInflowTotal) + elemR(:,er_VolumeArtificialInflow)
         
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('ZZZ  after accumulate overflow step 2')
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('ZZZ  after accumulate overflow step 2')
         !     ! print *, '==================================================='
-        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CheckIsNan ()
+        !     ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CheckIsNan ()
 
         !     ! if (setting%Time%Step == 25) then
         !     !    print *, ' '
@@ -2833,7 +2843,7 @@ module runge_kutta2
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
             
-            ! ! ! ! ! ! call util_utest_CLprint ('-------  WWW 00  start of rk2 Step CC')
+            ! ! ! ! ! ! ! call util_utest_CLprint ('-------  WWW 00  start of rk2 Step CC')
 
         !% --- CONTINUITY
         thisPackCol => col_elemP(ep_CC_H)
@@ -2845,19 +2855,19 @@ module runge_kutta2
             call ll_continuity_netflowrate_CC (er_SourceContinuity, thisPackCol, Npack)
 
 
-                ! ! ! ! ! ! call util_utest_CLprint ('-------  WWW 01  after ll_continuity_netflowrate')
+                ! ! ! ! ! ! ! call util_utest_CLprint ('-------  WWW 01  after ll_continuity_netflowrate')
 
             !% --- Solve for new volume
             call ll_continuity_volume_ETM (er_Volume, thisPackCol, Npack, istep)
 
-                ! ! ! ! ! ! call util_utest_CLprint ('-------  WWW 02  after ll_continuity_volume')
+                ! ! ! ! ! ! ! call util_utest_CLprint ('-------  WWW 02  after ll_continuity_volume')
 
 
             !% --- adjust extremely small volumes that might be been introduced
             call adjust_limit_by_zerovalues &
                 (er_Volume, setting%ZeroValue%Volume, thisP, .true.)
 
-                ! ! ! ! ! ! call util_utest_CLprint ('-------  WWW 03  after adjust_limit_by_zerovalues')
+                ! ! ! ! ! ! ! call util_utest_CLprint ('-------  WWW 03  after adjust_limit_by_zerovalues')
 
         end if  
 
@@ -2876,7 +2886,7 @@ module runge_kutta2
             !% --- Common source for momentum on channels and conduits for ETM
             call ll_momentum_source_CC (er_SourceMomentum, thisPackCol, Npack)
 
-                ! ! ! ! ! ! call util_utest_CLprint ('-------  WWW 06  after ll_momentum_source_cc')
+                ! ! ! ! ! ! ! call util_utest_CLprint ('-------  WWW 06  after ll_momentum_source_cc')
  
                ! print *, 'Source ',elemR(1,er_SourceMomentum)
 
@@ -2911,7 +2921,7 @@ module runge_kutta2
 
                 !print *, 'Vel 1   ',elemR(1,er_Velocity)
 
-                ! ! ! ! ! ! call util_utest_CLprint ('-------  WWW 15  after ll_momentum_solve_cc')
+                ! ! ! ! ! ! ! call util_utest_CLprint ('-------  WWW 15  after ll_momentum_solve_cc')
 
             !% --- velocity for ETM time march
             call ll_momentum_velocity_CC (er_Velocity, thisPackCol, Npack)
@@ -2948,12 +2958,12 @@ module runge_kutta2
         print *, 'OBSOLETE'
         stop 2098734
         ! !%       
-        !     ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('before rk2 continuity step etm')
+        !     ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('before rk2 continuity step etm')
 
         ! !% perform the continuity step of the rk2 for ETM CC and JM
         ! call rk2_continuity_step_ETM(istep)
 
-        !     ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('after rk2 continuity step etm')
+        !     ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('after rk2 continuity step etm')
 
         ! !% only adjust extremely small element volumes that have been introduced
         ! Npack = npack_elemP(ep_CCJM_H_ETM)
@@ -2961,12 +2971,12 @@ module runge_kutta2
         !     call adjust_limit_by_zerovalues &
         !         (er_Volume, setting%ZeroValue%Volume/twentyR, elemP(1:Npack,ep_CCJM_H_ETM), .true.)
         ! end if
-        !     ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('after rk2 call to adjust limit by zero')
+        !     ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint ('after rk2 call to adjust limit by zero')
 
         ! !% perform the momentum step of the rk2 for ETM
         ! call rk2_momentum_step_ETM(istep)
 
-            ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call to rk2_momentum_step_ETM')
+            ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call to rk2_momentum_step_ETM')
 
     end subroutine rk2_step_ETM
 !%
@@ -3125,7 +3135,7 @@ module runge_kutta2
         !%
         if (Npack > 0) then
 
-                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' start of rk2_momentum_step_ETM')
+                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' start of rk2_momentum_step_ETM')
 
                 ! print *, ' '
                 ! print *, 'in rk2_momentum_step at start'
@@ -3138,7 +3148,7 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at A'
                 ! print *, elemR(61,er_Ksource), elemR(61,er_Velocity), elemR(61,er_Flowrate)
 
-                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_momentum_Ksource_CC')
+                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_momentum_Ksource_CC')
 
 
             !% --- Common source for momentum on channels and conduits for ETM
@@ -3147,7 +3157,7 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at B'
                 ! print *, elemR(61,er_SourceMomentum), elemR(61,er_HydRadius), elemR(61,er_ManningsN), elemR(61,er_Flowrate)
 
-                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_momentum_source_CC')
+                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_momentum_source_CC')
 
             !% --- Common Gamma for momentum on channels and conduits for  ETM
             !%     Here for all channels and conduits, assuming CM roughness
@@ -3156,7 +3166,7 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at C'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)      
             
-                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_momentum_gammaCM_CC')
+                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_momentum_gammaCM_CC')
 
             !% --- handle force mains as Gamma terms
             !%     These overwrites the gamma from the CM roughness above
@@ -3183,7 +3193,7 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at E'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
 
-                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_minorloss_friction_gamma_CC')
+                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_minorloss_friction_gamma_CC')
   
             !% --- Advance flowrate to n+1/2 for conduits and channels with ETM
             call ll_momentum_solve_CC (er_Velocity, thisPackCol, Npack, thisMethod, istep)
@@ -3192,7 +3202,7 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at F'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
             
-                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_momentum_solve_CC')
+                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_momentum_solve_CC')
 
 
             !% --- velocity for ETM time march
@@ -3201,7 +3211,7 @@ module runge_kutta2
 
                 ! print *, 'in rk2_momentum_step at G'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
-                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_momentum_velocity_CC')
+                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_momentum_velocity_CC')
 
 
             !% --- prevent backflow through flapgates
@@ -3210,7 +3220,7 @@ module runge_kutta2
                 ! print *, 'in rk2_momentum_step at H'
                 ! print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
 
-                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_enforce_flapgate_CC')
+                ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after rk2 call ll_enforce_flapgate_CC')
 
         end if
 
@@ -3230,7 +3240,7 @@ module runge_kutta2
             !     print *, elemR(61,er_GammaM), elemR(61,er_Velocity), elemR(61,er_Flowrate)
 
     
-            ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after ll_flowrate_and_velocity_JB')
+            ! ! ! ! ! ! !  ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! call util_utest_CLprint (' after ll_flowrate_and_velocity_JB')
 
     end subroutine rk2_momentum_step_ETM
 !%

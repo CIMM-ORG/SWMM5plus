@@ -1135,6 +1135,7 @@ module geometry
         thisCol => col_elemPGx(epg_JM_impliedStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then
+            !print *, 'in implied storage'
             thisP => elemPGx(1:Npack,thisCol)
             call storage_implied_depth_from_volume (thisP, Npack)
             call geo_ZeroDepth_from_volume  (thisP)

@@ -293,6 +293,10 @@ module junction_elements
             elemR(thisp(mm),er_Volume) = elemR(thisp(mm),er_Volume_N0) &
                 + elemR(thisP(mm),er_FlowrateLateral) * dt
 
+            !  print *, ' '
+            !  print *, 'JM volume'
+            !  print *, elemR(thisP(mm),er_Volume)   
+
             !% --- volume change due to overfloe
             !% HACK -- OVERFLOW NEEDS TO BE CONSIDERED
 
@@ -309,6 +313,9 @@ module junction_elements
                         + faceR(elemI(thisP(mm)+kk,ei_Mface_uL),fr_Flowrate_Conservative) * dt
                 end if
             end do
+
+            ! print *, elemR(thisP(mm),er_Volume)
+            ! print *,' '
             
         end do
 

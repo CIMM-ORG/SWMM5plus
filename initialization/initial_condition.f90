@@ -1024,14 +1024,23 @@ contains
                 eDepth(pElem) = eHead(pElem) - eZbottom(pElem)
             else
                 !% --- implied reverse gradient is not allowed
-                print *, 'Inconsistent initial conditions at link '
-                print *, trim(link%Names(thisLink)%str)
-                print *, 'Depth at upstream node is zero and non-zero depth at'
-                print *, 'downstream noded implies upstream node depth'
-                print *, 'should be at least ',HeadDn - zLinkUp, ' meters'
-                print *, 'or ',(HeadDn - zLinkUp)*3.28084d0, 'feet'
-                print *, 'Please check the initial depths at the nodes connecting'
-                print *, 'to this link.'
+                print *, '!==============================================!'
+                print *, '! Inconsistent free surface initial conditions !'
+                print *, '!==============================================!'
+                print *, 'for link:            ',trim(link%Names(thisLink)%str) 
+                print *, 'with upstream node:  ',trim(node%Names(nup)%str)
+                print *, 'and downstream node: ',trim(node%Names(ndn)%str)
+                print *, 'Depth at upstream node has negative free surface gradient'
+                print *, 'to downstream node. This would cause a backwards wave'
+                print *, 'surge at the start, which is not allowed by SWMM5+.'
+                print *, 'Increasing the upstream node depth is required. Note that'
+                print *, 'fixing this node may cause further upstream nodes to  '
+                print *, 'violate this initial condition. Each upstream node initial'
+                print *, 'depth must be adjusted to ensure the initial water surface'
+                print *, 'gradient is flat or in the downstream direction.'
+                print *, 'Min depth for this Upstream Node: ',HeadDn - zLinkUp,' meters'
+                print *, 'or ',(HeadDn - zLinkUp)*3.28084d0,'feet'
+                print *, ' '
                 call util_crashpoint(40187339)
             end if
 
