@@ -107,7 +107,7 @@ module update
             thisP, npackP, thisP_Open, npackP_Open, thisP_Closed, npackP_Closed, &
              isSingularYN, isAllYN)
 
-            !  call util_utest_CLprint ('------- 0000 in update after geometry_toplevel_CC')
+            ! call util_utest_CLprint ('------- 0000 in update after geometry_toplevel_CC')
         
         if (npackP > 0) then
             !% --- Compute the flowrate on CC.
@@ -493,6 +493,12 @@ module update
             flowrate(thisP) = sign(Qmax(thisP), flowrate(thisP))
         end where
         
+        !% limit flowrates by small value
+        where ((flowrate(thisP) < 1.0d-10) .and. (flowrate(thisP) > -1.0d-10))
+            flowrate(thisP) = zeroR
+        endwhere
+
+
         ! call util_utest_CLprint ('in update element Flowrate C')
 
         ! print *, flowrate(139), area(139), velocity(139)

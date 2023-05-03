@@ -318,6 +318,7 @@ module define_indexes
          !% brh20211210e         
          enumerator :: ei_Temp01                    !% temporary array
          enumerator :: ei_Temp02
+         enumerator :: ei_Temp03
          enumerator :: ei_tmType                    !% KEY time march type (dynamic)
          enumerator :: ei_BoundaryArray_idx         !% if a boundary cell, then position in the elemB array
          enumerator :: ei_link_transect_idx         !% index of the link transect in link array

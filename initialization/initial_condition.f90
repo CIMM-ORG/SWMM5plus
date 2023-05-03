@@ -53,7 +53,7 @@ module initial_condition
     use utility_interpolate
     use utility_key_default
     use utility_crash, only: util_crashpoint
-   ! use utility_unit_testing, only: util_utest_CLprint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -76,7 +76,7 @@ contains
             integer          :: ii, iblank, whichTM
             integer, pointer :: whichSolver
             integer, allocatable :: tempP(:)  !% for debugging
-            integer, pointer :: thisCol, npack, thisP(:)
+            integer, pointer :: thisCol, Npack, thisP(:)
             character(64)    :: subroutine_name = 'init_IC_toplevel'
         !%-------------------------------------------------------------------
         !% Preliminaries:
@@ -215,18 +215,24 @@ contains
 
             ! call util_utest_CLprint ('initial_condition after transect_arrays and _geometry')
 
+        call init_IC_depth_volume_consistency ()
+
+            ! call util_utest_CLprint ('initial_condition after depth volume consistency')
+
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_error_check'
         call init_IC_error_check ()
        
         !% --- identify the small and zero depths (must be done before pack)
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth'
-        if (setting%SmallDepth%useMomentumCutoffYN) then
-            call adjust_smalldepth_identify_all ()
-        else
+        ! if (setting%SmallDepth%useMomentumCutoffYN) then
+        !     call adjust_smalldepth_identify_all ()
+        ! else
             !% --- if not using small depth algorithm, then cuttoff is the same as zero depth
             setting%SmallDepth%MomentumDepthCutoff = setting%ZeroValue%Depth
-        end if
-        call adjust_zerodepth_identify_all ()
+        ! end if
+        !call adjust_zerodepth_identify_all ()
+        call adjust_element_toplevel (CC)
+        call adjust_element_toplevel (JB)
 
             ! call util_utest_CLprint ('initial_condition after adjust_smalldepth and _zerodepth')
 
@@ -256,7 +262,9 @@ contains
 
         !% --- set all the zero and small volumes
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 2'
-        call adjust_zero_and_small_depth_elem (.true., .true.)
+        ! call adjust_zero_and_small_depth_elem (.true., .true.)
+        call adjust_element_toplevel (CC)
+        call adjust_element_toplevel (JB)
 
             ! call util_utest_CLprint ('initial_condition after adjust_zero_and_small_depth_elem')
 
@@ -367,10 +375,13 @@ contains
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
             !% --- junction head
             elemR(thisP,er_Head) = llgeo_head_from_depth_pure(thisP,elemR(thisP,er_Depth))
+            elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
             call geo_assign_JB (ep_JM)
             call slot_JB_computation (ep_JM)
         end if
         
+        ! call util_utest_CLprint ('initial_condition after update_auxiliary_variables JM 01')
+
         !% --- Froude number, wavespeed, and interpwights on JB
         Npack => npack_elemP(ep_JB)
         if (Npack > 0) then 
@@ -379,6 +390,8 @@ contains
             call update_wavespeed_element(thisP)
             call update_interpweights_JB (thisP, Npack, .false.)
         end if
+
+        ! call util_utest_CLprint ('initial_condition after update_auxiliary_variables JM 02')
 
         !% --- wave speed, Froude number on JM
         Npack => npack_elemP(ep_JM)
@@ -468,7 +481,7 @@ contains
 
         ! call util_utest_CLprint ('initial_condition at end')
 
-          ! stop 666987
+         ! stop 666987
 
         ! print *, 'TEST20230327'
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
@@ -669,8 +682,86 @@ contains
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_from_linkdata
-!
-!==========================================================================
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
+    subroutine init_IC_depth_volume_consistency ()
+        !%-----------------------------------------------------------------
+        !% Description
+        !% Adjusts volume so that depth computed from volume is consistent
+        !% with the original depth value
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer, dimension(:), allocatable, target  :: packed_link_idx
+
+            integer :: pLink, mm, ii ,kk, Npack
+            integer, pointer :: thisP(:), thisLink, eIdx(:)
+            integer, dimension(1) :: ap
+
+            real(8) :: Vdif, Ddif
+            real(8), parameter :: local_epsilon = 1e-13
+        !%-----------------------------------------------------------------
+        !% Aliases
+            eIdx          => elemI(:,ei_Lidx)
+        !%-----------------------------------------------------------------
+            
+        !% --- pack all the link indexes in an image
+        packed_link_idx = pack(link%I(:,li_idx), (link%I(:,li_P_image) == this_image()))    
+        
+        !% --- find the number of links in an image
+        pLink = size(packed_link_idx)
+        
+        !% --- cycle through the links
+        do mm = 1,pLink
+            thisLink => packed_link_idx(mm)
+            Npack    =  count(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+
+            if (Npack > 0) then
+                elemI(1:Npack,ei_Temp03) = pack(eIdx,elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                thisP => elemI(1:Npack,ei_Temp03)
+
+                !% --- store the correct depth
+                elemR(thisP,er_Temp03) = elemR(thisP,er_Depth)
+
+                !% --- compute the depth from volume
+                call geo_depth_from_volume_by_element_CC (thisP, Npack)
+
+                !% --- cycle through elements to fix volumes consistent with depth
+                do ii=1,Npack
+                    
+                    if ( abs(elemR(thisP(ii),er_Depth) - elemR(thisP(ii),er_Temp03)) > local_epsilon) then
+                        do kk=1,10
+                            !% ---difference between original depth and computed by volume
+                            Ddif =  elemR(thisP(ii),er_Depth) - elemR(thisP(ii),er_Temp03)
+                            if (abs(Ddif) < 1d-13) exit
+                            !% --- implied volume change to fix
+                            Vdif = Ddif * elemR(thisP(ii),er_TopWidth) * elemR(thisP(ii),er_Length) 
+                            elemR(thisP(ii),er_Volume) = elemR(thisP(ii),er_Volume) - Vdif
+                            !% --- require a singleton array for call to geo_depth...
+                            ap(1) = thisP(ii)
+                            !% --- compute a new depth from adjusted volume
+                            call geo_depth_from_volume_by_element_CC(ap,1)
+                                ! print *, 'Ddif, Vdif ',Ddif,Vdif
+                                ! print *, 'after fixing'
+                                ! print *, thisP(ii) , elemR(thisP(ii),er_Depth), elemR(thisP(ii),er_Temp03)
+                                ! print *, ' '
+                        end do
+                    end if
+                end do
+            end if
+        end do
+
+        !%------------------------------------------------------------------
+        !% Closing
+            !% deallocate the temporary array
+            deallocate(packed_link_idx)
+            elemR(:,er_Temp03) = zeroR 
+            elemI(:,ei_Temp03) = zeroI
+
+    end subroutine init_IC_depth_volume_consistency
+!%
+!%==========================================================================
 !%==========================================================================
 !%
     subroutine init_IC_get_barrels_from_linkdata (thisLink)
@@ -1483,7 +1574,10 @@ contains
         !--------------------------------------------------------------------------
 
             integer, intent(in) :: thisLink
-            integer, pointer    :: linkType
+            integer, pointer    :: linkType, thisP(:), eIdx(:)
+
+            integer :: ii, Npack 
+
             character(64) :: subroutine_name = 'init_IC_get_geometry_from_linkdata'
         !--------------------------------------------------------------------------
             !if (crashYN) return
@@ -1492,10 +1586,11 @@ contains
 
         !% necessary pointers
         linkType      => link%I(thisLink,li_link_type)
+        eIdx          => elemI(:,ei_Lidx)
 
-        print *, 'in ',trim(subroutine_name)
-        print *, thisLink, linkType
-        print *, trim(reverseKey(linkType))
+        ! print *, 'in ',trim(subroutine_name)
+        ! print *, thisLink, linkType
+        ! print *, trim(reverseKey(linkType))
 
         select case (linkType)
 
@@ -1538,9 +1633,10 @@ contains
 
         end select
 
-        print *, 'at exit'         
 
-        !call geometry_table_initialize ()
+        ! print *, 'at exit'         
+
+    
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

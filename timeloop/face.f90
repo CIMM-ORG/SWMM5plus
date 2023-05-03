@@ -2384,7 +2384,7 @@ module face
         select case (facePcol)
         case (fp_CC_downstream_is_zero_IorS,fp_JB_downstream_is_zero_IorS)
             !% --- use the downstream flow from the upstream element (or zero if upstream flow)
-            where (elemR(eup(thisP),er_Flowrate) .ge. zeroR)
+            where ((elemR(eup(thisP),er_Flowrate) .ge. zeroR) .and. (elemR(eup(thisP),er_Head) > elemR(edn(thisP),er_Zbottom)))
                 faceR(thisP,fr_Flowrate) = elemR(eup(thisP),er_Flowrate)
             elsewhere
                 faceR(thisP,fr_Flowrate) = zeroR
@@ -2392,7 +2392,7 @@ module face
 
         case (fp_CC_upstream_is_zero_IorS,fp_JB_upstream_is_zero_IorS)
             !% --- use the upstream flow from the downstream element (or zero if downstream flow)
-            where (elemR(edn(thisP),er_Flowrate) .le. zeroR)
+            where ((elemR(edn(thisP),er_Flowrate) .le. zeroR) .and. (elemR(edn(thisP),er_Head) > elemR(eup(thisP),er_Zbottom)))
                 faceR(thisP,fr_Flowrate) = elemR(edn(thisP),er_Flowrate)
             elsewhere
                 faceR(thisP,fr_Flowrate) = zeroR

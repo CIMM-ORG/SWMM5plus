@@ -77,6 +77,8 @@ module lowlevel_rk2
 
         elemR(thisP,outCol) = fQ(iup(thisP)) - fQ(idn(thisP)) + eQlat(thisP)
 
+       ! print *, 'netQ here ', elemR(1,outCol)
+
         ! print *, 'in ll_continuity_netflowrate_CC'
         ! print *, fQ(iup(1)), fQ(idn(1)), eQlat(1)
         !print *, fQ(iup(ietmp(3))), fQ(idn(ietmp(3))), eQlat(ietmp(3))
@@ -109,6 +111,10 @@ module lowlevel_rk2
             fdn      => elemI(:,ei_Mface_dL)
             nBarrel  => elemI(:,ei_barrels)
         !%------------------------------------------------------------------
+
+        print *, 'OBSOLETE '
+        stop 2098734
+
         !% note that 1, 3 and 5 are nominal upstream branches and 2, 4, 6 are nominal
         !% downstream branches
         elemR(thisP,outCol) = eQlat(thisP)
@@ -147,7 +153,8 @@ module lowlevel_rk2
                     -  fQ(fdn(thisP+ii+1)) * real(nBarrel(thisP+ii+1),8) 
             endwhere
         end do
-
+        
+        
         ! do ii=1,size(thisP)
         !     print *, thisP(ii), elemR(thisP(ii),outCol)
         ! end do
@@ -465,13 +472,14 @@ module lowlevel_rk2
     
         !    print *, 'in ',trim(subroutine_name)
         !    print *, 'Gamma element values'
-        !    print *, elemR(thisP,outCol)
-        !    print *, ' '
+        !    !print *, elemR(1,outCol)
+        !    !print *, ' '
         !    print *, '============================'
-        !    print *, elemR(139,outCol)      
-        !    print *, rh(139), mn(139),velocity(139)
-        !    print *, elemR(139,er_ManningsN), elemR(139,er_ManningsN_Dynamic)
-        !    print *, setting%Solver%ManningsN%useDynamicManningsN
+        !    print *, elemR(1,outCol)      
+        !    print *, rh(1), mn(1),velocity(1)
+        !    print *, elemR(1,er_ManningsN), elemR(1,er_ManningsN_Dynamic)
+        !    print *, rh(1)**fourthirdsR
+        !    !print *, setting%Solver%ManningsN%useDynamicManningsN
 
                 ! print *, 'in ', trim(subroutine_name)
                 ! print *, mn(thisP)

@@ -79,15 +79,14 @@ O.O_RM           649.5        FREE                 YES                          
 [STORAGE]
 ;;Name           Elev.    MaxDepth   InitDepth  Shape      Curve Name/Params            N/A      Fevap    Psi      Ksat     IMD     
 ;;-------------- -------- ---------- ----------- ---------- ---------------------------- -------- --------          -------- --------
-brh02            637.8     1000        1.4     FUNCTIONAL   0       0  100000.0
+brh02            637.8     1000        1.4     FUNCTIONAL   0       0  100000.0;;
 ;;brh02            637.8     1000        12.2     FUNCTIONAL   0       0  100000.0
-   
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
 557               1SB14             brh02            2000.0      0.014      0.0        0.0        0.0        0     ;;  
-brhOutfall        brh02              O.O_RM          2000.0       0.014     0        0.0        0.0        0     ;; 
+brhOutfall        brh02              O.O_RM          1000.0       0.014     0        0.0        0.0        0     ;; 
   
 
 [XSECTIONS]

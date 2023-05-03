@@ -25,6 +25,8 @@ module define_globals
     character (len=256) ::  outstring[*]
 
     real(8) :: Qcumulative = 0.d0
+    real(8) :: VolumeErrorCumulative = 0.d0
+
 
 
 !% ===================================================================================

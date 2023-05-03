@@ -618,6 +618,7 @@ contains
         !% Declarations:
             integer, allocatable :: tempP(:)
             integer :: ii, kk
+            real(8) :: tvolume
             character(64)    :: subroutine_name = 'tl_hydraulics'
         !%-------------------------------------------------------------------
         !% Preliminaries:
@@ -636,6 +637,9 @@ contains
         call rk2_toplevel_ETM_7()
 
         call util_accumulate_volume_conservation () 
+
+        ! tvolume = sum(elemR(1:N_elem(1),er_Volume))
+        ! print *, 'tvolume in tl_hydraulics ',tvolume - faceR(1,fr_Flowrate_Conservative) * setting%Time%Hydraulics%Dt
 
         !%-------------------------------------------------------------------
         !% closing
@@ -1124,7 +1128,7 @@ contains
                 thisCFL = tl_get_max_CFL_CC(ep_CCJM_NOTzerodepth,timeleft)
             !end if
 
-            ! print *, 'thisCFL to reach hydrology step ',thisCFL
+                ! print *, 'thisCFL to reach hydrology step ',thisCFL
 
             !% --- check to see if a single time step to match the hydrology time is possible
             if (thisCFL .le. maxCFL) then
@@ -1234,7 +1238,7 @@ contains
 
         else
  
-            ! print *, 'CFL with no hydrology '
+            !print *, 'CFL with no hydrology '
 
             if (useHydrology) then 
                 print *, 'USER CONFIGURATION ERROR: At this time, useHydrology requires '
@@ -1406,19 +1410,19 @@ contains
             if ((setting%Limiter%Dt%UseLimitMinYN) .and. (newDT .le. setting%Limiter%Dt%Minimum)) then
                 print*, 'timeNow = ', timeNow
                 print*, 'dt = ', newDT, 'minDt = ',  setting%Limiter%Dt%Minimum
-                if (setting%SmallDepth%useMomentumCutoffYN) then
+                ! if (setting%SmallDepth%useMomentumCutoffYN) then
+                !     print*, 'max velocity  ', maxval( &
+                !         elemR(elemP(1:npack_elemP(ep_CC_NOTsmalldepth),ep_CC_NOTsmalldepth),er_Velocity) )
+                !     print*, 'max wavespeed ', maxval( &
+                !         elemR(elemP(1:npack_elemP(ep_CC_NOTsmalldepth),ep_CC_NOTsmalldepth),er_WaveSpeed) )
+                !     print*, 'warning: the dt value is smaller than the user supplied min dt value'
+                ! else
                     print*, 'max velocity  ', maxval( &
                         elemR(elemP(1:npack_elemP(ep_CCJM_NOTzerodepth),ep_CCJM_NOTzerodepth),er_Velocity) )
                     print*, 'max wavespeed ', maxval( &
                         elemR(elemP(1:npack_elemP(ep_CCJM_NOTzerodepth),ep_CCJM_NOTzerodepth),er_WaveSpeed) )
                     print*, 'warning: the dt value is smaller than the user supplied min dt value'
-                else
-                    print*, 'max velocity  ', maxval( &
-                        elemR(elemP(1:npack_elemP(ep_CCJM_NOTzerodepth),ep_CCJM_NOTzerodepth),er_Velocity) )
-                    print*, 'max wavespeed ', maxval( &
-                        elemR(elemP(1:npack_elemP(ep_CCJM_NOTzerodepth),ep_CCJM_NOTzerodepth),er_WaveSpeed) )
-                    print*, 'warning: the dt value is smaller than the user supplied min dt value'
-                end if
+                ! end if
                 !stop 1123938
                 call util_crashpoint(1123938)
             end if
@@ -1753,6 +1757,10 @@ contains
             thisDT => dt
         end if
 
+        ! do ii=1,N_elem(1)
+        !     print *, ii, trim(reverseKey(elemI(ii,ei_elementType))), elemR(ii,er_WaveSpeed)
+        ! end do
+
             ! print *, ' '
             ! print *, 'in tl_get_max_CFL_CC, Npack = ', Npack
 
@@ -1815,7 +1823,9 @@ contains
             else 
                 outvalue = maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP))
             end if
-            ! print *, 'max vel, wave ', maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))        
+            ! print *, ' '
+            ! print *, 'max vel, wave ', maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))  
+            ! print *, ' '      
         else
             outvalue = zeroR
         end if
