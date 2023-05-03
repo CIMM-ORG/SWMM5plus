@@ -3383,7 +3383,7 @@ module geometry
             real(8), pointer :: zcrown(:)
             integer :: ii
 
-            character(64) :: subroutine_name = 'geo_ell'
+            character(64) :: subroutine_name = 'geo_elldepth_from_head_CC'
         !%------------------------------------------------------------------
         !% Preliminaries:
             if (setting%Debug%File%geometry) &

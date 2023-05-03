@@ -33,6 +33,7 @@ module face
     public :: face_interpolate_bc
     public :: face_force_JBadjacent_values
     public :: face_velocities
+    public :: face_shared_face_sync
 
 
     public :: face_flowrate_for_openclosed_elem
@@ -132,6 +133,12 @@ module face
 
         !% --- push data
         faceR(elemI(thisP,eiMface),frCol) = elemXR(thisP,erCol)
+
+        !% --- check if the elem data has either been pushed 
+        !%     to a shared face. if so then mark that face
+        where (faceYN(elemI(thisP,eiMface),fYN_isSharedFace))
+            faceYN(elemI(thisP,eiMface),fYN_isSharedFaceDiverged) = .true.
+        end where
 
     end subroutine face_push_elemdata_to_face
 !%
@@ -2132,6 +2139,11 @@ module face
 
             faceR(elemI(JMidx+kk,fiIdx),frCol) = faceR(elemI(JMidx+kk,fiIdx),frCol) + elemR(JMidx+kk,erCol)
 
+            !% --- set the shared face diverge to true
+            if (faceYN(elemI(JMidx+kk,fiIdx),fYN_isSharedFace)) then
+                faceYN(elemI(JMidx+kk,fiIdx),fYN_isSharedFaceDiverged) = .true.
+            end if
+
         end do
     
     end subroutine face_add_JBvalues
@@ -2254,9 +2266,9 @@ module face
         !% -----------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: facePcol
-            integer, pointer :: npack, thisP, edn, eup, GUp, GDn, ci
+            integer, pointer :: npack, thisP, edn, eup, GUp, GDn, ci, Ifidx
             logical, pointer :: isGhostUp, isGhostDn
-            integer :: ii, Ifidx
+            integer :: ii
         !% -----------------------------------------------------------------
         !% -----------------------------------------------------------------
         !% Preliminaries
@@ -2273,6 +2285,7 @@ module face
             edn             => faceI(thisP,fi_Melem_dL)
             GUp             => faceI(thisP,fi_GhostElem_uL)
             GDn             => faceI(thisP,fi_GhostElem_dL)
+            Ifidx           => faceI(thisP,fi_Identical_Lidx)
             isGhostUp       => faceYN(thisP,fYN_isUpGhost)
             isGhostDn       => faceYN(thisP,fYN_isDnGhost)
             
@@ -2294,9 +2307,6 @@ module face
                         faceR(thisP,fr_Area_u) = setting%ZeroValue%Area
                     end if
                     faceR(thisP,fr_Area_d) = faceR(thisP,fr_Area_u) 
-
-                    !% find the index of the indentical face in the connected image
-                    Ifidx = elemI(GDn,ei_Mface_uL)[ci]
 
                     !% the face values should be identical apart from the newly adjusted values
                     !% transfer the whole data column to the indetical array 
@@ -2321,9 +2331,6 @@ module face
                     faceR(thisP,fr_Area_d) = setting%ZeroValue%Area
                 end if
                 faceR(thisP,fr_Area_u) = faceR(thisP,fr_Area_d)
-
-                !% find the index of the indentical face in the connected image
-                Ifidx = elemI(GUp,ei_Mface_dL)[ci]
 
                 !% the face values should be identical apart from the newly adjusted values
                 !% transfer the whole data column to the indetical array 
@@ -2441,9 +2448,9 @@ module face
         !% -----------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: facePcol
-            integer, pointer :: npack, thisP, edn, eup, gUp, gDn, ci
+            integer, pointer :: npack, thisP, edn, eup, gUp, gDn, ci, Ifidx
             logical, pointer :: isGhostUp, isGhostDn
-            integer :: ii, Ifidx
+            integer :: ii
         !% -----------------------------------------------------------------
             npack => npack_facePS(facePCol)
             if (npack < 1) return
@@ -2457,6 +2464,7 @@ module face
             edn             => faceI(thisP,fi_Melem_dL)
             gUp             => faceI(thisP,fi_GhostElem_uL)
             gDn             => faceI(thisP,fi_GhostElem_dL)
+            Ifidx           => faceI(thisP,fi_Identical_Lidx)
             isGhostUp       => faceYN(thisP,fYN_isUpGhost)
             isGhostDn       => faceYN(thisP,fYN_isDnGhost)
 
@@ -2472,8 +2480,7 @@ module face
                     else 
                         faceR(thisP,fr_Flowrate) = zeroR
                     end if
-                    !% find the index of the indentical face in the connected image
-                    Ifidx = elemI(gDn,ei_Mface_uL)[ci]
+
                     !% the face values should be identical apart from the newly adjusted values
                     !% transfer only the flowrate data column to the indetical location 
                     faceR(Ifidx,fr_Flowrate)[ci] = faceR(thisP,fr_Flowrate)
@@ -2489,8 +2496,7 @@ module face
                     else 
                         faceR(thisP,fr_Flowrate) = zeroR
                     end if
-                    !% find the index of the indentical face in the connected image
-                    Ifidx = elemI(gUp,ei_Mface_dL)[ci]
+
                     !% the face values should be identical apart from the newly adjusted values
                     !% transfer only the flowrate data column to the indetical location 
                     faceR(Ifidx,fr_Flowrate)[ci] = faceR(thisP,fr_Flowrate)
@@ -2509,6 +2515,45 @@ module face
         end do
 
     end subroutine face_zeroDepth_flowrates_shared
+!%  
+!%========================================================================== 
+!%==========================================================================
+!%
+    subroutine face_shared_face_sync (facePcol)
+        !% -----------------------------------------------------------------
+        !% Description:
+        !% sync data between shared faces
+        !% 
+        !% -----------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: facePcol
+            integer, pointer :: npack, thisP, ci, Ifidx
+            logical, pointer :: isDiverged
+            integer :: ii
+        !% -----------------------------------------------------------------
+            npack => npack_facePS(facePCol)
+            if (npack < 1) return
+
+            do ii = 1,Npack
+                !%-----------------------------------------------------------------
+                !% Aliases
+                thisP           => facePS(ii,facePCol)
+                ci              => faceI(thisP,fi_Connected_image)
+                Ifidx           => faceI(thisP,fi_Identical_Lidx)
+                isDiverged      => faceYN(thisP,fYN_isSharedFaceDiverged)
+                
+                !% check if the shared face has been diverged
+                if (isDiverged) then
+                    !% if the face has been duverged, copy the whole shared face 
+                    !% column in the identical face location at the connected image
+                    faceR(Ifidx,:)[ci] = faceR(thisP,:)
+
+                    !% after the transfer, set the divergence check to false
+                    isDiverged = .false.
+                end if
+            end do
+
+    end subroutine face_shared_face_sync
 !%  
 !%========================================================================== 
 !%==========================================================================

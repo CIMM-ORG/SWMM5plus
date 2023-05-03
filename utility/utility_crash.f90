@@ -129,9 +129,9 @@ module utility_crash
             print *, 'crash stop originating at', indexnumber,' on image ',this_image()
         end if
 
-        sync all
+        ! sync all
         !% broadcast to all images and stop all
-        call co_max(crashI)
+        ! call co_max(crashI)
         if (crashI==1) then
             print *, 'stopping image ',this_image()
             stop indexnumber

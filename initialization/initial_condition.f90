@@ -4316,7 +4316,7 @@ contains
             end if
 
             !% --- check if the connected element is CC
-            if (elemI(Aidx,ei_elementType) == CC) then 
+            if (elemI(Aidx,ei_elementType)[ci] == CC) then 
                 elemSI(JBidx,esi_JunctionBranch_CC_adjacent) = oneI
             else
                 elemSI(JBidx,esi_JunctionBranch_CC_adjacent) = zeroI
