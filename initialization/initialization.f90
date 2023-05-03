@@ -1897,6 +1897,7 @@ contains
             endif
 
             if(line .eq. "[PROFILES]") then
+                print *, "inside of profiles"
                 
                 
                 
@@ -1944,15 +1945,15 @@ contains
                     profile_name_temp = profile_name
 
                 end do
+            else
+                print *, "...no profiles found"
+                return
             endif
+            
         end do
 
         max_links_profile_N = (max_links_profile_N*2) + 1 
 
-        if(max_links_profile_N .eq. 0) then
-            print *, "...no profiles found"
-            return
-        end if
 
         call util_allocate_output_profiles()
 
