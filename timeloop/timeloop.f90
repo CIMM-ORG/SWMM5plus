@@ -1054,7 +1054,7 @@ contains
             !rm velocity(:), wavespeed(:), length(:), PCelerity(:)
             real(8), pointer :: nextHydrologyTime, nextHydraulicsTime
             real(8), pointer :: lastHydrologyTime, lastHydraulicsTime
-            integer          :: ii, neededSteps
+            integer          :: ii, neededSteps, pindex(1)
             integer, pointer ::   checkStepInterval
             !rm integer, pointer :: thisCol, Npack, thisP(:)
             integer(kind=8), pointer :: stepNow, lastCheckStep
@@ -1408,7 +1408,10 @@ contains
         !%----------------------------------------------------------------------
         !% closing
             if ((setting%Limiter%Dt%UseLimitMinYN) .and. (newDT .le. setting%Limiter%Dt%Minimum)) then
-                print*, 'timeNow = ', timeNow
+                print *, ' '
+                print *, 'EXITING ON TIME STEP ERROR -- PROBABLY BLOWING UP DUE TO EXCESSIVE HEAD'
+                print *,'timestep= ', setting%Time%Step
+                print*, 'timeNow = ', timeNow, ' seconds'
                 print*, 'dt = ', newDT, 'minDt = ',  setting%Limiter%Dt%Minimum
                 ! if (setting%SmallDepth%useMomentumCutoffYN) then
                 !     print*, 'max velocity  ', maxval( &
@@ -1422,6 +1425,14 @@ contains
                     print*, 'max wavespeed ', maxval( &
                         elemR(elemP(1:npack_elemP(ep_CCJM_NOTzerodepth),ep_CCJM_NOTzerodepth),er_WaveSpeed) )
                     print*, 'warning: the dt value is smaller than the user supplied min dt value'
+
+                    print *, ' '
+                    print *, 'element index location of max velocity'
+                    pindex = maxloc(elemR(elemP(1:npack_elemP(ep_CCJM_NOTzerodepth),ep_CCJM_NOTzerodepth),er_Velocity))
+                    print *, elemP(pindex,ep_CCJM_NOTzerodepth)
+                    print *, 'element index location of max wavespeed'
+                    pindex = maxloc(  elemR(elemP(1:npack_elemP(ep_CCJM_NOTzerodepth),ep_CCJM_NOTzerodepth),er_WaveSpeed))
+                    print *, elemP(pindex,ep_CCJM_NOTzerodepth)
                 ! end if
                 !stop 1123938
                 call util_crashpoint(1123938)
@@ -1810,6 +1821,12 @@ contains
             ! print *, wavespeed(thisP)
             ! write(*,"(A,30f12.5)") 'Ccfl ' , PCelerity(thisP) * thisDT / length(thisP)
 
+        !% HACK experiment to evaluate effect of JM wavespeed on time step
+        elemR(:,er_Temp01) = wavespeed
+        where (elemI(thisP,ei_elementType) .eq. JM)
+            wavespeed(thisP) = zeroR
+        endwhere
+
         !% --- set the outvalue
         if (Npack > 0) then 
             if (setting%Solver%PreissmannSlot%useSlotTF) then
@@ -1829,6 +1846,12 @@ contains
         else
             outvalue = zeroR
         end if
+
+        !% HACK EXPERIMENT CHANGING JM WaveSpeed
+        where (elemI(thisP,ei_elementType) .eq. JM)
+            wavespeed(thisP) = elemR(thisP,er_Temp01)
+        endwhere
+        elemR(:,er_Temp01) = zeroR
 
         ! if (Npack == zeroI) then 
         !     !% --- no nonzero depths, so control time step by inflows

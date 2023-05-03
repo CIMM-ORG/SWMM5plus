@@ -192,8 +192,8 @@ contains
             ! integer :: ift(5) = (/     101,              102,    111,   112,   113/)
 
             ! % T007a dx10  8 x 5 with JB as 4th elem
-            integer :: iet(8) = (/98,  99,   100,   102,101,103,    112,   113 /)
-            integer :: ift(5) = (/   99, 100,  101,              102,    111/)
+            ! integer :: iet(8) = (/98,  99,   100,   102,101,103,    112,   113 /)
+            ! integer :: ift(5) = (/   99, 100,  101,              102,    111/)
 
                      !% T007a
             ! integer :: iet(8) = (/211,       213,212,214,    223,   224,    225,    226 /)
@@ -246,6 +246,8 @@ contains
             ! integer :: iet(10) = (/   61,60,62,   71,    72,   73,     75,74,76,     85 /)
             ! integer :: ift(7) = (/52,           53,   62,    63,    64,          65,    74/)
 
+            integer :: iet(6) = (/ 2049 ,       2050,         2022, 2019, 2021,    2023         /)
+            integer :: ift(4) = (/      1920         ,1892,                   1891,    1893 /)
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
         !% Preliminaries:
@@ -260,16 +262,25 @@ contains
             oneVec   => elemR(:,er_ones)
         !%------------------------------------------------------------------
 
-         ! return
+         print *, 'dt = ',dt
+        return
 
-       !
-             if (setting%Time%Step < 8360) return
+            ! print *, reverseKey(elemI(307,ei_elementType))
+            ! print *, reverseKey(elemI(320,ei_elementType))
+            ! print *, elemI(307,ei_Mface_uL), elemI(307,ei_Mface_dL)
+            ! print *, elemI(320,ei_Mface_uL), elemI(320,ei_Mface_dL)
 
-      ! ! !   if (setting%Time%Step < 1200) return
+
+            ! print *, faceI(elem)
+
+            ! stop 2398743
+
+       
+            ! if (setting%Time%Step < 511) return
 
 
 
-            !   if (setting%Time%Step > 15) then
+            !   if (setting%Time%Step > 512) then
 
             !     stop  6098723
             !   end if
@@ -290,7 +301,7 @@ contains
    !% branches and elements   
 
          ! print *, 'branches and elements'
-         !       do ii=1,N_elem(1)
+         !       do ii= 1,N_elem(1)
          !          if (elemI(ii,ei_elementType) == CC) then
          !             if (faceI(fup(ii),fi_BCType) == BCup) then 
          !                write(*,"(A, i5, A)"), 'fbcU', fup(ii),       '             '//trim(reverseKey(faceI(fup(ii),fi_BCType))) 
@@ -331,7 +342,7 @@ contains
          !          end if
          !        end do
          !            stop 239874
-         !       !     return
+         !           return
 
                ! print *, ' '
                ! print *, 'link,node names'
@@ -344,9 +355,92 @@ contains
                ! end do
 
                ! stop 239874
+!%
+!%  6 x 4 junction with two downstream
+!%
+            write(*,"(A9,21A11)"),' ','elem','faceU','faceD','elem','faceU','faceD',' jb ',' JM ',' jb ','faceU','faceD',' jb ','faceU','faceD'
+   
+          write(*,"(A,31e11.4)") '  Head    '  ,          &
+            elemR(iet(1),er_Head), &
+               faceR(ift(1),fr_Head_u), &
+               faceR(ift(1),fr_Head_d), &
+            elemR(iet(2),er_Head), &
+               faceR(ift(2),fr_Head_u), &
+               faceR(ift(2),fr_Head_d), &
+            elemR(iet(3),er_Head), &
+            elemR(iet(4),er_Head), &
+            elemR(iet(5),er_Head), &
+               faceR(ift(3),fr_Head_u), &
+               faceR(ift(3),fr_Head_d), &
+            elemR(iet(6),er_Head),&
+               faceR(ift(4),fr_Head_u), &
+               faceR(ift(4),fr_Head_d)
 
+            write(*,"(A,31e11.4)") '  Depth   '  ,          &
+            elemR(iet(1),er_Depth), &
+               faceR(ift(1),fr_Depth_u), &
+               faceR(ift(1),fr_Depth_d), &
+            elemR(iet(2),er_Depth), &
+               faceR(ift(2),fr_Depth_u), &
+               faceR(ift(2),fr_Depth_d), &
+            elemR(iet(3),er_Depth), &
+            elemR(iet(4),er_Depth), &
+            elemR(iet(5),er_Depth), &
+               faceR(ift(3),fr_Depth_u), &
+               faceR(ift(3),fr_Depth_d), &
+            elemR(iet(6),er_Depth),&
+               faceR(ift(4),fr_Depth_u), &
+               faceR(ift(4),fr_Depth_d)
 
+               write(*,"(A,31e11.4)") '  Area    '  ,          &
+               elemR(iet(1),er_Area), &
+                  faceR(ift(1),fr_Area_u), &
+                  faceR(ift(1),fr_Area_d), &
+               elemR(iet(2),er_Area), &
+                  faceR(ift(2),fr_Area_u), &
+                  faceR(ift(2),fr_Area_d), &
+               elemR(iet(3),er_Area), &
+               elemR(iet(4),er_Area), &
+               elemR(iet(5),er_Area), &
+                  faceR(ift(3),fr_Area_u), &
+                  faceR(ift(3),fr_Area_d), &
+               elemR(iet(6),er_Area),&
+                  faceR(ift(4),fr_Area_u), &
+                  faceR(ift(4),fr_Area_d)
 
+            write(*,"(A,31e11.4)") '  Flow    '  ,          &
+               elemR(iet(1),er_Flowrate), &
+                  faceR(ift(1),fr_Flowrate), &
+                  faceR(ift(1),fr_Flowrate), &
+               elemR(iet(2),er_Flowrate), &
+                  faceR(ift(2),fr_Flowrate), &
+                  faceR(ift(2),fr_Flowrate), &
+               elemR(iet(3),er_Flowrate), &
+               elemR(iet(4),er_Flowrate), &
+               elemR(iet(5),er_Flowrate), &
+                  faceR(ift(3),fr_Flowrate), &
+                  faceR(ift(3),fr_Flowrate), &
+               elemR(iet(6),er_Flowrate),&
+                  faceR(ift(4),fr_Flowrate), &
+                  faceR(ift(4),fr_Flowrate)
+
+                  write(*,"(A,31e11.4)") '  Vel     '  ,          &
+                  elemR(iet(1),er_Velocity), &
+                     faceR(ift(1),fr_Velocity_u), &
+                     faceR(ift(1),fr_Velocity_d), &
+                  elemR(iet(2),er_Velocity), &
+                     faceR(ift(2),fr_Velocity_u), &
+                     faceR(ift(2),fr_Velocity_d), &
+                  elemR(iet(3),er_Velocity), &
+                  elemR(iet(4),er_Velocity), &
+                  elemR(iet(5),er_Velocity), &
+                     faceR(ift(3),fr_Velocity_u), &
+                     faceR(ift(3),fr_Velocity_d), &
+                  elemR(iet(6),er_Velocity),&
+                     faceR(ift(4),fr_Velocity_u), &
+                     faceR(ift(4),fr_Velocity_d)
+
+            return
 
 !%
 !%  10 x 7 starting with 1 face, jbJM/jb, 3 elem, jb/jm/jb, 1 elem, 1 face

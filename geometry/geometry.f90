@@ -584,13 +584,13 @@ module geometry
             character(64) :: subroutine_name = "geo_sectionfactor_from_depth_singular"
         !%------------------------------------------------------------------  
     
-        ! print *, 'input depth ',inDepth
+         !print *, 'input depth ',inDepth, setting%ZeroValue%Depth
         thisArea      = geo_area_from_depth_singular      (eIdx, inDepth, ZeroValueArea)
-        ! print *, '----- area     ',thisArea
+         !print *, '----- area     ',thisArea, setting%ZeroValue%Area
         thisPerimeter = geo_perimeter_from_depth_singular (eIdx, inDepth, ZeroValuePerimeter)
-        ! print *, '----- perimeter',thisPerimeter
+         !print *, '----- perimeter',thisPerimeter
         outvalue      = thisArea * ((thisArea / thisPerimeter)**twothirdR)
-        ! print *, '----- sf       ',outvalue
+         !print *, '----- sf       ',outvalue
 
         !write(*,"(10f12.5)") inDepth, thisArea, thisPerimeter, outvalue
 
@@ -1297,6 +1297,8 @@ module geometry
 
             logical :: isUpBranch
 
+            integer :: printJB = 2022
+
         !% thisColP_JM is the column for the junction mains of a particular
         !% whichTM. For ALL ep_JM, for ETM, ep_JM_ETM, for AC ep_JM_AC
             integer, allocatable :: tempP(:)
@@ -1372,6 +1374,8 @@ module geometry
 
                     ! print *, 'tB ',tB 
 
+                    ! if (tB == printJB) print *, 'HEAD AAA',head(tB)
+
                     if (BranchExists(tB) .ne. oneI) cycle
 
                     !% only when a branch exists.
@@ -1398,6 +1402,8 @@ module geometry
 
                         head(tB) = head(tM)
 
+                        ! if (tB == printJB) print *, 'HEAD BBB',head(tB)
+
                     else
                         !% for main head below the branch bottom entrance we assign a
                         !% Froude number of one on an inflow to the junction main. Note
@@ -1412,6 +1418,17 @@ module geometry
                         !% 20230322 brh using velocity on face  
                         if     ((      isUpBranch) .and. (fVel_d(fup(tB)) > zeroR)) then 
                             !% --- upstream branch with inflow
+
+                            ! if (tB == printJB) then 
+                            !     print *, ' '
+                            !     print *, 'head up  ',fHead_d(fup(tB))
+                            !     print *, 'zcrown_d ',fZcrown_d(fup(tB))
+                            !     print *, 'Zbottom  ',zBtm(tB), sedimentDepth(tB)
+                            !     print *, 'Kfac     ',Kfac(tB)
+                            !     print *, 'Vel      ',fVel_d(fup(tB))
+                            !     print *, ' '
+                            ! end if
+
                             if (fHead_d(fup(tB)) > fZcrown_d(fup(tB))) then
                                 !% --- surcharged inflow of upstream branch
                                 !%     reduce by Kfactor
@@ -1422,6 +1439,9 @@ module geometry
                                 head(tB) = zBtm(tB) + sedimentDepth(tB)  &
                                     + (fVel_d(fup(tB))**twoI) / grav
                             endif
+
+                            ! if (tB == printJB) print *, 'HEAD CCC',head(tB)
+
                         elseif ((.not. isUpbranch) .and. (fVel_u(fdn(tB)) < zeroR)) then
                             !% --- downstream branch with inflow
                             if (fHead_u(fdn(tB)) > fZcrown_u(fdn(tB))) then
@@ -1434,14 +1454,20 @@ module geometry
                                 head(tB) = zBtm(tB) + sedimentDepth(tB)  &
                                     + (fVel_u(fdn(tB))**twoI) / grav
                             end if
+
+                            ! if (tB == printJB) print *, 'HEAD DDD',head(tB)
                         else 
                             !% --- no flow, set below zerovalue
                             head(tB) = zBtm(tB) + sedimentDepth(tB) + 0.99d0 * setting%ZeroValue%Depth
+
+                            ! if (tB == printJB) print *, 'HEAD EEE',head(tB)
                         end if
 
                             ! print *, 'HEAD B, velocity', head(tB), velocity(tB)
                             ! print *,'Velocity ',velocity(tB)
                     end if
+
+                    ! if (tB == printJB) print *, 'HEAD ZZZ',head(tB)
 
                     !% compute provisional depth
                     depth(tB) = head(tB) - (zBtm(tB) + sedimentDepth(tB))

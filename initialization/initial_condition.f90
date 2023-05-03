@@ -615,50 +615,50 @@ contains
 
         !% cycle through the links in an image
         do ii = 1,pLink
-             print *, ' '
-             print *, 'link ',ii
-             print *, ' '
+            !  print *, ' '
+            !  print *, 'link ',ii
+            !  print *, ' '
 
             ! % necessary pointers
             thisLink    => packed_link_idx(ii)
 
-                print *, 'calling get barrels'
+                ! print *, 'calling get barrels'
             call init_IC_get_barrels_from_linkdata(thisLink)
 
-                print *, 'calling get depth'
+                ! print *, 'calling get depth'
             !% --- note that this does NOT adjust depth for closed conduit crown height
             call init_IC_get_head_and_depth (thisLink)
 
                 ! print *, 'aaa ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
-                print *, 'calling get flow and roughness'
+                ! print *, 'calling get flow and roughness'
             call init_IC_get_flow_and_roughness_from_linkdata (thisLink)
 
                 ! print *, 'bbb ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
-               print *, 'calling get elemtype'
+            !    print *, 'calling get elemtype'
             call init_IC_get_elemtype_from_linkdata (thisLink)
             !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
             ! print *, 'ccc',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
-                print *, 'calling get geometry'
+                ! print *, 'calling get geometry'
             !% --- note this adjusts depth for closed conduit crown height and sets surcharge
             call init_IC_get_geometry_from_linkdata (thisLink)
 
             ! print *, 'ddd ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
-               print *, 'calling get flapgate'
+            !    print *, 'calling get flapgate'
             call init_IC_get_flapgate_from_linkdata (thisLink)
 
             ! print *, 'eee ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
-               print *, 'calling get forcemain'
+            !    print *, 'calling get forcemain'
             call init_IC_get_ForceMain_from_linkdata (thisLink)     
 
             ! print *, 'fff ',elemR(82,er_Depth), elemR(82,er_Head), elemYN(82,eYN_isPSsurcharged)
 
-               print *, 'calling get culvert'
+            !    print *, 'calling get culvert'
             call init_IC_get_culvert_from_linkdata(thisLink)
             !    print *, thisLink, elemR(54,er_Depth), elemR(54,er_Volume)
 
@@ -6340,8 +6340,10 @@ contains
         !%     must be consistent with a utd_... index,
         select case (utd_nonU)
             case (utd_SF_depth_nonuniform, utd_Qcrit_depth_nonuniform)
+                    print *, 'nonuniform depth'
                 NUtype = DepthData
             case (utd_SF_area_nonuniform, utd_Qcrit_area_nonuniform)
+                    print *, 'nonuniform area'
                 NUtype = AreaData
             case default
                 print *, 'CODE ERROR: unexpected case default'
@@ -6351,9 +6353,11 @@ contains
         !% set the type for the uniform data -- must be a utd_... index
         select case (utd_uniform)
             case (utd_SF_uniform)
+                    print *, 'uniform section factor'
                 Utype = SectionFactorData
                 utr_max = utr_SFmax
             case (utd_Qcrit_uniform)
+                    print *, 'uniform Qcritical'
                 Utype = QcriticalData
                 utr_max = utr_QcritMax
             case default
@@ -6364,7 +6368,7 @@ contains
         !% --- get the uniform data delta
         deltaUvalue = uniformTableR(UT_idx,utr_max) /  real((N_uniformTableData_items-1),8)
 
-            print *, 'deltaUvalue ',deltaUvalue
+            !print *, 'deltaUvalue ',deltaUvalue
 
         !print *,'Umax ',uniformTableR(UT_idx,utr_max)
         !print *, 'by depth ',geo_sectionfactor_from_depth_singular (eIdx,20.d0)
@@ -6380,7 +6384,7 @@ contains
             print *, 'CONFIGURATION OR CODE ERROR: too small of a depth step in ',trim(subroutine_name)
         end if
 
-            print *, 'deltaDepth ',deltaDepth
+            !print *, 'deltaDepth ',deltaDepth
 
         testUvalue    = zeroR
         testDepth     = zeroR
@@ -6397,6 +6401,11 @@ contains
 
             ! print *, ' '
             ! print *, 'jj, thisQcrit ',jj, thisUvalue
+            ! print *, 'testUvalue          ', testUvalue
+            ! print *, 'deltaDepth          ',deltaDepth 
+            ! print *, 'test +deltaDepth    ', deltaDepth + testDepth
+            ! print *, 'full depth          ',elemR(eIdx,er_FullDepth)
+            ! print *, ' '
 
             !% --- iterate to find depth that provides uniform value just below and
             !%     just above the target (thisUvalue)
@@ -6404,6 +6413,8 @@ contains
             do while ((testUvalue < thisUvalue) &
                      .and. (testDepth + deltaDepth .le. elemR(eIdx,er_FullDepth)) &
                      .and. isIncreasing)
+
+                     !print *, ' '
                 !% --- store the previous (low) guess
                 oldtestUvalue    = testUvalue
                 oldtestDepth     = testDepth
@@ -6415,7 +6426,8 @@ contains
                 !% --- compute values for incremented depth
                 select case (Utype)
                 case (SectionFactorData)
-                    testUvalue    = geo_sectionfactor_from_depth_singular (eIdx, testDepth, setting%ZeroValue%Area, setting%ZeroValue%Depth)
+                    !print *, 'calling section factor'
+                    testUvalue    = geo_sectionfactor_from_depth_singular (eIdx, testDepth, zeroR, deltaDepth / twoR)
                 case (QcriticalData)
                     testUvalue    = geo_Qcritical_from_depth_singular (eIdx, testDepth, zeroR)
                     !print *, 'test Qcrit ',testUvalue
@@ -6425,7 +6437,8 @@ contains
                     call util_crashpoint(608723)
                 end select
 
-                !print *, 'old,new Uvalue ',oldtestUvalue, testUvalue
+               ! print *, 'old,new Uvalue ',oldtestUvalue, testUvalue
+
                 !% --- for monotonic, exit will be when testUvalue >= thisUvalue
                 !% --- as soon as non-monotonic is found, the remainder of the
                 !%     array uses the final depth value
@@ -6489,7 +6502,7 @@ contains
                 print *, 'CODE ERROR in geometry processing for uniform table.'
                 print *, 'tolerance setting is ',uTol
                 print *, 'relative error is ',errorU
-                call util_crashpoint(69873)
+                call util_crashpoint(698731)
             end if
 
             ! if (jj > 50) then

@@ -969,7 +969,6 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-
 # # FAILED 20230424
 # add_test(NAME user5_E
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level03_test/user5_E.inp -s ./ctest/internal_testing/level03_test/settings_user5.json -o ./ctest/output/
@@ -1042,8 +1041,81 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
+# FAILED 20230503
+# add_test(NAME user5_A01
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_A01.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
-# # Passed 20230502  zero flow
+# # oscillations due to inconsistent initial conditions -- not a good test case
+# add_test(NAME user5_K
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_K.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230503 zero flows
+# add_test(NAME user5_KN
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_KN.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230503 zero flows
+# add_test(NAME user5_KNa6
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_KNa6.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # passed 20230503 zero flows
+# add_test(NAME user5_KNa6alt
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_KNa6alt.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Pass?  EVERYTHING IS OSCILLATING
+# add_test(NAME user5_L
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_L.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Passed 20230503 zero flows
+# add_test(NAME user5_LN
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_LN.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+# # Passed -- EPA SWMM has strong oscillations
+# add_test(NAME user5_M
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_M.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Passed 20230503 zero flows
+# add_test(NAME user5_MN
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_MN.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Passed 20230503 zero flows
+# add_test(NAME user5_N
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_N.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Passed 20230503 zero flows
+# add_test(NAME user5_O
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_O.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # FAILED 20230503
+# add_test(NAME user5_reduced01
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_reduced01.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+# # Passed 20230503  zero flow
 # add_test(NAME user5_reduced02
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_reduced02.inp -s ./ctest/internal_testing/brh05/settings_dx50.json -o ./ctest/outbrh5/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -1173,7 +1245,8 @@ enable_testing()
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0010_T20.inp -s ./ctest/internal_testing/brh03/settings_10_T20.json -o ./ctest/outbrh3/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
-# # Passed 20230430
+
+# # Passed 20230503
 # add_test(NAME T007a_RO_Free_dx0100
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0100.inp -s ./ctest/internal_testing/brh03/settings_100.json -o ./ctest/outbrh3/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -1197,17 +1270,23 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
+# 
+add_test(NAME T007c_RO_Free_dx0333
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007c_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh03/settings_333.json -o ./ctest/outbrh3/
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
 # # Passed 20230430
 # add_test(NAME T007a_RO_Free_dx0250_T20
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0250_T20.inp -s ./ctest/internal_testing/brh03/settings_250_T20.json -o ./ctest/outbrh3/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230502
-add_test(NAME T007a_RO_Free_dx0333
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh03/settings_333.json -o ./ctest/outbrh3/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# #  Passed 20230502  FAILED 20230503 IN TEST WITH SLIGHTLY LARGER TIME STEP (REMOVING WAVESPEED FROM CONSIDERATION)
+# add_test(NAME T007a_RO_Free_dx0333
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007a_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh03/settings_333.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
 # # Passed 20230430
 # add_test(NAME T007a_RO_Free_dx0333_T20
@@ -1281,7 +1360,7 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230502
+# # Passed 20230503
 # add_test(NAME T008_RO_Free_dx0100
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T008_RO_Free_dx0100.inp -s ./ctest/internal_testing/brh03/settings_100.json -o ./ctest/outbrh3/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -1307,13 +1386,13 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# #  Passed 20230501
+# #  Passed 20230503
 # add_test(NAME T009Wr_RO_Free_dx0010
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T009Wr_RO_Free_dx0010.inp -s ./ctest/internal_testing/brh03/settings_10.json -o ./ctest/outbrh3/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# # Passed 20230501
+# # FAIS 20230503, but looks OK -- Passed 20230501 (without dQdH)
 # add_test(NAME T009Wr_RO_Free_dx0100
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T009Wr_RO_Free_dx0100.inp -s ./ctest/internal_testing/brh03/settings_100.json -o ./ctest/outbrh3/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}

@@ -11,7 +11,7 @@ module junction_elements
     use geometry
     use pack_mask_arrays, only: pack_small_or_zero_depth_elements, pack_CC_zeroDepth_interior_faces
     use update
-    ! use utility_unit_testing, only: util_utest_CLprint
+    !use utility_unit_testing, only: util_utest_CLprint
     use utility_crash, only: util_crashpoint
 
 !%----------------------------------------------------------------------------- 
@@ -50,7 +50,7 @@ module junction_elements
 
     real(8) :: coef1, coef2, coef3, coef4
 
-    integer :: printJM = 5 ! 101 !81 ! 6 !137 !51 ! 62 !% 51 ! 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
+    integer :: printJM = 101 !81 ! 6 !137 !51 ! 62 !% 51 ! 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
 
     contains
 !%==========================================================================
@@ -176,7 +176,7 @@ module junction_elements
                 elemR(JMidx,er_FroudeNumber) = inletVelocity / sqrt(setting%Constant%gravity * elemR(JMidx,er_Depth))
 
                
-                if (JMidx == printJM) print *, 'junction main FR ',elemR(JMidx,er_FroudeNumber)
+              !  if (JMidx == printJM) print *, 'junction main FR ',elemR(JMidx,er_FroudeNumber)
                 
                    ! print *, 'junctionFlowrate ',JMidx, elemR(JMidx,er_Flowrate)
 
@@ -446,15 +446,15 @@ module junction_elements
                 !% --- adjust JM for small or zero depth (may be redundant)
                 call adjust_element_toplevel (JM)
 
-                ! call util_utest_CLprint ('------- fff.01  after adjust update for JM')
+                    ! call util_utest_CLprint ('------- fff.01  after adjust update for JM')
     
                 call update_wavespeed_element(thisP)
 
-                ! call util_utest_CLprint ('------- fff.02  after adjust update for JM')
+                    ! call util_utest_CLprint ('------- fff.02  after adjust update for JM')
 
                 call update_Froude_number_element (thisP) 
 
-                ! call util_utest_CLprint ('------- fff.03  after adjust update for JM')
+                    ! call util_utest_CLprint ('------- fff.03  after adjust update for JM')
             end if
     
             ! call util_utest_CLprint ('------- fff  after adjust update for JM')
@@ -599,6 +599,8 @@ module junction_elements
 
             !% --- compute JB element DeltaQ using dQdH
             call junction_update_branch_DeltaQ (JMidx,dH)  
+
+                ! if (JMidx==printJM) print *, 'delta Q ',elemR(JMidx+1,er_DeltaQ), elemR(JMidx+2,er_DeltaQ)
 
             !% --- update JB elements Q using Delta Q
             call junction_update_branch_flowrate (JMidx)
@@ -2063,12 +2065,12 @@ module junction_elements
 
                 ! if (JMidx==printJM) print *, 'Qstorage() - QnetBranches ', Qstorage(JMidx) - QnetBranches    
 
-               ! ! ! ! call util_utest_CLprint ('------- jjj01 abefore update Q dependent')
+               ! ! ! ! ! call util_utest_CLprint ('------- jjj01 abefore update Q dependent')
 
             !% --- update Volume, VolumeOverflow and JB face values
             call junction_update_Qdependent_values (JMidx, istep)
 
-               ! ! ! ! call util_utest_CLprint ('------- jjj02 after update Q dependent')
+               ! ! ! ! ! call util_utest_CLprint ('------- jjj02 after update Q dependent')
 
                 ! print *, ' '
                 ! print *, 'JMidx',JMidx
@@ -6356,7 +6358,7 @@ module junction_elements
         !     thisP => elemP(1:Npack,ep_JB)
         !     call update_interpweights_JB (thisP, Npack, .false.)
 
-        !     !    ! ! call util_utest_CLprint ('------- DDD08 after update_interpweights_JB')  
+        !     !    ! ! ! call util_utest_CLprint ('------- DDD08 after update_interpweights_JB')  
             
         !     ! print *, ' '
         !     ! print *,  'resid ',junction_conservation_residual(printJM)
@@ -6367,7 +6369,7 @@ module junction_elements
         !     sync all
         !     call face_interpolation(fp_JB_IorS, .false., .false., .true., .true., .true.) 
 
-        !         ! call util_utest_CLprint ('------- DDD09 after face_interpolation for JB') 
+        !         ! ! call util_utest_CLprint ('------- DDD09 after face_interpolation for JB') 
 
         !         ! print *, ' '
         !         ! print *,  'resid ',junction_conservation_residual(printJM)
@@ -6381,7 +6383,7 @@ module junction_elements
         !    !call junction_calculation_3 (thisP, Npack, istep)
         !     call junction_calculation_4 (thisP, Npack, istep)
 
-        !        ! call util_utest_CLprint ('------- DDD10 after junction_calculation') 
+        !        ! ! call util_utest_CLprint ('------- DDD10 after junction_calculation') 
 
         !         ! print *, ' '
         !         ! print *,  'resid ',junction_conservation_residual(printJM)
@@ -6393,7 +6395,7 @@ module junction_elements
         !     !%     .true. = force interp weights for Q to favor JB
         !     call update_auxiliary_variables_JMJB ( .true.)
 
-        !        ! call util_utest_CLprint ('------- DDD11 after update_auxiliary_variables_JMJB') 
+        !        ! ! call util_utest_CLprint ('------- DDD11 after update_auxiliary_variables_JMJB') 
         !         ! print *, ' '
         !         ! print *,  'resid ',junction_conservation_residual(printJM)
         !         ! print *, ' '
@@ -6401,18 +6403,18 @@ module junction_elements
         !     call adjust_element_toplevel (JB)
         !     call adjust_element_toplevel (JM)
         
-        !        ! call util_utest_CLprint ('------- DDD12 after adjust element toplevel') 
+        !        ! ! call util_utest_CLprint ('------- DDD12 after adjust element toplevel') 
         !         ! print *, ' '
         !         ! print *,  'resid ',junction_conservation_residual(printJM)
         !         ! print *, ' '
 
         !     call face_force_JBadjacent_values (ep_JM, .true.)
 
-        !         ! call util_utest_CLprint ('------- DDD13a  after face_force_JB... in junction')
+        !         ! ! call util_utest_CLprint ('------- DDD13a  after face_force_JB... in junction')
 
         !     call face_force_JBadjacent_values (ep_JM, .false.)
 
-        !        ! call util_utest_CLprint ('------- DDD13b  after face_force_JB... in junction')
+        !        ! ! call util_utest_CLprint ('------- DDD13b  after face_force_JB... in junction')
         !         ! print *, ' '
         !         ! print *, 'resid ',junction_conservation_residual(printJM)
         !         ! print *, ' '
@@ -6428,19 +6430,19 @@ module junction_elements
         !     !%     Fixes flowrate, volume, and geometry
         !     call junction_CC_for_JBadjacent (ep_CC_UpstreamOfJunction,   istep, .true.)
 
-        !     ! call util_utest_CLprint ('------- DDD14a  after junction_CC_forJBadjacent')
+        !     ! ! call util_utest_CLprint ('------- DDD14a  after junction_CC_forJBadjacent')
 
 
         !     call junction_CC_for_JBadjacent (ep_CC_DownstreamOfJunction, istep, .false.)
 
-        !        ! call util_utest_CLprint ('------- DDD14b  after junction_CC_forJBadjacent')
+        !        ! ! call util_utest_CLprint ('------- DDD14b  after junction_CC_forJBadjacent')
         !         ! print *, ' '
         !         ! print *, 'resid ',junction_conservation_residual(printJM)
         !         ! print *, ' '
 
         !     call adjust_face_toplevel(fp_noBC_IorS) !% CHANGING THIS TO fp_noBC_IorS CAUSED PROBLEMS!
 
-        !        ! call util_utest_CLprint ('------- DDD15  after junction_face toplevel')
+        !        ! ! call util_utest_CLprint ('------- DDD15  after junction_face toplevel')
         !         ! print *, ' ', printJM
         !         ! print *, 'resid ',junction_conservation_residual(printJM)
         !         ! print *, ' '

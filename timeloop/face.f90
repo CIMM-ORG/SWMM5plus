@@ -73,10 +73,14 @@ module face
             integer, intent(in) :: fp_downstream, fp_upstream, fp_bothsides
         !%------------------------------------------------------------------
 
+           !print *, 'Area AAA ',faceR(1892,fr_Area_u), faceR(1892,fr_Area_d)
+
         !% --- geometry (interior)
         call face_zeroDepth_geometry_interior(fp_downstream)
         call face_zeroDepth_geometry_interior(fp_upstream)
         call face_zeroDepth_geometry_interior(fp_bothsides)
+
+            !print *, 'Area BBB ',faceR(1892,fr_Area_u), faceR(1892,fr_Area_d)
 
         !% --- geometry (shared)
         !% sync all processors before the start of the subroutine
@@ -2202,16 +2206,23 @@ module face
             faceR(thisP,fr_Depth_u) = max(faceR(thisP,fr_Head_u) - faceR(thisP,fr_Zbottom), 0.99d0 * setting%ZeroValue%Depth)
             faceR(thisP,fr_Depth_d) = faceR(thisP,fr_Depth_u)
 
+            !% --- area is larger of the existing or the upstream
+            faceR(thisP,fr_Area_u) = max(faceR(thisP,fr_Area_u), elemR(eup(thisP),er_Area))
+            faceR(thisP,fr_Head_d) = faceR(thisP,fr_Head_u)
+
+            !% NOTE: the "consistent" approach does not work because at small depths the
+            !% computation of area from depth is not consistent with the depth obtained from
+            !% volume
             !% --- compute face area consistent with depth
-            do ii=1,npack 
-                mm => thisP(ii)
-                if (faceR(mm,fr_Depth_u) > setting%ZeroValue%Depth) then 
-                    faceR(mm,fr_Area_u) = geo_area_from_depth_singular(eup(mm),faceR(mm,fr_Depth_u),setting%ZeroValue%Area)
-                else
-                    faceR(mm,fr_Area_u) = setting%ZeroValue%Area
-                end if
-                faceR(mm,fr_Area_d) = faceR(mm,fr_Area_u)
-            end do
+            ! do ii=1,npack 
+            !     mm => thisP(ii)
+            !     if (faceR(mm,fr_Depth_u) > setting%ZeroValue%Depth) then 
+            !         faceR(mm,fr_Area_u) = geo_area_from_depth_singular(eup(mm),faceR(mm,fr_Depth_u),setting%ZeroValue%Area)
+            !     else
+            !         faceR(mm,fr_Area_u) = setting%ZeroValue%Area
+            !     end if
+            !     faceR(mm,fr_Area_d) = faceR(mm,fr_Area_u)
+            ! end do
 
         case (fp_CC_upstream_is_zero_IorS,fp_JB_upstream_is_zero_IorS)
             !% --- head is the smaller of the recent value or the downstream element value
@@ -2223,16 +2234,23 @@ module face
             faceR(thisP,fr_Depth_d) = max(faceR(thisP,fr_Head_d) - faceR(thisP,fr_Zbottom), 0.99d0 * setting%ZeroValue%Depth)
             faceR(thisP,fr_Depth_u) = faceR(thisP,fr_Depth_d)
 
-            !% --- compute face area consistent with depth
-            do ii=1,npack 
-                mm => thisP(ii)
-                if (faceR(mm,fr_Depth_d) > setting%ZeroValue%Depth) then 
-                    faceR(mm,fr_Area_d) = geo_area_from_depth_singular(edn(mm),faceR(mm,fr_Depth_d),setting%ZeroValue%Area)
-                else
-                    faceR(mm,fr_Area_d) = setting%ZeroValue%Area
-                end if
-                faceR(mm,fr_Area_u) = faceR(mm,fr_Area_d)
-            end do
+            !% --- area is larger of the existing or the upstream
+            faceR(thisP,fr_Area_d) = max(faceR(thisP,fr_Area_d), elemR(eup(thisP),er_Area))
+            faceR(thisP,fr_Head_u) = faceR(thisP,fr_Head_d)
+
+            !% NOTE: the "consistent" approach does not work because at small depths the
+            !% computation of area from depth is not consistent with the depth obtained from
+            !% volume
+            ! !% --- compute face area consistent with depth
+            ! do ii=1,npack 
+            !     mm => thisP(ii)
+            !     if (faceR(mm,fr_Depth_d) > setting%ZeroValue%Depth) then 
+            !         faceR(mm,fr_Area_d) = geo_area_from_depth_singular(edn(mm),faceR(mm,fr_Depth_d),setting%ZeroValue%Area)
+            !     else
+            !         faceR(mm,fr_Area_d) = setting%ZeroValue%Area
+            !     end if
+            !     faceR(mm,fr_Area_u) = faceR(mm,fr_Area_d)
+            ! end do
 
         case (fp_CC_bothsides_are_zero_IorS,fp_JB_bothsides_are_zero_IorS)
             faceR(thisP,fr_Depth_u) = 0.99d0 * setting%ZeroValue%Depth

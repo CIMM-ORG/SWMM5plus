@@ -87,7 +87,7 @@ module runge_kutta2
             
             !print *,' '
             !print *, ' '
-            ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
+          ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
  
         !%==================================    
         !% --- Initial adjustments
@@ -398,7 +398,7 @@ module runge_kutta2
                 thisP => elemP(1:Npack,ep_JB)
 
                 !% --- dQdH for both CC-adjacent and Diag-adjacent JB 
-                call junction_branch_dQdH (thisP, Npack, istep)
+                call junction_branch_dQdH (thisP, Npack, 1)  
 
                     ! call util_utest_CLprint ('------- HHH  after junction_branch_dQdH')
             end if
@@ -566,6 +566,9 @@ module runge_kutta2
                 ! call util_utest_CLprint ('------- PPP.01 after face zerodepth ')
 
             if (N_nJM > 0) then
+                ! print *, ' '
+                ! print *, faceP(1:npack_faceP(fp_JB_downstream_is_zero_IorS),fp_JB_downstream_is_zero_IorS)
+                ! print *, ' '
                 !% --- set face geometry and flowrates where adjacent element is zero
                 !%     only applies to faces with JB on one side
                 call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &

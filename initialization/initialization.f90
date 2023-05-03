@@ -898,8 +898,8 @@ contains
         !% --- NODE DATA
         !% -----------------------
         do ii = 1, N_node
-            print *, ' '
-            write(*,*) '==============================starting node ',ii
+            ! print *, ' '
+            write(*,*) '============================== starting node ',ii
             write(*,*) 'name ',trim(node%Names(ii)%str)
 
             total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
@@ -1048,7 +1048,7 @@ contains
                         ! write(*,*) '... is 1 junction is an upstream BC nJ1'
                     node%I(ii, ni_node_type) = nJ1
                 case (twoI)
-                        write(*,*) '... is 2 junction type nJ2'        
+                        ! write(*,*) '... is 2 junction type nJ2'        
                     node%I(ii, ni_node_type) = nJ2
                 case default 
                         ! write(*,*) '... is 3+ junction type nJm'
@@ -1067,7 +1067,7 @@ contains
                  (node%I(ii,ni_routeFrom) .ne. nullvalueI) &
                 )) then
                     !% ... switching to a 2 link nJm junction type'
-                        write(*,*) '... switching to a 2 link nJm junction type because of 2 up or 2 down links'
+                        ! write(*,*) '... switching to a 2 link nJm junction type because of 2 up or 2 down links'
                     node%I(ii, ni_node_type) = nJm
             end if
 
@@ -1120,7 +1120,7 @@ contains
                 !% --- phantom nodes will always be a nJ2
                 if  (node%YN(ii,nYN_is_phantom_node)) then
                     !% --- no action: retain nJ2
-                    write(*,*) 'retain nJ2 for a phantom node'
+                    ! write(*,*) 'retain nJ2 for a phantom node'
 
                 !% --- special channels and conduits that allow nJ2
                 elseif  ( ( (link%I(linkUp,li_link_type) .eq. lChannel)                &
@@ -1148,7 +1148,7 @@ contains
                         !%     overflow above the Surcharge Extra Depth
 
                         !% --- no action: retain nJ2
-                        write(*,*) 'retain nJ2 as open channel face'
+                        ! write(*,*) 'retain nJ2 as open channel face'
 
                 elseif ( (link%I(linkUp,li_link_type) .ne. lChannel)         &
                          .and.                                               &
@@ -1169,7 +1169,7 @@ contains
                         !%  
                         
                         !% --- no action: retain nJ2
-                        write(*,*) 'retain nJ2 as closed conduit face'
+                        ! write(*,*) 'retain nJ2 as closed conduit face'
 
                 elseif  (( (link%I(linkUp,li_link_type) .eq. lWeir)         &
                           .or.                                              &
@@ -1184,7 +1184,7 @@ contains
                         !%     them 
                         
                         !% no action: retain nJ2
-                        write(*,*) 'retain nJ2 on weir face'
+                        ! write(*,*) 'retain nJ2 on weir face'
 
                 elseif  (( (link%I(linkUp,li_link_type) .eq. lOrifice)         &
                             .or.                                               &
@@ -1199,10 +1199,10 @@ contains
                         !%     them 
                         
                         !% no action: retain nJ2
-                        write(*,*) 'retain nJ2 on orifice face '   
+                        ! write(*,*) 'retain nJ2 on orifice face '   
                 else
                     !% --- switch to nJm
-                    write(*,*) '... switching nJ2 to nJm '
+                    ! write(*,*) '... switching nJ2 to nJm '
                     !print *, 'infinite depth value ',setting%Junction%InfiniteExtraDepthValue, node%R(ii,nr_SurchargeExtraDepth)
 
                     node%I(ii, ni_node_type) = nJm
@@ -1344,7 +1344,7 @@ contains
         noerrorfound = .true.
         do ii = 1,N_node
             ! print *, 'Node name is ',trim(node%Names(ii)%str)
-            print*, '---------------------------------------------'
+            !print*, '---------------------------------------------'
             if (node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d) == zeroI) then
                 noerrorfound = .false.
                 print *, 'USER CONFIGURATION ERROR: disconnected node.'
@@ -1854,6 +1854,8 @@ contains
         ! write(*,"(A)"), 'input file name   ', trim(setting%File%inp_file)
         ! print *, 'input file number ',setting%File%UnitNumber%inp_file
         ! print *, ' '
+
+            !return  !% HACK -- SHUT OFF PROFILES BRH 20230503 for testing
 
         !% --- alias for the unit number
         thisUnit = setting%File%UnitNumber%inp_file
