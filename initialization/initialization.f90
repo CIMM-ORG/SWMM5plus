@@ -1947,14 +1947,19 @@ contains
                     profile_name_temp = profile_name
 
                 end do
-            else
-                print *, "...no profiles found"
-                return
+            !else
+            !    print *, "...no profiles found"
+            !    return
             endif
             
         end do
 
         max_links_profile_N = (max_links_profile_N*2) + 1 
+
+        if(max_links_profile_N .eq. 1) then
+            print *, "...no profiles found"
+            return
+        endif
 
 
         call util_allocate_output_profiles()
