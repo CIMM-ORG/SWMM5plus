@@ -425,9 +425,9 @@ module junction_elements
         !% --- update auxiliary variable on JM and JB
         !%     ASSUMES THAT HEAD, VOLUME, DEPTH ON JM ARE ALREADY ASSIGNED
         !%     JB TAKES ON JM HEAD
-        call geo_assign_JB (ep_JM) !% HACK  revise using ep_JB
+        call geo_assign_JB_from_head (ep_JM) !% HACK  revise using ep_JB
 
-            ! call util_utest_CLprint ('------- eee  after geo_assign_JB')
+            ! call util_utest_CLprint ('------- eee  after geo_assign_JB_from_head')
 
         ! !% --- adjust JB and JM for small or zero depth
         ! call adjust_element_toplevel (JB)
@@ -6408,11 +6408,11 @@ module junction_elements
         !         ! print *,  'resid ',junction_conservation_residual(printJM)
         !         ! print *, ' '
 
-        !     call face_force_JBadjacent_values (ep_JM, .true.)
+        !     call face_force_JBelem_to_face (ep_JM, .true.)
 
         !         ! ! call util_utest_CLprint ('------- DDD13a  after face_force_JB... in junction')
 
-        !     call face_force_JBadjacent_values (ep_JM, .false.)
+        !     call face_force_JBelem_to_face (ep_JM, .false.)
 
         !        ! ! call util_utest_CLprint ('------- DDD13b  after face_force_JB... in junction')
         !         ! print *, ' '

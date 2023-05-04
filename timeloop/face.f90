@@ -31,7 +31,7 @@ module face
     public :: face_push_diag_adjacent_data_to_face
     public :: face_interpolation
     public :: face_interpolate_bc
-    public :: face_force_JBadjacent_values
+    public :: face_force_JBelem_to_face
     public :: face_velocities
     public :: face_shared_face_sync
 
@@ -382,7 +382,7 @@ module face
 !%==========================================================================    
 !%==========================================================================
 !%    
-    subroutine face_force_JBadjacent_values (thisColP, isJBupstreamYN)
+    subroutine face_force_JBelem_to_face (thisColP, isJBupstreamYN)
         !%------------------------------------------------------------------
         !% Description
         !% Forces faces adjacent to JB to JB values without interpolation
@@ -465,7 +465,7 @@ module face
 
         end do
 
-    end subroutine face_force_JBadjacent_values
+    end subroutine face_force_JBelem_to_face
 !%    
 !%==========================================================================    
 !% PRIVATE

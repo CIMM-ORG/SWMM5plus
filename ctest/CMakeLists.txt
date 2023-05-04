@@ -1270,11 +1270,11 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-# 
-add_test(NAME T007c_RO_Free_dx0333
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007c_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh03/settings_333.json -o ./ctest/outbrh3/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# # 
+# add_test(NAME T007c_RO_Free_dx0333
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T007c_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh03/settings_333.json -o ./ctest/outbrh3/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
 # # Passed 20230430
 # add_test(NAME T007a_RO_Free_dx0250_T20
@@ -1403,3 +1403,53 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh03/T009Wr_RO_Free_dx0100_NJ2.inp -s ./ctest/internal_testing/brh03/settings_100_NJ2.json -o ./ctest/outbrh3/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
+
+
+# Pass 20230504 with compile using forceJBQyn = true at line 446 of RK
+# add_test(NAME T011_RC_Free_dx0333_true_NJ2
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T011_RC_Free_dx0333.inp -s ./ctest/internal_testing/brh05/settings_dx333.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Pass 20230504 with compile using forceJBQyn = true at line 446 of RK
+# add_test(NAME T011_RC_Free_dx0333_true_JM
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T011_RC_Free_dx0333.inp -s ./ctest/internal_testing/brh05/settings_dx333_JM.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # FAILS 20230504 with compile using forceJBQyn = true at line 446 of RK
+# add_test(NAME T011_RO_Free_dx0333_true_NJ2
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T011_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh05/settings_dx333.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # FAILS 20230504 with compile using forceJBQyn = true at line 446 of RK
+# add_test(NAME T011_RO_Free_dx0333_true_JM
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T011_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh05/settings_dx333_JM.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Pass 20230504 with compile using forceJBQyn = false at line 446 of RK
+# add_test(NAME T011_RC_Free_dx0333_false_NJ2
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T011_RC_Free_dx0333.inp -s ./ctest/internal_testing/brh05/settings_dx333.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Pass 20230504 with compile using forceJBQyn = false at line 446 of RK
+add_test(NAME T011_RC_Free_dx0333_false_JM
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T011_RC_Free_dx0333.inp -s ./ctest/internal_testing/brh05/settings_dx333_JM.json -o ./ctest/outbrh5/
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+# # Pass 20230504 with compile using forceJBQyn = false at line 446 of RK
+# add_test(NAME T011_RO_Free_dx0333_false_NJ2
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T011_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh05/settings_dx333.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+# FAILS 20230504 with compile using forceJBQyn = false at line 446 of RK
+add_test(NAME T011_RO_Free_dx0333_false_JM
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T011_RO_Free_dx0333.inp -s ./ctest/internal_testing/brh05/settings_dx333_JM.json -o ./ctest/outbrh5/
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)

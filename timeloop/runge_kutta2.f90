@@ -93,7 +93,7 @@ module runge_kutta2
         !% --- Initial adjustments
         istep = zeroI
 
-        !% --- update Diagnostic elements
+        !% --- update Diagnostic elements and faces
         if (N_diag > 0) then 
             !% STEP A
             !% --- update flowrates for aa diagnostic elements
@@ -109,8 +109,11 @@ module runge_kutta2
                 ! ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
         end if
 
-        !% --- push inflows on CC upstream of JB to face
+        !% HERE: DIAGNOSTIC VALUES ENFORCED ON ELEMENTS AND FACES, BUT CONNECTED JB ARE INCONSISTENT
+
+        !% --- push inflows on CC upstream or downstream of JB to face
         if (N_nJM > 0) then 
+            !% --- upstream CC elements
             Npack => npack_elemP(ep_CC_UpstreamOfJunction)
             if (Npack > 0) then 
                 thisP => elemP(1:Npack,ep_CC_UpstreamOfJunction)
@@ -125,12 +128,14 @@ module runge_kutta2
                     end where
                 endwhere
             end if
+            
+            !% --- downstream CC elements
             Npack => npack_elemP(ep_CC_DownstreamOfJunction)
             if (Npack > 0) then 
                 thisP => elemP(1:Npack,ep_CC_DownstreamOfJunction)
                 fAdj  => elemI(:,ei_Mface_uL)
                 where (elemR(thisP,er_Flowrate) < zeroR)
-                    faceR(fAdj(thisP),fr_Flowrate) = elemR(thisP,er_Flowrate)
+                    faceR(fAdj(thisP),fr_Flowrate)   = elemR(thisP,er_Flowrate)
                     faceR(fAdj(thisP),fr_Velocity_u) = elemR(thisP,er_Flowrate) / faceR(fAdj(thisP),fr_Area_u)
                     faceR(fAdj(thisP),fr_Velocity_d) = elemR(thisP,er_Flowrate) / faceR(fAdj(thisP),fr_Area_d)
                     !% check if any shared face has been diverged
@@ -139,9 +144,33 @@ module runge_kutta2
                     end where
                 endwhere
             end if
-        end if
-            ! call util_utest_CLprint ('------- CCC.1  after push inflows to JB faces')
 
+            ! call util_utest_CLprint ('------- CCC.1  after push CC to JB inflows to JB faces')
+
+        end if
+           
+        !% HERE: JB-ADJACENT FACES NOW CONTAIN EITHER (1) Diag fluxes or (2) CC inflows or (3) old data
+        !% the JB element fluxes are inconsistent with faces
+        !% Need to resolve shared faces and then push face data to JB
+
+        !% ==============================================================
+        !% --- face sync (20230504brh)
+        !%     sync all the images first. then copy over the data between
+        !%     shared-identical faces. then sync all images again
+        sync all
+
+        call face_shared_face_sync (fp_noBC_IorS)
+
+        sync all
+
+        !% --- ensure that all JB are consistent with adjacent face before the
+        !%     energy equation is invoked for outflow
+        if (N_nJM > 0) then 
+            call face_pull_facedata_to_JBelem (ep_JB, fr_Flowrate,   elemR(:,er_Flowrate))
+            call face_pull_facedata_to_JBelem (ep_JB, fr_Velocity_d, elemR(:,er_Velocity))
+        end if
+
+            ! call util_utest_CLprint ('------- CCC.2  after pull face flows to JB elements')
         !% --- get the velocity in the junction main
         if (N_nJM > 0) then
             !% STEP E
@@ -180,21 +209,24 @@ module runge_kutta2
         end if
 
 
-        !% --- compute flows on JB elements from energy equation
+        !% --- compute flows/velocities on JB/CC outflow elements/faces from 
+        !%     energy equation (does not affect JB with inflows or diagnostic adjacent )
         !% TO BE MOVED TO junction_branch_element_flowrates
         if (N_nJM > 0) then 
             !% --- array for the JM index
             JMar   => elemSI(:,esi_JunctionBranch_Main_Index)           
             !% --- cycle through nominal upstream and downstream JB
+            !%     This should affect only outflow branches with consistent
+            !%     pressure difference with adjacent CC
             do ii=1,2
                 !% --- get the upstream or downstream JB elements
                 if (ii==1) then 
                     !% --- upstream JB
                     isUpstreamBranch = .true.
                     bsign = oneR
-                    Npack => npack_elemP(ep_JB_Upstream)
+                    Npack => npack_elemP(ep_JB_Upstream_CC_Adjacent)
                     if (Npack > 0) then 
-                        thisJB => elemP(1:Npack,ep_JB_Upstream)
+                        thisJB => elemP(1:Npack,ep_JB_Upstream_CC_Adjacent)
                     end if
                     !% --- the JB-adjacent face is upstream
                     fAdj => elemI(:,ei_Mface_uL)
@@ -204,15 +236,16 @@ module runge_kutta2
                     !% --- downstream JB
                     bsign = -oneR
                     isUpstreamBranch = .false.
-                    Npack => npack_elemP(ep_JB_Downstream)
+                    Npack => npack_elemP(ep_JB_Downstream_CC_Adjacent)
                     if (Npack > 0) then 
-                        thisJB => elemP(1:Npack,ep_JB_Downstream)
+                        thisJB => elemP(1:Npack,ep_JB_Downstream_CC_Adjacent)
                     end if
                     !% --- the JB-adjacent face is downstream
                     fAdj => elemI(:,ei_Mface_dL)
                     fr_hAdj = fr_Head_d !% --- use d for jump purposes? QUESTION
                     fr_aAdj = fr_Area_d !% QUESTION
                 end if
+
                 !% --- head difference from junction main to face
                 deltaH => elemR(:,er_Temp01)
                 deltaH = zeroR
@@ -220,46 +253,75 @@ module runge_kutta2
                     deltaH(thisJB) =  elemR(JMar(thisJB),er_Head) - faceR(fAdj(thisJB),fr_hAdj)
                 endwhere
 
-                ! print *, ' '
-                ! print *, 'thisJB ', thisJB
-                ! print *, 'depth  ', elemR(thisJB,er_Depth)
-                ! print *, 'flowr  ', elemR(thisJB,er_Flowrate)
-                ! print *, 'deltaH ', deltaH(thisJB)
-                ! print *, 'flo*b  ', elemR(thisJB,er_Flowrate) * bsign
-                ! print *,' '
+                ! if (.not. isUpstreamBranch) then 
+                !     print *, 'deltaH(48)',deltaH(48), elemR(48,er_Depth)
+                !     print *, 'JM        ', JMar(48), elemR(JMar(48),er_Head)
+                !     print *, 'fAdj      ',fAdj(48), faceR(fAdj(48),fr_hAdj)
+                ! end if
 
+                where (deltaH(thisJB) > onehalfR   * elemR(thisJB,er_Depth))
+                    deltaH(thisJB)    = onefourthR * elemR(thisJB,er_Depth)
+                end where
 
                 !% --- Subcritical outflow junction (super overwrites below)
-                where ((deltaH(thisJB) > 1.0d-8) .and. (elemR(thisJB,er_Flowrate) * bsign < -1.0d-8))
-                        !% --- outflow from JB upstream 
-                        !% --- or outflow from JB downstream
+                !%     Requires more than a trivial deltaH and there must be more than
+                !%     a trivial outflowrate
+                where ((deltaH(thisJB) > 1.0d-8)                        &
+                       .and.                                            &
+                       (elemR(thisJB,er_Flowrate) * bsign < -1.0d-8)    &
+                       )
+                        !% --- outflow from JB  in upstream direction
+                        !% --- or outflow from JB in downstream direction
                         !%     NOTE: without junction main approach velocity
                         elemR(thisJB,er_Flowrate) = - bsign * faceR(fAdj(thisJB),fr_aAdj)                  &
                                 * sqrt(                                                                     &
                                         (twoR * grav * deltaH(thisJB))                                      &
                                         /(oneR + elemSR(thisJB,esr_JunctionBranch_Kfactor))                 &
                                         )   
+
+                        where (elemR(thisJB,er_Area) > setting%ZeroValue%Area)
+                            elemR(thisJB,er_Velocity) = elemR(thisJB,er_Flowrate) / elemR(thisJB,er_Area)
+                        elsewhere 
+                            elemR(thisJB,er_Velocity) = zeroR
+                        endwhere
+        
+                        !% --- apply velocity limiter
+                        where (abs(elemR(thisJB,er_Velocity)) > setting%Limiter%Velocity%Maximum)
+                            elemR(thisJB,er_Velocity) = sign(setting%Limiter%Velocity%Maximum * 0.99d0, elemR(thisJB,er_Velocity))
+                        endwhere
+
+                        !% --- push flowrate and velocity to faces
+                        faceR(fAdj(thisJB),fr_Flowrate)   = elemR(thisJB,er_Flowrate)
+                        faceR(fAdj(thisJB),fr_Velocity_u) = elemR(thisJB,er_Velocity)
+                        faceR(fAdj(thisJB),fr_Velocity_d) = elemR(thisJB,er_Velocity)
                 endwhere 
 
-                where ((deltaH(thisJB) > 1.0d-8) .and. (elemR(thisJB,er_Flowrate) * bsign > -1.0d-8))
-                    !% --- inconsistent flow direction and pressure gradient   
+                !% --- for a trivial outflow and a trivial dH, set flow to zero
+                !%     Note -- does not affect inflows or deltaH < zeroR
+                where ((deltaH(thisJB) .ge. zeroR) .and. (deltaH(thisJB) .le. 1.0d-8) .and. (elemR(thisJB,er_Flowrate) * bsign < -1.0d-8))
                     elemR(thisJB,er_Flowrate) = zeroR
-                endwhere 
+                    elemR(thisJB,er_Velocity) = zeroR
+                end where
 
-                where  ((deltaH(thisJB) .le. 1.0d-8) .and. (deltaH(thisJB) .ge. -1.0d-8))
-                    !% --- effectively zero pressure gradient
-                    elemR(thisJB,er_Flowrate) = zeroR
-                endwhere 
+                ! where ((deltaH(thisJB) > 1.0d-8) .and. (elemR(thisJB,er_Flowrate) * bsign > -1.0d-8))
+                !     !% --- inconsistent flow direction and pressure gradient   
+                !     elemR(thisJB,er_Flowrate) = zeroR
+                ! endwhere 
 
-                where ((deltaH(thisJB) < -1.0d-8) .and. (elemR(thisJB,er_Flowrate) * bsign > -1.0d-8))
-                    !% --- inflow using face flowrate
-                    elemR(thisJB,er_Flowrate) =  faceR(fAdj(thisJB),fr_Flowrate) 
-                endwhere
+                ! where  ((deltaH(thisJB) .le. 1.0d-8) .and. (deltaH(thisJB) .ge. -1.0d-8))
+                !     !% --- effectively zero pressure gradient (applies to JB as zerodepth)
+                !     elemR(thisJB,er_Flowrate) = zeroR
+                ! endwhere 
 
-                where  ((deltaH(thisJB) < -1.0d-8) .and. (elemR(thisJB,er_Flowrate) * bsign .le. -1.0d-8))
-                    !% --- inconsistent flow direction and pressure gradient   
-                    elemR(thisJB,er_Flowrate) = zeroR
-                endwhere
+                ! where ((deltaH(thisJB) < -1.0d-8) .and. (elemR(thisJB,er_Flowrate) * bsign > -1.0d-8))
+                !     !% --- inflow using face flowrate
+                !     elemR(thisJB,er_Flowrate) =  faceR(fAdj(thisJB),fr_Flowrate) 
+                ! endwhere
+
+                ! where  ((deltaH(thisJB) < -1.0d-8) .and. (elemR(thisJB,er_Flowrate) * bsign .le. -1.0d-8))
+                !     !% --- inconsistent flow direction and pressure gradient   
+                !     elemR(thisJB,er_Flowrate) = zeroR
+                ! endwhere
  
 
                 ! do mm = 1,size(thisJB)
@@ -315,42 +377,18 @@ module runge_kutta2
                 !     !end do
                 ! end if
 
-                !% --- update velocity
-                where (elemR(thisJB,er_Area) > setting%ZeroValue%Area)
-                    elemR(thisJB,er_Velocity) = elemR(thisJB,er_Flowrate) / elemR(thisJB,er_Area)
-                elsewhere 
-                    elemR(thisJB,er_Velocity) = zeroR
-                endwhere
-
-                !% --- apply velocity limiter
-                where (abs(elemR(thisJB,er_Velocity)) > setting%Limiter%Velocity%Maximum)
-                    elemR(thisJB,er_Velocity) = sign(setting%Limiter%Velocity%Maximum * 0.99d0, elemR(thisJB,er_Velocity))
-                endwhere
-
-                ! !% --- zero outflow from upstream branch if JB depth is zero
-                ! where ((elemR(thisJB,er_Depth) .le. setting%ZeroValue%Depth)    .and. &
-                !        (elemSI(thisJB,esi_JunctionBranch_IsUpstream) .eq. oneI) .and. &
-                !        (elemR(thisJB,er_Flowrate) < zeroR) )
-
-                !        elemR(thisJB,er_Flowrate) = zeroR 
-                !        elemR(thisJB,er_Velocity) = zeroR
-
+                ! !% --- update velocity
+                ! where (elemR(thisJB,er_Area) > setting%ZeroValue%Area)
+                !     elemR(thisJB,er_Velocity) = elemR(thisJB,er_Flowrate) / elemR(thisJB,er_Area)
+                ! elsewhere 
+                !     elemR(thisJB,er_Velocity) = zeroR
                 ! endwhere
 
-                ! !% --- zero outflow from downstream branch if JB depth is zero
-                ! where ((elemR(thisJB,er_Depth) .le. setting%ZeroValue%Depth)    .and. &
-                !        (elemSI(thisJB,esi_JunctionBranch_IsUpstream) .ne. oneI) .and. &
-                !        (elemR(thisJB,er_Flowrate) > zeroR) )
-
-                !        elemR(thisJB,er_Flowrate) = zeroR 
-                !        elemR(thisJB,er_Velocity) = zeroR
-
+                ! !% --- apply velocity limiter
+                ! where (abs(elemR(thisJB,er_Velocity)) > setting%Limiter%Velocity%Maximum)
+                !     elemR(thisJB,er_Velocity) = sign(setting%Limiter%Velocity%Maximum * 0.99d0, elemR(thisJB,er_Velocity))
                 ! endwhere
 
-                ! print *, ' '
-                ! print *, 'in energy term ',elemR(7,er_Flowrate)
-                ! print *, elemR(5,er_Volume) / elemR(7,er_Flowrate), setting%Time%Hydraulics%Dt
-                ! print *, ' '
 
             end do
 
@@ -359,24 +397,29 @@ module runge_kutta2
                 thisP => elemP(1:Npack, ep_JB)
                 call update_Froude_number_element (thisP) 
                 call update_wavespeed_element (thisP)
-                call update_interpweights_JB (thisP, Npack, .true.)
+                !call update_interpweights_JB (thisP, Npack, .true.) !% not needed here 20230504brh
             end if
 
                 ! call util_utest_CLprint ('------- FFF  after Energy-based JB flows')
         end if
     
+        !% HERE: We now have JB elements and faces that are consistent, with Diag-adjacent and
+        !% inflows having the face values pushed to the JB, and JB/CC faces having the energy
+        !% based flowrate/velocity from the element pushed to faces. Need to sync faces to
+        !% ensure consistency across processors
 
-        !% --- Push JB element flows to faces
-        !%     Note that for inflows this doesn't change anything because the JB and faces
-        !%     are still the same. This only changes tht outflows
-        if (N_nJM > 0) then 
-            !% --- push JB upstream branch Q to the upstream face
-            call face_push_elemdata_to_face (ep_JB_Upstream,fr_Flowrate,   er_Flowrate, elemR,.true.)
-            !% --- push JB downstream branch Q to the downstream face
-            call face_push_elemdata_to_face (ep_JB_Downstream,fr_Flowrate, er_Flowrate, elemR,.false.)
+        ! !% --- Push JB element flows to faces MOVED INSIDE THE ENERGY EQUATION 20230504 TO ENSURE ONLY 
+        !% OUTFLOWS ARE AFFECTED
+        ! !%     Note that for inflows this doesn't change anything because the JB and faces
+        ! !%     are still the same. This only changes tht outflows
+        ! if (N_nJM > 0) then 
+        !     !% --- push JB upstream branch Q to the upstream face
+        !     call face_push_elemdata_to_face (ep_JB_Upstream,fr_Flowrate,   er_Flowrate, elemR,.true.)
+        !     !% --- push JB downstream branch Q to the downstream face
+        !     call face_push_elemdata_to_face (ep_JB_Downstream,fr_Flowrate, er_Flowrate, elemR,.false.)
 
-                ! call util_utest_CLprint ('------- GGG after push JB flowrates to face')
-        end if
+        !         ! call util_utest_CLprint ('------- GGG after push JB flowrates to face')
+        ! end if
 
         !% ==============================================================
         !% --- face sync (saz05022023)
@@ -416,7 +459,6 @@ module runge_kutta2
             ! print *, istep, '= iSTEP /////////////////////////////////////// ISTEP = ',istep
             ! print *, ' '
         
-
             !% --- Half-timestep advance on CC for U and UVolume
             call rk2_step_ETM_CC (istep)  
 
@@ -443,7 +485,7 @@ module runge_kutta2
                     Npack => npack_elemP(ep_JB)
                     if (Npack > 0) then 
                         thisP => elemP(1:Npack, ep_JB)
-                        call update_interpweights_JB (thisP, Npack, .true.)
+                        call update_interpweights_JB (thisP, Npack, .false.)
                     end if
 
                 else if (istep == 2)then 
@@ -465,9 +507,10 @@ module runge_kutta2
                         !% that limits depth based on fulldepth
                         call geo_depth_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
                     
-                        !% --- new JM head
+                        !% --- new JM head, ellDepth and area
                         elemR(thisP,er_Head) = llgeo_head_from_depth_pure (thisP,elemR(thisP,er_Depth))
                         elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
+                        elemR(thisP,er_Area) = elemR(thisP,er_Depth) * sqrt(elemSR(thisP,esr_Storage_Plan_Area))
 
                         !% NEED PREISSMANN SLOT STUFF HERE (OR BELOW?) TO GET CORRECT HEAD
                         !% QUESTION: SHOULD ELLDEPTH BE DEPTH OR HEAD - ZBOTTOM?
@@ -475,7 +518,7 @@ module runge_kutta2
                         !% --- adjust JM for small or zero depth
                         call adjust_element_toplevel (JM)
                         !% --- assign JB values based on new JM head
-                        call geo_assign_JB (ep_JM) !% HACK  revise using ep_JB
+                        call geo_assign_JB_from_head (ep_JM) !% HACK  revise using ep_JB
                         !% --- adjust JB for small or zero depth
                         call adjust_element_toplevel (JB)
                         
@@ -573,9 +616,10 @@ module runge_kutta2
                 !%     only applies to faces with JB on one side
                 call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &
                     fp_JB_upstream_is_zero_IorS,fp_JB_bothsides_are_zero_IorS)
-            end if
 
-                ! call util_utest_CLprint ('------- PPP.02 after face zerodepth ')
+                    ! call util_utest_CLprint ('------- PPP.02 after face zerodepth ')
+
+            end if                
 
             !% --- enforce open (1) closed (0) "setting" value from EPA-SWMM
             !%     for all CC and Diag elements (not allowed on junctions)
@@ -606,8 +650,8 @@ module runge_kutta2
                     !% HACK - INCLUDES DEPTH, ETC, BUT COMMENTED OUT FOR NOW
                     !% NOTE - THIS IS NOT in junction_toplevel because this
                     !% is the subroutine that requires face syncing afterwards
-                    call face_force_JBadjacent_values (ep_JM, .true.)
-                    call face_force_JBadjacent_values (ep_JM, .false.)
+                    call face_force_JBelem_to_face (ep_JM, .true.)
+                    call face_force_JBelem_to_face (ep_JM, .false.)
 
                         ! call util_utest_CLprint ('------- SSS  after face_force_JBadjacent')
                 end if
@@ -635,7 +679,7 @@ module runge_kutta2
                     !% --- Adjust JB-adjacent CC elements using fr_DeltaQ flux changes
                     !%     This fixes conservative flowrate, volume, velocity for upstream (true)
                     !%     and downstream (false) branches. Note that flowrate is already
-                    !%     fixed in face_force_JBadjacent_values. Also calls update_auxiliary_data_CC
+                    !%     fixed in face_force_JBelem_to_face. Also calls update_auxiliary_data_CC
                     !%     for associated geometry data updates
 
     
@@ -671,19 +715,19 @@ module runge_kutta2
                     call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &
                         fp_JB_upstream_is_zero_IorS,fp_JB_bothsides_are_zero_IorS)
 
-                        ! ! call util_utest_CLprint ('------- TTT.01  after face zerodepth for JB')
+                        ! call util_utest_CLprint ('------- TTT.01  after face zerodepth for JB')
 
                 end if
             end if
             !% END JUNCTION SOLUTION
             !%=========================================
 
-                ! ! call util_utest_CLprint ('------- VVV.01  before adjust Vfilter CC')
+                ! call util_utest_CLprint ('------- VVV.01  before adjust Vfilter CC')
 
             !% --- Filter flowrates to remove grid-scale checkerboard
             call adjust_Vfilter_CC ()
 
-                ! ! call util_utest_CLprint ('------- VVV.02  after adjust Vfilter CC')
+                ! call util_utest_CLprint ('------- VVV.02  after adjust Vfilter CC')
 
             if (istep == 1) then 
                 !% -- the conservative fluxes from N to N_1 on CC are stored for CC and Diag
@@ -691,7 +735,7 @@ module runge_kutta2
                 !call rk2_store_conservative_fluxes (CCDiag) 
                 call rk2_store_conservative_fluxes (ALL) 
 
-                    ! ! call util_utest_CLprint ('------- WWW  after  step 1 store conservative fluxes all')
+                    ! call util_utest_CLprint ('------- WWW  after  step 1 store conservative fluxes all')
             end if
 
                 ! call util_utest_CLprint ('------- YYY end of RK step')
@@ -931,6 +975,10 @@ module runge_kutta2
                 !     if (istep == 1) ! ! ! ! ! ! call util_utest_CLprint ('------- KKK  after update weights JB for JB/Diag')
             end if
 
+            
+
+
+
             !% STEP rkH
             !% --- interpolate all data to faces
             !% NOTE 20230419 THIS IS DIFFERENT THAN IN JUNCTION_TOPLEVEL_3
@@ -1028,8 +1076,8 @@ module runge_kutta2
                 !%     and downstream (false) branches.
                 !%     Forces elem  flowrate, deltaQ, and head to face
                 !%     also computes new depths and areas for faces
-                call face_force_JBadjacent_values (ep_JM, .true.)
-                call face_force_JBadjacent_values (ep_JM, .false.)
+                call face_force_JBelem_to_face (ep_JM, .true.)
+                call face_force_JBelem_to_face (ep_JM, .false.)
 
                     ! ! ! ! call util_utest_CLprint ('------- RRR  after face_force_JBadjacent')
 
@@ -1452,8 +1500,8 @@ module runge_kutta2
                 !%     and downstream (false) branches.
                 !%     Forces elem  flowrate, deltaQ, and head to face
                 !%     also computes new depths and areas for faces
-                call face_force_JBadjacent_values (ep_JM, .true.)
-                call face_force_JBadjacent_values (ep_JM, .false.)
+                call face_force_JBelem_to_face (ep_JM, .true.)
+                call face_force_JBelem_to_face (ep_JM, .false.)
 
                     ! ! ! ! ! ! call util_utest_CLprint ('------- RRR  after face_force_JBadjacent')
 
