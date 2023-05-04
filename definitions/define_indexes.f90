@@ -527,6 +527,8 @@ module define_indexes
         enumerator :: ep_JB_Upstream               !% all the downstream JB elements 
         enumerator :: ep_JB_Diag_Adjacent            !% all JB adjacent to Diag elements
         enumerator :: ep_JB_CC_Adjacent              !% all JB adjacent to CC elements
+        enumerator :: ep_JB_Upstream_CC_Adjacent     !% all JB upstream branches adjacent to CC elements
+        enumerator :: ep_JB_Downstream_CC_Adjacent   !% all JB downstream branches adjacent to CC elements
         !enumerator :: ep_JB_AC                      !% junction branches using AC method
         !enumerator :: ep_JB_ALLtm                   !% Junction branches with any time march (static)
         !enumerator :: ep_JB_ETM                     !% junction branches using ETM method
@@ -1633,7 +1635,7 @@ module define_indexes
         enumerator :: pfc_init_IC_get_channel_conduit_velocity
         enumerator :: pfc_init_IC_from_nodedata
         enumerator :: pfc_init_IC_get_junction_data
-        enumerator :: pfc_geo_assign_JB
+        enumerator :: pfc_geo_assign_JB_from_head
         enumerator :: pfc_update_auxiliary_variables
         enumerator :: pfc_init_IC_set_SmallVolumes
         enumerator :: pfc_init_IC_diagnostic_interpolation_weights

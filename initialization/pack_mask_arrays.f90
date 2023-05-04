@@ -3063,6 +3063,61 @@ contains
                 )
         end if
 
+
+    !% ep_JB_Upstream_CC_Adjacent 
+        !% -- all JB upstream_branch elements that are adjacent to a CC element
+        ptype => col_elemP(ep_JB_Upstream_CC_Adjacent)
+        npack => npack_elemP(ptype)
+        
+        npack = count( &
+                (elemI(:,ei_elementType) == JB)                     &
+                .and.                                               &
+                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                .and.                                               &
+                (elemYN(:,eYN_is_CCadjacent_JBorDiag))              &
+                .and.                                               &
+                (elemSI(:,esi_JunctionBranch_IsUpstream) == oneI)   &
+                 )
+
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack( eIdx, &
+                (elemI(:,ei_elementType) == JB)                     &
+                .and.                                               &
+                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                .and.                                               &
+                (elemYN(:,eYN_is_CCadjacent_JBorDiag))              &
+                .and.                                               &
+                (elemSI(:,esi_JunctionBranch_IsUpstream) == oneI)   &
+                )
+        end if
+
+    !% ep_JB_Downstream_CC_Adjacent 
+        !% -- all JB downpstream_branch elements that are adjacent to a CC element
+        ptype => col_elemP(ep_JB_Downstream_CC_Adjacent)
+        npack => npack_elemP(ptype)
+        
+        npack = count( &
+                (elemI(:,ei_elementType) == JB)                     &
+                .and.                                               &
+                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                .and.                                               &
+                (elemYN(:,eYN_is_CCadjacent_JBorDiag))              &
+                .and.                                               &
+                (elemSI(:,esi_JunctionBranch_IsUpstream) .ne. oneI) &
+                 )
+
+        if (npack > 0) then
+            elemP(1:npack,ptype) = pack( eIdx, &
+                (elemI(:,ei_elementType) == JB)                     &
+                .and.                                               &
+                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                .and.                                               &
+                (elemYN(:,eYN_is_CCadjacent_JBorDiag))              &
+                .and.                                               &
+                (elemSI(:,esi_JunctionBranch_IsUpstream) .ne. oneI) &
+                )
+        end if
+
     !% ep_CC_DownstreamOfJunction
         !% - all CC element downstream of a JB
         ptype => col_elemP(ep_CC_DownstreamOfJunction)
@@ -3100,6 +3155,9 @@ contains
                 (elemYN(:,eYN_isElementUpstreamOfJB)) &
                 ))
         endif
+
+
+
 
 
     !% ep_Diag_DownstreamOfJunction

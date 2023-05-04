@@ -376,7 +376,7 @@ contains
             !% --- junction head
             elemR(thisP,er_Head) = llgeo_head_from_depth_pure(thisP,elemR(thisP,er_Depth))
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
-            call geo_assign_JB (ep_JM)
+            call geo_assign_JB_from_head (ep_JM)
             call slot_JB_computation (ep_JM)
         end if
         

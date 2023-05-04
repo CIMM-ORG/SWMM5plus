@@ -836,8 +836,8 @@ contains
             profiler_procedure_name(pfc_init_IC_get_orifice_geometry) = 'init_IC_get_orifice_geometry'
             profiler_procedure_level(pfc_init_IC_get_orifice_geometry) = 3
 
-            profiler_procedure_name(pfc_geo_assign_JB) = 'geo_assign_JB'
-            profiler_procedure_level(pfc_geo_assign_JB) = 3
+            profiler_procedure_name(pfc_geo_assign_JB_from_head) = 'geo_assign_JB_from_head'
+            profiler_procedure_level(pfc_geo_assign_JB_from_head) = 3
 
             profiler_procedure_name(pfc_init_IC_get_channel_conduit_velocity) = 'init_IC_get_channel_conduit_velocity'
             profiler_procedure_level(pfc_init_IC_get_channel_conduit_velocity) = 3

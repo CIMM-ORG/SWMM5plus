@@ -51,7 +51,7 @@ module geometry
     !public :: geometry_toplevel
     public :: geometry_toplevel_CC
     public :: geometry_toplevel_JMJB
-    public :: geo_assign_JB
+    public :: geo_assign_JB_from_head
     public :: geo_JM_depth_area_from_volume
     public :: geo_common_initialize
     public :: geo_sectionfactor_from_depth_singular
@@ -236,9 +236,9 @@ module geometry
         !% --- JB VALUES
         !%    assign the non-volume geometry on junction branches JB based on JM head
         !%    Values limited by full volume. Volume assigned is area * length
-        call geo_assign_JB (ep_JM)
+        call geo_assign_JB_from_head (ep_JM)
 
-            ! call util_utest_CLprint ('------- in geometry after geo_assign_JB')
+            ! call util_utest_CLprint ('------- in geometry after geo_assign_JB_from_head')
         
         !% --- JB slot adjustments
         !%     make the slot adjustments for JB after the geometry is assigned
@@ -1251,7 +1251,7 @@ module geometry
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine geo_assign_JB (thisColP_JM)
+    subroutine geo_assign_JB_from_head (thisColP_JM)
         !%------------------------------------------------------------------
         !% Description:
         !% Assigns geometry for head, depth, area and volume for JB (junction branches)
@@ -1297,18 +1297,18 @@ module geometry
 
             logical :: isUpBranch
 
-            integer :: printJB = 2022
+            integer :: printJB = 5
 
         !% thisColP_JM is the column for the junction mains of a particular
         !% whichTM. For ALL ep_JM, for ETM, ep_JM_ETM, for AC ep_JM_AC
             integer, allocatable :: tempP(:)
-            character(64) :: subroutine_name = 'geo_assign_JB'
+            character(64) :: subroutine_name = 'geo_assign_JB_from_head'
             character(256) :: chartemp
         !%---------------------------------------------------------------------
         !% Preliminaries
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-            if (setting%Profile%useYN) call util_profiler_start (pfc_geo_assign_JB)
+            if (setting%Profile%useYN) call util_profiler_start (pfc_geo_assign_JB_from_head)
         !%----------------------------------------------------------------------
         !% Aliases
             Npack         => npack_elemP(thisColP_JM)
@@ -1374,7 +1374,7 @@ module geometry
 
                     ! print *, 'tB ',tB 
 
-                    ! if (tB == printJB) print *, 'HEAD AAA',head(tB)
+                        ! if (tB == printJB) print *, 'HEAD AAA',head(tB)
 
                     if (BranchExists(tB) .ne. oneI) cycle
 
@@ -1455,24 +1455,26 @@ module geometry
                                     + (fVel_u(fdn(tB))**twoI) / grav
                             end if
 
-                            ! if (tB == printJB) print *, 'HEAD DDD',head(tB)
+                                ! if (tB == printJB) print *, 'HEAD DDD',head(tB)
+
                         else 
                             !% --- no flow, set below zerovalue
                             head(tB) = zBtm(tB) + sedimentDepth(tB) + 0.99d0 * setting%ZeroValue%Depth
 
-                            ! if (tB == printJB) print *, 'HEAD EEE',head(tB)
+                                ! if (tB == printJB) print *, 'HEAD EEE',head(tB)
+
                         end if
 
                             ! print *, 'HEAD B, velocity', head(tB), velocity(tB)
                             ! print *,'Velocity ',velocity(tB)
                     end if
 
-                    ! if (tB == printJB) print *, 'HEAD ZZZ',head(tB)
+                        ! if (tB == printJB) print *, 'HEAD ZZZ',head(tB)
 
                     !% compute provisional depth
                     depth(tB) = head(tB) - (zBtm(tB) + sedimentDepth(tB))
 
-                    ! print *, 'DEPTH ',depth(tB)
+                        ! if (tB == printJB) print *, 'DEPTH ',depth(tB)
 
                     if (depth(tB) .ge. fulldepth(tB)) then
                         !% surcharged or incipient surcharged
@@ -1833,11 +1835,11 @@ module geometry
         !% with thisP(ii) and tB with thisP(ii)+kk, which makes the code
         !% difficult to read.
 
-        if (setting%Profile%useYN) call util_profiler_stop (pfc_geo_assign_JB)
+        if (setting%Profile%useYN) call util_profiler_stop (pfc_geo_assign_JB_from_head)
 
         if (setting%Debug%File%geometry) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine geo_assign_JB
+    end subroutine geo_assign_JB_from_head
 !%
 !%==========================================================================
 !%==========================================================================
@@ -4904,7 +4906,7 @@ module geometry
         ! !% --- JB VALUES
         ! !%    assign the non-volume geometry on junction branches JB based on JM head
         ! !%    Values limited by full volume. Volume assigned is area * length
-        ! call geo_assign_JB (whichTM, thisColP_JM)
+        ! call geo_assign_JB_from_head (whichTM, thisColP_JM)
 
         !     ! ! ! call util_utestLprint ('in geometry after assign_JB') 
 
@@ -4931,7 +4933,7 @@ module geometry
         ! !%    compute area from volume for CC, JM
         ! !%     For closed conduits this is based on the volume limited by full volume.
         ! !%     For open channels the volume limit depends on if AllowChanneOverflowTF is false.
-        ! !%     Note that JB areas are already assigned in geo_assign_JB()
+        ! !%     Note that JB areas are already assigned in geo_assign_JB_from_head()
         ! Npack     => npack_elemP(thisColP_all_TM)
         ! if (Npack > 0) then
         !     thisP => elemP(1:Npack,thisColP_all_TM)
@@ -5025,7 +5027,7 @@ module geometry
 
         ! !% --- compute the SlotDepth, SlotArea, SlotVolume and update
         ! !%     elem volume and depth for JB. Note elem head on JB either with or
-        ! !%     without surcharge is assigned in geo_assign_JB
+        ! !%     without surcharge is assigned in geo_assign_JB_from_head
         ! call slot_JB_computation (thisColP_JM)
         
         !     ! ! ! call util_utestLprint ('in geometry after slot_JB_computation') 
