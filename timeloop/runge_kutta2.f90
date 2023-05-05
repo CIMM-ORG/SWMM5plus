@@ -13,6 +13,7 @@ module runge_kutta2
     use lowlevel_rk2
     use culvert_elements, only: culvert_toplevel
     use pack_mask_arrays
+    use preissmann_slot
     use adjust
     use diagnostic_elements
     use utility, only: util_syncwrite
@@ -500,8 +501,11 @@ module runge_kutta2
                         !% --- new junction plan area
                         call geo_plan_area_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
                         !print *, 'plan area ',elemSR(thisP(1),esr_Storage_Plan_Area)
-
-
+                        
+                        !% --- saz20230504 compute slots based on solved volume
+                        !% --- slot calculations based on junction volume
+                        call slot_JM_ETM (ep_JM, Npack)
+                        
                         !% --- new junction depth 
                         !% NOTE: THIS USES storage_implied_depth_from_volume
                         !% that limits depth based on fulldepth
@@ -514,18 +518,22 @@ module runge_kutta2
 
                         !% NEED PREISSMANN SLOT STUFF HERE (OR BELOW?) TO GET CORRECT HEAD
                         !% QUESTION: SHOULD ELLDEPTH BE DEPTH OR HEAD - ZBOTTOM?
+                        !% saz 20230504 --- add back the slot depths back to head 
+                        call slot_JM_adjustments (ep_JM, Npack)
 
                         !% --- adjust JM for small or zero depth
                         call adjust_element_toplevel (JM)
                         !% --- assign JB values based on new JM head
                         call geo_assign_JB_from_head (ep_JM) !% HACK  revise using ep_JB
+
+                        ! QUESTION? NEED THIS HERE? see  geometry_toplevel_JMJB
+                        !% saz 20230504 -- since geometry_toplevel_JMJB is obsolete,
+                        !% we need JB slot computations here
+                        call slot_JB_computation (ep_JM)
+
                         !% --- adjust JB for small or zero depth
                         call adjust_element_toplevel (JB)
                         
-
-                        ! QUESTION? NEED THIS HERE? see  geometry_toplevel_JMJB
-                        !% call slot_JB_computation (ep_JM)
-            
                     end if
 
                     ! ! call util_utest_CLprint ('------- LLL  after JM 2nd step ')

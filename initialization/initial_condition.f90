@@ -4121,6 +4121,8 @@ contains
         else
             !% --- not infinite depth
             if (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) .eq. zeroR) then 
+                !% --- open channel storage can not surcharge
+                elemYN(JMidx,eYN_canSurcharge) = .false.
                 !% --- open channel storage
                 if (elemSR(JMidx,esr_JunctionMain_PondedArea) == zeroR) then
                     !% --- use the overflow weir algorithm

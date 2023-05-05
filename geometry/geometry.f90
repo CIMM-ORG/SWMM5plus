@@ -215,7 +215,7 @@ module geometry
         ! print *, 'in geometry JJJJ',elemR(5,er_Depth), elemR(5,er_EllDepth)
 
         !% --- check for crashpoint and stop here
-        call util_crashstop(830984)
+        ! call util_crashstop(830984)
 
     end subroutine geometry_toplevel_CC
 !% 

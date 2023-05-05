@@ -1891,9 +1891,10 @@ contains
         mm=0
         do
             mm=mm+1 
-            !print *, 'mm ',mm
+            ! print *, 'mm ',mm
 
             read(thisUnit, "(A)", iostat = read_status) line
+
             if (read_status /= 0) then 
                 exit
             endif
@@ -2066,8 +2067,6 @@ contains
             
 
         end do
-        
-        !print *, output_profile_names
 
         close (thisUnit)
 

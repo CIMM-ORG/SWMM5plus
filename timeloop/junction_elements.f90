@@ -10,6 +10,7 @@ module junction_elements
     use face
     use geometry
     use pack_mask_arrays, only: pack_small_or_zero_depth_elements, pack_CC_zeroDepth_interior_faces
+    use preissmann_slot
     use update
     !use utility_unit_testing, only: util_utest_CLprint
     use utility_crash, only: util_crashpoint
@@ -426,6 +427,10 @@ module junction_elements
         !%     ASSUMES THAT HEAD, VOLUME, DEPTH ON JM ARE ALREADY ASSIGNED
         !%     JB TAKES ON JM HEAD
         call geo_assign_JB_from_head (ep_JM) !% HACK  revise using ep_JB
+
+        !% saz 20230504 -- since geometry_toplevel_JMJB is obsolete,
+        !% we need JB slot computations here
+        call slot_JB_computation (ep_JM)
 
             ! call util_utest_CLprint ('------- eee  after geo_assign_JB_from_head')
 
@@ -2661,9 +2666,16 @@ module junction_elements
             junction_main_dQdHstorage = zeroR
             return
         else
-            !% --- Storage rate term based on time step
-            junction_main_dQdHstorage = elemSR(JMidx,esr_Storage_Plan_Area) &
-                / (setting%Solver%crk2(iStep) * setting%Time%Hydraulics%Dt)
+            if (.not.elemYN(JMidx,eYN_isSurcharged)) then
+                !% --- Storage rate term based on time step
+                junction_main_dQdHstorage = elemSR(JMidx,esr_Storage_Plan_Area) &
+                    / (setting%Solver%crk2(iStep) * setting%Time%Hydraulics%Dt)
+            else
+                !% saz 20230504
+                !% --- Storage rate term based on time step
+                junction_main_dQdHstorage = elemSR(JMidx,esr_JunctionMain_Surcharge_Plan_Area) &
+                                            / (setting%Solver%crk2(iStep) * setting%Time%Hydraulics%Dt)
+            end if
         end if
 
     end function junction_main_dQdHstorage   
@@ -2686,7 +2698,7 @@ module junction_elements
         ! print *, elemR(JMidx,er_Head) - elemR(JMidx,er_Zcrown)
 
         !% --- if not an overflow at this time
-        if (elemR(JMidx,er_Head) .le. elemR(JMidx,er_Zcrown)) then 
+        if (elemR(JMidx,er_Head) .le. (elemR(JMidx,er_Zcrown) + elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth))) then 
             junction_main_dQdHoverflow = zeroR
             return 
         end if
