@@ -795,6 +795,7 @@ module define_indexes
         enumerator ::  esr_JunctionMain_OverflowOrifice_Length
         enumerator ::  esr_JunctionMain_OverflowOrifice_Height
         enumerator ::  esr_JunctionMain_OverflowRate
+        enumerator ::  esr_JunctionMain_Surcharge_Plan_Area
         enumerator ::  esr_JunctionMain_StorageRate
         enumerator ::  esr_JunctionBranch_Kfactor
         enumerator ::  esr_JunctionBranch_fa !% constant factor in dQdH

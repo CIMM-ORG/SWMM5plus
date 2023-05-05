@@ -18,6 +18,7 @@ module preissmann_slot
     private
     public :: slot_toplevel 
     public :: slot_CC_ETM
+    public :: slot_JM_ETM
     public :: slot_initialize
     public :: slot_JM_head_PSadd
     public :: slot_JM_head_PSremove
@@ -277,15 +278,15 @@ module preissmann_slot
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine slot_JM_adjustments (thisColP_JM)    
+    subroutine slot_JM_adjustments (thisCol, Npack)   
         !%------------------------------------------------------------------
         !% Description:
         !% Adjusts geometry in JM for Preissmann Slot
         !% Uses the Static Slot approach (only)
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, intent(in) :: thisColP_JM
-            integer, pointer    :: Npack, thisP(:)
+            integer, intent(in) :: thisCol, Npack
+            integer, pointer    :: thisP(:)
             real(8), pointer    :: volume(:), depth(:),  head(:), ellDepth(:)
             !real(8), pointer    :: , ellMax(:)
             !real(8), pointer    :: pressurehead(:)
@@ -296,29 +297,23 @@ module preissmann_slot
         !% Preliminaries:
             !% --- exit if not using PS
             if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
-            Npack => npack_elemP(thisColP_JM)
             if (Npack < 1) return
             if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% Aliases
-            thisP    => elemP(1:Npack,thisColP_JM)
+            thisP    => elemP(1:Npack,thisCol)
             volume   => elemR(:,er_Volume)
             depth    => elemR(:,er_Depth)
             head     => elemR(:,er_Head)
             ellDepth => elemR(:,er_EllDepth)
-            !ellMax => elemR(:,er_FullEllDepth) 
-            !pressurehead  => elemR(:,er_Pressure_Head)
             SlotVolume => elemR(:,er_SlotVolume)
             SlotDepth  => elemR(:,er_SlotDepth)
         !%------------------------------------------------------------------
 
-        call slot_JM_head_PSadd (thisColP_JM)
+        call slot_JM_head_PSadd (thisCol)
 
-        volume(thisp) = volume(thisP) + SlotVolume(thisP)
-        depth(thisP)  = depth(thisP)  + SlotDepth(thisP)
-        !pressurehead(thisP) = head(thisP) + SlotDepth(thisP)
-        !ell(thisP)    = ellMax(thisP)
+        depth(thisP)    = depth(thisP)  + SlotDepth(thisP)
         ellDepth(thisP) = depth(thisP)
 
         if (setting%Debug%File%geometry) &
@@ -687,12 +682,12 @@ module preissmann_slot
             integer, intent(in) :: thisCol, Npack
             integer, pointer    :: thisP(:), SlotMethod
             real(8), pointer    :: fullarea(:), fullVolume(:), length(:)
-            real(8), pointer    :: PNumber(:), PCelerity(:)
+            real(8), pointer    :: PNumber(:), PCelerity(:), pAreaSurcharge(:)
             real(8), pointer    :: volume(:) , SlotVolume(:), SlotDepth(:)
-            real(8), pointer    :: SlotArea(:), SlotWidth(:), maxSlotDepth(:)
+            real(8), pointer    :: SlotWidth(:), maxSlotDepth(:)
             real(8), pointer    :: VolumeExtra(:), VolumePonded(:), VolumeOverflow(:)
             real(8), pointer    :: TargetPCelerity, cfl, grav, Alpha, Dt
-            logical, pointer    :: isSlot(:), isSurcharge(:)
+            logical, pointer    :: isSlot(:), isSurcharge(:), canSurcharge(:)
             integer :: ii
 
             character(64) :: subroutine_name = 'slot_JM_ETM'
@@ -712,16 +707,17 @@ module preissmann_slot
             PCelerity  => elemR(:,er_Preissmann_Celerity)
             SlotVolume => elemR(:,er_SlotVolume)
             SlotDepth  => elemR(:,er_SlotDepth)
-            SlotArea   => elemR(:,er_SlotArea)
             SlotWidth  => elemR(:,er_SlotWidth)
             volume     => elemR(:,er_Volume)
             maxSlotDepth   => elemSR(:,esr_JunctionMain_SurchargeExtraDepth)
+            pAreaSurcharge => elemSR(:,esr_JunctionMain_Surcharge_Plan_Area)
             VolumePonded   => elemR(:,er_VolumePonded)
             VolumeExtra    => elemR(:,er_Temp01)
             VolumeOverflow => elemR(:,er_VolumeOverFlow)
             !% --- pointer to elemYN column
             isSlot         => elemYN(:,eYN_isPSsurcharged)
             isSurcharge    => elemYN(:,eYN_isSurcharged)
+            canSurcharge   => elemYN(:,eYN_canSurcharge)
             !% --- pointer to necessary settings struct
             SlotMethod          => setting%Solver%PreissmannSlot%Method
             TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
@@ -730,133 +726,91 @@ module preissmann_slot
             grav                => setting%Constant%gravity
             Dt                  => setting%Time%Hydraulics%Dt
         !%-----------------------------------------------------------------
-        ! !% Select the type of slot method
-        ! select case (SlotMethod)
-        !     !% for a static slot, the preissmann number will always be one.
-        !     case (StaticSlot)
+            !% initialize static slot
+            PNumber(thisP)        = oneR  !% required for static slot
+            SlotVolume(thisP)     = zeroR
+            pAreaSurcharge(thisP) = zeroR
+            SlotDepth(thisP)      = zeroR
+            PCelerity(thisP)      = zeroR
+            SlotWidth(thisP)      = zeroR
+            VolumeExtra(thisP)    = zeroR
+            isSlot(thisP)         = .false.
+            isSurcharge(thisP)    = .false.
+            !% --- find the slot volume/ area/ and the faces that are surcharged
 
-        !% --- HACK JM are always static slot. should test using JB average PNumber
-        !%     for a dynamic slot
+            !% --- initialize extra volume to zero so that non-surcharged JM will
+            !%     not be affected. 
+            !%     Note that a positive value is extra volume that would be in the 
+            !%     slot but is lost to ponding/overflow. A negative value is the ability
+            !%     take take in extra volume into the slot due to ponding (only). 
+            !%     Remember the inflow from ponding into a non-surcharged JM is handled
+            !%     in geo_ponding_inflow
+            VolumeExtra(thisP) = zeroR
 
-        ! print *, ' '
-        ! print *, 'in ',trim(subroutine_name)
-        ! print *, ' '
+            !% --- compute baseline slot properties 
+            !%     allows SlotDepth greater than maximum allowed
+            where ((volume(thisP) >= fullVolume(thisP)) .and. canSurcharge(thisP))
+                isSlot(thisP)         = .true.
+                isSurcharge(thisP)    = .true.
+                SlotVolume(thisP)     = max(volume(thisP) - fullVolume(thisP), zeroR)
+                PCelerity(thisP)      = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
+                SlotWidth(thisP)      = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
+                pAreaSurcharge(thisP) = SlotWidth(thisP) * SlotWidth(thisP) 
+                SlotDepth(thisP)      = SlotVolume(thisP) / pAreaSurcharge(thisP)
+                !% --- difference between SlotDepth and maximum is the "extra" volume
+                !%     If negative, this is volume that could be filled by ponding
+                !%     If positive, this is volume that is added to ponding or lost 
+                !%     in overflow
+                VolumeExtra(thisP) =  (SlotDepth(thisP) - maxSlotDepth(thisP)) &
+                                        * pAreaSurcharge(thisP)
+            end where
 
-                !% initialize static slot
-                PNumber(thisP)    = oneR  !% required for static slot
-                SlotVolume(thisP) = zeroR
-                SlotArea(thisP)   = zeroR
-                SlotDepth(thisP)  = zeroR
-                PCelerity(thisP)  = zeroR
-                SlotWidth(thisP)  = zeroR
-                VolumeExtra(thisP)= zeroR
-                isSlot(thisP)     = .false.
-                isSurcharge(thisP)= .false.
-                !% --- find the slot volume/ area/ and the faces that are surcharged
+            !% HACK saz 20230504: skipping volume overflow for now
+            !% --- if ponding is not allowed, there is no possibility of ponding inflow
+            !%     so VolumeExtra must be positive or zero
+            if (.not. setting%SWMMinput%AllowPonding) then
+                VolumeExtra(thisP) = max(VolumeExtra(thisP), zeroR)
+            end if
 
-                !% --- initialize extra volume to zero so that non-surcharged JM will
-                !%     not be affected. 
-                !%     Note that a positive value is extra volume that would be in the 
-                !%     slot but is lost to ponding/overflow. A negative value is the ability
-                !%     take take in extra volume into the slot due to ponding (only). 
-                !%     Remember the inflow from ponding into a non-surcharged JM is handled
-                !%     in geo_ponding_inflow
-                VolumeExtra(thisP) = zeroR
+            !% --- limit inflow volumes from ponding
+            if (setting%SWMMinput%AllowPonding) then  
+                where (VolumeExtra(thisP) < zeroR)
+                    !% --- inflow from ponding is the smaller volume of the extra available 
+                    !%     in the slot and the amount in the ponded volume (negative values, 
+                    !%     so use max). If there is no ponded volume, this returns 0 for extra
+                    !%     volume
+                    VolumeExtra(thisP) = max(VolumeExtra(thisP), -VolumePonded(thisp) )
+                endwhere
+            end if
 
-                !% --- compute baseline slot properties 
-                !%     allows SlotDepth greater than maximum allowed
-                where (volume(thisP) >= fullVolume(thisP))
-                    isSlot(thisP)      = .true.
-                    isSurcharge(thisP) = .true.
-                    SlotVolume(thisP) = max(volume(thisP) - fullVolume(thisP), zeroR)
-                    SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
-                    PCelerity(thisP)  = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
-                    SlotWidth(thisP)  = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
-                    SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
-                    !% --- difference between SlotDepth and maximum is the "extra" volume
-                    !%     If negative, this is volume that could be filled by ponding
-                    !%     If positive, this is volume that is added to ponding or lost 
-                    !%     in overflow
-                    VolumeExtra(thisP) =  (SlotDepth(thisP) - maxSlotDepth(thisP)) &
-                                         * SlotWidth(thisP) * length(thisP)
-                end where
+            where (VolumeExtra(thisP) .ne. zeroR) 
+                !% --- adjust slot for ponding inflow/outflow or overflow
+                !%     Note that non-surcharged will have VolumeExtra == zeroR
+                !%     so they are not affected. A negative volume extra is
+                !%     adding water to the slot.
+                SlotVolume(thisP) = SlotVolume(thisP) - VolumeExtra(thisP)
+                !% --- prevent truncation error values from causing a negative
+                !%     slot volume.
+                SlotVolume(thisP)     = max(SlotVolume(thisP),zeroR)
+                PCelerity(thisP)      = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
+                SlotWidth(thisP)      = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
+                pAreaSurcharge(thisP) = SlotWidth(thisP) * SlotWidth(thisP)
+                SlotDepth(thisP)      = SlotVolume(thisP) / pAreaSurcharge(thisP) 
+                volume(thisP)         = volume(thisP) - VolumeExtra(thisP)
+            end where
 
-                ! print *, 'thisP       ',thisP
-                ! print *, 'isSlot      ',isSlot(thisP)
-                ! print *, 'SlotVol     ',SlotVolume(thisP)
-                ! print *, 'SlotArea    ',SlotArea(thisP)
-                ! print *, 'PCelerity   ',PCelerity(thisP)
-                ! print *, 'SlotDepth   ',SlotDepth(thisP)
-                ! print *, 'SlotWidth   ',SlotWidth(thisP)
-                ! print *, 'VolumeExtra ',VolumeExtra(thisP)
-                ! print *, 'fullArea    ',fullArea(thisP)
 
-                ! stop 4987032
-                ! print *, 'in slot upper'
-                ! print *, SlotDepth(21), maxSlotDepth(21), VolumeExtra(21)
+            !% HACK saz 20230504: do not reset volume overflow for now
+            !% --- note, nBarrels not needed because JM always has 1 barrel
+            if (setting%SWMMinput%AllowPonding) then 
+                VolumePonded(thisP)   = VolumePonded(thisP)   + VolumeExtra(thisP)
+            else
+                !% --- note that VolumeExtra >= 0 is guaranteed if ponding isnot used
+                VolumeOverflow(thisP) = VolumeExtra(thisP)
+            end if
 
-                !% --- if ponding is not allowed, there is no possibility of ponding inflow
-                !%     so VolumeExtra must be positive or zero
-                if (.not. setting%SWMMinput%AllowPonding) then
-                    VolumeExtra(thisP) = max(VolumeExtra(thisP), zeroR)
-                end if
-    
-                !% --- limit inflow volumes from ponding
-                if (setting%SWMMinput%AllowPonding) then  
-                    where (VolumeExtra(thisP) < zeroR)
-                        !% --- inflow from ponding is the smaller volume of the extra available 
-                        !%     in the slot and the amount in the ponded volume (negative values, 
-                        !%     so use max). If there is no ponded volume, this returns 0 for extra
-                        !%     volume
-                        VolumeExtra(thisP) = max(VolumeExtra(thisP), -VolumePonded(thisp) )
-                    endwhere
-                end if
-
-                where (VolumeExtra(thisP) .ne. zeroR) 
-                    !% --- adjust slot for ponding inflow/outflow or overflow
-                    !%     Note that non-surcharged will have VolumeExtra == zeroR
-                    !%     so they are not affected. A negative volume extra is
-                    !%     adding water to the slot.
-                    SlotVolume(thisP) = SlotVolume(thisP) - VolumeExtra(thisP)
-                    !% --- prevent truncation error values from causing a negative
-                    !%     slot volume.
-                    SlotVolume(thisP) = max(SlotVolume(thisP),zeroR)
-                    SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)
-                    PCelerity(thisP)  = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
-                    SlotDepth(thisP)  = SlotArea(thisP)  * (PCelerity(thisP) ** twoR)  &
-                                            / (grav * (fullArea(thisP)))
-                    SlotWidth(thisP)  = SlotArea(thisP) / SlotDepth(thisP)
-                    !% --- adjust the element volume for the extra volume leaving or entering
-                    !%     (the latter from ponded only)
-                    volume(thisP)     = volume(thisP) - VolumeExtra(thisP)
-                end where
-
-                !% --- note, nBarrels not needed because JM always has 1 barrel
-                if (setting%SWMMinput%AllowPonding) then 
-                    VolumePonded(thisP)   = VolumePonded(thisP)   + VolumeExtra(thisP)
-                else
-                    !% --- note that VolumeExtra >= 0 is guaranteed if ponding isnot used
-                    VolumeOverflow(thisP) = VolumeExtra(thisP)
-                end if
-
-                ! print *, 'in slot', VolumeOverFlow
-                ! print *, SlotVolume(21), SlotDepth(21), VolumeExtra(21)
-            
-        !     !% for dynamic slot, preissmann number is adjusted
-        !     case (DynamicSlot)
-                
-        !         print *, 'In ', subroutine_name
-        !         print *, 'Dynamic slot for junction mains is under development'
-        !         call util_crashpoint(4098734)
-
-        !     case default
-        !         !% should not reach this stage
-        !         print *, 'In ', subroutine_name
-        !         print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
-        !         print *, 'which has key ',trim(reverseKey(SlotMethod))
-        !         cal util_crashpoint(698723)
-
-        ! end select
+            ! print *, 'in slot', VolumeOverFlow
+            ! print *, SlotVolume(21), SlotDepth(21), VolumeExtra(21)
 
     end subroutine slot_JM_ETM
 !%
