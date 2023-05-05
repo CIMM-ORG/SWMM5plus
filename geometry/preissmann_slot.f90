@@ -755,7 +755,8 @@ module preissmann_slot
                 SlotVolume(thisP)     = max(volume(thisP) - fullVolume(thisP), zeroR)
                 PCelerity(thisP)      = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
                 SlotWidth(thisP)      = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
-                pAreaSurcharge(thisP) = SlotWidth(thisP) * SlotWidth(thisP) 
+                !pAreaSurcharge(thisP) = SlotWidth(thisP) * SlotWidth(thisP) 
+                pAreaSurcharge(thisP) = SlotWidth(thisP) * elemR(thisP,er_Length) 
                 SlotDepth(thisP)      = SlotVolume(thisP) / pAreaSurcharge(thisP)
                 !% --- difference between SlotDepth and maximum is the "extra" volume
                 !%     If negative, this is volume that could be filled by ponding
