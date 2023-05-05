@@ -8,7 +8,7 @@ module adjust
     use pack_mask_arrays, only: pack_small_or_zero_depth_elements, pack_CC_zeroDepth_interior_faces
     use utility
     use utility_crash
-    !use utility_unit_testing, only: util_utest_CLprint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -65,52 +65,69 @@ module adjust
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: elementType !%, CC, JM, JB
+            integer :: npack
         !%------------------------------------------------------------------
 
-            ! ! call util_utest_CLprint ('        ADJUST yyy00 before zero...')
+            ! print *, ' '
+            ! print *, 'IN ADJUST CALLING FOR ',reverseKey(elementType)
+            ! print *, ' '
+            ! call util_utest_CLprint ('        ADJUST yyy00 before zero...')
 
 
-    !% --- CC ELEMENT AD HOC ADJUSTMENTS    
-    !% --- identify zero depths (.true. is zero depth)
-    call adjust_zero_or_small_depth_identify_NEW(elementType,.true.)
+        !% --- CC ELEMENT AD HOC ADJUSTMENTS    
+        !% --- identify zero depths (.true. is zero depth)
+        call adjust_zero_or_small_depth_identify_NEW(elementType,.true.)
 
-        ! ! call util_utest_CLprint ('        ADJUST yyy01 after zero depth identify')
+            ! if (elementType == CC) then 
+            !     print *, ' '
+            !     print *, 'Zero Depth YN ', elemYN(:,eYN_isZeroDepth)
+            !     print *, ' '
+            ! end if
 
-
-    if (setting%SmallDepth%useMomentumCutoffYN) then    
-        !% --- identify small depths (.false. is small depth)
-        call adjust_zero_or_small_depth_identify_NEW(elementType,.false.)
-
-        ! ! call util_utest_CLprint ('        ADJUST yyy02 after small depth identify')
-            
-    end if
-
-    !% --- create packed arrays of zero and small depths
-    call pack_small_or_zero_depth_elements (elementType,.true.)
-
-    if (setting%SmallDepth%useMomentumCutoffYN) then   
-        call pack_small_or_zero_depth_elements (elementType,.false.)
-    end if
-
-            ! ! call util_utest_CLprint ('        ADJUST yyy03 after pack elements')
-
-    !% --- adjust head, flowrate, and auxiliary values at zero depth
-    call adjust_zerodepth_element_values (elementType) 
+            ! call util_utest_CLprint ('        ADJUST yyy01 after zero depth identify')
 
 
-            ! ! call util_utest_CLprint ('        ADJUST yyy04 after zero depth element values')
+        if (setting%SmallDepth%useMomentumCutoffYN) then    
+            !% --- identify small depths (.false. is small depth)
+            call adjust_zero_or_small_depth_identify_NEW(elementType,.false.)
 
-    if (elementType == CC) then 
-        if (setting%SmallDepth%useMomentumCutoffYN) then
-            !% --- apply limiters to fluxes and velocity
-            !%     (.false. so that smalldepth fluxes are not set to zero)
-            call adjust_smalldepth_element_fluxes_CC (.false.)
-
-                ! ! call util_utest_CLprint ('        ADJUST yyy05 after small depth element fluxes')
+            ! call util_utest_CLprint ('        ADJUST yyy02 after small depth identify')
+                
         end if
 
-        call adjust_limit_velocity_max_CC () 
-    end if
+        !% --- create packed arrays of zero and small depths
+        call pack_small_or_zero_depth_elements (elementType,.true.)
+
+        ! if (elementType == CC) then 
+        !     print *, ' '
+        !     npack = npack_elemP(ep_ZeroDepth_CC)
+        !     print *, 'Zero Depth  elements', elemP(1:npack,ep_ZeroDepth_CC)
+        !     print *, ' '
+        ! end if
+
+        if (setting%SmallDepth%useMomentumCutoffYN) then   
+            call pack_small_or_zero_depth_elements (elementType,.false.)
+        end if
+
+                ! call util_utest_CLprint ('        ADJUST yyy03 after pack elements')
+
+        !% --- adjust head, flowrate, and auxiliary values at zero depth
+        call adjust_zerodepth_element_values (elementType) 
+
+
+                ! call util_utest_CLprint ('        ADJUST yyy04 after zero depth element values')
+
+        if (elementType == CC) then 
+            if (setting%SmallDepth%useMomentumCutoffYN) then
+                !% --- apply limiters to fluxes and velocity
+                !%     (.false. so that smalldepth fluxes are not set to zero)
+                call adjust_smalldepth_element_fluxes_CC (.false.)
+
+                    ! call util_utest_CLprint ('        ADJUST yyy05 after small depth element fluxes')
+            end if
+
+            call adjust_limit_velocity_max_CC () 
+        end if
 
     end subroutine adjust_element_toplevel
 !%
@@ -121,27 +138,30 @@ module adjust
 
        integer, intent(in) :: facePcol
 
-    !call pack_CC_zeroDepth_interior_faces ()
+       print *, 'OBSOLETE'
+       stop 55098723
 
-    ! print *, ' '
-    ! print *, 'in adjust face toplevel'
-    ! print *, 'facePCol ',fp_noBC_IorS
-    ! print *, faceP(1:npack_faceP(facePcol),facePcol)
-    ! print *, ' '
+        !call pack_CC_zeroDepth_interior_faces ()
+
+        ! print *, ' '
+        ! print *, 'in adjust face toplevel'
+        ! print *, 'facePCol ',fp_noBC_IorS
+        ! print *, faceP(1:npack_faceP(facePcol),facePcol)
+        ! print *, ' '
 
 
-    !% only valid for fp_noBC_IorS
+        !% only valid for fp_noBC_IorS
 
-!     !if (facePcol == fp_noBC_IorS) then 
-!         if (setting%SmallDepth%useMomentumCutoffYN) then
-!             !% --- face ad hoc flux adjustments 
-!             !%     (.false. so that conservative fluxes are not altered)
-!             call adjust_smalldepth_face_fluxes_CC (.false.)
-!                     ! call util_utest_CLprint ('------- HHH01  after face_adjustment')
-!         end if
-        
-!         call adjust_zerodepth_face_fluxes_CC  (.false.)
-!    ! end if
+        !     !if (facePcol == fp_noBC_IorS) then 
+        !         if (setting%SmallDepth%useMomentumCutoffYN) then
+        !             !% --- face ad hoc flux adjustments 
+        !             !%     (.false. so that conservative fluxes are not altered)
+        !             call adjust_smalldepth_face_fluxes_CC (.false.)
+        !                     ! call util_utest_CLprint ('------- HHH01  after face_adjustment')
+        !         end if
+                
+        !         call adjust_zerodepth_face_fluxes_CC  (.false.)
+        !    ! end if
 
 
     end subroutine adjust_face_toplevel
@@ -351,18 +371,19 @@ module adjust
             !% --- no flow adjustment
         end if
 
-        if ((setting%Adjust%Flowrate%ApplyYN) .or. (setting%Adjust%Head%ApplyYN) ) then
-            where (elemR(thisP,er_Area) > setting%ZeroValue%Area)
-                elemR(thisP,er_Velocity) = elemR(thisP,er_Flowrate) / elemR(thisP,er_Area)   
-            elsewhere 
-                elemR(thisP,er_Velocity) = zeroR
-            endwhere                    
-            !% reset for high velocity (typically due to small area)
-            where (abs(elemR(thisP,er_Velocity)) > vMax) 
-                elemR(thisP,er_Velocity)  = sign( 0.99d0 * vMax, elemR(thisP,er_Velocity) )
-                !elemFlow(thisP) = elemVel(thisP) * elemArea(thisP) !% THIS PROBABLY ISN'T NEEDED 20230428
-            endwhere 
-        end if
+        !% 20230505 -- adjusting velocity without adjusting area causes problem on small depths
+        ! if ((setting%Adjust%Flowrate%ApplyYN) .or. (setting%Adjust%Head%ApplyYN) ) then
+        !     where (elemR(thisP,er_Area) > setting%ZeroValue%Area)
+        !         elemR(thisP,er_Velocity) = elemR(thisP,er_Flowrate) / elemR(thisP,er_Area)   
+        !     elsewhere 
+        !         elemR(thisP,er_Velocity) = zeroR
+        !     endwhere                    
+        !     !% reset for high velocity (typically due to small area)
+        !     where (abs(elemR(thisP,er_Velocity)) > vMax) 
+        !         elemR(thisP,er_Velocity)  = sign( 0.99d0 * vMax, elemR(thisP,er_Velocity) )
+        !         !elemFlow(thisP) = elemVel(thisP) * elemArea(thisP) !% THIS PROBABLY ISN'T NEEDED 20230428
+        !     endwhere 
+        ! end if
 
         !% --- ad hoc adjustments to head
         ! !%     done before velocity adjust so that area change alters velocity
@@ -770,6 +791,12 @@ module adjust
             if (npack < 1) return
             thisP   => elemP(1:npack,thisCol)
         !% -----------------------------------------------------------------
+
+            ! print *, ' '
+            ! print *, 'in adjust zerodepth '
+            ! print *, 'thisP ', thisP
+            ! print *, 'ZERO TOPWIDTH ',setting%ZeroValue%Topwidth
+            ! print *, ' '
 
         !% only reset the depth if it is too small
         where (elemR(thisP,er_Depth) .le. setting%ZeroValue%Depth)

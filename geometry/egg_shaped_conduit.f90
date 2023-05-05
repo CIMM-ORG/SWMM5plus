@@ -29,7 +29,6 @@ module egg_shaped_conduit
     ! public :: egg_shaped_hyddepth_from_topwidth
     ! !public :: egg_shaped_hyddepth_from_topwidth_singular
     ! public :: egg_shaped_hydradius_from_depth_singular
-    ! public :: egg_shaped_normaldepth_from_sectionfactor_singular
 
 
 

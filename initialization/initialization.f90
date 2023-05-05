@@ -899,8 +899,8 @@ contains
         !% -----------------------
         do ii = 1, N_node
             ! print *, ' '
-            write(*,*) '============================== starting node ',ii
-            write(*,*) 'name ',trim(node%Names(ii)%str)
+            ! write(*,*) '============================== starting node ',ii
+            ! write(*,*) 'name ',trim(node%Names(ii)%str)
 
             total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
             node%I(ii, ni_idx) = ii

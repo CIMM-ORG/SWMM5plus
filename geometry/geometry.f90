@@ -387,6 +387,12 @@ module geometry
                 call util_crashpoint(5298733)
         end select
 
+        ! print *, ' '
+        ! print *, 'in common geo'
+        ! print *, 'thisP ',thisP
+        ! print *, elemR(thisP,er_FullTopwidth)
+        ! print *, ' '
+
         !% temporary store of depth
         tempDepth(thisP) = depth(thisP)
 
@@ -395,6 +401,8 @@ module geometry
         elemR(thisP,er_Area)      = elemR(thisP,er_FullArea)
         elemR(thisP,er_Perimeter) = elemR(thisP,er_FullPerimeter)
         elemR(thisP,er_Topwidth)  = elemR(thisP,er_FullTopwidth)
+
+       
 
         !% --- standard functions using temporary store
         !elemR(thisP,er_FullEllDepth)       = llgeo_FullEll_pure(thisP) 
@@ -592,7 +600,7 @@ module geometry
         outvalue      = thisArea * ((thisArea / thisPerimeter)**twothirdR)
          !print *, '----- sf       ',outvalue
 
-        !write(*,"(10f12.5)") inDepth, thisArea, thisPerimeter, outvalue
+        !write(*,"(10f12.5)") inDepth, thisArea, thisPerimeter, outvalue 
 
     end function geo_sectionfactor_from_depth_singular
 !%
@@ -3668,6 +3676,13 @@ module geometry
             iA(1)     = idx
             depthA(1) = indepth
         !%------------------------------------------------------------------
+
+        !% ensure that small depths have small perimeter
+        if (indepth .le. setting%ZeroValue%Depth) then
+            outvalue = setting%ZeroValue%Area
+            return
+        endif    
+
         !% --- set lookup table names
         select case (elemI(idx,ei_geometryType))
             !% --- for tables using HydRadius
@@ -3821,6 +3836,13 @@ module geometry
             iA(1)     = idx
             depthA(1) = indepth
         !%------------------------------------------------------------------
+
+        !% ensure that small depths have small topwidths
+        if (indepth .le. setting%ZeroValue%Depth) then
+            outvalue = setting%ZeroValue%Topwidth
+            return
+        endif
+
         select case (elemI(idx,ei_geometryType))
                 !% --- for tables using HydRadius
             case (arch)
@@ -3946,6 +3968,8 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         end select
+
+        
            
     end function geo_topwidth_from_depth_singular
 !%
@@ -3975,6 +3999,12 @@ module geometry
             fullarea      => elemR(:,er_FullArea)
             fullHydRadius => elemR(:,er_FullHydRadius)
         !%------------------------------------------------------------------
+
+        !% ensure that small depths have small perimeter
+        if (indepth .le. setting%ZeroValue%Depth) then
+            outvalue = setting%ZeroValue%Topwidth
+            return
+        endif
 
         !% --- 1D array values of index and depth for pure functions
         iA(1)       = idx
@@ -4150,6 +4180,8 @@ module geometry
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(332344)
         end select
+
+
 
     end function geo_perimeter_from_depth_singular
 !%

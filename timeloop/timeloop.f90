@@ -1093,10 +1093,10 @@ contains
         newDT    => setting%Time%Hydraulics%Dt
         reportDt = setting%Output%Report%TimeInterval
 
-        ! print *, '============================================================='
-        ! print *, 'in ', trim(subroutine_name) 
-        ! print *, 'starting dt', oldDT, setting%Time%Hydraulics%Dt
-        ! print *, 'Hydrology DT',setting%Time%Hydrology%Dt
+            ! print *, '============================================================='
+            ! print *, 'in ', trim(subroutine_name) 
+            ! print *, 'starting dt', oldDT, setting%Time%Hydraulics%Dt
+            ! print *, 'Hydrology DT',setting%Time%Hydrology%Dt
 
         !% --- set the minimum CFL, used to detect near zero flow conditions
         if (setting%Limiter%Dt%UseLimitMaxYN) then
@@ -1111,7 +1111,7 @@ contains
 
         if ((matchHydrologyStep) .and. (useHydrology) .and. (.not. inSpinUpYN)) then 
 
-            ! print *, 'in matching hydrology step'
+            print *, 'in matching hydrology step'
 
             !% --- for combined hydrology and hydraulics compute the CFL if we take a single
             !%     step to match the next hydrology time
@@ -1238,7 +1238,7 @@ contains
 
         else
  
-            !print *, 'CFL with no hydrology '
+                ! print *, 'CFL with no hydrology '
 
             if (useHydrology) then 
                 print *, 'USER CONFIGURATION ERROR: At this time, useHydrology requires '
@@ -1267,7 +1267,7 @@ contains
                 newDT = oldDT * targetCFL / thisCFL
                 lastCheckStep = stepNow
 
-                !  print *, 'Adjust DT for high CFL    ',newDT   
+                    ! print *, 'Adjust DT for high CFL    ',newDT   
 
             else 
                 !% --- if CFL is less than max, see if it can be raised (only checked at intervals)
@@ -1382,8 +1382,8 @@ contains
         !     end if
         ! end if
 
-        !  print *, 'final DT: ',newDT
-        !  print *, ' '
+            ! print *, 'final DT: ',newDT
+            ! print *, ' '
 
         ! if (newDT < 0.01d0) then 
         !     print *, 'ERROR: time step has dropped below 0.01 s. need to investigate!'
@@ -1847,7 +1847,7 @@ contains
             outvalue = zeroR
         end if
 
-        !% HACK EXPERIMENT CHANGING JM WaveSpeed
+        !% HACK EXPERIMENT CHANGING JM WaveSpeed -- KEEP THIS 20230505
         where (elemI(thisP,ei_elementType) .eq. JM)
             wavespeed(thisP) = elemR(thisP,er_Temp01)
         endwhere
@@ -1860,10 +1860,10 @@ contains
 
         !     print *, 'max Q lateral ',maxval(elemR(:,er_FlowrateLateral) * thisDT / (elemR(:,er_Length) * elemR(:,er_Breadthmax) * smallDepth))
 
-            ! print *, ' '
-            ! print *, 'ThisDT ',thisDT
-            ! print *, 'outvalue CFL in tl_get_max_CFL_CC',outvalue
-        !     print *, ' '
+                ! print *, ' '
+                ! print *, 'ThisDT ',thisDT
+                ! print *, 'outvalue CFL in tl_get_max_CFL_CC',outvalue
+                ! print *, ' '
 
             ! print *, ' '
             ! print *, 'in tl_get_max_CFL_CC'
@@ -1923,12 +1923,13 @@ contains
         ! print *, ' '
         ! print *, 'this dt into limiter ',thisDT
         ! print *, 'size  in tl_limit_BCinflow_dt',size(BC%P%BCup)
+
         if (size(BC%P%BCup) > 0) then
 
             !% ensure flowrate used for limiter is  positive and non-zero
             BCQ(:) = max( abs(BC%flowR(BC%P%BCup,br_value)), setting%Eps%Velocity)
 
-           ! print *, 'BCQ ',BCQ(:)
+            !    print *, 'BCQ ',BCQ(:)
 
             !% store the element indexes downstream of a BCup face
             BCelemIdx =  faceI(BC%flowI(BC%P%BCup,bi_face_idx), fi_Melem_dL)
@@ -1937,14 +1938,19 @@ contains
             !% from an inflow is similar to the gravity wave speed of the BC inflow
             depthScale = ( (alpha**4) * (BCQ**2) / (gravity * (topwidth(BCelemIdx)**2) ) )**onethirdR
 
-            ! print *, 'depthScale ',depthScale
-            ! print *, 'depth      ',elemR( BCelemIdx,er_Depth)
+                ! print *, ' '
+                ! print *, 'alpha ',alpha
+                ! print *, 'BCQ   ',BCQ 
+                ! print *, BCelemIdx, topwidth(BCelemIdx)
+
+                ! print *, 'depthScale ',depthScale
+                ! print *, 'depth      ',elemR( BCelemIdx,er_Depth)
 
             !% get the depth limit for maximum depth that the time step will be limited as 
             !% either the depth scale or the specified smallDepth limit
             depthLimit = max(smallDepth, depthScale)
 
-            ! print *, 'depthLimit ',depthLimit
+                ! print *, 'depthLimit ',depthLimit
             
             !% time step limit based on inflow flux
             ! print *, 'length  ', length(BCelemIdx)
@@ -1954,7 +1960,11 @@ contains
 
             DTlimit = length(BCelemIdx) * ( ( alpha * topwidth(BCelemIdx) / (gravity * BCQ) )**onethirdR) 
 
-            ! print *, 'DTlimit ',DTlimit
+                ! print *, ' '
+                ! print *, 'DTlimit ',DTlimit
+                ! print *, 'length  ',length(BCelemIdx)
+                ! print *, 'term    ',( ( alpha * topwidth(BCelemIdx) / (gravity * BCQ) )**onethirdR) 
+                ! print *, ' '
         
             !% where the depth is greater than the depthlimit the DT inflow limiter
             !% is not needed, and we can use the existing DT value
@@ -1963,12 +1973,12 @@ contains
                 DTlimit = thisDT
             endwhere
 
-            ! print *, 'new 1 DTlimit ',DTlimit
+                ! print *, 'new 1 DTlimit ',DTlimit
 
             !% get the smallest DT in the limiter array
             newDTlimit = minval(DTlimit)
 
-            ! print *, 'new 2 DTlimit ',DTlimit
+                ! print *, 'new 2 DTlimit ',DTlimit
 
             !% use the smaller value of the new limit or the input
             thisDT = min(newDTlimit,thisDT) 
@@ -2007,6 +2017,9 @@ contains
         !%------------------------------------------------------------------    
 
         do ii=1, N_headBC
+
+            ! print *, ' '
+            ! print *, 'BC Head inflow limit'
 
             !% face index
             fidx     => BC%headI(ii,bi_face_idx)

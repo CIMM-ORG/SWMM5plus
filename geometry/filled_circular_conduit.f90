@@ -33,7 +33,6 @@ module filled_circular_conduit
 !     public :: filled_circular_hyddepth_from_topwidth
 !    ! public :: filled_circular_hyddepth_from_topwidth_singular
 !     public :: filled_circular_hydradius_from_depth_singular
-!     public :: filled_circular_normaldepth_from_sectionfactor_singular
 
 
 

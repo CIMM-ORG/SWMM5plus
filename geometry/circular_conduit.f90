@@ -30,7 +30,6 @@ module circular_conduit
     ! public :: circular_hyddepth_from_topwidth
     ! !public :: circular_hyddepth_from_topwidth_singular
     ! public :: circular_hydradius_from_depth_singular
-    ! public :: circular_normaldepth_from_sectionfactor_singular
     public :: circular_get_normalized_depth_from_area_analytical
 
 

@@ -142,7 +142,7 @@ contains
 
         !print *, 'TEST 98743987 ', elemR()
 
-          !  stop 6398743
+          ! stop 6398743
 
         sync all
         !% --- set up background geometry for weir, orifice, etc.
@@ -232,6 +232,7 @@ contains
         ! end if
         !call adjust_zerodepth_identify_all ()
         call adjust_element_toplevel (CC)
+            ! call util_utest_CLprint ('initial_condition after adjust_smalldepth and _zerodepth')    
         call adjust_element_toplevel (JB)
 
             ! call util_utest_CLprint ('initial_condition after adjust_smalldepth and _zerodepth')
@@ -479,7 +480,7 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
 
-        ! call util_utest_CLprint ('initial_condition at end')
+        ! ! call util_utest_CLprint ('initial_condition at end')
 
          ! stop 666987
 
@@ -532,7 +533,7 @@ contains
         !         end if
         !     end if
         ! end do 
-        ! stop 49734
+       ! stop 49734
       
 
    
@@ -1897,6 +1898,8 @@ contains
             !% --- store IC data
             elemR(thisP,er_Perimeter)     = llgeo_rectangular_perimeter_from_depth_pure (thisP, depth(thisP))
             elemR(thisP,er_Topwidth)      = llgeo_rectangular_topwidth_from_depth_pure (thisP, depth(thisP))
+
+
             elemR(thisP,er_Area)          = llgeo_rectangular_area_from_depth_pure(thisP,depth(thisP))
             elemR(thisP,er_Area_N0)       = elemR(thisP,er_Area)
             elemR(thisP,er_Area_N1)       = elemR(thisP,er_Area)
@@ -2074,7 +2077,12 @@ contains
             call util_crashpoint(98734)
 
         end select
-    
+
+        !% --- ensure near-zero depths have small topwidth
+        where (depth(thisP) .le. setting%ZeroValue%Depth)
+            elemR(thisP,er_Topwidth) = setting%ZeroValue%Depth !% zero value topwidth has not been set yet
+        endwhere
+ 
 
         !% -- set the face values for the crown (full depth)
         faceR(fUp(thisP),fr_Zcrown_d) = faceR(fUp(thisP),fr_Zbottom) + elemR(thisP,er_FullDepth)
@@ -4036,6 +4044,8 @@ contains
                 !% --- no storage
                 elemSI(JMidx,esi_JunctionMain_Type)    = NoStorage
                 setting%Junction%SurfaceArea_Minimum   = zeroR
+                print *, 'CODE ERROR: no storage junctions not implemented'
+                call util_crashpoint(6698723)
             end if
             elemI (JMidx,ei_geometryType)          = rectangular
             elemSR(JMidx,esr_Storage_FractionEvap) = zeroR  !% --- no evap from implied storage junction
@@ -4463,6 +4473,8 @@ contains
                 elemR (JMidx,er_FullArea)           = elemSR(JMidx,esr_Storage_Plan_Area)
                 elemR (JMidx,er_BreadthMax)         = sqrt(elemSR(JMidx,esr_Storage_Plan_Area) )
                 elemR (JMidx,er_Length)             = sqrt(elemSR(JMidx,esr_Storage_Plan_Area) )
+                elemR (JMidx,er_Topwidth)           = sqrt(elemSR(JMidx,esr_Storage_Plan_Area) )
+                elemR (JMidx,er_FullTopwidth)       = sqrt(elemSR(JMidx,esr_Storage_Plan_Area) )
 
             case (NoStorage)
                 elemSR(JMidx,esr_Storage_Plan_Area)      = zeroR
@@ -4635,7 +4647,8 @@ contains
                 !%      on storage elements.
                 elemR(JMidx,er_FullArea)   = sqrt( elemR(JMidx,er_FullVolume) * elemR(JMidx,er_FullDepth) )
                 !% --- max breadth approximated as sqrt of max planar area
-                elemR(JMidx,er_BreadthMax) = sqrt(maxval(curve(CurveID)%ValueArray(:,curve_storage_area)))
+                elemR(JMidx,er_BreadthMax)   = sqrt(maxval(curve(CurveID)%ValueArray(:,curve_storage_area)))
+                elemR(JMidx,er_FullTopwidth) = sqrt(maxval(curve(CurveID)%ValueArray(:,curve_storage_area)))
 
                 elemR(JMidx,er_Length) = sqrt(elemR(JMidx,er_FullArea))
 
@@ -4653,7 +4666,8 @@ contains
                 !% --- see note in Functional Storage
                 elemR(JMidx,er_FullArea)   = sqrt( elemR(JMidx,er_FullVolume) * elemR(JMidx,er_FullDepth) )
                 !% --- max breadth approximated as sqrt of max planar area
-                elemR(JMidx,er_BreadthMax) = sqrt(maxval(curve(CurveID)%ValueArray(:,curve_storage_area)))
+                elemR(JMidx,er_BreadthMax)   = sqrt(maxval(curve(CurveID)%ValueArray(:,curve_storage_area)))
+                elemR(JMidx,er_FullTopwidth) = sqrt(maxval(curve(CurveID)%ValueArray(:,curve_storage_area)))
 
                 elemR(JMidx,er_Length) = sqrt(elemR(JMidx,er_FullArea))
 
@@ -4681,7 +4695,8 @@ contains
             case (FunctionalStorage,TabularStorage)
                 call util_curve_lookup_singular(CurveID, er_Volume, er_Temp01, curve_storage_volume, &
                                                 curve_storage_area, 1)
-                elemSR(JMidx,esr_Storage_Plan_Area) = elemR(JMidx,er_Temp01)                          
+                elemSR(JMidx,esr_Storage_Plan_Area) = elemR(JMidx,er_Temp01)    
+                elemR (JMidx,er_Topwidth)           = sqrt(elemSR(JMidx,esr_Storage_Plan_Area))                   
             case default 
                 print *, 'CODE ERROR: Unexpected case default'
                 call util_crashpoint(6098734)
@@ -6161,13 +6176,14 @@ contains
                !print *, 'TEMP COMMENT OUT OF SECTION FACTOR'
 
             !% --- uniformly-distributed section factor
+            !print *, 'sectionfactors by uniform distribution'
             call init_uniformtabledata_Uvalue(ii,utr_SFmax, utd_SF_uniform)
 
             !% -- uniformly-distributed critical flow
             call init_uniformtabledata_Uvalue(ii,utr_QcritMax, utd_Qcrit_uniform)
    
             !% --- nonuniform values mapping from section factors
-               ! print *, 'sectionfactors by depth ----------------'
+               !print *, 'sectionfactors by depth ----------------'
             call init_uniformtabledata_nonUvalue (ii, utd_SF_depth_nonuniform, utd_SF_uniform)
                ! print *, 'sectionfactors by area ----------------'
             call init_uniformtabledata_nonUvalue (ii, utd_SF_area_nonuniform,  utd_SF_uniform)
@@ -6301,6 +6317,8 @@ contains
 
                 !% --- check if this is the max sf thus far
                 uniformTableR(UT_idx,utr_SFmax)    = max(uniformTableR(UT_idx,utr_SFmax),sf)
+
+                !print *, 'depth, SF ',thisDepth,sf
             end do
         end do
 
@@ -6340,10 +6358,10 @@ contains
         !%     must be consistent with a utd_... index,
         select case (utd_nonU)
             case (utd_SF_depth_nonuniform, utd_Qcrit_depth_nonuniform)
-                    print *, 'nonuniform depth'
+                    !print *, 'nonuniform depth'
                 NUtype = DepthData
             case (utd_SF_area_nonuniform, utd_Qcrit_area_nonuniform)
-                    print *, 'nonuniform area'
+                    !print *, 'nonuniform area'
                 NUtype = AreaData
             case default
                 print *, 'CODE ERROR: unexpected case default'
@@ -6353,11 +6371,11 @@ contains
         !% set the type for the uniform data -- must be a utd_... index
         select case (utd_uniform)
             case (utd_SF_uniform)
-                    print *, 'uniform section factor'
+                    !print *, 'uniform section factor'
                 Utype = SectionFactorData
                 utr_max = utr_SFmax
             case (utd_Qcrit_uniform)
-                    print *, 'uniform Qcritical'
+                    !print *, 'uniform Qcritical'
                 Utype = QcriticalData
                 utr_max = utr_QcritMax
             case default
@@ -6393,6 +6411,22 @@ contains
 
         !% --- initialization: store all zeros for the first table items
         uniformTableDataR(UT_idx,1,utd_nonU) = zeroR
+
+        ! print *, ' '
+        ! print *, 'uniform table max for ID ', UT_idx
+        ! print *, uniformTableR(UT_idx,utr_max)
+        ! print *, 'uniform table values '
+        ! do jj=1,50
+        !     print *, jj, uniformTableDataR(UT_idx,jj,utd_uniform)
+        ! end do
+
+        ! print *, ''
+        ! print *, 'max depth (hard code) ', 10.5
+        ! print *, 'section factor values from depths'
+        
+        ! do jj=1,51
+        !     print *,  geo_sectionfactor_from_depth_singular (eIdx, real(jj-1,8) * 10.5d0 / 50, zeroR, zeroR)
+        ! end do
 
         !% --- retain zeros as the first table items, so start at column 2.
         do jj = 2, N_uniformTableData_items
@@ -6509,7 +6543,8 @@ contains
             !     stop 298734
             ! end if
         end do
-          
+
+        !stop 2098374
 
     end subroutine init_uniformtabledata_nonUvalue
 !%
@@ -6730,7 +6765,10 @@ contains
                     call util_crashpoint(6629873)
                 end select
 
-
+                ! print *, ' '
+                ! print *, 'IN ZERO DEPTH ', reverseKey(elemI(thisP,ei_elementType))
+                ! print *, elemR(thisP,er_Temp01)
+                ! print *, ' '
                 ! print *, thisP, trim(reverseKey(elemI(thisP,ei_elementType))), &
                 !  elemI(thisP,ei_geometryType), trim(reverseKey(elemI(thisP,ei_geometryType))), &
                 !   elemR(thisP,er_Temp01)
@@ -6745,19 +6783,39 @@ contains
                             
             end do
 
+            
             !% --- get the minimum values, use 1/2 to ensure
             !%     that a zerovalue for depth will have a larger
             !%     value of topwidth, area, and volume than the
             !%     zerovalues of the respective terms
             allP => elemP(1:Npack,ep_CCJM)
+
             topwidth0 = minval( elemR(allP,er_Temp01)) * onehalfR
             area0     = minval( elemR(allP,er_Temp02)) * onehalfR
             volume0   = minval( elemR(allP,er_Temp03)) * onehalfR
+
+            !print *, 'AAA topwidth zero ',topwidth0, area0
+
+            !% --- smallest topwidth should be larger than smallest depth
+            if (topwidth0 < depth0) then 
+                topwidth0 = onehundredR * depth0
+            endif
+
+            !print *, 'BBB topwidth zero ',topwidth0, area0
+
+            !% --- excessively small areas can cause division problems
+            if (area0 < depth0 * topwidth0) then 
+                area0 = depth0 * topwidth0
+            end if
+
+           ! print *, 'BBB.01 topwidth zero ',topwidth0, area0
 
             !% Ensure zero values are not too small
             if (topwidth0 .le. setting%Eps%Machine) then
                 topwidth0 = onethousandR * setting%Eps%Machine
             end if
+
+            !print *, 'CCC topwidth zero ',topwidth0, area0
 
             if (area0 .le. setting%Eps%Machine) then
                 area0 = onethousandR * setting%Eps%Machine
@@ -6771,6 +6829,7 @@ contains
             topwidth0 = max(topwidth0, area0 / depth0)
             volume0   = min(volume0, area0 * setting%Discretization%NominalElemLength)
 
+           ! print *, 'DDD topwidth zero ',topwidth0, area0
 
             !% --- reset temporary arrays used above
             elemR(:,er_Temp01) = nullvalueR
@@ -6803,6 +6862,8 @@ contains
                     volume0 = min(volume0, min(volume0a - volumeIncrease, onehundredR*setting%Eps%Machine) )
                 end if
             end do
+
+           ! print *, 'EEE topwidth zero ',topwidth0, area0
 
             !% --- reset the depth from depth0 to IC value
             elemR(:,er_Depth) = elemR(:,er_Temp04)
@@ -6878,6 +6939,8 @@ contains
             call util_crashpoint(77395)
             !return
         end if
+
+        !stop 2098734
 
         !%------------------------------------------------------------------
         !% Closing

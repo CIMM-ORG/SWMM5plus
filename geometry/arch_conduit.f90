@@ -30,7 +30,7 @@ module arch_conduit
     ! public :: arch_hyddepth_from_topwidth
     ! !public :: arch_hyddepth_from_depth_singular
     ! public :: arch_hydradius_from_depth_singular
-    ! public :: arch_normaldepth_from_sectionfactor_singular
+
 
 
 

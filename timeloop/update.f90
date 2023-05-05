@@ -526,7 +526,6 @@ module update
 
         Froude(thisP) = velocity(thisP) / sqrt(grav * ellDepth(thisP))
       
-
     end subroutine update_Froude_number_element
 !%
 !%==========================================================================

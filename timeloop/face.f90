@@ -483,6 +483,7 @@ module face
             integer :: ii
             integer, pointer :: edn(:), idx_P(:), fdn(:)
             integer, pointer :: idx_fBC(:), idx_fJ1(:), idx_fBoth(:)
+            integer, pointer :: npackBC, npackJ1, npackBoth
             character(64) :: subroutine_name = 'face_interpolation_upBC'
         !%-------------------------------------------------------------------
         !% Preliminaries
@@ -494,30 +495,33 @@ module face
         !% So there is no eup for upstream BCs
             edn       => faceI(:,fi_Melem_dL)
             fdn       => elemI(:,ei_Mface_dL)   
-            idx_fBC   => faceP(1:npack_faceP(fp_BCup),fp_BCup)
-            idx_fJ1   => faceP(1:npack_faceP(fp_J1),  fp_J1)
-            idx_fBoth => faceP(1:npack_faceP(fp_J1_BCup),  fp_J1_BCup)
+            npackBC   => npack_faceP(fp_BCup)
+            idx_fBC   => faceP(1:npackBC,fp_BCup)
+            npackJ1   => npack_faceP(fp_J1)
+            idx_fJ1   => faceP(1:npackJ1,  fp_J1)
+            npackBoth => npack_faceP(fp_J1_BCup)
+            idx_fBoth => faceP(1:npackBoth,  fp_J1_BCup)
             idx_P     => BC%P%BCup(:)
         !%-------------------------------------------------------------------
         !% enforce stored inflow BC    
-        faceR(idx_fBC, fr_Flowrate) = BC%flowR(idx_P,br_value)
-
-        ! print *, 'in face_interpolation_upBC'
-        ! print *, faceR(idx_fBC,fr_Area_d), faceR(idx_fBC, fr_Flowrate)
+        if (npackBC > 0) then
+            faceR(idx_fBC, fr_Flowrate) = BC%flowR(idx_P,br_value)
+        end if
 
         !% enforce zero flow on J1 faces
-        faceR(idx_fJ1, fr_Flowrate) = zeroR
-        faceR(idx_fJ1, fr_Velocity_u) = zeroR
-        faceR(idx_fJ1, fr_Velocity_d) = zeroR
+        if (npackJ1 > 0) then
+            faceR(idx_fJ1, fr_Flowrate)  = zeroR
+            faceR(idx_fJ1, fr_Velocity_u) = zeroR
+            faceR(idx_fJ1, fr_Velocity_d) = zeroR
+        end if
+
+        !% --- no upstream BC
+        if (npackBoth < 1) return 
 
         !% update geometry data (don't do on a BC-only call)
         if (.not. isBConly) then
             !% Define sets of points for the interpolation, we are going from
             !% the elements to the faces.       
-            !fGeoSetU = [fr_Area_u, fr_Topwidth_u, fr_HydDepth_u]
-            !fGeoSetD = [fr_Area_d, fr_Topwidth_d, fr_HydDepth_d]
-            !eGeoSet  = [er_Area,   er_Topwidth,   er_EllDepth]
-
             fGeoSetU = [fr_Area_u, fr_Depth_u]
             fGeoSetD = [fr_Area_d, fr_Depth_d]
             eGeoSet  = [er_Area,   er_Depth]
@@ -534,43 +538,75 @@ module face
             faceR(idx_fBoth,fr_Preissmann_Number) = elemR(edn(idx_fBoth),er_Preissmann_Number) 
             
             !% gradient extrapolation for head at infow
-            faceR(idx_fBC, fr_Head_d) = elemR(edn(idx_fBC),er_Head)       &
-                                      + elemR(edn(idx_fBC),er_Head)        &
-                                      - faceR(fdn(edn(idx_fBC)),fr_Head_d) 
+            if (npackBC > 0) then 
+                faceR(idx_fBC, fr_Head_d) = elemR(edn(idx_fBC),er_Head)        &
+                                          + elemR(edn(idx_fBC),er_Head)        &
+                                          - faceR(fdn(edn(idx_fBC)),fr_Head_d) 
+                !% --- use larger depth of the direct injection (from GeoSet above)
+                !%     and depth implied by head gradient extrapolation.                          
+                faceR(idx_fBC,fr_Depth_d) = max(faceR(idx_fBC,fr_Depth_d),  &
+                                                  faceR(idx_fBC,fr_Head_d)    &
+                                                - faceR(idx_fBC,fr_Zbottom))                          
+            end if
 
             !% zero head gradient at J1 cells
-            faceR(idx_fJ1,fr_Head_d) = elemR(edn(idx_fJ1),er_Head) 
+            if (npackJ1 > 0) then
+                faceR(idx_fJ1,fr_Head_d) = elemR(edn(idx_fJ1),er_Head) 
+            end if
 
-            !% head on downstream side of face is copied to upstream side (no jump)
-            faceR(idx_fBoth,fr_Head_u) = faceR(idx_fBoth,fr_Head_d)
+            !% head/ depth on downstream side of face is copied to upstream side (no jump)
+            faceR(idx_fBoth,fr_Head_u)  = faceR(idx_fBoth,fr_Head_d)
+            faceR(idx_fBoth,fr_Depth_u) = faceR(idx_fBoth,fr_Depth_d)
            
             !% ensure face area_u is not smaller than zerovalue
-            where (faceR(idx_fBC,fr_Area_d) <= setting%ZeroValue%Area)
-                faceR(idx_fBC,fr_Area_d)     = setting%ZeroValue%Area
-            end where
-            where (faceR(idx_fBC,fr_Area_u) <= setting%ZeroValue%Area)
-                faceR(idx_fBC,fr_Area_u)     = setting%ZeroValue%Area
-            endwhere
+            if (npackBC > 0) then
+                where (faceR(idx_fBC,fr_Area_d) <= setting%ZeroValue%Area)
+                    faceR(idx_fBC,fr_Area_d)     = setting%ZeroValue%Area
+                end where
+                where (faceR(idx_fBC,fr_Area_u) <= setting%ZeroValue%Area)
+                    faceR(idx_fBC,fr_Area_u)     = setting%ZeroValue%Area
+                endwhere
+            end if
+
+        end if
+        
+        !% --- inflow velocity (provides momentum transported into downstream element)
+        if (npackBC > 0) then 
+            !% --- set velocity based on flowrate
+            faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_d)
+            !% --- limit Velocity of inflow to Froude Number = 1
+            faceR(idx_fBC,fr_Velocity_d) = min(faceR(idx_fBC,fr_Velocity_d), &
+                                               sqrt( setting%Constant%gravity &
+                                                     * faceR(idx_fBC,fr_Depth_d) ))
+
+            !% --- set upstream velocity to downstream
+            faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Velocity_d)  
+ 
+            ! print *, ' '
+            ! print *, 'in face interp for BC'
+            ! print *, faceR(idx_fBC,fr_Flowrate), faceR(idx_fBC,fr_Velocity_d), faceR(idx_fBC,fr_Area_d)
+            ! print *, 'depth, fr ', faceR(idx_fBC,fr_Depth_d), faceR(idx_fBC,fr_Velocity_d) / (setting%Constant%gravity * faceR(idx_fBC,fr_Depth_d))
+
+            !%  --- reset velocity using high velocity limiter
+            if (setting%Limiter%Velocity%UseLimitMaxYN) then            
+                where(abs(faceR(idx_fBC,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
+                    faceR(idx_fBC,fr_Velocity_d) = sign(0.99d0 * setting%Limiter%Velocity%Maximum, &
+                        faceR(idx_fBC,fr_Velocity_d))
+                endwhere
+                where(abs(faceR(idx_fBC,fr_Velocity_u))  > setting%Limiter%Velocity%Maximum)
+                    faceR(idx_fBC,fr_Velocity_u) = sign(0.99d0 * setting%Limiter%Velocity%Maximum, &
+                        faceR(idx_fBC,fr_Velocity_u))
+                endwhere
+            end if
 
         end if
 
-        !% set velocity based on flowrate
-        faceR(idx_fBC,fr_Velocity_d) = faceR(idx_fBC,fr_Flowrate)/faceR(idx_fBC,fr_Area_d)
-        faceR(idx_fBC,fr_Velocity_u) = faceR(idx_fBC,fr_Velocity_d)  
-
-        !%  If an inflow has a high velocity, reset the value of the high velocity limiter
-        !%  
-        if (setting%Limiter%Velocity%UseLimitMaxYN) then            
-            where(abs(faceR(idx_fBC,fr_Velocity_d))  > setting%Limiter%Velocity%Maximum)
-                faceR(idx_fBC,fr_Velocity_d) = sign(0.99d0 * setting%Limiter%Velocity%Maximum, &
-                    faceR(idx_fBC,fr_Velocity_d))
-            endwhere
-            where(abs(faceR(idx_fBC,fr_Velocity_u))  > setting%Limiter%Velocity%Maximum)
-                faceR(idx_fBC,fr_Velocity_u) = sign(0.99d0 * setting%Limiter%Velocity%Maximum, &
-                    faceR(idx_fBC,fr_Velocity_u))
-            endwhere
-        end if
-
+        ! print *, 'after limiter'
+        ! print *, faceR(idx_fBC,fr_Flowrate), faceR(idx_fBC,fr_Velocity_d), faceR(idx_fBC,fr_Area_d)
+        ! print *, 'velocity limited by Fr=1 ',sqrt(setting%Constant%gravity * faceR(idx_fBC,fr_Depth_d))
+        ! print *, 'depth, fr ', faceR(idx_fBC,fr_Depth_d), faceR(idx_fBC,fr_Velocity_d) / (setting%Constant%gravity * faceR(idx_fBC,fr_Depth_d))
+        ! print *, 'sqrt(g)/Q ', sqrt(9.81) / faceR(idx_fBC,fr_Flowrate)
+        ! print *, 'Tsqrt(h)  ', oneR / (elemR(edn(idx_fBC),er_Topwidth) * (faceR(idx_fBC,fr_Depth_d)**1.5d0))
         !stop 209873
 
         !%-------------------------------------------------------------------
