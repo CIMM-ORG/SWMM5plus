@@ -1,6 +1,7 @@
 [TITLE]
 ;;Project Title/Notes
 ;; T010 testing surcharge
+;; T010a -- ensuring JM on both junctions
 
 [OPTIONS]
 ;;Option             Value
@@ -51,8 +52,8 @@ DRY_ONLY         NO
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
 J0               11.895      0          0.5          2.0        0    
-J1               10.9475     0          0.7525        100.0        0    
-J2               10.5375     1000       1.1625       1000.0       0    
+J1               10.9475     0          0.7525        100.0     0    
+J2               10.5375     0          1.1625        100.0     0    
      
 
 [OUTFALLS]

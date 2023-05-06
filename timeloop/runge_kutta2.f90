@@ -112,6 +112,8 @@ module runge_kutta2
 
         !% HERE: DIAGNOSTIC VALUES ENFORCED ON ELEMENTS AND FACES, BUT CONNECTED JB ARE INCONSISTENT
 
+    !% BEGIN JUNCTION SETUP
+
         !% --- push inflows on CC upstream or downstream of JB to face
         if (N_nJM > 0) then 
             !% --- upstream CC elements
@@ -210,7 +212,7 @@ module runge_kutta2
         end if
 
 
-        !% --- compute flows/velocities on JB/CC outflow elements/faces from 
+        !% --- JB ENERGY EQUATION compute flows/velocities on JB/CC outflow elements/faces from 
         !%     energy equation (does not affect JB with inflows or diagnostic adjacent )
         !% TO BE MOVED TO junction_branch_element_flowrates
         if (N_nJM > 0) then 
@@ -264,10 +266,6 @@ module runge_kutta2
                 where (deltaH(thisJB) > onehalfR   * elemR(thisJB,er_Depth))
                     deltaH(thisJB)    = onefourthR * elemR(thisJB,er_Depth)
                 end where
-
-                ! if (.not. isUpstreamBranch) then 
-                !     print *, 'deltaH(6)',deltaH(6), elemR(6,er_Depth)
-                ! end if
 
                 !% --- Subcritical outflow junction (super overwrites below)
                 !%     Requires more than a trivial deltaH and there must be more than
@@ -326,22 +324,11 @@ module runge_kutta2
                 !     elemR(thisJB,er_Flowrate) =  faceR(fAdj(thisJB),fr_Flowrate) 
                 ! endwhere
 
-                ! where  ((deltaH(thisJB) < -1.0d-8) .and. (elemR(thisJB,er_Flowrate) * bsign .le. -1.0d-8))
-                !     !% --- inconsistent flow direction and pressure gradient   
-                !     elemR(thisJB,er_Flowrate) = zeroR
-                ! endwhere
+                where  ((deltaH(thisJB) < -1.0d-8) .and. (elemR(thisJB,er_Flowrate) * bsign .le. -1.0d-8))
+                    !% --- inconsistent flow direction and pressure gradient   
+                    elemR(thisJB,er_Flowrate) = zeroR
+                endwhere
  
-
-                ! do mm = 1,size(thisJB)
-                !     if (thisJB(mm) == printJB) then 
-                !         print *, JMar(thisJB(mm))
-                !         print *, 'AAAA head     ',elemR(JMar(thisJB(mm)),er_Head), faceR(fAdj(thisJB(mm)),fr_hAdj)
-                !         print *, 'AAAA dH       ',deltaH(thisJB(mm))
-                !         print *, 'AAAA FLowrate ',thisJB(mm), elemR(thisJB(mm),er_Flowrate)
-                !     end if
-                ! end do
-                ! print *, ' '
-                ! print *, 'before ', elemR(7,er_Flowrate), elemR(5,er_FroudeNumber)
 
                 !% THE SUPERCRITICAL CAUSED PROBLEMS FOR THIN LAYERS
                 ! !% --- Supercritical junction (requires JM velocity and froude number)
@@ -378,12 +365,6 @@ module runge_kutta2
                 !     !endwhere
                 ! end if
 
-                ! if (isUpstreamBranch) then 
-                ! else 
-                !     !do mm=1,size(thisJB)
-                !         print *, 'vel to empty', 127, 125, elemR(125,er_Volume) / dt
-                !     !end do
-                ! end if
 
                 ! !% --- update velocity
                 ! where (elemR(thisJB,er_Area) > setting%ZeroValue%Area)
