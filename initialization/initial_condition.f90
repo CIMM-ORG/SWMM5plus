@@ -2719,10 +2719,8 @@ contains
                     !% real data
                     elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth)  
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
-                    !% the unit of weir discharge coefficient is (ft^0.5)/sec
-                    !% thus converting it to (m^0.5)/sec by multiplying it with 0.5521
-                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1) * 0.5521
-                    elemSR(:,esr_Weir_Triangular)            = link%R(thisLink,lr_DischargeCoeff2) * 0.5521
+                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
+                    elemSR(:,esr_Weir_Triangular)            = link%R(thisLink,lr_DischargeCoeff2)
                     elemSR(:,esr_Weir_TrapezoidalBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,esr_Weir_TrapezoidalLeftSlope)  = link%R(thisLink,lr_SideSlope)
                     elemSR(:,esr_Weir_TrapezoidalRightSlope) = link%R(thisLink,lr_SideSlope)
@@ -2756,9 +2754,7 @@ contains
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth) 
-                    !% the unit of weir discharge coefficient is (ft^0.5)/sec
-                    !% thus converting it to (m^0.5)/sec by multiplying it with 0.5521
-                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1) * 0.5521
+                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,esr_Weir_FullArea)              = elemSR(:,esr_Weir_RectangularBreadth) * elemSR(:,esr_Weir_FullDepth)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
@@ -2782,9 +2778,7 @@ contains
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth) 
-                    !% the unit of weir discharge coefficient is (ft^0.5)/sec
-                    !% thus converting it to (m^0.5)/sec by multiplying it with 0.5521
-                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1) * 0.5521
+                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,esr_Weir_FullArea)              = elemSR(:,esr_Weir_RectangularBreadth) * elemSR(:,esr_Weir_FullDepth)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom) + link%R(thisLink,lr_InletOffset)
@@ -2808,9 +2802,7 @@ contains
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth)
-                    !% the unit of weir discharge coefficient is (ft^0.5)/sec
-                    !% thus converting it to (m^0.5)/sec by multiplying it with 0.5521
-                    elemSR(:,esr_Weir_Triangular)            = link%R(thisLink,lr_DischargeCoeff1) * 0.5521 
+                    elemSR(:,esr_Weir_Triangular)            = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,esr_Weir_TriangularSideSlope)   = link%R(thisLink,lr_SideSlope)
                     elemSR(:,esr_Weir_FullArea)              = elemSR(:,esr_Weir_FullDepth) * elemSR(:, esr_Weir_FullDepth) &
                                                                 * elemSR(:,esr_Weir_TriangularSideSlope) 
@@ -2837,9 +2829,7 @@ contains
                     !% real data
                     elemSR(:,esr_Weir_EffectiveFullDepth)    = link%R(thisLink,lr_FullDepth)
                     elemSR(:,esr_Weir_FullDepth)             = link%R(thisLink,lr_FullDepth)
-                    !% the unit of weir discharge coefficient is (ft^0.5)/sec
-                    !% thus converting it to (m^0.5)/sec by multiplying it with 0.5521
-                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1) * 0.5521
+                    elemSR(:,esr_Weir_Rectangular)           = link%R(thisLink,lr_DischargeCoeff1)
                     elemSR(:,esr_Weir_RectangularBreadth)    = link%R(thisLink,lr_BreadthScale)
                     elemSR(:,esr_Weir_FullArea)              = elemSR(:,esr_Weir_RectangularBreadth) * elemSR(:,esr_Weir_FullDepth)
                     elemSR(:,esr_Weir_Zcrest)                = elemR(:,er_Zbottom)  + link%R(thisLink,lr_InletOffset)

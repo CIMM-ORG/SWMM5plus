@@ -225,8 +225,8 @@ module define_settings
 
     !% setting%Limiter%InterpWeight
     type LimiterInterpWeightType
-        real(8) :: Maximum = 1.0d6
-        real(8) :: Minimum = 1.0d-6
+        real(8) :: Maximum = 1.0d8
+        real(8) :: Minimum = 1.0d-8
     end type LimiterInterpWeightType
 
     !% setting%Limiter%Velocity

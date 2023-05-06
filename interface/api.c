@@ -1383,7 +1383,16 @@ int DLLEXPORT api_get_linkf_attribute(
         case linkf_discharge_coeff1 :
             switch (Link[link_idx].type) {
                 case WEIR :
-                    *value = Weir[Link[link_idx].subIndex].cDisch1;
+                    // the unit of weir discharge coefficient is (ft^0.5)/sec for US units
+                    // thus converting it to (m^0.5)/sec by multiplying it with 0.5521
+                    if (UnitSystem == US)
+                        {
+                            *value = Weir[Link[link_idx].subIndex].cDisch1 * 0.5521;
+                        }
+                    else
+                        {
+                           *value = Weir[Link[link_idx].subIndex].cDisch1; 
+                        }
                     break;
                 case ORIFICE :
                     *value = Orifice[Link[link_idx].subIndex].cDisch;
@@ -1399,7 +1408,16 @@ int DLLEXPORT api_get_linkf_attribute(
         case linkf_discharge_coeff2 :
             switch (Link[link_idx].type) {
                 case WEIR :
-                    *value = Weir[Link[link_idx].subIndex].cDisch2;
+                    // the unit of weir discharge coefficient is (ft^0.5)/sec for US units
+                    // thus converting it to (m^0.5)/sec by multiplying it with 0.5521
+                    if (UnitSystem == US)
+                    {
+                        *value = Weir[Link[link_idx].subIndex].cDisch2 * 0.5521;
+                    }
+                    else
+                    {
+                       *value = Weir[Link[link_idx].subIndex].cDisch2; 
+                    }
                     break;
                 case OUTLET :
                     *value = Outlet[Link[link_idx].subIndex].qExpon;
