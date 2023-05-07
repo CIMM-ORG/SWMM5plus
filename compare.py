@@ -548,6 +548,7 @@ print(' ')
 if(len(list_of_errors) == 0):
     print("no links or nodes are out of range for given % tolerance", Qtolerance, Ytolerance)
     sys.stdout.write("no links or nodes are out of the L0, L1, and Linf norm range for given tolerance {Qtolerance,Ytolerance}")
+    print(' ')
     exit(0)
 else:
     print("Issues: some links or nodes are out of the L0, L1, and Linf norm range for given tolerance {Qtol,Ytol}")

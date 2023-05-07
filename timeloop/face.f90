@@ -1122,7 +1122,7 @@ module face
             Npack => npack_facePS(facePackCol)
         !%-------------------------------------------------------------------
         !% Preliminaries   
-            if (Npack < 1) return
+            ! if (Npack < 1) return !% saz 20230507 --- this creates race condition for network with diagnostic elements
 
             if (setting%Debug%File%face) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

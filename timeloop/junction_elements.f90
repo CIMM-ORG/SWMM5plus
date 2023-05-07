@@ -268,17 +268,18 @@ module junction_elements
             !% losing/gaining mass?
             !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-            !% --- update various packs of zeroDepth faces
-            call pack_JB_zeroDepth_interior_faces ()
-            sync all
-            call pack_JB_zeroDepth_shared_faces ()  !% HACK STUB ROUTINE NOT COMPLETE
-
-            !% --- set face geometry and flowrates where adjacent element is zero
-            !%     only applies to faces with JB on one side
-            call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &
-                fp_JB_upstream_is_zero_IorS,fp_JB_bothsides_are_zero_IorS)
-
         end if
+
+        !% saz 20230507 --- get tehse calls out of the if statement to prevent any race conditions
+        !% --- update various packs of zeroDepth faces
+        call pack_JB_zeroDepth_interior_faces ()
+        sync all
+        call pack_JB_zeroDepth_shared_faces ()  !% HACK STUB ROUTINE NOT COMPLETE
+
+        !% --- set face geometry and flowrates where adjacent element is zero
+        !%     only applies to faces with JB on one side
+        call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &
+            fp_JB_upstream_is_zero_IorS,fp_JB_bothsides_are_zero_IorS)
         
     end subroutine junction_first_step
 !%
@@ -356,15 +357,16 @@ module junction_elements
             call update_Froude_number_element (thisP) 
         end if
 
+        !% saz 20230507 commented out
         !% --- QUESTION -- IS THIS NEEDED HERE? 
         !%     should this be outside of the IF/ENDIF for the istep=2?
-        if (N_diag > 0) then 
-                !% --- update flowrates for diagnostic elements that are not adjacent to JB
-                !call diagnostic_by_type (ep_Diag_notJBadjacent, istep)  
-                !20230423 test using all DIAG
-                call diagnostic_by_type (ep_Diag, 2) 
+        ! if (N_diag > 0) then 
+        !         !% --- update flowrates for diagnostic elements that are not adjacent to JB
+        !         !call diagnostic_by_type (ep_Diag_notJBadjacent, istep)  
+        !         !20230423 test using all DIAG
+        !         call diagnostic_by_type (ep_Diag, 2) 
 
-        end if
+        ! end if
 
     end subroutine junction_second_step
 !%

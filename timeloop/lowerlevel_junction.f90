@@ -96,6 +96,8 @@ module lowerlevel_junction
                 Npack => npack_elemP(ep_JB_Upstream_CC_Adjacent)
                 if (Npack > 0) then 
                     thisJB => elemP(1:Npack,ep_JB_Upstream_CC_Adjacent)
+                else
+                    cycle
                 end if
                 !% --- the JB-adjacent face is upstream
                 fidx => elemI(:,ei_Mface_uL)
@@ -108,6 +110,8 @@ module lowerlevel_junction
                 Npack => npack_elemP(ep_JB_Downstream_CC_Adjacent)
                 if (Npack > 0) then 
                     thisJB => elemP(1:Npack,ep_JB_Downstream_CC_Adjacent)
+                else 
+                    cycle
                 end if
                 !% --- the JB-adjacent face is downstream
                 fidx => elemI(:,ei_Mface_dL)

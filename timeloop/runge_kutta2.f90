@@ -92,17 +92,18 @@ module runge_kutta2
         !% --- Diagnostic and junction adjustments before RK2
         istep = zeroI
 
-        !% --- Diagnostic elements and faces
-        if (N_diag > 0) then 
-            !% --- update flowrates for aa diagnostic elements
-            call diagnostic_by_type (ep_Diag, istep)  
-                ! call util_utest_CLprint ('------- BBB  after diagnostic')
+        !% saz 20230507 commented out
+        ! !% --- Diagnostic elements and faces
+        ! if (N_diag > 0) then 
+        !     !% --- update flowrates for aa diagnostic elements
+        !     call diagnostic_by_type (ep_Diag, istep)  
+        !         ! call util_utest_CLprint ('------- BBB  after diagnostic')
 
-            !% --- push the diagnostic flowrate data to faces -- true is upstream, false is downstream
-            call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .true.)
-            call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .false.)
-                ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
-        end if
+        !     !% --- push the diagnostic flowrate data to faces -- true is upstream, false is downstream
+        !     call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .true.)
+        !     call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .false.)
+        !         ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
+        ! end if
 
         !% AT THIS POINT: DIAGNOSTIC VALUES ENFORCED ON ELEMENTS AND FACES, BUT CONNECTED JB ARE INCONSISTENT
 
@@ -154,6 +155,28 @@ module runge_kutta2
             sync all
             call face_interpolation(fp_noBC_IorS, .true., .true., .true., .false., .true.) 
                 ! call util_utest_CLprint ('------- OOO  after face interp')
+
+            !% saz 20230507
+            if (N_diag > 0) then 
+                !% --- update flowrates for aa diagnostic elements
+                call diagnostic_by_type (ep_Diag, istep)  
+                    ! call util_utest_CLprint ('------- BBB  after diagnostic')
+    
+                !% --- push the diagnostic flowrate data to faces -- true is upstream, false is downstream
+                call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .true.)
+                call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .false.)
+                    ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
+            end if
+
+            !% ==============================================================
+            !% --- face sync (saz 20230507)
+            !%     sync all the images first. then copy over the data between
+            !%     shared-identical faces. then sync all images again
+            sync all
+            call face_shared_face_sync (fp_noBC_IorS)
+            sync all
+            !% 
+            !% ==============================================================
 
             !% --- update various packs of zeroDepth faces
             call pack_CC_zeroDepth_interior_faces ()
