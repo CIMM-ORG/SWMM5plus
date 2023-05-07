@@ -152,6 +152,17 @@ for keys in all_dset_keys:
 
 # get the profile from the h5 file
 all_attribute_names=h5_file.attrs.keys()
+if not all_attribute_names:
+    print("------------------------ MISSING ATTRIBUTE SET IN .H5 FILE -------------------------")
+    print("missing attributes in the output.h5; add profiles at the end of SWMM5 input file as:")
+    print("                                                                                    ")
+    print("[PROFILES]                                                                          ")
+    print(";;Name           Links                                                              ")
+    print(";;-------------- ----------                                                         ")
+    print("\"profile_name    \" link_1 link_2 link_3 ... ...                                   ")
+    print("                                                                                    ")
+    print("------------------------------------------------------------------------------------") 
+    quit()
 
 if(has_arg_profile):
     if(arg_profile_name.strip() not in all_attribute_names):
