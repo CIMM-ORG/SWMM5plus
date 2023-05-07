@@ -2157,6 +2157,11 @@ module face
 
             faceR(elemI(JMidx+kk,fiIdx),frCol) = elemR(JMidx+kk,erCol)
 
+            !% --- set the shared face diverge to true
+            if (faceYN(elemI(JMidx+kk,fiIdx),fYN_isSharedFace)) then
+                faceYN(elemI(JMidx+kk,fiIdx),fYN_isSharedFaceDiverged) = .true.
+            end if
+
         end do
     
     end subroutine face_force_JBvalues
