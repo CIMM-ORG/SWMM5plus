@@ -86,22 +86,13 @@ else:
 # allow for different find of output paths
 if has_output_path:
     output_dir = output_path+inp_name+"_parallel_comparison"
-    output_dir_timestamped = output_dir+'/'+time_now+'/'
 else:
     #setting the output directory
     output_dir = inp_name+"_parallel_comparison"
-    output_dir_timestamped = output_dir+'/'+time_now+'/'
-
 #creates new output_dir for the test_case and inside of it a timestamped version 
 os.system('mkdir '+ output_dir)
 os.system('cd ' + output_dir)
 os.system('cd ' + output_dir+ '\n  mkdir '+time_now)
-
-#setting the input, output and report paths needed for running SWMM5_C 
-#inp_path = cwd + '/' + sys.argv[1][::len(sys.argv)-1]
-out_path = output_dir_timestamped + inp_name +'.out'
-rpt_path = output_dir_timestamped + inp_name +'.rpt'
-
 
 for ii in range(len(num_processors)):    
 
@@ -114,6 +105,18 @@ for ii in range(len(num_processors)):
     os.system('cd build \n make \n mv SWMM ..')
     # set the number of processors 
     os.environ["FOR_COARRAY_NUM_IMAGES"] = str(num_processors[ii])
+
+    # allow for different find of output paths
+    if has_output_path:
+        output_dir_timestamped = output_dir+'/'+time_now+'_processor_'+str(num_processors[ii])+'/'
+    else:
+        #setting the output directory
+        output_dir_timestamped = output_dir+'/'+time_now+'_processor_'+str(num_processors[ii])+'/'
+    
+    #setting the input, output and report paths needed for running SWMM5_C 
+    #inp_path = cwd + '/' + sys.argv[1][::len(sys.argv)-1]
+    out_path = output_dir_timestamped + inp_name +'.out'
+    rpt_path = output_dir_timestamped + inp_name +'.rpt'
 
     if(settings_path==""):
         os.system('./SWMM -i ' + inp_path + ' -o ' + output_dir_timestamped)

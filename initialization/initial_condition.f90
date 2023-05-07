@@ -4126,9 +4126,10 @@ contains
                 if (elemSR(JMidx,esr_JunctionMain_PondedArea) == zeroR) then
                     !% --- use oveflow orifice
                     elemSI(JMidx,esi_JunctionMain_OverflowType) = OverflowOrifice
-                    !% --- HACK using default orifice length and height for overflow
-                    elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) = setting%Junction%OverflowOrificeLength
-                    elemSR(JMidx,esr_Junctionmain_OverflowOrifice_Height) = setting%Junction%OverflowOrificeHeight
+                    !% --- Using default orifice length and height for overflow
+                    !%     FUTURE: need user-supplied values in SWMM *.inp file
+                    elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) = setting%Junction%Overflow%OrificeLength
+                    elemSR(JMidx,esr_Junctionmain_OverflowOrifice_Height) = setting%Junction%Overflow%OrificeHeight
                 else
                     !% --- use ponded overflow
                     elemSI(JMidx,esi_JunctionMain_OverflowType) = Ponded 
@@ -4455,6 +4456,11 @@ contains
                     if (elemR(JMidx+ii,er_BreadthMax) == nullvalueR) cycle
                     largestBreadth = max(largestBreadth,elemR(JMidx+ii,er_BreadthMax))
                 end do
+                !% --- set the implies storage area if the largest breadth of connected
+                !%     conduites is less than the global minimum, then use the global minimum
+                !%     For larger connected conduits compute the area of a circular junction
+                !%     whose diameter is the "BreadthFactor" times the largest connected
+                !%     conduit.
                 if (largestBreadth < sqrt(setting%Junction%SurfaceArea_Minimum)) then 
                     elemSR(JMidx,esr_Storage_Plan_Area) = setting%Junction%SurfaceArea_Minimum
                 else

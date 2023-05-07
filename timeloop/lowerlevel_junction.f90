@@ -45,17 +45,8 @@ module lowerlevel_junction
     public :: lljunction_push_inflowCC_flowrates_to_face
     public :: lljunction_push_adjacent_elemdata_to_face
 
+    integer :: printJM = 212
     
-    real(8), parameter :: Cbc = 0.46295d0  !% HACK dimensionless 1.45/sqrt(g) from Brater and King broad-crested weir coefficient
-    real(8), parameter :: Horifice = 0.15d0  !% HACK fixed orifice height
-    real(8), parameter :: Lorifice = 1.5d0   !% HACK fixed orifice length
-
-    real(8) :: coef1, coef2, coef3, coef4
-   
-
-
-
-
     contains
 !%==========================================================================
 !% PUBLIC
@@ -769,10 +760,11 @@ module lowerlevel_junction
 
         repeatYN = .true.
 
-        ! print *, ' '
-        ! print *, '============FIX CONSERVATION'
-        ! print *, 'JUNCTION ',JMidx
-        ! print *, 'starting resid ',resid 
+            ! ! print *, ' '
+            ! print *, '============FIX CONSERVATION'
+            ! print *, 'JUNCTION ',JMidx
+            ! print *, 'starting resid ',resid 
+            ! print *, 'Qoverflow      ',Qoverflow
 
         dQ = zeroR
         dH = zeroR
@@ -799,15 +791,17 @@ module lowerlevel_junction
             end if
         endif
 
-        ! print *, '0001  Resid',resid
+            ! print *, '0001  Resid    ',resid
             
         do while (repeatYN)
 
+            !print *,' '
+
             !% --- distribute change in in/outflows based on contributing area
             bFixYN = .false.
-            Aout = zeroR
-            Ain  = zeroR
-            areaQ = zeroR
+            Aout   = zeroR
+            Ain    = zeroR
+            areaQ  = zeroR
             bcount = zeroI
             do kk=1,max_branch_per_node
                 !% --- cycle if this branch cannot contribute to flow
@@ -824,7 +818,7 @@ module lowerlevel_junction
                     bcount = bcount + oneI
                     areaQ(kk) = max(faceR(fup(JMidx+kk),fr_Area_d),elemR(JMidx+kk,er_Area))
 
-                    ! print *, 'ff 01 AREA for Flow ',kk, areaQ(kk)
+                        ! print *, 'ff 01 AREA for Flow ',kk, areaQ(kk)
 
                 else
                     !% --- downstream branch
@@ -836,7 +830,7 @@ module lowerlevel_junction
                     bcount = bcount + oneI
                     areaQ(kk) = max(faceR(fdn(JMidx+kk),fr_Area_u),elemR(JMidx+kk,er_Area))
 
-                    ! print *, 'ff 02 Area for Flow',kk, areaQ(kk)
+                        ! print *, 'ff 02 Area for Flow',kk, areaQ(kk)
                 end if
                 !% --- note, should not reach here unles bFix == .true.
 
@@ -845,10 +839,14 @@ module lowerlevel_junction
                     call util_crashpoint(6209873)
                 end if
 
-                    ! print *, 'QVAL ',(real(branchsign(kk),8) * elemR(JMidx+kk,er_Flowrate))
+                    ! print *, 'QVAL ',kk, (real(branchsign(kk),8) * elemR(JMidx+kk,er_Flowrate))
 
 
             end do
+
+                ! print *,' '
+                ! print *, 'bcount ',bcount
+                ! print *,' '
 
             if (bcount < 1) then 
                 !% --- occurs during wetting drying, use all real branches for adjustment
@@ -862,7 +860,7 @@ module lowerlevel_junction
                         bcount = bcount + oneI
                         areaQ(kk) = max(faceR(fup(JMidx+kk),fr_Area_d),elemR(JMidx+kk,er_Area))
 
-                        ! print *, 'ff 03 ',kk, areaQ(kk)
+                        print *, 'ff 03 ',kk, areaQ(kk)
 
                     else
                         !% --- downstream branch
@@ -870,7 +868,7 @@ module lowerlevel_junction
                         bcount = bcount + oneI
                         areaQ(kk) = max(faceR(fdn(JMidx+kk),fr_Area_u),elemR(JMidx+kk,er_Area))
 
-                        ! print *, 'ff 04 ',kk, areaQ(kk)
+                        print *, 'ff 04 ',kk, areaQ(kk)
 
                     end if
                 end do
@@ -897,20 +895,19 @@ module lowerlevel_junction
                     Aout = Aout + elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) &
                                 * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Height)
 
-                    ! print *, 'Aout with overflow ',Aout    
+                        ! print *, 'Aout with overflow ',kk,Aout    
 
                 end if
             end do
 
-        !     print *, ' '
-        ! !    ! print *, 'bfix ',bFixYN
-        !     print *, 'Ain, Aout ',Ain, Aout
-        !     print *, ' '
+                ! print *, ' '
+                ! print *, 'Ain, Aout ',Ain, Aout
+                ! print *, ' '
             
 
             if ((Ain < setting%ZeroValue%Area) .and. (Aout < setting%ZeroValue%Area)) then 
                 !% degenerate condition 
-                print *, 'CODE ERROR: unexpected junction are condition '
+                print *, 'CODE ERROR: unexpected junction condition '
                 print *, 'JMidx ',JMidx
                 print *, Ain, Aout, setting%ZeroValue%Area
                 call util_crashpoint(629784)
@@ -919,8 +916,12 @@ module lowerlevel_junction
                 do kk=1,max_branch_per_node
                     if (.not. bFixYN(kk)) cycle 
                     dQ(kk) = - resid * real(branchsign(kk),8) * areaQ(kk) / (Ain + Aout) 
+
+                     ! print *, 'dQ(kk) ',kk, dQ(kk)
+
                 end do
                 !% --- overflow rate adjustment
+                 ! print *, 'Qoverflow ',Qoverflow
                 if (Qoverflow < zeroR) then 
                     dQoverflow = -resid * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) &
                                         * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Height) &
@@ -966,6 +967,7 @@ module lowerlevel_junction
         !% --- update overflow
         Qoverflow = Qoverflow + dQoverflow
 
+
         !% --- recompute the residual
         resid = lljunction_conservation_residual (JMidx)
 
@@ -975,6 +977,8 @@ module lowerlevel_junction
 
         if (abs(resid) > localEpsilon) then 
             print *, 'resid ',resid, ' at junction element ',JMidx
+            print *, 'on solution step ',setting%Time%Step
+            print *, 'at time ',setting%Time%Now / (3600.d0), ' hours'
             print *, 'CODE ERROR: unexpected flowrate residual'
             call util_crashpoint(6109873)
             return 
@@ -1018,13 +1022,19 @@ module lowerlevel_junction
 !%==========================================================================
 !%==========================================================================
 !% 
-    real(8) pure function lljunction_main_dQdHoverflow (JMidx)
+    real(8) function lljunction_main_dQdHoverflow (JMidx)
         !%------------------------------------------------------------------
         !% Description
         !% Computes the overflow rate for  junction
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: JMidx
+            real(8), pointer    :: Lorifice(:), coef2, coef4
+        !%------------------------------------------------------------------  
+        !% Aliases
+            Lorifice => elemSR(:,esr_JunctionMain_OverflowOrifice_Length)
+            coef2    => setting%Junction%Overflow%coef2
+            coef4    => setting%Junction%Overflow%coef4
         !%------------------------------------------------------------------  
 
         ! print *, ' '
@@ -1043,12 +1053,22 @@ module lowerlevel_junction
             case (NoOverflow,Ponded)
                 lljunction_main_dQdHoverflow = zeroR
             case (OverflowWeir)
-                lljunction_main_dQdHoverflow = -coef2                            &
+                !% --- Using Brater and King Eq 5.10 dQ/dH = (3/2) C L H^{1/2}
+                !%     Apply L = 2 (pi A)^{1/2} such that
+                !%     coef2 = (3/2) (2 C sqrt(pi)) and
+                !%     dQ/dH = coef2 * sqrt( A H )
+                !%     minus sign as Q is outflow (negative) as H increases
+                lljunction_main_dQdHoverflow = -coef2                          &
                     * sqrt(   ( elemSR(JMidx,esr_Storage_Plan_Area))           &
                             * ( elemR(JMidx,er_Head - elemR(JMidx,er_Zcrown))) &
                           )
             case (OverflowOrifice)
-                lljunction_main_dQdHoverflow = -coef4 * Lorifice                  &
+                !% --- use the supplied orifice length
+                !%     Using Brater and King Eq. 4.16 or 4.17
+                !%     dQ/dH = sqrt(2g) L sqrt(H)
+                !%     coef4 = sqrt(2g)
+                !%     minus sign as Q is outflow (negative) as H increases
+                lljunction_main_dQdHoverflow = -coef4 * Lorifice(JMidx)         &
                         * sqrt(elemR(JMidx,er_Head) - elemR(JMidx,er_Zcrown))     
             case default
                 !% --- should not reach here.
@@ -1237,44 +1257,76 @@ module lowerlevel_junction
         !%------------------------------------------------------------------
         !% Description
         !% Computes the overflow rate of a junction
-        !% HACK: for an overflow orifice we have hard-coded the orifice
-        !%   height and length. Later these should be user inputs
-        !% HACK: for an overflow weir we have hard-coded the weir coefficient.
-        !%   Later this should be moved to the settings structure
+        !% Weir overflow based on non-dimensional approach of Brater and King
+        !% for broad-crested weir
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: JMidx
+            real(8), pointer    :: Horifice(:), Lorifice(:), coef1, coef3
+            real(8)             :: SurchargeHeadMax, OverFlowHead
+        !%------------------------------------------------------------------  
+        !% Aliases
+            Horifice => elemSR(:,esr_JunctionMain_OverflowOrifice_Height)
+            Lorifice => elemSR(:,esr_JunctionMain_OverflowOrifice_Length)
+            coef1    => setting%Junction%Overflow%coef1
+            coef3    => setting%Junction%Overflow%coef3
         !%------------------------------------------------------------------  
 
-        !% --- return zero if the head is below the crown at the start.
-        if (elemR(JMidx,er_Head) .le. elemR(JMidx,er_Zcrown)) then 
+        SurchargeHeadMax = elemR(JMidx,er_Zcrown) + elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)
+        OverFlowHead     = elemR(JMidx,er_Head) - SurchargeHeadMax
+
+            ! if (JMidx==printJM) print *, ' in LLjunction head ',elemR(JMidx,er_Head), elemR(JMidx,er_Zcrown)
+
+        !% --- return zero if the head is below the surcharge max head at the start.
+        if (elemR(JMidx,er_Head) .le. SurchargeHeadMax) then
             lljunction_main_Qoverflow = zeroR
             return
         end if
 
         select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
+
             case (NoOverflow,Ponded)
-                !% --- ponding an NoOverflow do not have separate volume accounting
+                !% --- ponding and NoOverflow do not have separate volume accounting
                 !%     for overflow
                 lljunction_main_Qoverflow = zeroR
+
             case (OverflowWeir)
-                !% --- weir overflow based on estimated circumference of storage plan area
-                lljunction_main_Qoverflow = -coef1 * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) &
-                    * ((elemR(JMidx,er_Head) - elemR(JMidx,er_Zcrown))**threehalfR)
+                !% --- weir overflow based on weir length as circumference of storage plan area
+                !%     Q = C L H^{3/2}
+                !%     L = 2 (pi A)^{1/2}
+                !%     1.38 < C < 1.83 from Brater and King Table 5.1 where L in m
+                !%     and C in m^{1/2} / S
+                !%     Q = coef1 (sqrt(A)) H^(3/2)
+                !%     minus sign as Q is outflow (negative)
+                lljunction_main_Qoverflow                                &
+                    = -coef1 * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) &
+                       * (OverFlowHead**threehalfR)
+
             case (OverflowOrifice)
-                !% --- orifice overflow assuming a single orifice of standard dimensions
-                if (elemR(JMidx,er_Head) .le. (elemR(JMidx,er_Zcrown) + Horifice )) then
-                    !% --- water surface below upper edge of orifice
-                    lljunction_main_Qoverflow = -coef3 * Lorifice &
-                        * (elemR(JMidx,er_Head) - elemR(JMidx,er_Zcrown))
+                !% --- orifice overflow assuming a single orifice
+                !%     Using Brater and King Eq. 4.17 
+                !%     Q = (2/3) L sqrt(2g) H^(3/2)
+                !%     define coef3 = (2/3) sqrt(2g) so that
+                !%     Q = coef3 * L * H^{3/2}
+                !%     minus sign as Q is outflow (negative)
+                if (elemR(JMidx,er_Head) .le. (SurchargeHeadMax + Horifice(JMidx) )) then
+                    !% --- water surface below upper edge of orifice (H < Z + Horifice)
+                    lljunction_main_Qoverflow = -coef3 * Lorifice(JMidx) * (OverFlowHead**threehalfR)
+
                 else
-                    !% --- orifice is pressurized (head above the Zcrown + Horifice)
-                    lljunction_main_Qoverflow = -coef3 * Lorifice  &
+                    !% --- orifice is pressurized (H > Zcrown + Horifice)
+                    !%     Using Brater and King eq. 4.16
+                    !%     Q = (2/3) L sqrt(2g) ( (H-Zcrown)^(3/2) - (H-(zcrown+Horifice))^(3/2) )
+                    !%     define coef3 = (2/3) sqrt(2g) so that
+                    !%     Q = coef3 * L * ( (H-Zcrown)^(3/2) - (H-(zcrown+Horifice))^(3/2) )
+                    !%     minus sign as Q is outflow (negative) 
+                    lljunction_main_Qoverflow = -coef3 * Lorifice(JMidx)  &
                         * (                                                                                 &
-                            +  ((elemR(JMidx,er_Head) -  elemR(JMidx,er_Zcrown)            )**threehalfR)   &
-                            -  ((elemR(JMidx,er_Head) - (elemR(JMidx,er_Zcrown) + Horifice))**threehalfR)   &
+                            +  ((OverFlowHead                  )**threehalfR)   &
+                            -  ((OverFlowHead - Horifice(JMidx))**threehalfR)    &
                           )
                 end if
+
             case default
                 !% --- should not reach here.
                 !%     for debugging, change to impure function and uncomment

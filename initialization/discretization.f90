@@ -91,6 +91,9 @@ contains
     !==========================================================================
     !
     subroutine init_discretization_adjustlinklength()
+
+        print *, 'OBSOLETE 20230507 brh'
+        stop 539874
         !%-------------------------------------------------------------------------
         !% Description:
         !%   This subroutine computes the "Adusted_Length" that is a section of the
@@ -101,62 +104,62 @@ contains
         !%   from the channel/conduit length herein 
         !%-------------------------------------------------------------------------
         !% Declarations
-            integer          :: ii, Adjustment_flag
-            real(8)          :: temp_length
-            logical, pointer :: isAdjustLinkLength
-            real(8)          :: elem_nominal_length, elem_shorten_cof
-            character(64)    :: subroutine_name = 'init_discretization_adjustlinklength'
-        !%-------------------------------------------------------------------------
-        if (setting%Debug%File%discretization) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !     integer          :: ii, Adjustment_flag
+        !     real(8)          :: temp_length
+        !     logical, pointer :: isAdjustLinkLength
+        !     real(8)          :: elem_nominal_length, elem_shorten_cof
+        !     character(64)    :: subroutine_name = 'init_discretization_adjustlinklength'
+        ! !%-------------------------------------------------------------------------
+        ! if (setting%Debug%File%discretization) &
+        !     write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        isAdjustLinkLength => setting%Discretization%AdjustLinkLengthForJunctionBranchYN
+        ! isAdjustLinkLength => setting%Discretization%AdjustLinkLengthForJunctionBranchYN
 
-        if (isAdjustLinkLength) then 
-            print *, 'CONFIGURATION ERROR'
-            print *, 'setting.Discretization.AdjustLinkLengthForJunctionBranchYN = .true.'
-            print *, 'SWMM5+ presently requires this to be .false.'
-            print *, 'Please change the setting in your *.json file'
-            stop 77098723
-        end if
+        ! ! if (isAdjustLinkLength) then 
+        ! !     print *, 'CONFIGURATION ERROR'
+        ! !     print *, 'setting.Discretization.AdjustLinkLengthForJunctionBranchYN = .true.'
+        ! !     print *, 'SWMM5+ presently requires this to be .false.'
+        ! !     print *, 'Please change the setting in your *.json file'
+        ! !     stop 77098723
+        ! ! end if
         
-        do ii =1, N_link
-            !% --- default shorting coefficient (reset for each link)
-            elem_nominal_length = link%R(ii,lr_Length) / link%I(ii,li_N_element)
-            elem_shorten_cof    = setting%Discretization%JunctionBranchLengthFactor
+        ! do ii =1, N_link
+        !     !% --- default shorting coefficient (reset for each link)
+        !     elem_nominal_length = link%R(ii,lr_Length) / link%I(ii,li_N_element)
+        !     elem_shorten_cof    = setting%Discretization%JunctionBranchLengthFactor
 
-            temp_length = link%R(ii,lr_Length) ! length of link ii
-            Adjustment_flag = oneI
+        !     temp_length = link%R(ii,lr_Length) ! length of link ii
+        !     Adjustment_flag = oneI
            
-            !% --- adjust the shortening for small link lengths 20220520brh 
-            ! if (temp_length < (oneR + twoR*elem_shorten_cof) * elem_nominal_length) then
-            !     !% --- limit the shortening to 1/4 of the total element length (1/8 on either side)
-            !     elem_shorten_cof = temp_length / (elem_nominal_length * eightR)
-            ! end if
+        !     !% --- adjust the shortening for small link lengths 20220520brh 
+        !     ! if (temp_length < (oneR + twoR*elem_shorten_cof) * elem_nominal_length) then
+        !     !     !% --- limit the shortening to 1/4 of the total element length (1/8 on either side)
+        !     !     elem_shorten_cof = temp_length / (elem_nominal_length * eightR)
+        !     ! end if
 
-            if ( node%I(link%I(ii,li_Mnode_u), ni_node_type) == nJm ) then
-                temp_length = temp_length - elem_shorten_cof * elem_nominal_length ! make a cut for upstream M junction
-                Adjustment_flag = Adjustment_flag + oneI
-            end if
+        !     if ( node%I(link%I(ii,li_Mnode_u), ni_node_type) == nJm ) then
+        !         temp_length = temp_length - elem_shorten_cof * elem_nominal_length ! make a cut for upstream M junction
+        !         Adjustment_flag = Adjustment_flag + oneI
+        !     end if
 
-            if ( node%I(link%I(ii,li_Mnode_d), ni_node_type) == nJm ) then
-                temp_length = temp_length - elem_shorten_cof * elem_nominal_length ! make a cut for downstream M junction
-                Adjustment_flag = Adjustment_flag + oneI
-            end if
+        !     if ( node%I(link%I(ii,li_Mnode_d), ni_node_type) == nJm ) then
+        !         temp_length = temp_length - elem_shorten_cof * elem_nominal_length ! make a cut for downstream M junction
+        !         Adjustment_flag = Adjustment_flag + oneI
+        !     end if
 
-            if ((link%I(ii,li_link_type) == lChannel) .or. (link%I(ii,li_link_type) == lPipe)) then
-                link%I(ii,li_length_adjusted) = Adjustment_flag
-                link%R(ii,lr_AdjustedLength) = temp_length
-                !% set the new element length based on the adjusted link length if the user permits
-                if (isAdjustLinkLength) link%R(ii,lr_ElementLength) = link%R(ii,lr_AdjustedLength)/link%I(ii,li_N_element)     
-            else
-                link%R(ii,lr_AdjustedLength) = link%R(ii,lr_ElementLength)
-                link%I(ii,li_length_adjusted) = DiagAdjust
-            end if
-        end do
+        !     if ((link%I(ii,li_link_type) == lChannel) .or. (link%I(ii,li_link_type) == lPipe)) then
+        !         link%I(ii,li_length_adjusted) = Adjustment_flag
+        !         link%R(ii,lr_AdjustedLength) = temp_length
+        !         !% set the new element length based on the adjusted link length if the user permits
+        !         if (isAdjustLinkLength) link%R(ii,lr_ElementLength) = link%R(ii,lr_AdjustedLength)/link%I(ii,li_N_element)     
+        !     else
+        !         link%R(ii,lr_AdjustedLength) = link%R(ii,lr_ElementLength)
+        !         link%I(ii,li_length_adjusted) = DiagAdjust
+        !     end if
+        ! end do
 
-        if (setting%Debug%File%discretization)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        ! if (setting%Debug%File%discretization)  &
+        !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_discretization_adjustlinklength
     !
     !==========================================================================
