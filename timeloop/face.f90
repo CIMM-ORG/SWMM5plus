@@ -149,7 +149,7 @@ module face
 !%==========================================================================    
 !%==========================================================================
 !%
-    subroutine face_push_diag_adjacent_data_to_face (thisPCol )
+    subroutine face_push_diag_adjacent_data_to_face (thisPCol)
         !%------------------------------------------------------------------
         !% Description
         !% Pushes element data into the fr_..._adjacent data fields
@@ -162,6 +162,7 @@ module face
             integer :: ii, kk, ff
         !%------------------------------------------------------------------
             Npack => npack_elemP(thisPCol)
+            thisP => elemP(1:Npack,thisPCol)
             if (Npack < 1) return 
         !%------------------------------------------------------------------   
 
@@ -195,8 +196,12 @@ module face
                         print *, 'CODE ERROR: unexpected case default'
                         call util_crashpoint(3111987)
                 end select
+                !% --- check if the elem data has either been pushed 
+                !%     to a shared face. if so then mark that face
+                if (faceYN(ff,fYN_isSharedFace)) then
+                    faceYN(ff,fYN_isSharedFaceDiverged) = .true.
+                end if
             end do
-
         end do    
 
 
