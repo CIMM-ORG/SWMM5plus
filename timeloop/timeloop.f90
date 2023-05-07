@@ -634,7 +634,7 @@ contains
         faceR(:,fr_Flowrate_Conservative) = zeroR  
 
         !% call the RK2 time-march
-        call rk2_toplevel_ETM_7()
+        call rk2_toplevel_ETM()
 
         call util_accumulate_volume_conservation () 
 

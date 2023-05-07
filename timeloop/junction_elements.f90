@@ -9,9 +9,11 @@ module junction_elements
     use diagnostic_elements, only: diagnostic_by_type
     use face
     use geometry
+    use lowerlevel_junction
     use pack_mask_arrays, only: pack_small_or_zero_depth_elements, pack_CC_zeroDepth_interior_faces
     use preissmann_slot
     use update
+    use lowerlevel_junction
     !use utility_unit_testing, only: util_utest_CLprint
     use utility_crash, only: util_crashpoint
 
@@ -25,8 +27,9 @@ module junction_elements
     private
     
     !public :: junction_toplevel
-    public :: junction_main_velocity
-    public :: junction_branch_dQdH
+    public :: junction_preliminaries
+    !public :: junction_main_velocity
+    !public :: junction_branch_dQdH
     !public :: junction_branch_adjacent
     !public :: junction_branch_element_flowrates
     public :: junction_main_volume_advance
@@ -61,137 +64,99 @@ module junction_elements
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine junction_main_velocity (thisColP)
+    subroutine junction_preliminaries ()
         !%-----------------------------------------------------------------
         !% Description
-        !% computes an approximate velocity in a junction main for use
-        !% in downstream fluxes
         !%-----------------------------------------------------------------
-        !% Declarations
-            integer, intent(in) :: thisColP  !% should be only JM elements
-
-            integer, pointer :: Npack
-            integer :: mm, ii, kk, JMidx, nInflow
-
-            real(8), dimension(max_branch_per_node) :: inVelocity, inFlow
-            real(8) :: weightedVelocity, junctionVelocity, totalQ
-            real(8) :: inletVelocity
+        !% Provides computations for junctions prior to RK2 time stepping
+        !% to (1) obtain consistency with diagnostic elements, (2) estimate
+        !% the flowrate/velocity in the junction main, (3) use an energy
+        !% equation argument for nominal outflow flowrates, and (4) compute
+        !% the dQ/dH needed for the first step junction solution. 
         !%-----------------------------------------------------------------
-        !% Preliminaries
-            Npack => npack_elemP(thisColP)
-            if (Npack < 1) return
+        !%-----------------------------------------------------------------
         !%-----------------------------------------------------------------
 
 
-        do mm=1,Npack 
-            JMidx = elemP(mm,thisColP)
+        !% --- flowrate/velocity of the JM
+        if (N_nJM > 0) then
+            call lljunction_main_velocity (ep_JM)
+                ! call util_utest_CLprint ('------- jjj.01  after lljunction_main_velocity')
+        end if
 
-            elemR(JMidx,er_Flowrate) = zeroR 
-            elemR(JMidx,er_Velocity) = zeroR
+        !% --- push inflows on CC upstream or downstream of JB elem to CC/JB face
+        if (N_nJM > 0) then 
+            call lljunction_push_inflowCC_flowrates_to_face ()
+                ! call util_utest_CLprint ('------- jjj.02  after lljunction_push_inflowCC_flowrates_to_face')
+        end if
+           
+        !% AT THIS POINT: JB-ADJACENT FACES NOW CONTAIN EITHER 
+        !% (1) Diag fluxes or (2) CC inflows or (3) old data.
+        !% However, the JB element fluxes are inconsistent with faces
+        !% Need to resolve shared faces and then push face data to JB
 
-            ! ! print *, ' '
-            ! ! print *, '============================'
-            ! ! print *, 'in junction main velocity '
-            ! ! print *, 'JMidx = ',JMidx
+        !% ==============================================================
+        !% --- face sync (20230504brh)
+        !%     sync all the images first. then copy over the data between
+        !%     shared-identical faces. then sync all images again
+        sync all
+        call face_shared_face_sync (fp_noBC_IorS)
+        sync all
+        !% ==============================================================
 
-            inFlow     = zeroR
-            inVelocity = zeroR
+        !% --- ensure that all JB are consistent with adjacent face before the
+        !%     energy equation is invoked for outflow
+        if (N_nJM > 0) then 
+            call face_pull_facedata_to_JBelem (ep_JB, fr_Flowrate,   elemR(:,er_Flowrate))
+            call face_pull_facedata_to_JBelem (ep_JB, fr_Velocity_d, elemR(:,er_Velocity))
+                ! call util_utest_CLprint ('------- jjj.03  after face_pull_facedata_to_JBelem in lljunction')
+        end if
 
-            !% --- cycle thru branches to get inflow velocities and flowrates
-            !%     note that the net inflow velocity is directional (i.e. an inflow
-            !%     from downstream against the flow cancels velocity of inflows
-            !%     from upstream with the flow)
-            kk=1
-            do ii=1,max_branch_per_node
-                if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI)  cycle
-                if (elemR(JMidx+ii,er_Depth) .le. setting%ZeroValue%Depth) cycle
-                if (mod(ii,2) == 0) then 
-                    !% --- downstream branch
-                    if (elemR(JMidx+ii,er_Flowrate) < zeroR) then 
-                        !% --- downstream branch inflow
-                        inVelocity(kk) = elemR(JMidx+ii,er_Velocity)
-                        inFlow(kk)     = abs(elemR(JMidx+ii,er_Flowrate))
-                        kk=kk+1
-                    else 
-                        !% downstream outflow
-                    end if
-                else 
-                    !% --- upstream branch
-                    if (elemR(JMidx+ii,er_Flowrate) > zeroR) then 
-                        !% --- upstream branch inflow
-                        inVelocity(kk) = elemR(JMidx+ii,er_Velocity)
-                        inFlow(kk)     = abs(elemR(JMidx+ii,er_Flowrate))
-                        kk=kk+1
-                    else 
-                        !% upstream outflow
-                    end if
-                end if
-            end do
-            nInflow = kk-1
+        !% --- store junction-adjacent element data on face
+        !%     QUESTION -- SHOULD THIS BE IN THE RK ITERATION FOR UPDATES?
+        !%     ANSWER: NO, as long as the second step junction solution is NOT the backwards euler.
+        !%     TO BE MOVED TO junction_branch_adjacent 
+        if (N_nJM > 0) then 
+            call lljunction_push_adjacent_elemdata_to_face ()
+                ! call util_utest_CLprint ('------- jjj.04 after lljunction_push_adjacent_elemdata_to_face')
+        end if
 
-            !% --- sum the inflows
-            if (nInflow > 0) then 
-                totalQ = sum(inFlow(1:nInflow))
-            else
-                totalQ = zeroR
-            end if
+        !% --- JB ENERGY EQUATION compute flows/velocities on JB/CC outflow elements/faces from 
+        !%     energy equation (does not affect JB with inflows or diagnostic adjacent )
+        !% TO BE MOVED TO junction_branch_element_flowrates
+        if (N_nJM > 0) then 
+            call lljunction_branch_energy_outflow ()
+                ! call util_utest_CLprint ('------- jjj.05 after lljunction_branch_energy_outflow')
+        end if
+    
+        !% AT THIS POINT: We now have JB elements and faces that are consistent. The Diag-adjacent and
+        !% inflows have had the face values pushed to the JB, and JB/CC faces having the energy
+        !% based flowrate/velocity from the element pushed to faces. Need to sync faces to
+        !% ensure consistency across processors
 
-            !% --- add lateral inflow
-            if (elemR(JMidx,er_FlowrateLateral) > zeroR) then
-                totalQ = totalQ + elemR(JMidx,er_FlowrateLateral)
-            else 
-                !% --- nothing to add 
-            end if
+        !% ==============================================================
+        !% --- face sync (saz05022023)
+        !%     sync all the images first. then copy over the data between
+        !%     shared-identical faces. then sync all images again
+        sync all
+        call face_shared_face_sync (fp_noBC_IorS)
+        sync all
+        !% 
+        !% ==============================================================
+        
+        !% --- store the junction dQdH used in Backwards Euler
+        if (N_nJM > 0) then            
+            call lljunction_branch_dQdH ()  
+                ! call util_utest_CLprint ('------- jjj.06 after lljunction_branch_dQdH')
+        end if
 
+        !% --- ensure DeltaQ are zero 
+        if (N_nJM > 0) then        
+            faceR(:,fr_DeltaQ) = zeroR
+            elemR(:,er_DeltaQ) = zeroR
+        end if
 
-            if (totalQ > zeroR) then 
-               
-                !% --- weightedvelocity is the flow-weighted average velocity of the inflows
-                !% --- HACK we need some branch reduction factors for more than 1 inflow branch
-                weightedVelocity = sum(inFlow(1:nInflow) * inVelocity(1:nInflow) ) / totalQ
-
-                !% --- junctionVelocity is the velocity for the flow given the junction geometry
-                junctionVelocity = totalQ / ( sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) * elemR(JMidx,er_Depth))
-
-                !  print *, 'weightedVelocity ',JMidx, weightedVelocity 
-                !  print *, 'junctionVelocity ',JMidx, junctionVelocity
-
-                if (weightedVelocity == zeroR) then
-                    inletVelocity = junctionVelocity
-                elseif (weightedVelocity < zeroR) then 
-                    !% -- net upstream velocity
-                    inletVelocity = max(weightedVelocity, -junctionVelocity)
-                else 
-                    inletVelocity = min(weightedVelocity,junctionVelocity)
-                end if
-
-                ! print *, 'TEST USING WEIGHTED VELOCITY'
-                ! inletVelocity = weightedVelocity
-
-                !TEST inletVelocity = onehalfR * (weightedVelocity + junctionVelocity)
-
-                ! print *, 'test velocity ', weightedVelocity, junctionVelocity
-                ! print *, 'inletVelocity ',inletVelocity
-
-                elemR(JMidx,er_Velocity) = inletVelocity
-
-                if (abs(inletVelocity) > setting%Limiter%Velocity%Maximum) then
-                    inletVelocity = sign(0.99d0 * setting%Limiter%Velocity%Maximum, inletVelocity) 
-                end if
-
-                elemR(JMidx,er_Flowrate)     = inletVelocity * elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area))
-                elemR(JMidx,er_FroudeNumber) = inletVelocity / sqrt(setting%Constant%gravity * elemR(JMidx,er_Depth))
-
-            else
-                !% --- no inflows to provide momentum, 
-            end if
-
-            !elemR(JMidx,er_Flowrate) = zeroR 
-            !elemR(JMidx,er_Velocity) = zeroR
-        end do
-
-
-    end subroutine junction_main_velocity
+    end subroutine junction_preliminaries
 !%
 !%==========================================================================
 !%==========================================================================
@@ -559,268 +524,7 @@ module junction_elements
     end subroutine junction_calculation_5
 !%
 !%==========================================================================
-!%==========================================================================
-!%
-    subroutine junction_branch_dQdH (thisP, Npack, istep)
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Computes the branch dQdH from the
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, target, intent(in) :: thisP(:)
-            integer,         intent(in) ::  Npack, istep
 
-            integer, pointer :: JBidx, JMidx
-            integer          :: fidx
-            real(8), pointer :: fA, fH, fQ, fZ
-            real(8), pointer :: Ladj, Tadj, Hadj, headJM
-            real(8), pointer ::  crk, dt, grav
-            real(8), pointer :: VelAdj , FrAdj, Dadj, ZBadj
-            real(8)          :: bsign, denominator, thisArea, FrFactor
-            logical          :: isInflow, isDownstream
-            integer          :: ii
-
-            real(8) :: tempfactor !% used for experiments only 20230425
-
-        !%------------------------------------------------------------------
-        !% Aliases
-            crk  => setting%Solver%crk2(istep)
-            dt   => setting%Time%Hydraulics%Dt
-            grav => setting%Constant%gravity
-        !%------------------------------------------------------------------
-
-        !% --- cycle through branches to set dQdH
-        do ii=1,Npack 
-            JBidx => thisP(ii)
-            JMidx => elemSI(JBidx,esi_JunctionBranch_Main_Index)
-
-            headJM => elemR(JMidx,er_Head)
-
-            !% --- get the face for this JB
-            if (elemSI(JBidx,esi_JunctionBranch_IsUpstream) == oneI) then 
-                !% --- upstream JB
-                isDownstream = .false.
-                fidx  =  elemI(JBidx,ei_Mface_uL)
-                fA    => faceR(fidx,fr_Area_u)
-                fH    => faceR(fidx,fr_Head_u)
-                fQ    => faceR(fidx,fr_Flowrate)
-                fZ    => faceR(fidx,fr_Zbottom)
-                FrAdj => faceR(fidx,fr_Froude_Adjacent)
-                !bsign = +oneR
-                !bsign = -oneR
-                if (fQ .ge. 0) then 
-                    isInflow = .true.
-                else 
-                    isInflow = .false.
-                end if
-
-            else
-                !% --- downstream JB
-                isDownstream = .true.
-                fidx  =  elemI(JBidx,ei_Mface_dL)
-                fA    => faceR(fidx,fr_Area_d)
-                fH    => faceR(fidx,fr_Head_d)
-                fQ    => faceR(fidx,fr_Flowrate)
-                fZ    => faceR(fidx,fr_Zbottom)
-                FrAdj => faceR(fidx,fr_Froude_Adjacent)
-                !bsign = -oneR
-                !bsign = +oneR
-                if (fQ < 0) then 
-                    isInflow = .true.
-                else 
-                    isInflow = .false.
-                end if
-
-                ! print *, ' '
-                ! print *, 'in dqdh ',isInflow, JBidx, fidx
-                ! print *, ' '
-
-            end if
-            !% --- adjacent element data
-            Ladj  => faceR(fidx,fr_Length_Adjacent)
-            Tadj  => faceR(fidx,fr_Topwidth_Adjacent)
-            Hadj  => faceR(fidx,fr_Head_Adjacent)
-            VelAdj=> faceR(fidx,fr_Velocity_Adjacent)
-            Dadj  => faceR(fidx,fr_Depth_Adjacent)
-            ZBadj => faceR(fidx,fr_Zcrest_Adjacent)
-
-
-            !% --- CC elements adjacent to JB
-            if (elemSI(JBidx,esi_JunctionBranch_CC_adjacent) == oneI) then 
-
-                if (isDownstream) then 
-
-                    ! print *, 'FrAdj ',FrAdj
-
-                    !% --- downstream branch
-                    if ((FrAdj .le. -oneR) .or. (elemR(JBidx,er_FroudeNumber) .le. -oneR)) then 
-                        !% --- supercritical inflow
-                        elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR
-                    else 
-                        !% --- outflow or subcritical inflow
-                        elemSR(JBidx,esr_JunctionBranch_dQdH) = + crk * grav * dt * fA / Ladj
-                    end if
-
-                    ! if (FrAdj .ge. oneR) then  
-                    !     !% --- supercritical outflow  (HACK NEEDS BETTER TESTING BEFORE USING)
-                    !     !elemSR(JBidx,esr_JunctionBranch_dQdH) =  VelAdj * Tadj * FrAdj  TEST MOD 20230430brh
-                    !     elemSR(JBidx,esr_JunctionBranch_dQdH) = crk * grav * dt * fA / Ladj
-                    ! elseif (FrAdj .le. -oneR) then 
-                    !     !% --- supercritical inflow
-                    !     elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR
-                    ! else 
-                    !     !% --- subcritical in/out flow
-                    !     elemSR(JBidx,esr_JunctionBranch_dQdH) = crk * grav * dt * fA / Ladj
-                    ! end if
-
-                    ! print *, 'dqdh AA ',elemSR(JBidx,esr_JunctionBranch_dQdH)
-
-                    !% --- handle waterfall inflow elements
-                    if ((isInflow) .and. (headJM < fZ)) then 
-                        elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR
-                    end if
-
-                    ! print *, 'dqdh BB ',elemSR(JBidx,esr_JunctionBranch_dQdH)
-
-                    !% --- handle uphill outflow
-                    if ((.not. isInflow) .and. (headJM < Hadj)) then 
-                        elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR 
-                    end if
-
-                    !% --- TEST limit uphill outflow   20230506brh
-                    if ( (.not. isInflow) .and. (headJM < Hadj)) then 
-                        !% --- outflow into an adverse pressure gradient,
-                        !%     largest negative allowable dQdH is Q/deltaH
-                        elemSR(JBidx,esr_JunctionBranch_dQdH) = min(elemSR(JBidx,esr_JunctionBranch_dQdH), elemR(JBidx,er_Flowrate) / (Hadj - headJM))
-                    end if
-
-                    ! print *, 'dqdh CC ',elemSR(JBidx,esr_JunctionBranch_dQdH)
-                    ! print *, JBidx, isInflow, headJM, Hadj
-                    ! print *,' '
-
-                    !% --- limit outflow by 1/4 volume of JM
-                    !%     Qmax = (1/4) V / dt;  V = Aplan * Depth
-                    !%     Q/H = 1/4 (Aplan * Depth) / (dt * Depth) = (1/4) Aplan / dt
-                    if (.not. isInflow) then   !% CHANGE 20230506brh
-                        elemSR(JBidx,esr_JunctionBranch_dQdH) &
-                            = min (elemSR(JBidx, esr_JunctionBranch_dQdH),  &
-                                    elemSR(JMidx, esr_Storage_Plan_Area) * onefourthR / dt)
-                    end if
-
-                    ! print *, 'dqdh DD ',elemSR(JBidx,esr_JunctionBranch_dQdH)
-                    ! print *, JBidx, isInflow, headJM, Hadj
-                    ! print *,' '
-
-                else
-                    !% --- downstream branch
-                    if ((FrAdj .ge. +oneR) .or. (elemR(JBidx,er_FroudeNumber) .ge. +oneR)) then 
-                        !% --- supercritical inflow
-                        elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR
-                    else
-                        !% --- outflow or subcritical inflow
-                        elemSR(JBidx,esr_JunctionBranch_dQdH) = - crk* grav * dt * fA / Ladj
-                    end if
-
-
-                    ! if (FrAdj .le. -oneR) then 
-                    !     !% --- supercritical outflow (HACK NEEDS BETTER TESTING BEFORE USING)
-                    !     !elemSR(JBidx,esr_JunctionBranch_dQdH) = VelAdj * Tadj * abs(FrAdj)  TEST MOD 20230430brh
-                    !     elemSR(JBidx,esr_JunctionBranch_dQdH) = - crk* grav * dt * fA / Ladj
-                    ! elseif (FrAdj .ge. +oneR) then 
-                    !     !% --- supercritical inflow
-                    !     elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR
-                    ! else
-                    !     !% --- subcritical in/out flow
-                    !     elemSR(JBidx,esr_JunctionBranch_dQdH) = - crk* grav * dt * fA / Ladj
-                    ! end if
-
-                    !% --- handle waterfall inflow elements
-                    if ((isInflow) .and. (headJM < fZ)) then 
-                        elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR
-                    end if
-
-                    !% --- handle uphill outflow
-                    ! if ((.not. isInflow) .and. (headJM < Hadj)) then 
-                    !     elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR 
-                    ! end if
-
-                    !% --- TEST limit uphill outflow  20230506brh
-                    if ( (.not. isInflow) .and. (headJM < Hadj)) then 
-                        !% --- outflow into adverse pressure gradient
-                        !%     largest (positive) dQ/dH is Q/deltaH
-                        elemSR(JBidx,esr_JunctionBranch_dQdH) = max(elemSR(JBidx,esr_JunctionBranch_dQdH), elemR(JBidx,er_Flowrate) / (Hadj-headJM))
-                    end if
-
-                    !% --- limit outflow dQdH by 1/4 volume of JM
-                    !%     Qmax = (1/4) V / dt;  V = Aplan * Depth
-                    !%     Q/H = 1/4 (Aplan * Depth) / (dt * Depth) = (1/4) Aplan / dt
-                    !%     note upstream branch dQdH < 0
-                    if (.not. isInflow) then   !% CHANGE 20230506brh
-                        elemSR(JBidx,esr_JunctionBranch_dQdH) &
-                            = max ( elemSR(JBidx, esr_JunctionBranch_dQdH),  &
-                                    -elemSR(JMidx, esr_Storage_Plan_Area) * onefourthR / dt)
-                    end if
-
-                end if
-
-               
-                !thisArea = fA + Tadj*(fH - Hadj)
-                ! if (thisArea > zeroR) then 
-                    
-                    ! if ((elemSI(JBidx,esi_JunctionBranch_IsUpstream) .ne. oneI) .and. (FrAdj .ge. oneR)) then 
-                    !     elemSR(JBidx,esr_JunctionBranch_dQdH) = FrAdj * (Tadj + onehalfR / (grav * Dadj))
-                    ! else 
-                    !     elemSR(JBidx,esr_JunctionBranch_dQdH) = tempfactor * (bsign * crk * dt / Ladj) * (grav * thisArea)
-                    ! end if
-                    ! if (JMidx == printJM) print *, JBidx, 'dQdH thisarea ',elemSR(JBidx,esr_JunctionBranch_dQdH)
-                    ! if (JMidx == printJM) print *, JBidx, 'Froude number ',FrAdj
-                    !elemSR(JBidx,esr_JunctionBranch_dQdH) = tempfactor * (bsign * crk * dt / Ladj) * (grav * thisArea + FrFactor * (VelAdj**2) * Tadj)
-                    !if (JMidx == printJM) print *, JBidx, 'dqdH A ',(bsign * crk * dt / Ladj) * (grav * thisArea)
-                    !if (JMidx == printJM) print *, JBidx, 'dQdH B ',(bsign * crk * dt / Ladj) * (grav * thisArea + FrFac * (VelAdj**2) * Tadj)
-                    !if (JMidx == printJM) print *, JBidx, 'Vel1   ',VelAdj
-                ! else 
-                    ! elemSR(JBidx,esr_JunctionBranch_dQdH) = tempfactor * (bsign * crk * dt / Ladj) * (grav * fA)
-                    ! if (JMidx == printJM) print *, JBidx, 'dQdH small A  ',elemSR(JBidx,esr_JunctionBranch_dQdH)
-                    ! if (JMidx == printJM) print *, JBidx, 'Froude number ',FrAdj
-                    !elemSR(JBidx,esr_JunctionBranch_dQdH) = tempfactor * (bsign * crk * dt / Ladj) * (grav * fA + FrFactor * (VelAdj**2) * Tadj)
-                    !if (JMidx == printJM) print *, JBidx, 'dqdH A ',(bsign * crk * dt / Ladj) * (grav * thisArea)
-                    !if (JMidx == printJM) print *, JBidx, 'dqdH B ',(bsign * crk * dt / Ladj) * (grav * thisArea + (VelAdj**2) * Tadj)
-                    !if (JMidx == printJM) print *, JBidx, 'Vel2   ',VelAdj
-                ! end if
-
-            !% --- Diagnostic element adjacent to JB
-            elseif (elemSI(JBidx,esi_JunctionBranch_Diag_adjacent)) then 
-                !% --- dQdH for adjacent diagnostic element
-                if (isInflow) then 
-                    bsign = -oneR !% increasing head decreases flowrate for inflow
-                else
-                    bsign = +oneR !% increasing head increases flowrate for outflow
-                endif
-                if (elemR(JMidx,er_Head) < faceR(fidx,fr_Zcrest_Adjacent)) then 
-                    !% -- insufficient head means the junction cannot affect the flow in 
-                    !%    diagnostic branch (either in or out flow)
-                    elemSR(JBidx,esr_JunctionBranch_dQdH) = zeroR
-                    !cycle
-                else
-                    elemSR(JBidx,esr_JunctionBranch_dQdH) = bsign * faceR(fidx,fr_dQdH_Adjacent)
-                    !cycle
-                end if
-
-            else 
-                print *, 'CODE ERROR: Unexepected else'
-                call util_crashpoint(140987112)
-            end if
-
-            ! print *, ' '
-            ! print *, 'in junction_branch_dQdH'
-            ! print *, JBidx, elemSR(JBidx,esr_JunctionBranch_dQdH)
-            ! print *, ' '
-
-        end do
-        
-    end subroutine junction_branch_dQdH
-!%
-!%==========================================================================
 !%==========================================================================
 !% 
     subroutine junction_mass_conservation (thisColP, istep)
