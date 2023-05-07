@@ -548,28 +548,6 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    ! subroutine init_geometry_tables ()
-    !     !%------------------------------------------------------------------
-    !     !% Description
-    !     !% Initializes the geometry types and geometry tables
-    !     !%------------------------------------------------------------------
-    !     !%------------------------------------------------------------------
-    !     !%------------------------------------------------------------------
-    !     !% --- allocate the space for the geometry tables
-    !     call util_allocate_geometrytable_array ()
-
-    !     !% --- create new tables from existing
-
-    !     do ii=1,size(geometryTableR,1)
-    !     end do
-      
-
-
-    ! end subroutine init_geometry_tables
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     subroutine init_linknode_arrays()
         !%------------------------------------------------------------------
         !% Description:
@@ -1381,22 +1359,24 @@ contains
             end if
         end do
 
-        !% Check for small links if automatic resizing is not used.
-        if (setting%Discretization%MinElemLengthMethod /= ElemLengthAdjust) then
+        !% Check for small links
+      !  if (setting%Discretization%MinElemLengthMethod /= ElemLengthAdjust) then
             do ii = 1, N_link
                 if ( (link%I(ii,li_link_type) == lChannel) .or. (link%I(ii,li_link_type) == lPipe) ) then
-                    if (link%R(ii,lr_Length) < 1.5 * setting%Discretization%NominalElemLength) then
-                        print *, 'SWMM input file links are smaller than 1.5 * NominalElemLength'
+                    if (link%R(ii,lr_Length) < (real(setting%Discretization%MinElementPerLink,8) * setting%Discretization%NominalElemLength)) then
+                        print *, 'SWMM input file links too small for selected NominalElemLength and MinElementPerLink'
                         print *, 'Found link length of ',link%R(ii,lr_Length)
-                        print *, 'Link index is ',ii
+                        print *, 'Link index is ',ii,' link name is ',  trim(link%Names(ii)%str)
                         print *, 'setting.Discretization.NominalElemLength is ',setting%Discretization%NominalElemLength
-                        print *, 'Either change setting.Discretization.AdjustLinkLengthForJunctionBranchYN to true, or'
-                        print *, 'Decrease nominal element length to less than', link%R(ii,lr_Length)/1.5
+                        print *, 'setting.Discretization.MinElementPerLink is ',setting%Discretization%MinElementPerLink
+                        print *, 'Decrease nominal element length to less than', link%R(ii,lr_Length)/ real(setting%Discretization%MinElementPerLink,8)
+                        print *, 'or modify link length in SWMM input file'
+                        print *, 'NOTE: recommend at MinElementPer Link of 3 or greater'
                         call util_crashpoint(447298)
                     end if
                 end if
             end do
-        end if
+       ! end if
 
         if (setting%Debug%File%initialization) then
             !%-----------------------------------------------------------------------------
@@ -2125,7 +2105,7 @@ contains
         !% Compute the amount of a conduit length that is added to a connected junction.
         !% This modifies the conduit length itself if setting%Discretization%AdjustLinkLengthForJunctionBranchYN
         !% is true. The junction itself is setup in init_network_nJm_branch_length()
-        call init_discretization_adjustlinklength()
+        !call init_discretization_adjustlinklength()
 
         !% calculate the largest number of elements and faces to allocate the coarrays
         call init_coarray_length()

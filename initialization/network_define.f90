@@ -67,7 +67,7 @@ contains
 
         !% look for small CC elements in the network and elongates them
         !% to a user defined value
-        call init_network_CC_elem_length_adjust ()
+        ! REMOVED 20230507brh call init_network_CC_elem_length_adjust ()
 
         !print *, 'DDD'
 
@@ -395,65 +395,68 @@ contains
         !--------------------------------------------------------------------------
         !if (crashYN) return
 
-        AdjustType      => setting%Discretization%MinElemLengthMethod
-        NominalLength   => setting%Discretization%NominalElemLength
-        MinLengthFactor => setting%Discretization%MinElemLengthFactor
+        print *, 'OBSOLETE 20230507 brh'
+        stop 2309743
 
-        elementIdx    => elemI(:,ei_Lidx)
-        elementType   => elemI(:,ei_elementType)
-        elementLength => elemR(:,er_Length)
+        ! AdjustType      => setting%Discretization%MinElemLengthMethod
+        ! NominalLength   => setting%Discretization%NominalElemLength
+        ! MinLengthFactor => setting%Discretization%MinElemLengthFactor
 
-        select case (AdjustType)
+        ! elementIdx    => elemI(:,ei_Lidx)
+        ! elementType   => elemI(:,ei_elementType)
+        ! elementLength => elemR(:,er_Length)
 
-        case(RawElemLength)
-            !% do not do any adjustment and return the raw network
-            return
+        ! select case (AdjustType)
 
-        case (ElemLengthAdjust)
+        ! case(RawElemLength)
+        !     !% do not do any adjustment and return the raw network
+        !     return
 
-            MinElemLength = NominalLength * MinLengthFactor
+        ! case (ElemLengthAdjust)
 
-            do ii = 1,N_elem(this_image())
-                if ((elementType(ii) == CC) .and. (elementLength(ii) < zeroR)) then
-                    print *, 'CODE ERROR: negative element length at element ',elementIdx(ii)
-                    write(*,"(A,f12.3,A,f12.3)") '       element length = ', elementLength(ii)
-                    write(*,"(A,i8)")            '       This element is in SWMM link ',elemI(elementIdx(ii),ei_link_Gidx_SWMM)
-                    write(*,"(A,A)")             '       This link name is            ',trim(link%Names(elemI(elementIdx(ii),ei_link_Gidx_SWMM))%str)
-                    write(*,"(A,f12.3)")         '       The SWMM link length is ',link%R(elemI(elementIdx(ii),ei_link_Gidx_SWMM),lr_Length)
-                    call util_crashpoint(209837)
-                end if
+        !     MinElemLength = NominalLength * MinLengthFactor
 
-                if ((elementType(ii) == CC) .and. (elementLength(ii) < MinElemLength)) then
-                    if (setting%Output%Verbose) then
-                        !print*, 'In, ', subroutine_name
-                        print *, ' '
-                        write(*,"(A,i8,A,i5)")       '... small element detected at ElemIdx = ', elementIdx(ii), ' in processor = ',this_image()
-                        write(*,"(A,f12.3,A,f12.3)") '       element length = ', elementLength(ii), ' is adjusted to ', MinElemLength
-                        write(*,"(A,i8)")            '       This element is in SWMM link ',elemI(elementIdx(ii),ei_link_Gidx_SWMM)
-                        write(*,"(A,A)")             '       This link name is            ',trim(link%Names(elemI(elementIdx(ii),ei_link_Gidx_SWMM))%str)
-                        write(*,"(A,f12.3)")         '       The SWMM link length is ',link%R(elemI(elementIdx(ii),ei_link_Gidx_SWMM),lr_Length)
+        !     do ii = 1,N_elem(this_image())
+        !         if ((elementType(ii) == CC) .and. (elementLength(ii) < zeroR)) then
+        !             print *, 'CODE ERROR: negative element length at element ',elementIdx(ii)
+        !             write(*,"(A,f12.3,A,f12.3)") '       element length = ', elementLength(ii)
+        !             write(*,"(A,i8)")            '       This element is in SWMM link ',elemI(elementIdx(ii),ei_link_Gidx_SWMM)
+        !             write(*,"(A,A)")             '       This link name is            ',trim(link%Names(elemI(elementIdx(ii),ei_link_Gidx_SWMM))%str)
+        !             write(*,"(A,f12.3)")         '       The SWMM link length is ',link%R(elemI(elementIdx(ii),ei_link_Gidx_SWMM),lr_Length)
+        !             call util_crashpoint(209837)
+        !         end if
 
-                        print *, 'RECOMMEND SHORTER NOMINAL ELEMENT LENGTH.'
-                        print *, 'STOP HERE (working on new algorithm)'
-                        call util_crashpoint(6098723)
+        !         if ((elementType(ii) == CC) .and. (elementLength(ii) < MinElemLength)) then
+        !             if (setting%Output%Verbose) then
+        !                 !print*, 'In, ', subroutine_name
+        !                 print *, ' '
+        !                 write(*,"(A,i8,A,i5)")       '... small element detected at ElemIdx = ', elementIdx(ii), ' in processor = ',this_image()
+        !                 write(*,"(A,f12.3,A,f12.3)") '       element length = ', elementLength(ii), ' is adjusted to ', MinElemLength
+        !                 write(*,"(A,i8)")            '       This element is in SWMM link ',elemI(elementIdx(ii),ei_link_Gidx_SWMM)
+        !                 write(*,"(A,A)")             '       This link name is            ',trim(link%Names(elemI(elementIdx(ii),ei_link_Gidx_SWMM))%str)
+        !                 write(*,"(A,f12.3)")         '       The SWMM link length is ',link%R(elemI(elementIdx(ii),ei_link_Gidx_SWMM),lr_Length)
+
+        !                 print *, 'RECOMMEND SHORTER NOMINAL ELEMENT LENGTH.'
+        !                 print *, 'STOP HERE (working on new algorithm)'
+        !                 call util_crashpoint(6098723)
 
 
-                    end if
-                    elementLength(ii) = MinElemLength
-                end if
-            end do
+        !             end if
+        !             elementLength(ii) = MinElemLength
+        !         end if
+        !     end do
 
-        case default
-            print*, 'In, ', subroutine_name
-            print *, 'CODE ERROR: AdjustType unknown for # ',AdjustType 
-            print *, 'which has key ',trim(reverseKey(AdjustType))
-            !stop 
-            call util_crashpoint(89537)
-            !return
-        end select
+        ! case default
+        !     print*, 'In, ', subroutine_name
+        !     print *, 'CODE ERROR: AdjustType unknown for # ',AdjustType 
+        !     print *, 'which has key ',trim(reverseKey(AdjustType))
+        !     !stop 
+        !     call util_crashpoint(89537)
+        !     !return
+        ! end select
 
-        if (setting%Debug%File%network_define) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        ! if (setting%Debug%File%network_define) &
+        ! write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_network_CC_elem_length_adjust
 !%
 !%==========================================================================    
@@ -1541,7 +1544,8 @@ contains
                     !% integer data
                     elemSI(ElemLocalCounter,esi_JunctionBranch_Exists)           = oneI
                     elemSI(ElemLocalCounter,esi_JunctionBranch_Link_Connection)  = upBranchIdx
-                    elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(upBranchIdx)
+                    !elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(upBranchIdx)
+                    elemR(ElemLocalCounter,er_Length) = setting%Discretization%NominalElemLength
                     elemYN(ElemLocalCounter,eYN_isElementUpstreamOfJB) = .true.
                     faceI(FaceLocalCounter,fi_link_idx_BIPquick) = upBranchIdx
                     faceI(FaceLocalCounter,fi_link_idx_SWMM)     = link%I(upBranchIdx,li_parent_link)
@@ -1624,7 +1628,8 @@ contains
                     !% integer data
                     elemSI(ElemLocalCounter,esi_JunctionBranch_Exists)          = oneI
                     elemSI(ElemLocalCounter,esi_JunctionBranch_Link_Connection) = dnBranchIdx
-                    elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(dnBranchIdx)
+                   ! elemR(ElemLocalCounter,er_Length) = init_network_nJm_branch_length(dnBranchIdx)
+                    elemR(ElemLocalCounter,er_Length) = setting%Discretization%NominalElemLength
                     elemYN(ElemLocalCounter,eYN_isElementDownstreamOfJB) = .true.
                     faceI(FacelocalCounter,fi_link_idx_BIPquick) = dnBranchIdx
                     faceI(FaceLocalCounter,fi_link_idx_SWMM)     = link%I(dnBranchIdx,li_parent_link)
@@ -2056,37 +2061,37 @@ contains
 !==========================================================================
 !==========================================================================
 !
-    function init_network_nJm_branch_length (LinkIdx) result (BranchLength)
-        !--------------------------------------------------------------------------
-        !
-        !% compute the length of a junction branch
-        !
-        !--------------------------------------------------------------------------
+    ! function init_network_nJm_branch_length (LinkIdx) result (BranchLength)
+    !     !--------------------------------------------------------------------------
+    !     !
+    !     !% compute the length of a junction branch
+    !     !
+    !     !--------------------------------------------------------------------------
 
-        integer, intent(in)  :: LinkIdx
-        real(8)              :: BranchLength
-        real(8), pointer     :: elem_nominal_length, elem_shorten_cof
+    !     integer, intent(in)  :: LinkIdx
+    !     real(8)              :: BranchLength
+    !     real(8), pointer     :: elem_nominal_length, elem_shorten_cof
 
-        character(64) :: subroutine_name = 'init_network_nJm_branch_length'
-        !--------------------------------------------------------------------------
-        if (setting%Debug%File%network_define) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     character(64) :: subroutine_name = 'init_network_nJm_branch_length'
+    !     !--------------------------------------------------------------------------
+    !     if (setting%Debug%File%network_define) &
+    !         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        elem_nominal_length => setting%Discretization%NominalElemLength
-        elem_shorten_cof    => setting%Discretization%JunctionBranchLengthFactor
+    !     elem_nominal_length => setting%Discretization%NominalElemLength
+    !     elem_shorten_cof    => setting%Discretization%JunctionBranchLengthFactor
 
-        !% find the length of the junction branch
-        if (link%I(LinkIdx,li_length_adjusted) == OneSideAdjust) then
-            BranchLength = link%R(LinkIdx,lr_Length) - link%R(LinkIdx,lr_AdjustedLength)
-        elseif (link%I(LinkIdx,li_length_adjusted) == BothSideAdjust) then
-            BranchLength = (link%R(LinkIdx,lr_Length) - link%R(LinkIdx,lr_AdjustedLength))/twoR
-        elseif (link%I(LinkIdx,li_length_adjusted) == DiagAdjust) then
-            BranchLength = elem_shorten_cof * elem_nominal_length
-        end if
+    !     !% find the length of the junction branch
+    !     if (link%I(LinkIdx,li_length_adjusted) == OneSideAdjust) then
+    !         BranchLength = link%R(LinkIdx,lr_Length) - link%R(LinkIdx,lr_AdjustedLength)
+    !     elseif (link%I(LinkIdx,li_length_adjusted) == BothSideAdjust) then
+    !         BranchLength = (link%R(LinkIdx,lr_Length) - link%R(LinkIdx,lr_AdjustedLength))/twoR
+    !     elseif (link%I(LinkIdx,li_length_adjusted) == DiagAdjust) then
+    !         BranchLength = elem_shorten_cof * elem_nominal_length
+    !     end if
 
-        if (setting%Debug%File%network_define) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end function init_network_nJm_branch_length
+    !     if (setting%Debug%File%network_define) &
+    !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    ! end function init_network_nJm_branch_length
 !
 !==========================================================================
 !==========================================================================

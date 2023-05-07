@@ -238,7 +238,7 @@
         enumerator :: Pump3Curve               !% flow v. head for pump (continuous)
         enumerator :: Pump4Curve               !% flow v. depth for pump (continuous)
         !% keys for minimum element size adjustment
-        enumerator :: ElemLengthAdjust         !% only adjust the element length and set it to user defined min
+        !enumerator :: ElemLengthAdjust         !% only adjust the element length and set it to user defined min
         enumerator :: RawElemLength            !% keep the raw data and do not adjust
         !% data types used for ZeroValues
         enumerator :: DepthValue
@@ -558,7 +558,7 @@
         reverseKey(Pump2Curve) = 'Pump2Curve'
         reverseKey(Pump3Curve) = 'Pump3Curve'
         reverseKey(Pump4Curve) = 'Pump4Curve'
-        reverseKey(ElemLengthAdjust) = 'ElemLengthAdjust'
+        !reverseKey(ElemLengthAdjust) = 'ElemLengthAdjust'
         reverseKey(RawElemLength) = 'RawElemLength'
         reverseKey(DepthValue)  = 'DepthValue'
         reverseKey(VolumeValue) = 'VolumeValue'
@@ -688,7 +688,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(dummy)) , dummy
         write(*,'(A," = ",i4)') trim(reverseKey(dynamic)) , dynamic
         write(*,'(A," = ",i4)') trim(reverseKey(eggshaped)) , eggshaped
-        write(*,'(A," = ",i4)') trim(reverseKey(ElemLengthAdjust)) , ElemLengthAdjust
+        !write(*,'(A," = ",i4)') trim(reverseKey(ElemLengthAdjust)) , ElemLengthAdjust
         write(*,'(A," = ",i4)') trim(reverseKey(ETM)) , ETM
         write(*,'(A," = ",i4)') trim(reverseKey(ETM_AC)) , ETM_AC
         write(*,'(A," = ",i4)') trim(reverseKey(Explicit1)),Explicit1 

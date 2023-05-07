@@ -353,8 +353,9 @@ module utility
         if (npack > 0) then
             thisP => elemP(1:npack,thisColJM)
 
-            !% HACK does not handle overflow (20230423) or barrels 
-            tempCons(thisP) = eQlat(thisP) - (VolNew(thisP) - VolOld(thisP))/dt
+            !% HACK does not handle barrels 
+            !% --- net flow rate
+            tempCons(thisP) = eQlat(thisP) - (VolNew(thisP) - VolOld(thisP))/dt - VolOver(thisP)/dt
 
             !% --- cycle through the JM to get the branch flows
             do ii=1,size(thisP)
@@ -386,12 +387,14 @@ module utility
                     print *, 'tempCons   ',tempCons(mm)
                     print *, 'Q branches ',Qbranches
                     print *, 'Q lat      ',eQlat(mm)
+                    print *, 'Q overflow ',-VolOver(mm) / dt
+                    print *, 'Q Storage  ',(VolNew(mm) - VolOld(mm)) / dt
+                    print *, 'Net Q      ', Qbranches +eQlat(mm) - VolOver(mm) / dt
+                    print *, ' '
                     print *, 'Vol old    ',VolOld(mm)
                     print *, 'Vol new    ',VolNew(mm)
-                    print *, 'Net Q      ', Qbranches +eQlat(mm)
-                    print *, 'Vol rate   ', (VolNew(mm) - VolOld(mm)) / dt
                     print *, ' '
-                    print *, 'depth ',elemR(mm,er_Depth)
+                    print *, 'head       ',elemR(mm,er_Head)
                     !call util_crashpoint(62098734)
                 end if
 

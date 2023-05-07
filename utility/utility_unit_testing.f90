@@ -198,6 +198,10 @@ contains
             ! integer :: iet(8) = (/211,       213,212,214,    223,   224,    225,    226 /)
             ! integer :: ift(5) = (/     210,              211,    220,   221,   222/)
 
+
+            integer :: iet(8) = (/209,    210,     211,       213,212,214,    223,   224 /)
+            integer :: ift(5) = (/    208,     209,   210,                 211,    220 /)
+
             ! !% T007 dx333
             ! integer :: iet(7) = (/ 102, 104,   113, 114,   115,  117, 116/)
             ! integer :: ift(4) = (/           89,   98,  99,    100 /)
@@ -222,8 +226,8 @@ contains
             ! real(8) :: tempV, tempVold, tempFin, tempFout
 
             !% T010 dx333
-            integer :: iet(8) = (/  1,  2,  3,     5,4,6,   15,  16/)
-            integer :: ift(5) = (/    2,  3,   4,         5,   14 /)
+            ! integer :: iet(8) = (/  1,  2,  3,     5,4,6,   15,  16/)
+            ! integer :: ift(5) = (/    2,  3,   4,         5,   14 /)
 
             ! integer :: iet(8) = (/  1,  2,  3,     5,4,6,   15,  16/)
             ! integer :: ift(7) = (/1 , 2,  3,   4,         5,   14,  15/)
@@ -275,7 +279,7 @@ contains
    
 
        
-          !if (setting%Time%Step < 6840) return
+         !  if (setting%Time%Step < 9344) return
 
 
 
@@ -284,19 +288,16 @@ contains
             !   end if
 
    !% --- USEFUL HEADER -----------------------------------------------
-            print *, ' '
+           ! print *, ' '
             write(*,"(A,A, e12.5)") ' ',trim(inputstring)     
-            write(*,"(A,i7,A, f12.5, A, f12.5, A)") '        step = ',setting%Time%Step ,&
-            '; dt = ',setting%Time%Hydraulics%Dt,&
-            '; time = ',setting%Time%Now / 60.d0, ' min'        
-
-
-      !   print *, elemR(3,er_Head) + (elemR(3,er_Velocity)**2) / (twoR * grav)   
-      !   print *, elemR(5,er_Head) + (elemR(5,er_Velocity)**2) / (twoR * grav)   
-      !   print *, elemR(4,er_Head) + (elemR(4,er_Velocity)**2) / (twoR * grav)  
-      !   print *, elemR(6,er_Head) + (elemR(6,er_Velocity)**2) / (twoR * grav)  
-      !   print *, elemR(15,er_Head) + (elemR(15,er_Velocity)**2) / (twoR * grav) 
-      !      return
+            ! write(*,"(A,i7,A, f12.5, A, f12.5, A)") '        step = ',setting%Time%Step ,&
+            ! '; dt = ',setting%Time%Hydraulics%Dt,&
+            ! '; time = ',setting%Time%Now / 60.d0, ' min'      
+            return
+            
+            ! print *, ' '
+            ! print *, 'Qoverflow ',elemSR(212,esr_JunctionMain_OverflowRate) 
+            ! print *, ' '
 
 
    !% --- SETUP  -----------------------------------------------
