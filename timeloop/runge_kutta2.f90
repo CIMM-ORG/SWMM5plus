@@ -86,39 +86,32 @@ module runge_kutta2
             end if
         end do
             
-            !print *,' '
-            !print *, ' '
-        !   call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
- 
+            ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
+
         !%==================================    
-        !% --- Initial adjustments
+        !% --- Diagnostic and junction adjustments before RK2
         istep = zeroI
 
-        
-
-        !% --- update Diagnostic elements and faces
+        !% --- Diagnostic elements and faces
         if (N_diag > 0) then 
-            !% STEP A
             !% --- update flowrates for aa diagnostic elements
             call diagnostic_by_type (ep_Diag, istep)  
+                ! call util_utest_CLprint ('------- BBB  after diagnostic')
 
-                ! ! ! ! ! call util_utest_CLprint ('------- BBB  after diagnostic')
-
-            !% STEP B
             !% --- push the diagnostic flowrate data to faces -- true is upstream, false is downstream
             call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .true.)
             call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .false.)
-
-                ! ! ! ! ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
+                ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
         end if
 
-        !% HERE: DIAGNOSTIC VALUES ENFORCED ON ELEMENTS AND FACES, BUT CONNECTED JB ARE INCONSISTENT
+        !% AT THIS POINT: DIAGNOSTIC VALUES ENFORCED ON ELEMENTS AND FACES, BUT CONNECTED JB ARE INCONSISTENT
 
-        !% --- updates for JM/JB elements
-        !%     Note, must be called even if no JM/JB on this image because 
+        !% --- Preliminary values for JM/JB elements
+        !%     Note, this must be called even if no JM/JB on this image because 
         !%     the faces require synchronizing.
         call junction_preliminaries ()
 
+        !%==================================  
         !% --- RK2 SOLUTION
         do istep = 1,2
             ! print *, ' '
@@ -127,24 +120,20 @@ module runge_kutta2
         
             !% --- Half-timestep advance on CC for U and UVolume
             call rk2_step_ETM_CC (istep)  
-
-                ! ! ! ! ! call util_utest_CLprint ('------- III  after rk2_step')
+                ! call util_utest_CLprint ('------- III  after rk2_step')
 
             !% --- Update all CC aux variables
             !%     Note, these updates CANNOT depend on face values
             call update_auxiliary_variables_CC (                  &
                 ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
                 .true., .false., dummyIdx)
-                
-                ! ! ! call util_utest_CLprint ('------- JJJ  after update_aux...CC step')
+                ! call util_utest_CLprint ('------- JJJ  after update_aux...CC step')
 
             !% --- zero and small depth adjustment for elements
             call adjust_element_toplevel (CC)
-
                 ! call util_utest_CLprint ('------- KKK  after adjust element CC (before 2nd step junction)')
 
-            !% --- Conservative JM update in 2nd RK step
-            !% MOVE THIS TO A JUNCTION SUBROUTINE
+            !% --- JUNCTION 2nd STEP
             if (N_nJM > 0) then 
                 if (istep == 1) then
                     !% --- ensure JB interpweights for Q are forced for JB dominance: QUESTION -- SHOULD THIS BE TRUE OR NOT?
@@ -154,261 +143,69 @@ module runge_kutta2
                         call update_interpweights_JB (thisP, Npack, .false.)
                     end if
 
-                else if (istep == 2)then 
-
-                    !print *,'in junction '
-
-                    Npack => npack_elemP(ep_JM)
-                    if (Npack > 0) then
-                        thisP => elemP(1:Npack,ep_JM)
-                        !% --- new junction volume from conservative face fluxes
-                        call junction_main_volume_advance (ep_JM, Npack)
-                        !% --- new junction plan area
-                        call geo_plan_area_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
-                        !print *, 'plan area ',elemSR(thisP(1),esr_Storage_Plan_Area)
-                        
-                        !% --- saz20230504 compute slots based on solved volume
-                        !% --- slot calculations based on junction volume
-                        call slot_JM_ETM (ep_JM, Npack)
-                        
-                        !% --- new junction depth 
-                        !% NOTE: THIS USES storage_implied_depth_from_volume
-                        !% that limits depth based on fulldepth
-                        call geo_depth_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
-                    
-                        !% --- new JM head, ellDepth and area
-                        elemR(thisP,er_Head) = llgeo_head_from_depth_pure (thisP,elemR(thisP,er_Depth))
-                        elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
-                        elemR(thisP,er_Area) = elemR(thisP,er_Depth) * sqrt(elemSR(thisP,esr_Storage_Plan_Area))
-
-                        !% NEED PREISSMANN SLOT STUFF HERE (OR BELOW?) TO GET CORRECT HEAD
-                        !% QUESTION: SHOULD ELLDEPTH BE DEPTH OR HEAD - ZBOTTOM?
-                        !% saz 20230504 --- add back the slot depths back to head 
-                        call slot_JM_adjustments (ep_JM, Npack)
-
-                        !% --- adjust JM for small or zero depth
-                        call adjust_element_toplevel (JM)
-                        !% --- assign JB values based on new JM head
-                        call geo_assign_JB_from_head (ep_JM) !% HACK  revise using ep_JB
-
-                        ! QUESTION? NEED THIS HERE? see  geometry_toplevel_JMJB
-                        !% saz 20230504 -- since geometry_toplevel_JMJB is obsolete,
-                        !% we need JB slot computations here
-                        call slot_JB_computation (ep_JM)
-
-                        !% --- adjust JB for small or zero depth
-                        call adjust_element_toplevel (JB)
-                        
-                    end if
-
-                    ! ! ! ! call util_utest_CLprint ('------- LLL  after JM 2nd step ')
-
-                    !% --- auxiliary variables update
-                    !%     replaces update_auxiliary_variables_JMJB
-                    !% NOTE TRUE FORCES Q weight on JB to minimum, which
-                    !% means that face interpolation will have JB values
-                    !% dominate over adjacent CC values, but will be
-                    !% simple averaging with adjacen Diag Q values -- HERE WE USE TRUE IS THIS CORRECT?
-                    Npack => npack_elemP(ep_JB)
-                    if (Npack > 0) then 
-                        thisP => elemP(1:Npack, ep_JB)
-                        call update_Froude_number_element (thisP) 
-                        call update_wavespeed_element (thisP)
-                        call update_interpweights_JB (thisP, Npack, .true.)
-                    end if
-
-                    !% --- wave speed, Froude number on JM
-                    Npack => npack_elemP(ep_JM)
-                    if (Npack > 0) then
-                        thisP => elemP(1:Npack, ep_JM)
-                        call update_wavespeed_element (thisP)
-                        call update_Froude_number_element (thisP) 
-                    end if
-                
-                        ! call util_utest_CLprint ('------- MMM  after update aux JMJB 2nd step ')
-
-                    !% --- QUESTION -- IS THIS NEEDED HERE? 
-                    !%     should this be outside of the IF/ENDIF for the istep=2?
-                    if (N_diag > 0) then 
-                            !% --- update flowrates for diagnostic elements that are not adjacent to JB
-                            !call diagnostic_by_type (ep_Diag_notJBadjacent, istep)  
-                            !20230423 test using all DIAG
-                            call diagnostic_by_type (ep_Diag, istep) 
-
-                            ! ! ! ! ! call util_utest_CLprint ('------- NNN  after update aux JMJB 2nd step ')
-                    end if
+                else if (istep == 2) then 
+                    !% --- conservative storage advance for junction
+                    call junction_second_step ()
+                    ! call util_utest_CLprint ('------- PPP  after junction second step')
                 end if
             end if
 
             !% --- interpolate all data to faces
             sync all
             call face_interpolation(fp_noBC_IorS, .true., .true., .true., .false., .true.) 
-
                 ! call util_utest_CLprint ('------- OOO  after face interp')
 
-            !% --- reset the face zerodepth array 
-            !%     note, this affects both interior shared faces, so this must be done
-            !%     once before all the face_zeroDepth calls
-            !%     HACK THIS ARRAY APPEARS TO BE UNUSED
-           ! faceI(:,fi_zeroDepth) = zeroI  !% default to no zerodepth
-
-             !% --- update various packs of zeroDepth faces 20230430brh
+            !% --- update various packs of zeroDepth faces
             call pack_CC_zeroDepth_interior_faces ()
             if (N_nJM > 0) then 
                 call pack_JB_zeroDepth_interior_faces ()
             end if
             sync all
-            call pack_CC_zeroDepth_shared_faces ()  !% HACK NEEDS REVIEW
+
+            call pack_CC_zeroDepth_shared_faces ()  
             if (N_nJM > 0) then
-                call pack_JB_zeroDepth_shared_faces ()  !% HACK STUB ROUTINE NOT COMPLETE
+                call pack_JB_zeroDepth_shared_faces ()  
             end if
-
-            ! print *, ' '
-            ! print *, 'face pack JB'
-            ! print *, faceP(1:npack_faceP(fp_JB_downstream_is_zero_IorS),fp_JB_downstream_is_zero_IorS)
-            ! print *, ' '
-
-            !% --- set face geometry and flowrates where adjacent element is zero
-            !%     only applies to faces with CC on both sides
-
-            ! print *, ' '
-            ! print *, 'face with zero downstream'
-            ! print *, faceP(1:npack_faceP(fp_CC_downstream_is_zero_IorS),fp_CC_downstream_is_zero_IorS)
-            ! print *, ' '
 
             call face_zeroDepth (fp_CC_downstream_is_zero_IorS, &
                 fp_CC_upstream_is_zero_IorS,fp_CC_bothsides_are_zero_IorS)
-
-                ! ! ! call util_utest_CLprint ('------- PPP.01 after face zerodepth ')
+                ! call util_utest_CLprint ('------- PPP.01 after face zerodepth ')
 
             if (N_nJM > 0) then
-                ! print *, ' '
-                ! print *, faceP(1:npack_faceP(fp_JB_downstream_is_zero_IorS),fp_JB_downstream_is_zero_IorS)
-                ! print *, ' '
                 !% --- set face geometry and flowrates where adjacent element is zero
                 !%     only applies to faces with JB on one side
                 call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &
                     fp_JB_upstream_is_zero_IorS,fp_JB_bothsides_are_zero_IorS)
-
-                    ! ! ! ! call util_utest_CLprint ('------- PPP.02 after face zerodepth ')
-
+                    ! call util_utest_CLprint ('------- PPP.02 after face zerodepth ')
             end if                
 
             !% --- enforce open (1) closed (0) "setting" value from EPA-SWMM
             !%     for all CC and Diag elements (not allowed on junctions)
             call face_flowrate_for_openclosed_elem (ep_CCDiag)
-
-            !% HACK -- FOR SHARED WE NEED TO IDENTIFY ANY SHARED FACES THAT HAVE AN
-            !% UPSTREAM elemR(:,er_Setting) = 0.0 and set their face Q and V to zero.
-
                 ! call util_utest_CLprint ('------- QQQ after openclosed setting (before 1st step junction solution)')
 
-            !%=========================================
-            !% BEGIN JUNCTION SOLUTION
+            !% QUESTION: DO WE NEED ANOTHER SYNC HERE? OR CAN face_flowrate_for_openclosedL_elem
+            !% BE MOVED UPWARDS IN STEPPING SO THAT IT GETS SYNCED?
+
+            !% --- JUNCTION FIRST STEP
             if (istep == 1) then 
-                if (N_nJM > 0) then 
-
-                    !% ---
-                    !%     forces JB elem Q to faces (overriding the interpolation)
-                    !%     computes new JM Volume, Head, JB fluxes, JB DeltaQ
-                    !%     for conservation and dH change in head 
-                    !%     assigns new JB and JM aux values
-                    call junction_toplevel_5 (istep)
-
-                        ! ! ! ! call util_utest_CLprint ('------- RRR  after junction toplevel')
-
-                    !% --- force the JB element values to the faces for upstream (true)
-                    !%     and downstream (false) branches.
-                    !%     Forces elem  flowrate, deltaQ
-                    !% HACK - INCLUDES DEPTH, ETC, BUT COMMENTED OUT FOR NOW
-                    !% NOTE - THIS IS NOT in junction_toplevel because this
-                    !% is the subroutine that requires face syncing afterwards
-                    call face_force_JBelem_to_face (ep_JM, .true.)
-                    call face_force_JBelem_to_face (ep_JM, .false.)
-
-                        ! ! ! ! call util_utest_CLprint ('------- SSS  after face_force_JBadjacent')
-                end if
-                
-                !sync all  !% cannot be in an if N_nJM statement
-                !% ==============================================================
-                !% --- face sync (saz05022023)
-                !%     sync all the images first. then copy over the data between
-                !%     shared-identical faces. then sync all images again
-                sync all
-
-                call face_shared_face_sync (fp_noBC_IorS)
-
-                sync all
-                !% 
-                !% ==============================================================
-
-                !%================================
-                !% --- HACK need to force face data on all JB faces for image containing JB
-                !%     element to the connected image. This is a direct transfer of face
-                !%     Data without transferring ghost element data or interpolation
-                !%================================
-
-                if (N_nJM > 0) then 
-                    !% --- Adjust JB-adjacent CC elements using fr_DeltaQ flux changes
-                    !%     This fixes conservative flowrate, volume, velocity for upstream (true)
-                    !%     and downstream (false) branches. Note that flowrate is already
-                    !%     fixed in face_force_JBelem_to_face. Also calls update_auxiliary_data_CC
-                    !%     for associated geometry data updates
-
-    
-                    call junction_CC_for_JBadjacent (ep_CC_UpstreamOfJunction,   istep, .true.)
-
-                    call junction_CC_for_JBadjacent (ep_CC_DownstreamOfJunction, istep, .false.)
-    
-                        ! ! ! ! call util_utest_CLprint ('------- TTT  after junction_CC_for_JBadjacent')
-    
-                    ! if (N_diag > 0) then
-                    ! CANNOT USE THIS BECAUSE YOU MIGHT HAVE JUNCTIONS ON BOTH SIDES OF
-                    ! A DIAGNOSTIC WHICH MEANS YOU CANNOT RESET THE FAR FACE. INSTEAD WE
-                    !% MUST CHANGE THE LOCAL JUNCTION TO MATCH THE DIAGNOSTIC.
-                    !         !% --- set conservative fluxes for JB/Diag
-                    !     !% --- Adjust JB-adjacent Diag elements and faces using new face values
-                    !     !%     This fixes flowrate only. Note that this changes both JB/Diag
-                    !     !%     faces and the non-JB face of the Diag element. This ensures that
-                    !     !%     the JB face velocity from the junction solution is propagated through
-                    !     !%     the entire Diag element to its opposite face.
-                    !     call junction_Diag_for_JBadjacent (ep_Diag_UpstreamOfJunction,   istep, .true.)
-                    !     call junction_Diag_for_JBadjacent (ep_Diag_DownstreamOfJunction, istep, .false.)
-    
-                    !         ! ! ! ! ! ! ! ! call util_utest_CLprint ('------- UUU  after junction_Diag_for_JBadjacent')
-                    ! end if
-
-                    !% --- update various packs of zeroDepth faces
-                    call pack_JB_zeroDepth_interior_faces ()
-                    sync all
-                    call pack_JB_zeroDepth_shared_faces ()  !% HACK STUB ROUTINE NOT COMPLETE
-
-                    !% --- set face geometry and flowrates where adjacent element is zero
-                    !%     only applies to faces with JB on one side
-                    call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &
-                        fp_JB_upstream_is_zero_IorS,fp_JB_bothsides_are_zero_IorS)
-
-                        ! ! ! ! call util_utest_CLprint ('------- TTT.01  after face zerodepth for JB')
-
-                end if
+                !% --- Junction first step RK estimate
+                !%     Note that this must be called in every image, including
+                !%     those that do not have junctions as it contains a sync
+                call junction_first_step ()
             end if
-            !% END JUNCTION SOLUTION
-            !%=========================================
-
                 ! call util_utest_CLprint ('------- VVV.01  before adjust Vfilter CC')
 
             !% --- Filter flowrates to remove grid-scale checkerboard
             call adjust_Vfilter_CC ()
 
-                ! ! ! call util_utest_CLprint ('------- VVV.02  after adjust Vfilter CC')
+                ! call util_utest_CLprint ('------- VVV.02  after adjust Vfilter CC')
 
             if (istep == 1) then 
-                !% -- the conservative fluxes from N to N_1 on CC are stored for CC and Diag
-                !%    that are NOT adjacent to JB
-                !call rk2_store_conservative_fluxes (CCDiag) 
+                !% -- fluxes at end of first RK2 step are the conservative fluxes enforced
+                !%    in second step
                 call rk2_store_conservative_fluxes (ALL) 
-
-                    ! ! ! ! call util_utest_CLprint ('------- WWW  after  step 1 store conservative fluxes all')
+                    ! all util_utest_CLprint ('------- WWW  after  step 1 store conservative fluxes all')
             end if
 
                 ! call util_utest_CLprint ('------- YYY end of RK step')

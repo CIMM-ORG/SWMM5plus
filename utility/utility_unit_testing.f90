@@ -8,7 +8,6 @@ module utility_unit_testing
   use define_settings
   use network_define
   use utility_crash
-  !use junction_elements, only: junction_conservation_residual
 
   implicit none
 
