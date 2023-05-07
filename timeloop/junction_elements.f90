@@ -101,6 +101,12 @@ module junction_elements
                 ! call util_utest_CLprint ('------- jjj.04 after lljunction_push_adjacent_elemdata_to_face')
         end if
 
+        !% saz 20230507
+        !% --- push JB adjacent diag data to faces
+        if (npack_elemP(ep_Diag_JBadjacent) > 0) then
+            call face_push_diag_adjacent_data_to_face (ep_Diag_JBadjacent)
+        end if
+
         !% --- JB ENERGY EQUATION compute flows/velocities on JB/CC outflow elements/faces from 
         !%     energy equation (does not affect JB with inflows or diagnostic adjacent )
         !% TO BE MOVED TO junction_branch_element_flowrates
