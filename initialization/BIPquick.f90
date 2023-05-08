@@ -368,9 +368,22 @@ contains
         if ( (element_length < 0.0) .or. (element_length > length) ) then
             element_length = 1.0
         end if
-
+        
         !% The link weight is equal to the link length divided by the element length
         weight = length / element_length
+
+        !% set the weights of the hydraulic features to zero so that 
+        !% the do not contribute to the weights calculations
+        if ((link%I(link_index,li_link_type) == lWeir)      &
+            .or.                                            &
+            (link%I(link_index,li_link_type) == lOrifice)   &
+            .or.                                            &
+            (link%I(link_index,li_link_type) == lPump)      &
+            .or.                                            &
+            (link%I(link_index,li_link_type) == lOutlet)    &
+            ) then
+                weight = 0.0
+        end if
 
         if (setting%Debug%File%BIPquick) print *, '*** leave ', this_image(),function_name
     end function calc_link_weights
@@ -763,6 +776,8 @@ contains
         integer :: weight_range(2)
         integer :: upstream_node
         integer :: ii, jj
+
+        logical :: isCC
         !--------------------------------------------------------------------------
         !if (crashYN) return
         if (setting%Debug%File%BIPquick) &
@@ -774,7 +789,14 @@ contains
             if ( link%I(jj, li_idx) == nullValueI ) then
                 cycle
             end if
-
+            
+            isCC = .true.
+            ! if ((.not. link%I(jj,li_link_type) == lChannel)    &
+            !     .or.                                           &
+            !     (.not. link%I(jj,li_link_type) == lPipe)       &
+            !     ) then
+            !         isCC = .false.
+            ! end if
             !% Save the upstream node of the current link
             upstream_node = link%I(jj, li_Mnode_u)
 
@@ -788,7 +810,8 @@ contains
             !% and that link has not yet been partitioned
             if ( (weight_range(oneI) < partition_threshold) .and. &
                 (partition_threshold < weight_range(twoI)) .and. &
-                (partitioned_links(jj) .eqv. .false.) ) then
+                (partitioned_links(jj) .eqv. .false.)      .and. &
+                (isCC)) then
 
                 !% The current link is the spanning link
                 spanning_link = link%I(jj, li_idx)
