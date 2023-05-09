@@ -105,9 +105,9 @@ module utility
             call util_crashpoint(559872)
         end if
 
-        ! if (setting%Junction%StorageSurchargeExtraDepth < zeroR) then 
+        ! if (setting%Junction%StorageOverflowDepth < zeroR) then 
         !     print *, 'USER CONFIGURATION ERROR'
-        !     print *, 'setting%Junction%StorageSurchargeExtraDepth < 0.0 is not allowed'
+        !     print *, 'setting%Junction%StorageOverflowDepth < 0.0 is not allowed'
         !     call util_crashpoint(5598721)
         ! end if
 
@@ -242,6 +242,7 @@ module utility
         !% Declarations:
             real(8), pointer :: eCons(:), fQ(:), eQLat(:), VolNew(:), VolOld(:), dt
             real(8), pointer :: VolOver(:), VolSlot(:), VolArtInflow(:), tempCons(:)
+            real(8), pointer :: VolPond(:)
             integer, pointer :: thisColCC, thisColJM, npack, thisP(:)
             integer, pointer :: fdn(:), fup(:), BranchExists(:), fBarrels(:)
             integer :: ii,kk, mm
@@ -262,6 +263,7 @@ module utility
             VolNew  => elemR(:,er_Volume)  
             VolOld  => elemR(:,er_Volume_N0) 
             VolOver => elemR(:,er_VolumeOverFlow)
+            VolPond => elemR(:,er_VolumePonded)
             VolSlot => elemR(:,er_SlotVolume) 
             VolArtInflow => elemR(:,er_VolumeArtificialInflow)
             fup     => elemI(:,ei_Mface_uL)
@@ -355,7 +357,7 @@ module utility
 
             !% HACK does not handle barrels 
             !% --- net flow rate
-            tempCons(thisP) = eQlat(thisP) - (VolNew(thisP) - VolOld(thisP))/dt - VolOver(thisP)/dt
+            tempCons(thisP) = eQlat(thisP) - (VolNew(thisP) - VolOld(thisP))/dt - VolOver(thisP)/dt - VolPond(thisP)/dt
 
             !% --- cycle through the JM to get the branch flows
             do ii=1,size(thisP)
@@ -388,13 +390,14 @@ module utility
                     print *, 'Q branches ',Qbranches
                     print *, 'Q lat      ',eQlat(mm)
                     print *, 'Q overflow ',-VolOver(mm) / dt
+                    print *, 'Q ponded   ',-VolPond(mm) / dt
                     print *, 'Q Storage  ',(VolNew(mm) - VolOld(mm)) / dt
-                    print *, 'Net Q      ', Qbranches +eQlat(mm) - VolOver(mm) / dt
+                    print *, 'Net Q      ', Qbranches + eQlat(mm) - VolOver(mm) / dt -VolPond(mm) / dt
                     print *, ' '
                     print *, 'Vol old    ',VolOld(mm)
                     print *, 'Vol new    ',VolNew(mm)
                     print *, ' '
-                    print *, 'head       ',elemR(mm,er_Head)
+                    print *, 'head, dt   ',elemR(mm,er_Head), dt
                     !call util_crashpoint(62098734)
                 end if
 

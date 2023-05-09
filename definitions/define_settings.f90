@@ -40,8 +40,8 @@ module define_settings
 
     !% setting%Adjust%Head
     type AdjustHeadType
-        logical :: ApplyYN = .true.
-        integer :: Approach = vshape_all_CC !% options: vshape_surcharge_CC, vshape_freesurface_CC
+        logical :: ApplyYN = .false. !.false.
+        integer :: Approach = vshape_surcharge_CC !% doesnotexist  !% options: doesnotexist !%vshape_all_CC  vshape_surcharge_CC, vshape_freesurface_CC
         real(8) :: Coef = 1.0d0
     end type AdjustHeadType
 
@@ -150,6 +150,7 @@ module define_settings
         !%     changes made here have no effect!
         real(8) :: OrificeLength !% length of overflow orifice (m)
         real(8) :: OrificeHeight!% height of overflow orifice (m)
+        real(8) :: WeirLengthFactor !% multiplier of the default overflow weir length that is derived from junction plan area
         real(8) :: CbroadCrestedWeir
         real(8) :: coef1 
         real(8) :: coef2
@@ -373,6 +374,7 @@ module define_settings
     !% setting%Discretization
     type DiscretizationType
         !logical :: StopOnLengthAdjustTF = .false.  !% Can be used to force code to stop if link lengths are adjusted.
+        !% NOTE CHannel overflow not tested and is disabled as of 20230508
         logical :: AllowChannelOverflowTF = .false. !% if true, then open channels (CC) can overflow (lose water) NOT IN EPA SWMM
         !logical :: AdjustLinkLengthForJunctionBranchYN = .false.          !% OBSOLETE DO NOT USE TRUE -- if true then JB (junction branch) length is subtracted from link length
         !real(8) :: JunctionBranchLengthFactor  = 1.d0    !% MUST USE 1.0   !% fraction of NominalElemLength used for JB
@@ -453,6 +455,8 @@ module define_settings
         real(8) :: InfiniteExtraDepthValue = 1000.d0  !% Surcharge Depth if this value or higher is treated as impossible to overflow
         real(8) :: SurfaceArea_Minimum !% from EPA-SWMM, minimum for ImpliedStorage
         real(8) :: BreadthFactor = 1.5d0 !% multiplier of breadthMax used to multiply diameter of largest branch for computing ImpliedJunction area
+        !% PondingScaleFactor is multiplier of junction/storage length scale (sqrt of area) to get minimum length scale of ponding
+        real(8) :: PondingScaleFactor = 10.d0 
         type(OverflowType) :: Overflow
     end type JunctionType
 
@@ -781,8 +785,9 @@ contains
 
     !% --- overflow orifice for junctions based on broad-crested weir using
     !%     non-dimensional formulation of Brater and King Eq. 5.10 and Table 5.1
-    setting%Junction%Overflow%OrificeLength     = 1.5d0 !% length of overflow orifice (m)
-    setting%Junction%Overflow%OrificeHeight     = 0.15d0  !% height of overflow orifice (m)
+    setting%Junction%Overflow%OrificeLength     = 2.0d0 !% length of overflow orifice (m)
+    setting%Junction%Overflow%OrificeHeight     = 0.2d0 !% height of overflow orifice (m)
+    setting%Junction%Overflow%WeirLengthFactor  = 1.d0  !% multiplier of the default overflow weir length that is derived from junction plan area
     setting%Junction%Overflow%CbroadCrestedWeir = 1.5d0 !% Brater and King, Table 5.1   (m^{1/2}/s)   
     !% coef1 used in Q = CLH^{3/2} for broad crested weir where L = 2(pi A)^{1/2}
     setting%Junction%Overflow%coef1 = twoR * setting%Junction%Overflow%CbroadCrestedWeir * sqrt(setting%Constant%pi)
@@ -1243,10 +1248,10 @@ contains
         ! if (found) setting%Junction%CFLlimit = real_value
         ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.CFLlimit not found'
 
-        !%                       Junction.StorageSurchargeExtraDepth
-        ! call json%get('Junction.StorageSurchargeExtraDepth', real_value, found)
-        ! if (found) setting%Junction%StorageSurchargeExtraDepth = real_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.StorageSurchargeExtraDepth not found'
+        !%                       Junction.StorageOverflowDepth
+        ! call json%get('Junction.StorageOverflowDepth', real_value, found)
+        ! if (found) setting%Junction%StorageOverflowDepth = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.StorageOverflowDepth not found'
 
         !%                       Junction.FunStorageN
         call json%get('Junction.FunStorageN', integer_value, found)
@@ -1278,6 +1283,12 @@ contains
         call json%get('Junction.Overflow.OrificeHeight', real_value, found)
         if (found) setting%Junction%Overflow%OrificeHeight = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.OrificeHeight not found'
+
+        !%                       Junction.Overflow.WeirLengthFactor
+        call json%get('Junction.Overflow.WeirLengthFactor', real_value, found)
+        if (found) setting%Junction%Overflow%WeirLengthFactor= real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.WeirLengthFactor not found'
+
 
         !%                       Junction.Overflow.CbroadCrestedWeir
         call json%get('Junction.Overflow.CbroadCrestedWeir', real_value, found)

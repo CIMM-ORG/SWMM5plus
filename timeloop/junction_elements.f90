@@ -31,13 +31,11 @@ module junction_elements
     public :: junction_main_volume_advance
     public :: junction_first_step
     public :: junction_second_step
-
-    public :: junction_toplevel
    
 
   
 
-    integer :: printJM = 212 !4 ! 101 !81 ! 6 !137 !51 ! 62 !% 51 ! 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
+    integer :: printJM = 32 !4 ! 101 !81 ! 6 !137 !51 ! 62 !% 51 ! 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
 
     contains
 !%==========================================================================
@@ -56,7 +54,6 @@ module junction_elements
         !%-----------------------------------------------------------------
         !%-----------------------------------------------------------------
         !%-----------------------------------------------------------------
-
 
         !% --- flowrate/velocity of the JM
         if (N_nJM > 0) then
@@ -179,8 +176,32 @@ module junction_elements
             !  print *, 'JM volume'
             !  print *, elemR(thisP(mm),er_Volume)   
 
-            !% --- volume change due to overfloe
-            !% HACK -- OVERFLOW NEEDS TO BE CONSIDERED
+            !% --- volume change due to overflow or ponding
+            select case (elemSI(thisP(mm),esi_JunctionMain_OverflowType))
+                case (NoOverflow)
+                    !% no action 
+                    
+                case (OverflowWeir,OverflowOrifice)
+                    !% --- VolumeOverFlow > 0 is removing volume
+                    elemR(thisp(mm),er_Volume) = elemR(thisp(mm),er_Volume) &
+                            - elemR(thisP(mm),er_VolumeOverflow)
+
+                    elemR(thisP(mm),er_VolumeOverFlowTotal) = elemR(thisP(mm),er_VolumeOverFlow) &
+                        + elemR(thisP(mm),er_VolumeOverFlowTotal)
+
+                case (PondedWeir,PondedOrifice)
+                    !% --- VolumePonded > 0 is removing volume 
+                    !%     VolumePonded < 0 is adding volume
+                    elemR(thisp(mm),er_Volume) = elemR(thisp(mm),er_Volume) &
+                            - elemR(thisP(mm),er_VolumePonded)
+
+                    elemR(thisP(mm),er_VolumePondedTotal) = elemR(thisP(mm),er_VolumePonded) &
+                        + elemR(thisP(mm),er_VolumePondedTotal)
+
+                case default
+                    print *, 'CODE ERROR: unexpected case default'
+                    call util_crashpoint(772223)
+            end select
 
             !% --- volume change due to branch flows
             do kk=1,max_branch_per_node
@@ -200,7 +221,6 @@ module junction_elements
             ! print *,' '
             
         end do
-
 
     end subroutine junction_main_volume_advance
 !%
@@ -275,7 +295,7 @@ module junction_elements
 
         end if
 
-        !% saz 20230507 --- get tehse calls out of the if statement to prevent any race conditions
+        !% saz 20230507 --- get these calls out of the if statement to prevent any race conditions
         !% --- update various packs of zeroDepth faces
         call pack_JB_zeroDepth_interior_faces ()
         sync all
@@ -305,6 +325,7 @@ module junction_elements
             thisP => elemP(1:Npack,ep_JM)
             !% --- new junction volume from conservative face fluxes
             call junction_main_volume_advance (ep_JM, Npack)
+
             !% --- new junction plan area
             call geo_plan_area_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
             !print *, 'plan area ',elemSR(thisP(1),esr_Storage_Plan_Area)
@@ -519,6 +540,7 @@ module junction_elements
         !%-----------------------------------------------------------------
         !% Aliases
             Qstorage    => elemSR(:,esr_JunctionMain_StorageRate) !% positive is increasing storage
+            !% --- note that Qoverflow includes ponding rate
             Qoverflow   => elemSR(:,esr_JunctionMain_OverflowRate) !% negative is outflow
             Qlateral    => elemR (:,er_FlowrateLateral) !% negative is outflow)
             dt          => setting%Time%Hydraulics%Dt
@@ -562,8 +584,8 @@ module junction_elements
 
                 ! if (JMidx==printJM) print *, '   QnetBranches ',QnetBranches
 
-            !% --- compute overflow rate (negative is outflow)
-            Qoverflow(JMidx) = lljunction_main_Qoverflow (JMidx)
+            !% --- compute overflow/ponding rate (negative is outflow)
+            Qoverflow(JMidx) = lljunction_main_Qoverflow (JMidx,1)
 
                 ! if (JMidx==printJM) print *, '   Qoverflow   ',Qoverflow(JMidx)
 
@@ -646,7 +668,7 @@ module junction_elements
             !% --- update junction main overflow rate
             Qoverflow(JMidx) = Qoverflow(JMidx) + dH * dQdHoverflow
 
-               ! if (JMidx==printJM) print *,'    Qover      ',Qoverflow(JMidx)
+            !    if (JMidx==printJM) print *,'    Qover      ',Qoverflow(JMidx)
 
             !% --- update net Q branches (included CC and Diag)
             QnetBranches = lljunction_main_sumBranches (JMidx,er_Flowrate,elemR)
@@ -667,7 +689,15 @@ module junction_elements
                 ! if (JMidx==printJM) print *,'    new Volume  ',elemR(JMidx,er_Volume)
 
             !% --- update the overflow volume based on rate and time step
-            elemR(JMidx,er_VolumeOverflow) = Qoverflow(JMidx)  * dt * crk(istep)
+            select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
+                case (OverflowWeir,OverflowOrifice)
+                    elemR(JMidx,er_VolumeOverflow) = Qoverflow(JMidx)  * dt * crk(istep)
+                case (PondedWeir,PondedOrifice)
+                    elemR(JMidx,er_VolumePonded)   = Qoverflow(JMidx)  * dt * crk(istep)
+                case default
+                    print *, 'CODE ERROR: unexpected case default'
+                    stop 397894
+            end select
 
                 ! if (JMidx==printJM) print *,'    new overflow',elemR(JMidx,er_VolumeOverflow)
 
@@ -719,22 +749,38 @@ module junction_elements
 
         do mm=1,Npack
             JMidx => thisJM(mm)
+
+                ! print *, ' JM ',JMidx
+
             ! !% --- compute junction residual
             resid = lljunction_conservation_residual (thisJM(mm)) 
+
                     ! if (JMidx == printJM) 
 
             ! if (JMidx == printJM) print *, '    resid at 4     ',resid, JMidx 
 
+                ! print *, 'resid ',resid
+
             if (abs(resid) > local_epsilon) then 
                 !% --- note that QnetIn > 0 and QnetOut < 0
                 QnetIn  = lljunction_branch_Qnet (thisJM(mm),+oneI)
-                QnetOut = lljunction_branch_Qnet (thisJM(mm),-oneI) + Qoverflow(thisJM(mm))
+                QnetOut = lljunction_branch_Qnet (thisJM(mm),-oneI)
+                if (Qoverflow(thisJM(mm)) > zeroR) then
+                    QnetIn = QnetIn + Qoverflow(thisJM(mm))
+                else
+                    QnetOut = QnetOut + Qoverflow(thisJM(mm))
+                end if
 
                     ! if (JMidx == printJM) print *, 'starting conservation resid flows '
                     ! if (JMidx == printJM) print *, QnetIn, QnetOut, elemR(thisJM(mm),er_FlowrateLateral)
 
+                    !print *, 'Qnets: ',QnetIn, QnetOut
+
                 !% --- ad hoc adjustment of elemR(:,er_Flowrate) of JB and Qoverflow of JM
                 call lljunction_conservation_fix(thisJM(mm),resid, QnetIn, QnetOut)
+
+                !% --- note that QnetIn, QnetOut, and elemSR(:,esr_JunctionMain_OverflowRate) 
+                !%     are all changed in lljunction_conservation_fix
 
                         ! if (JMidx == printJM) then 
                         !     print *, 'Q update 2'

@@ -25,8 +25,6 @@ module lowerlevel_junction
     public :: lljunction_branch_update_DeltaQ
     public :: lljunction_branch_update_flowrate
     
-    
-
     public :: lljunction_CC_for_JBadjacent
 
     public :: lljunction_conservation_residual
@@ -732,18 +730,20 @@ module lowerlevel_junction
         !%------------------------------------------------------------------
             integer, intent(in) :: JMidx
             real(8), intent(inout) :: resid,  QnetOut
-            real(8), intent(in) :: QnetIn
+            real(8), intent(inout) :: QnetIn
 
             real(8), pointer :: Qoverflow, Qstorage, dQdH(:)
+            real(8), pointer :: pi
 
             integer, pointer :: fup(:), fdn(:)
 
             integer :: kk
             real(8) :: QratioIn, QratioOut, dQoverflow, Hinc
+            real(8) :: MinHeadForOverflow, OverflowDepth, PondedHead
 
             real(8), dimension(max_branch_per_node) :: dQ, dH, areaQ
             real(8), parameter :: localEpsilon = 1.0d-6
-            real(8) :: zbottom, Aout, Ain
+            real(8) :: zbottom, Aout, Ain, AoutOverflow, AinPonded
             integer :: zcount, Qcount, bcount
             logical, dimension(max_branch_per_node) :: bFixYN
 
@@ -756,6 +756,7 @@ module lowerlevel_junction
 
             fup       => elemI(:,ei_Mface_ul)
             fdn       => elemI(:,ei_Mface_dl)
+            pi        => setting%Constant%pi
         !%------------------------------------------------------------------
 
         repeatYN = .true.
@@ -764,18 +765,21 @@ module lowerlevel_junction
             ! print *, '============FIX CONSERVATION'
             ! print *, 'JUNCTION ',JMidx
             ! print *, 'starting resid ',resid 
-            ! print *, 'Qoverflow      ',Qoverflow
 
         dQ = zeroR
         dH = zeroR
         dQoverflow = zeroR
 
+        Aout   = zeroR
+        Ain    = zeroR
+
         !% --- note that by definition: QnetIn > 0 and QnetOut < 0 
         !%     resid > 0 implies too much inflow
         !%     resid < 0 implies too much outflow
 
-        !% --- reduce or eliminate Qoverflow rate for negative residual
+        !% --- attempt to adjust residual with overflow/ponding alone
         if ((resid < zeroR) .and. (Qoverflow < zeroR)) then 
+            !% --- reduce negative magnitude or eliminate negative Qoverflow rate
             !% --- note Qoverflow < 0 is an outflow
             if (Qoverflow < resid) then 
                 !% --- resid can be fully accounted for by overflow reduction
@@ -789,20 +793,72 @@ module lowerlevel_junction
                 Qoverflow = zeroR
                 !% -- continue with residual processing
             end if
+        elseif ((resid > zeroR) .and. (Qoverflow > zeroR)) then 
+            !% --- reduce positive magnitude or elimenate positive Qoverflow rate
+            !%     this is an inflow that only occurs due to ponding
+            if (Qoverflow > resid) then 
+                !% --- resid can be fully accounted for by overflowr eduction
+                Qoverflow = Qoverflow - resid
+                resid = zeroR
+                return !% --- no further residual processing needed
+            else
+                !% --- resid reduces the overflow, but some resid remains
+                QnetIn    = QnetIn - Qoverflow
+                resid     = resid - Qoverflow 
+                Qoverflow = zeroR
+            end if
+        else
+            !% --- if Qoverflow == 0 no action required
         endif
 
             ! print *, '0001  Resid    ',resid
+
+            ! print *, 'head ',elemR(JMidx,er_Head)
+
+        !% --- set the conditions for overflow and ponding
+        call lljunction_main_overflow_conditions &
+            (JMidx, MinHeadForOverflow, OverflowDepth, PondedHead)
+
+            ! print *, MinHeadForOverflow, OverFlowDepth, PondedHead
+            ! print *, Qoverflow
             
         do while (repeatYN)
 
-            !print *,' '
+            !% --- get flow areas of overflows or ponding
+            if (Qoverflow > zeroR) then 
+                !% --- inflow from ponding only (OverflowDepth < 0)
+                select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
+                    case (PondedWeir)
+                        AinPonded =  -OverflowDepth * twoR * sqrt( pi * elemSR(JMidx,esr_JunctionMain_Surcharge_Plan_Area))
+                    case (PondedOrifice)
+                        AinPonded =  -OverFlowDepth * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length)
+                    case default 
+                        print *, 'CODE ERROR: unexpected case default'
+                        call util_crashpoint(7798723)
+                end select
+                AoutOverflow = zeroR
 
-            !% --- distribute change in in/outflows based on contributing area
-            bFixYN = .false.
-            Aout   = zeroR
-            Ain    = zeroR
-            areaQ  = zeroR
-            bcount = zeroI
+            elseif (Qoverflow < zeroR) then
+                !% --- outflow either as overflow or to ponding (OverflowDepth > 0)
+                select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
+                    case (OverflowWeir, PondedWeir)
+                        AoutOverflow = OverflowDepth * twoR * sqrt( pi * elemSR(JMidx,esr_JunctionMain_Surcharge_Plan_Area))
+                    case (OverflowOrifice, PondedOrifice)
+                        AoutOverflow = OverFlowDepth * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length)
+                    case default 
+                        print *, 'CODE ERROR: unexpected case default'
+                        call util_crashpoint(7722366)
+                end select
+                AinPonded = zeroR
+            else 
+                AinPonded = zeroR 
+                AoutOverflow = zeroR
+            end if
+
+            !% --- Compute contributing area in branches
+            bFixYN = .false. !% --- whether or not a branch can be fixed for conservation
+            areaQ  = zeroR   !% --- area for each branch
+            bcount = zeroI   !% --- number of modifiable branches
             do kk=1,max_branch_per_node
                 !% --- cycle if this branch cannot contribute to flow
                 if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)        .ne. oneI) .or.  &
@@ -840,15 +896,14 @@ module lowerlevel_junction
                 end if
 
                     ! print *, 'QVAL ',kk, (real(branchsign(kk),8) * elemR(JMidx+kk,er_Flowrate))
-
-
             end do
 
                 ! print *,' '
                 ! print *, 'bcount ',bcount
                 ! print *,' '
 
-            if (bcount < 1) then 
+            !% --- if no branches with flow and no ponded inflow, then use all branches
+            if ((bcount < 1) .and. (AinPonded == zeroR)) then 
                 !% --- occurs during wetting drying, use all real branches for adjustment
                 do kk=1,max_branch_per_node
                     if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)        .ne. oneI) .or.  &
@@ -860,7 +915,7 @@ module lowerlevel_junction
                         bcount = bcount + oneI
                         areaQ(kk) = max(faceR(fup(JMidx+kk),fr_Area_d),elemR(JMidx+kk,er_Area))
 
-                        print *, 'ff 03 ',kk, areaQ(kk)
+                        !print *, 'ff 03 ',kk, areaQ(kk)
 
                     else
                         !% --- downstream branch
@@ -868,7 +923,7 @@ module lowerlevel_junction
                         bcount = bcount + oneI
                         areaQ(kk) = max(faceR(fdn(JMidx+kk),fr_Area_u),elemR(JMidx+kk,er_Area))
 
-                        print *, 'ff 04 ',kk, areaQ(kk)
+                        !print *, 'ff 04 ',kk, areaQ(kk)
 
                     end if
                 end do
@@ -877,8 +932,13 @@ module lowerlevel_junction
                     print *, 'CODE ERROR: Mass residual in an unexpected condition'
                     call util_crashpoint(2298522)
                 endif
+            else
+                !% --- continue
             end if
 
+            !% --- Accumulate area weighting for inflows and outflows
+            Ain  = Ain  + AinPonded
+            Aout = Aout + AoutOverflow
             do kk=1,max_branch_per_node
                 if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)        .ne. oneI) .or.  &
                     (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ)    .ne. oneI)        ) cycle
@@ -889,14 +949,6 @@ module lowerlevel_junction
                 else
                     Aout = Aout + areaQ(kk)
                             ! print *, 'Aout ',kk, Aout
-                end if
-                
-                if (Qoverflow < zeroR) then 
-                    Aout = Aout + elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) &
-                                * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Height)
-
-                        ! print *, 'Aout with overflow ',kk,Aout    
-
                 end if
             end do
 
@@ -915,6 +967,13 @@ module lowerlevel_junction
                 !% --- distribute residual in proportion to area
                 do kk=1,max_branch_per_node
                     if (.not. bFixYN(kk)) cycle 
+                    !% --- note resid<0 is too much outflow and branchsign for
+                    !%     downstream is -1, while the value of a downstream outflow
+                    !%     is positive. We require dQ < 0 to decrease
+                    !%     the positive outflow on a downstream branch. Similarly
+                    !%     for an upstream branch the Q is inherently negative and the
+                    !%     branch sign is positive so the dQ > 0 is needed to reduce
+                    !%     the (negative) outflow on an upstream branch
                     dQ(kk) = - resid * real(branchsign(kk),8) * areaQ(kk) / (Ain + Aout) 
 
                      ! print *, 'dQ(kk) ',kk, dQ(kk)
@@ -923,11 +982,15 @@ module lowerlevel_junction
                 !% --- overflow rate adjustment
                  ! print *, 'Qoverflow ',Qoverflow
                 if (Qoverflow < zeroR) then 
-                    dQoverflow = -resid * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) &
-                                        * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Height) &
-                                        / (Ain + Aout)
+                    !% --- overflow/ponding is an outflow (negative Q)
+                    !%     negative residual indicates too much outflow,
+                    !%     which requires a positive dQ to reduce the
+                    !%     outflow magnitude
+                    dQoverflow =  - resid * AoutOverflow / (Ain + Aout)
 
                     !% --- check to see if too much overflow was removed
+                    !%     i.e., a positive residual (too much inflow)
+                    !%     caused a
                     if (Qoverflow + dQoverflow > zeroR) then 
                         resid = resid - Qoverflow
                         Qoverflow = zeroR
@@ -935,7 +998,28 @@ module lowerlevel_junction
                     else 
                         repeatYN = .false.
                     endif
+
+                elseif (Qoverflow > zeroR) then 
+                    !% --- Ponding with higher head outside is an inflow (positive Q)
+                    !%     and a negative residual indicates too little inflow
+                    !%     so dQ>0 is required to increase inflow rate.
+                    !%     Conversely, a positive residual requires reduction of inflow
+                    !%     so dQ < 0 is needed
+                    dQoverflow = -resid * AinPonded / (Ain + Aout)    
+
+                    !% --- check to see if too much ponding was removed
+                    !%     i.e., a positive residual (too much inflow)
+                    !%     caused a
+                    if (Qoverflow + dQoverflow < zeroR) then 
+                        resid = resid - Qoverflow
+                        Qoverflow = zeroR
+                        repeatYN = .true.
+                    else 
+                        repeatYN = .false.
+                    endif
+
                 else
+                    !% Qoverflow == 0
                     dQoverflow = zeroR
                     repeatYN = .false.
                 end if
@@ -955,10 +1039,6 @@ module lowerlevel_junction
         !% --- update flowrates
         do kk=1,max_branch_per_node
             if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) .ne. oneI) cycle
-            ! if ((elemSI(JMidx+kk,esi_JunctionBranch_Exists)     == oneI) .and. &
-            !     (elemSI(JMidx+kk,esi_JunctionBranch_CanModifyQ) == oneI)         ) then
-            !     elemR(JMidx+kk,er_Flowrate) = elemR(JMidx+kk,er_Flowrate) + dQ(kk)
-            ! end if
             if (bFixYN(kk) .ne. zeroI) then
                 elemR(JMidx+kk,er_Flowrate) = elemR(JMidx+kk,er_Flowrate) + dQ(kk)
             end if
@@ -1030,6 +1110,7 @@ module lowerlevel_junction
         !% Declarations
             integer, intent(in) :: JMidx
             real(8), pointer    :: Lorifice(:), coef2, coef4
+            real(8)             :: MinHeadForOverflow, OverFlowDepth, PondedHead
         !%------------------------------------------------------------------  
         !% Aliases
             Lorifice => elemSR(:,esr_JunctionMain_OverflowOrifice_Length)
@@ -1037,39 +1118,58 @@ module lowerlevel_junction
             coef4    => setting%Junction%Overflow%coef4
         !%------------------------------------------------------------------  
 
-        ! print *, ' '
-        ! print *, 'OverFlowType ',elemSI(JMidx,esi_JunctionMain_OverflowType)
-        ! print *, NoOverflow, Ponded, OverflowWeir, OverflowOrifice
-        ! print *, elemR(JMidx,er_Head) - elemR(JMidx,er_Zcrown)
+        !% --- set the conditions for overflow or ponding
+        call lljunction_main_overflow_conditions &
+            (JMidx, MinHeadForOverflow, OverflowDepth, PondedHead)
 
-        !% --- if not an overflow at this time
-        if (elemR(JMidx,er_Head) .le. (elemR(JMidx,er_Zcrown) + elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth))) then 
+
+        !% --- Head below surcharge, only possibility is a ponding inflow
+        !%     But changing Q does not change the inflow
+        if (elemR(JMidx,er_Head) .le. MinHeadForOverflow) then 
             lljunction_main_dQdHoverflow = zeroR
             return 
         end if
 
         !% --- if possible overflow condition exists
         select case (elemSI(JMidx,esi_JunctionMain_OverflowType))  
-            case (NoOverflow,Ponded)
-                lljunction_main_dQdHoverflow = zeroR
+            case (NoOverflow)
+                lljunction_main_dQdHoverflow = zeroR 
+                return 
+
             case (OverflowWeir)
                 !% --- Using Brater and King Eq 5.10 dQ/dH = (3/2) C L H^{1/2}
                 !%     Apply L = 2 (pi A)^{1/2} such that
-                !%     coef2 = (3/2) (2 C sqrt(pi)) and
+                !%     coef2 = (3/2) (C sqrt(pi)) and
                 !%     dQ/dH = coef2 * sqrt( A H )
                 !%     minus sign as Q is outflow (negative) as H increases
-                lljunction_main_dQdHoverflow = -coef2                          &
-                    * sqrt(   ( elemSR(JMidx,esr_Storage_Plan_Area))           &
-                            * ( elemR(JMidx,er_Head - elemR(JMidx,er_Zcrown))) &
-                          )
+                lljunction_main_dQdHoverflow = -coef2                            &
+                    * sqrt(elemSR(JMidx,esr_Storage_Plan_Area) * OverflowDepth)
+                return
+
+            case (PondedWeir)
+                !% --- see explanation for OverflowWeir, above
+                !%     abs(OverflowDepth) required so that negative OverflowDepth
+                !%     is allowed when ponding is an inflow
+                lljunction_main_dQdHoverflow = -coef2                            &
+                    * sqrt(elemSR(JMidx,esr_Storage_Plan_Area) * abs(OverflowDepth))
+                return
+                
             case (OverflowOrifice)
                 !% --- use the supplied orifice length
                 !%     Using Brater and King Eq. 4.16 or 4.17
                 !%     dQ/dH = sqrt(2g) L sqrt(H)
                 !%     coef4 = sqrt(2g)
                 !%     minus sign as Q is outflow (negative) as H increases
-                lljunction_main_dQdHoverflow = -coef4 * Lorifice(JMidx)         &
-                        * sqrt(elemR(JMidx,er_Head) - elemR(JMidx,er_Zcrown))     
+                lljunction_main_dQdHoverflow = -coef4 * Lorifice(JMidx) * sqrt(OverflowDepth)   
+                return
+                        
+            case (PondedOrifice)
+                !% --- see explanation for OverflowOrifice, above
+                !%     abs(OverflowDepth) required so that negative OverflowDepth
+                !%     is allowed when ponding is an inflow
+                lljunction_main_dQdHoverflow = -coef4 * Lorifice(JMidx) * sqrt(abs(OverflowDepth))   
+                return
+
             case default
                 !% --- should not reach here.
                 !%     for debugging, change to impure function and uncomment
@@ -1077,6 +1177,7 @@ module lowerlevel_junction
                 ! print *, 'CODE ERROR'
                 ! print *, 'unexpected case default'
                 ! call util_crashpoint(1209874)
+
         end select 
 
     end function lljunction_main_dQdHoverflow
@@ -1253,42 +1354,110 @@ module lowerlevel_junction
 !%==========================================================================
 !%==========================================================================
 !% 
-    real(8) function lljunction_main_Qoverflow (JMidx)  
+    real(8) function lljunction_main_Qoverflow (JMidx, istep)  
         !%------------------------------------------------------------------
         !% Description
-        !% Computes the overflow rate of a junction
+        !% Computes the overflow/ponding rate of a junction that is stored
+        !% Negative is outflow, positive is inflow
         !% Weir overflow based on non-dimensional approach of Brater and King
         !% for broad-crested weir
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: JMidx
-            real(8), pointer    :: Horifice(:), Lorifice(:), coef1, coef3
-            real(8)             :: SurchargeHeadMax, OverFlowHead
+            integer, intent(in) :: JMidx, istep
+            real(8), pointer    :: Horifice(:), Lorifice(:), coef1, coef3, WeirFactor
+            real(8)             :: MinHeadForOverflow, OverflowDepth, PondedHead
+            real(8)             :: tempOverflow
+
+            real(8), pointer    :: dt, crk
         !%------------------------------------------------------------------  
         !% Aliases
-            Horifice => elemSR(:,esr_JunctionMain_OverflowOrifice_Height)
-            Lorifice => elemSR(:,esr_JunctionMain_OverflowOrifice_Length)
-            coef1    => setting%Junction%Overflow%coef1
-            coef3    => setting%Junction%Overflow%coef3
+            Horifice   => elemSR(:,esr_JunctionMain_OverflowOrifice_Height)
+            Lorifice   => elemSR(:,esr_JunctionMain_OverflowOrifice_Length)
+            WeirFactor => setting%Junction%Overflow%WeirLengthFactor
+            coef1      => setting%Junction%Overflow%coef1
+            coef3      => setting%Junction%Overflow%coef3
+            dt         => setting%Time%Hydraulics%Dt
+            crk        => setting%Solver%crk2(istep)
         !%------------------------------------------------------------------  
 
-        SurchargeHeadMax = elemR(JMidx,er_Zcrown) + elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)
-        OverFlowHead     = elemR(JMidx,er_Head) - SurchargeHeadMax
+        !% --- set the overflow conditions
+        call lljunction_main_overflow_conditions &
+            (JMidx,MinHeadForOverflow, OverflowDepth, PondedHead)
 
             ! if (JMidx==printJM) print *, ' in LLjunction head ',elemR(JMidx,er_Head), elemR(JMidx,er_Zcrown)
 
-        !% --- return zero if the head is below the surcharge max head at the start.
-        if (elemR(JMidx,er_Head) .le. SurchargeHeadMax) then
-            lljunction_main_Qoverflow = zeroR
-            return
+        !% --- Head below the surcharge, only possibility is a ponding inflow
+        if (elemR(JMidx,er_Head) .le. MinHeadForOverflow) then
+            !% --- no outflowing overflow 
+            if ( elemSR(JMidx,esr_JunctionMain_PondedArea) == zeroR) then 
+                !% --- no ponding inflow or outflow
+                lljunction_main_Qoverflow = zeroR
+                return
+
+            else
+                !% --- possible ponding inflow as waterfall into junction
+                if (PondedHead > MinHeadForOverflow) then 
+                    !% --- ponding inflow as waterfall
+                    select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
+
+                        case (PondedWeir)
+                            !% --- see OverflowWeir below for explanation
+                            !%     given + value as inflow
+                            tempOverflow = coef1 *  WeirFactor * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) &
+                                * ((PondedHead - MinHeadForOverflow)**threehalfR)
+
+            
+                        case (PondedOrifice)
+                            !% ---- see OverflowOrifice below for explanation
+                            !%      given + value as inflow
+                            tempOverflow = coef3 * Lorifice(JMidx) &
+                                    * ((PondedHead - MinHeadForOverflow)**threehalfR)
+
+                        case default 
+                            print *, 'CODE ERROR: unexpected case default'
+                            call util_crashpoint(7298723)
+                    end select
+
+                    !% --- limit inflow by ponded water available
+                    if ((tempOverflow * dt *crk)  > elemR(Jmidx,er_VolumePondedTotal)) then
+                        lljunction_main_Qoverflow = elemR(Jmidx,er_VolumePondedTotal) / (dt * crk)
+                    else 
+                        lljunction_main_Qoverflow = tempOverflow
+                    end if
+                    return
+
+                else
+                    !% --- no ponding inflow or outflow
+                    lljunction_main_Qoverflow = zeroR
+                    return
+
+                end if
+            end if
+        else 
+            !% --- continue
+            !%     Note that all of the conditional in the if..then above will result
+            !%     in the subroutine returning. We only continue to the next step
+            !%     if the junction head is above the minimum head for overflow,
+            !%     which will require a overflow depth > 0 for a strict overflow
+            !%     but may have a +/- overflow depth for ponding. Note that a negative
+            !%     overflow depth indicates junction head is lower than ponded head
+            !%     so the ponding causes and inflow
         end if
 
+        !% --- possible inflow or outflow due to overflow or ponding
+        !%     CONVENTIONS: 
+        !%     (1) a flowrate is positive if it is an outflow
+        !%      and negative if it is an inflow.
+        !%     (2) a positive Overflow Depth causes an outflow (negative Q)
+        !%      whereas a negative Overflow depth causes a inflow (positive Q)
+        !%     (3) A positive inflow is only allowed with ponding.
+        !%     
         select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
 
-            case (NoOverflow,Ponded)
-                !% --- ponding and NoOverflow do not have separate volume accounting
-                !%     for overflow
+            case (NoOverflow)
+                !% --- NoOverflow implies no ponding or overflow
                 lljunction_main_Qoverflow = zeroR
+                return
 
             case (OverflowWeir)
                 !% --- weir overflow based on weir length as circumference of storage plan area
@@ -1299,8 +1468,39 @@ module lowerlevel_junction
                 !%     Q = coef1 (sqrt(A)) H^(3/2)
                 !%     minus sign as Q is outflow (negative)
                 lljunction_main_Qoverflow                                &
-                    = -coef1 * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) &
-                       * (OverFlowHead**threehalfR)
+                    = -coef1 * WeirFactor * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) &
+                       * (OverFlowDepth**threehalfR)
+                return
+
+            case (PondedWeir)           
+                !% --- similar to OverflowWeir above, but allows in or outflow 
+                if (OverflowDepth < zeroR) then 
+                    !% --- inflow from ponding (+ value)
+                    tempOverflow                                             &
+                        = +coef1 * WeirFactor * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) &
+                            * (-OverflowDepth)**threehalfR
+
+                    !% --- limit inflow by ponded water available
+                    if ((tempOverflow * dt *crk)  > elemR(Jmidx,er_VolumePondedTotal)) then
+                        lljunction_main_Qoverflow = elemR(Jmidx,er_VolumePondedTotal) / (dt * crk)
+                    else 
+                        lljunction_main_Qoverflow = tempOverflow
+                    end if
+
+                    return
+
+                elseif (OverflowDepth > zeroR) then 
+                    !% --- outflow to ponding (- value)
+                    lljunction_main_Qoverflow                                &
+                        = -coef1 * WeirFactor * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) &
+                            * (OverflowDepth**threehalfR)
+                    return
+
+                else 
+                    !% --- no exchange
+                    lljunction_main_Qoverflow = zeroR
+                    return
+                end if
 
             case (OverflowOrifice)
                 !% --- orifice overflow assuming a single orifice
@@ -1309,9 +1509,10 @@ module lowerlevel_junction
                 !%     define coef3 = (2/3) sqrt(2g) so that
                 !%     Q = coef3 * L * H^{3/2}
                 !%     minus sign as Q is outflow (negative)
-                if (elemR(JMidx,er_Head) .le. (SurchargeHeadMax + Horifice(JMidx) )) then
-                    !% --- water surface below upper edge of orifice (H < Z + Horifice)
-                    lljunction_main_Qoverflow = -coef3 * Lorifice(JMidx) * (OverFlowHead**threehalfR)
+                if (elemR(JMidx,er_Head) .le. (MinHeadForOverflow + Horifice(JMidx) )) then
+                    !% --- head (water surface) below upper edge of orifice (H < Z + Horifice)
+                    lljunction_main_Qoverflow = -coef3 * Lorifice(JMidx) * (OverFlowDepth**threehalfR)
+                    return 
 
                 else
                     !% --- orifice is pressurized (H > Zcrown + Horifice)
@@ -1322,9 +1523,58 @@ module lowerlevel_junction
                     !%     minus sign as Q is outflow (negative) 
                     lljunction_main_Qoverflow = -coef3 * Lorifice(JMidx)  &
                         * (                                                                                 &
-                            +  ((OverFlowHead                  )**threehalfR)   &
-                            -  ((OverFlowHead - Horifice(JMidx))**threehalfR)    &
+                            +  ((OverFlowDepth                  )**threehalfR)   &
+                            -  ((OverFlowDepth - Horifice(JMidx))**threehalfR)    &
                           )
+                    return
+                end if
+             
+            case (PondedOrifice)
+                !% --- similar to OverflowOrifice but allows in or outflows with ponding
+                if (OverflowDepth < zeroR) then
+                    !% --- inflows from ponding require + value
+                    if (PondedHead .le. (MinHeadForOverflow + Horifice(JMidx) )) then
+                        !% --- water surface below upper edge of orifice (H < Z + Horifice)
+                        tempOverflow = +coef3 * Lorifice(JMidx) * ((-OverflowDepth)**threehalfR)
+
+                    else
+                        !% --- inflows from ponding
+                        tempOverflow = +coef3 * Lorifice(JMidx)  &
+                            * (                                                                                 &
+                                +  ((-OverFlowDepth                  )**threehalfR)   &
+                                -  ((-OverflowDepth - Horifice(JMidx))**threehalfR)    &
+                            )
+                    end if
+
+                    !% --- limit inflow by ponded water available
+                    if ((tempOverflow * dt *crk)  > elemR(Jmidx,er_VolumePondedTotal)) then
+                        lljunction_main_Qoverflow = elemR(Jmidx,er_VolumePondedTotal) / (dt * crk)
+                    else 
+                        lljunction_main_Qoverflow = tempOverflow
+                    end if
+                    return 
+
+                elseif (OverflowDepth > zeroR) then
+                    !% --- outflows to ponding with - value
+                    if (PondedHead .le. (MinHeadForOverflow + Horifice(JMidx) )) then
+                        !% --- water surface below upper edge of orifice (H < Z + Horifice)
+                        lljunction_main_Qoverflow = -coef3 * Lorifice(JMidx) &
+                            * ((OverflowDepth)**threehalfR)
+                        return 
+
+                    else
+                        lljunction_main_Qoverflow = -coef3 * Lorifice(JMidx)  &
+                            * (                                                                                 &
+                                +  ((OverFlowDepth                  )**threehalfR)   &
+                                -  ((OverflowDepth - Horifice(JMidx))**threehalfR)    &
+                            )
+                        return
+                    end if
+
+                else 
+                    !% --- no exchange
+                    lljunction_main_Qoverflow = zeroR
+                    return
                 end if
 
             case default
@@ -1391,37 +1641,51 @@ module lowerlevel_junction
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: JMidx, istep
-            real(8), pointer    :: Qstorage, Qoverflow
+            real(8), pointer    :: Qstorage, Qoverflow, dt, crk
 
             real(8) :: QnetBranches
         !%------------------------------------------------------------------
         !% Alias
             Qstorage  => elemSR(JMidx,esr_JunctionMain_StorageRate)
             Qoverflow => elemSR(JMidx,esr_JunctionMain_OverflowRate)
+            dt        => setting%Time%Hydraulics%Dt
+            crk       => setting%Solver%crk2(istep)
         !%------------------------------------------------------------------
 
-        !% STEP J21
         !% --- update storage volume
         if (elemSI(JMidx,esi_JunctionMain_Type) .ne. NoStorage) then
             elemR(JMidx,er_Volume) = elemR(JMidx,er_Volume_N0)                         &
-                + setting%Time%Hydraulics%Dt * setting%Solver%crk2(istep) * Qstorage
+                + dt *crk * Qstorage
         else 
             !% --- no storage does not change volume
             elemR(JMidx,er_Volume) = elemR(JMidx,er_Volume_N0)
         end if
 
-        !% STEP J22
-        !% --- update volume overflow 
-        elemR(JMidx,er_VolumeOverflow) = Qoverflow &
-                * setting%Time%Hydraulics%Dt * setting%Solver%crk2(istep) 
+        !% --- update this time step volume overflow and ponded
+        select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
+            case (NoOverflow)
+                !% -- no action
 
-        
-        
+            case (OverflowWeir,OverflowOrifice)
+                !% --- define the VolumeOverflow as positive
+                elemR(JMidx,er_VolumeOverFlow) = -Qoverflow * dt * crk
+
+            case (PondedWeir, PondedOrifice)
+                !% --- define the VolumePonded as positive is increasing 
+                !%     the ponded volume and negative decreasing it.
+                !%     This changes the sign of Qoverflow, which is 
+                !%     negative for an outflow rate
+                elemR(JMidx,er_VolumePonded)   = -Qoverflow * dt * crk
+
+            case default
+                print *, 'CODE ERROR: unexpected case default'
+                call util_crashpoint(711345)
+        end select
 
     end subroutine lljunction_main_update_Qdependent_values
 !%    
 !%==========================================================================
-    !%==========================================================================
+!%==========================================================================
 !% 
     real(8) function lljunction_main_update_storage_rate (JMidx, dH, QnetBranches, istep)
         !%------------------------------------------------------------------
@@ -1455,7 +1719,7 @@ module lowerlevel_junction
                     !% --- compute rate from mass conservation
                     lljunction_main_update_storage_rate = QnetBranches       &
                         + elemSR(JMidx,esr_JunctionMain_OverflowRate) &
-                        +  elemR(JMIdx,er_FlowrateLateral)
+                        + elemR(JMIdx,er_FlowrateLateral)
                 else 
                     !% should not be possible
                     print *, 'CODE ERROR: unexpected else'
@@ -1784,7 +2048,49 @@ module lowerlevel_junction
     end subroutine lljunction_push_adjacent_elemdata_to_face
 !%
 !%==========================================================================
+!% PRIVATE
+!%==========================================================================
+!%
+    subroutine lljunction_main_overflow_conditions &
+            (JMidx, MinHeadForOverflow, OverflowDepth, PondedHead)
+        !%-----------------------------------------------------------------
+        !% Description
+        !% Computes data needed for evaluating conditions for overflow
+        !% and ponding
+        !%-----------------------------------------------------------------
+        !% Declarations
+            integer, intent(in)    :: JMidx
+            real(8), intent(inout) :: MinHeadForOverFlow, OverFlowDepth, PondedHead
+        !%-----------------------------------------------------------------
+        !%-----------------------------------------------------------------
+        !%-----------------------------------------------------------------
 
+        !% --- minimum head at which overflow/poinding occurs
+        MinHeadForOverflow = elemR(JMidx,er_Zcrown) &
+             + elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)
+
+        !% --- ponding junctions are treated differently than non-ponding
+        if ( elemSR(JMidx,esr_JunctionMain_PondedArea) > zeroR) then 
+            !% --- ponded head is the head available in the ponded area
+            PondedHead       = MinHeadForOverflow                           &
+                                + (  elemR (JMidx,er_VolumePondedTotal)   &
+                                    / elemSR(JMidx,esr_JunctionMain_PondedArea)  )
+            !% --- for ponding, the overflow depth is the difference                        
+            !%     between the junction head and ponded head. A positive value
+            !%     causes an outflow to ponding whereas a negative value
+            !%     causes an inflow from ponding to the junciton
+            OverFlowDepth = elemR(JMidx,er_Head) - PondedHead
+        else 
+            !% --- by definition, the ponded head at an overflow is the minimum
+            !%     head for overflow -- but this should never be needed
+            PondedHead = MinHeadForOverflow 
+            !% --- For non-ponding, the overflow depth is either positive or zero
+            OverFlowDepth = max(elemR(JMidx,er_Head) - MinHeadForOverflow, zeroR)                   
+        end if
+
+    end subroutine lljunction_main_overflow_conditions
+!%
+!%==========================================================================
 
 !%==========================================================================
 !%

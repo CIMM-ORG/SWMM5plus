@@ -147,6 +147,7 @@ module geometry
         !%     Note that overflow or ponding for JM elements is handled 
         !%     in slot_JM_ETM.
         !%     Note, this is NOT standard in EPA-SWMM
+        !% 20230508 This needs careful checking and integration
         if (npackP_Open > 0) then
             if (setting%Discretization%AllowChannelOverflowTF) then
                 call geo_overflow_openchannels (thisP_Open)

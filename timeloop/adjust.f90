@@ -371,39 +371,27 @@ module adjust
             !% --- no flow adjustment
         end if
 
-        !% 20230505 -- adjusting velocity without adjusting area causes problem on small depths
-        ! if ((setting%Adjust%Flowrate%ApplyYN) .or. (setting%Adjust%Head%ApplyYN) ) then
-        !     where (elemR(thisP,er_Area) > setting%ZeroValue%Area)
-        !         elemR(thisP,er_Velocity) = elemR(thisP,er_Flowrate) / elemR(thisP,er_Area)   
-        !     elsewhere 
-        !         elemR(thisP,er_Velocity) = zeroR
-        !     endwhere                    
-        !     !% reset for high velocity (typically due to small area)
-        !     where (abs(elemR(thisP,er_Velocity)) > vMax) 
-        !         elemR(thisP,er_Velocity)  = sign( 0.99d0 * vMax, elemR(thisP,er_Velocity) )
-        !         !elemFlow(thisP) = elemVel(thisP) * elemArea(thisP) !% THIS PROBABLY ISN'T NEEDED 20230428
-        !     endwhere 
-        ! end if
 
         !% --- ad hoc adjustments to head
-        ! !%     done before velocity adjust so that area change alters velocity
-        ! if (setting%Adjust%Head%ApplyYN) then   
-        !     select case (setting%Adjust%Head%Approach)
-        !         case (vshape_all_CC)
-        !             call adjust_Vshaped_head_CC(thisP,0,.false.)
-        !         case (vshape_freesurface_CC)
-        !             call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.false.)
-        !         case (vshape_surcharge_CC)
-        !             call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.true.)
-        !             print *,  'CODE ERROR: unknown setting.Adjust.Head.Approach #',setting%Adjust%Head%Approach
-        !             print *, 'which has key ',trim(reverseKey(setting%Adjust%Head%Approach))
-        !             !stop 
-        !             call util_crashpoint( 9073)
-        !             !return
-        !     end select
-        ! else 
-        !     !% --- nohead adjustment
-        ! end if
+        !%     only affects head
+        if (setting%Adjust%Head%ApplyYN) then   
+            select case (setting%Adjust%Head%Approach)
+                case (vshape_all_CC)
+                    call adjust_Vshaped_head_CC(thisP,0,.false.)
+                case (vshape_freesurface_CC)
+                    call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.false.)
+                case (vshape_surcharge_CC)
+                    call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.true.)
+                case default
+                    print *,  'CODE ERROR: unknown setting.Adjust.Head.Approach #',setting%Adjust%Head%Approach
+                    print *, 'which has key ',trim(reverseKey(setting%Adjust%Head%Approach))
+                    !stop 
+                    call util_crashpoint( 9073)
+                    !return
+            end select
+        else 
+            !% --- nohead adjustment
+        end if
  
                 
  
@@ -2174,12 +2162,12 @@ module adjust
             eHead(thisP)  =  (oneR - coef) * eHead(thisP) &
                + coef * onehalfR * (fHup(fDn(thisP)) + fHdn(fUp(thisP)))
 
-            !% --- adjust depth
-            elemR(thisP,er_Depth) = eHead(thisP) - elemR(thisP,er_Zbottom) 
+            ! !% --- adjust depth
+            ! elemR(thisP,er_Depth) = eHead(thisP) - elemR(thisP,er_Zbottom) 
             
-            !% --- adjust area as a average rather than trying to use geometry
-            eArea(thisP)  = (oneR - coef) * eArea(thisP)                    &
-                + coef * onehalfR * (fAup(fDn(thisP)) + fAdn(fUp(thisP)))
+            ! !% --- adjust area as a average rather than trying to use geometry
+            ! eArea(thisP)  = (oneR - coef) * eArea(thisP)                    &
+            !     + coef * onehalfR * (fAup(fDn(thisP)) + fAdn(fUp(thisP)))
 
             !% --- NOTE: volume is NOT adjusted.
         end where

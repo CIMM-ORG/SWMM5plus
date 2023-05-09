@@ -86,6 +86,7 @@ module runge_kutta2
             end if
         end do
             
+      
              ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
 
         !%==================================    
@@ -125,6 +126,7 @@ module runge_kutta2
 
             !% --- Update all CC aux variables
             !%     Note, these updates CANNOT depend on face values
+            !%     Through geometry, this sets Preissmann Slot variables
             call update_auxiliary_variables_CC (                  &
                 ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
                 .true., .false., dummyIdx)

@@ -593,7 +593,7 @@ contains
         node%I(:,ni_N_link_u) = 0
         node%I(:,ni_N_link_d) = 0
         !% --- set default for extra surcharge depth
-        node%R(:,nr_SurchargeExtraDepth) = setting%Junction%InfiniteExtraDepthValue 
+        node%R(:,nr_OverflowHeightAboveCrown) = setting%Junction%InfiniteExtraDepthValue 
 
         !% -----------------------
         !% --- LINK DATA
@@ -922,8 +922,8 @@ contains
             !% --- Total pressure head above max depth allowed for surcharge
             !%     If 0 then node cannot surcharge, so exceeding depth means water either ponds or is lost
             ! write(*,*) 'call api_nodef_surDepth == ', reverseKey_api(api_nodef_surDepth)
-            node%R(ii,nr_SurchargeExtraDepth) = interface_get_nodef_attribute(ii, api_nodef_surDepth)
-            ! write(*,*) '... nr_SurchargeExtraDepth = ',node%R(ii,nr_SurchargeExtraDepth) 
+            node%R(ii,nr_OverflowHeightAboveCrown) = interface_get_nodef_attribute(ii, api_nodef_surDepth)
+            ! write(*,*) '... nr_OverflowHeightAboveCrown = ',node%R(ii,nr_OverflowHeightAboveCrown) 
             ! write(*,*)
 
             !% --- Note that Storage Constant is converted for correct units in api.c/api_get_nodef_attribute
@@ -1057,7 +1057,7 @@ contains
             !%  
             !%     The following "or" conditions must be met for an nJ2:
             !%     1. either side is an open-channel element AND ponding_Area = 0 AND
-            !%        the SurchargeExtraDepth = 0
+            !%        the OverflowDepth = 0
             !%     2. both sides are NOT open channel AND the junction extra
             !%        surcharge depth == Junction.InfiniteExtraDepthValue
             !%     3. Downstream link may not be a Type1 Pump
@@ -1108,12 +1108,12 @@ contains
                           .and.                                                        &
                           (node%R(ii,nr_PondedArea) == zeroR)                          &
                           .and.                                                        &
-                          (  (node%R(ii,nr_SurchargeExtraDepth) == zeroR)              & 
+                          (  (node%R(ii,nr_OverflowHeightAboveCrown) == zeroR)              & 
                               .or.                                                     &
-                             (node%R(ii,nr_SurchargeExtraDepth)                        &
+                             (node%R(ii,nr_OverflowHeightAboveCrown)                        &
                                == setting%Junction%InfiniteExtraDepthValue)            &
                              .or.                                                      &
-                             (node%R(ii,nr_SurchargeExtraDepth)                        &
+                             (node%R(ii,nr_OverflowHeightAboveCrown)                        &
                                 == setting%Junction%InfiniteExtraDepthValue*0.3048d0)) & 
                         ) then
                         !% nJ2 OPEN CHANNEL FACE
@@ -1132,14 +1132,14 @@ contains
                          .and.                                               &
                          (link%I(linkDn,li_link_type) .ne. lChannel)         &
                          .and.                                               &
-                         ((node%R(ii,nr_SurchargeExtraDepth)                  &
+                         ((node%R(ii,nr_OverflowHeightAboveCrown)                  &
                            == setting%Junction%InfiniteExtraDepthValue)       &
                            .or.                                               &
-                           (node%R(ii,nr_SurchargeExtraDepth)                     &
+                           (node%R(ii,nr_OverflowHeightAboveCrown)                     &
                            == setting%Junction%InfiniteExtraDepthValue*0.3048d0)) & 
                           ) then
                         !% nJ2 CLOSED CONDUIT FACE
-                        !% --- if both links are NOT open channel AND the SurchargeExtraDepth
+                        !% --- if both links are NOT open channel AND the OverflowDepth
                         !%     is equal to the InfiniteExtraDepthValue, then this is retained 
                         !%     as an nJ2 (unvented)  face. Otherwise switched to a vented nJM element.
                         !%     HACK -- if 1000 ft is put in a CFS input file or 1000 m in an SI
@@ -1181,13 +1181,13 @@ contains
                 else
                     !% --- switch to nJm
                     ! write(*,*) '... switching nJ2 to nJm '
-                    !print *, 'infinite depth value ',setting%Junction%InfiniteExtraDepthValue, node%R(ii,nr_SurchargeExtraDepth)
+                    !print *, 'infinite depth value ',setting%Junction%InfiniteExtraDepthValue, node%R(ii,nr_OverflowHeightAboveCrown)
 
                     node%I(ii, ni_node_type) = nJm
 
                     write(*,*) '...NOTE: ',trim(node%Names(ii)%str),' is held as nJM node rather than nJ2 (faces).'
                     write(*,*) '   This occurs because the input SurchargeDepth is less than the InfiniteDepthValue'
-                    write(*,*) '   Input SurcharegeDepth is ',node%R(ii,nr_SurchargeExtraDepth)
+                    write(*,*) '   Input SurcharegeDepth is ',node%R(ii,nr_OverflowHeightAboveCrown)
                     write(*,*) '   InfiniteDepthValue is    ',setting%Junction%InfiniteExtraDepthValue
                 end if
 

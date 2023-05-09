@@ -193,7 +193,8 @@
         enumerator :: Implicit0
         !% type of junction overflow
         enumerator :: NoOverflow
-        enumerator :: Ponded 
+        enumerator :: PondedWeir
+        enumerator :: PondedOrifice 
         enumerator :: OverflowWeir
         enumerator :: OverflowOrifice
         !% MISC keys
@@ -525,7 +526,8 @@
         reverseKey(Explicit2) = 'Explicit2'
         reverseKey(Implicit0)  = 'Implicit0'
         reverseKey(NoOverflow) = 'NoOverflow'
-        reverseKey(Ponded)     = 'Ponded'
+        reverseKey(PondedWeir) = 'PondedWeir'
+        reverseKey(PondedOrifice) = 'PondedOrifice'
         reverseKey(OverflowWeir) = 'OverflowWeir'
         reverseKey(OverflowOrifice) = 'OverflowOrifice'
         reverseKey(doesnotexist) = 'doesnotexist'
@@ -790,7 +792,8 @@
         write(*,'(A," = ",i4)') trim(reverseKey(OverflowWeir)), OverflowWeir
         write(*,'(A," = ",i4)') trim(reverseKey(parabolic)) , parabolic
         write(*,'(A," = ",i4)') trim(reverseKey(Paved)) , Paved
-        write(*,'(A," = ",i4)') trim(reverseKey(Ponded)) , Ponded
+        write(*,'(A," = ",i4)') trim(reverseKey(PondedWeir)) , PondedWeir
+        write(*,'(A," = ",i4)') trim(reverseKey(PondedOrifice)) , PondedOrifice
         write(*,'(A," = ",i4)') trim(reverseKey(power_function)) , power_function
         write(*,'(A," = ",i4)') trim(reverseKey(pump)) , pump
         write(*,'(A," = ",i4)') trim(reverseKey(Pump1Curve)) , Pump1Curve

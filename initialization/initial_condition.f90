@@ -53,7 +53,7 @@ module initial_condition
     use utility_interpolate
     use utility_key_default
     use utility_crash, only: util_crashpoint
-    ! use utility_unit_testing, only: util_utest_CLprint
+    use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -480,9 +480,15 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
 
-        ! ! call util_utest_CLprint ('initial_condition at end')
+        
 
-         ! stop 666987
+        !% --- error check for ponding scales 
+        call init_IC_ponding_errorcheck ()
+
+
+        ! call util_utest_CLprint ('initial_condition at end')
+
+        !stop 6669871
 
         ! print *, 'TEST20230327'
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
@@ -3982,15 +3988,6 @@ contains
         !% find the first element ID associated with that nJm
         !% masked on the global node number for this node.
 
-        ! print *, 'thisJunctionNode ',thisJunctionNode
-        ! print *, ' '
-
-        ! print *, 'Lidx'
-        ! print *, elemI(:,ei_Lidx)
-
-        ! print *, ' '
-        ! print *, elemI(:,ei_node_Gidx_SWMM)
-
         JMidx = minval(elemI(:,ei_Lidx), elemI(:,ei_node_Gidx_SWMM) == thisJunctionNode)
 
         ! print *, ' '
@@ -4059,7 +4056,7 @@ contains
         elemR(JMidx,er_Head)      = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
         elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_FullDepth)
         elemR(JMidx,er_Zcrown)    = elemR(JMidx,er_FullDepth) + elemR(JMidx,er_Zbottom)
-        
+
         !% --- overflow volume accumulator
         elemR(JMidx,er_VolumeOverFlowTotal) = zeroR
 
@@ -4071,55 +4068,68 @@ contains
         else
             elemSR(JMidx,esr_JunctionMain_PondedArea) = zeroR
         end if
-        elemR(JMidx,er_VolumePonded) = zeroR
 
-        !% --- all JM "can" surcharge, but are limited by their SurchargeExtraDepth
-        !%     which might be 0 (effectively preventing any surcharge)
+        elemR(JMidx,er_VolumePonded)      = zeroR
+        elemR(JMidx,er_VolumePondedTotal) = zeroR
+
+        !% --- all JM "can" surcharge
+        !%     At their esr_OverflowHeigthAboveCrown (which may be zero)
+        !%     the surcharge causes overflow or ponding
         elemYN(JMidx,eYN_canSurcharge) = .true.
 
         !% --- check for initialization of surcharge extra depth
-        if (node%R(thisJunctionNode,nr_SurchargeExtraDepth) == nullvalueR) then 
+        if (node%R(thisJunctionNode,nr_OverflowHeightAboveCrown) == nullvalueR) then 
             print *, 'ERROR: Surcharge Extra Depth at a junction not initialized'
             print *, 'This should not happen! Likely problem forinitialization code'
             call util_crashpoint(8838723)
         end if
 
         !% --- Set the extra head above the crown for maximum surcharge at Junction
-        elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)      &
-            = node%R(thisJunctionNode,nr_SurchargeExtraDepth)
+        elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)      &
+            = node%R(thisJunctionNode,nr_OverflowHeightAboveCrown)
 
         !% --- Set the overflow and surcharge conditions
         !% --- check for infinite extra depth 
         !%     if infinite marker (1000) is used, then no oveflow allowed
         !%     applies to both 1000 m and 1000 ft as input.
-        if  ( ( (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)                &
+        if  ( ( (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)                &
                 .le. 1.001d0 * setting%Junction%InfiniteExtraDepthValue)           &
                 .and.                                                              &
-                (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)                &
+                (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)                &
                 .ge. 0.999d0 * setting%Junction%InfiniteExtraDepthValue)           &
                 )                                                                  &
             .or.                                                                   &
-                ( (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)              &
+                ( (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)              &
                 .le. 1.001d0 * setting%Junction%InfiniteExtraDepthValue*0.3048d0)  & 
                 .and.                                                              &
-                (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth)                &
+                (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)                &
                 .ge. 0.999d0 * setting%Junction%InfiniteExtraDepthValue*0.3048d0)  & 
                 )                                                                  &
             ) then 
-            !% --- set type to NoOverflow 
-            elemSI(JMidx,esi_JunctionMain_OverflowType) = NoOverflow    
+            !% --- set type to NoOverflow and ponded area to zero
+            elemSI(JMidx,esi_JunctionMain_OverflowType) = NoOverflow 
+            elemSR(JMidx,esr_JunctionMain_PondedArea)   = zeroR   
         else
             !% --- not infinite depth
-            if (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) .eq. zeroR) then 
-                !% --- open channel storage can not surcharge
-                elemYN(JMidx,eYN_canSurcharge) = .false.
-                !% --- open channel storage
+            if (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown) .eq. zeroR) then 
+                !% --- treated as open top junction where surcharge provides an overflow or ponding.
+                !%     if esr_OverflowHeightAboveCrown > 0, then it is assumed that the 
+                !%     overflow/ponding is through a curb inlet  whose area is treated as an orfice
+                !%     if esr_OverFlowHeightAboveCrown== 0 then it is assumed that the
+                !%     overflow/ponnding is through an open top equivalent to the area of the
+                !%     Junction, which is estimated as a weir of the circumference surrounding
+                !%     the junction/storage
+
+                    !% --- zero OverflowDepth can not surcharge
+                    !% 20230509brh   COMMENT THIS OUT SO THAT JMidx ALL CAN SURCHARGE elemYN(JMidx,eYN_canSurcharge) = .false.
+
+                !% --- open storage
                 if (elemSR(JMidx,esr_JunctionMain_PondedArea) == zeroR) then
                     !% --- use the overflow weir algorithm
                     elemSI(JMidx,esi_JunctionMain_OverflowType) = OverflowWeir
                 else
                     !% --- use ponded overflow algorithm
-                    elemSI(JMidx,esi_JunctionMain_OverflowType) = Ponded 
+                    elemSI(JMidx,esi_JunctionMain_OverflowType) = PondedWeir 
                 end if
             else 
                 !% --- closed conduit overflow
@@ -4132,15 +4142,17 @@ contains
                     elemSR(JMidx,esr_Junctionmain_OverflowOrifice_Height) = setting%Junction%Overflow%OrificeHeight
                 else
                     !% --- use ponded overflow
-                    elemSI(JMidx,esi_JunctionMain_OverflowType) = Ponded 
+                    elemSI(JMidx,esi_JunctionMain_OverflowType) = PondedOrifice 
+                    elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) = setting%Junction%Overflow%OrificeLength
+                    elemSR(JMidx,esr_Junctionmain_OverflowOrifice_Height) = setting%Junction%Overflow%OrificeHeight
                 end if
             end if
         end if
 
         !else 
-            !elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) = zeroR
+            !elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown) = zeroR
 
-            !% --- THE StorageSurchargeExtraDepth IS NOT YET IMPLEMENTED!
+            !% --- THE StorageOverflowDepth IS NOT YET IMPLEMENTED!
             !%     It requires computation of elemR(:,er_FullArea) in initial_conditions
             !%     for tabular and functional storage
             !% --- for storage nodes without extra surcharge depth, check
@@ -4150,18 +4162,18 @@ contains
             !%     input of Extra Surcharge Depth. SWMM5+ allows 
             !%     a storage node to surcharge, but there needs to be a 
             !%     future extension to provide the value for each storage node.  
-            !%     As an intermediate step we use a default "StorageSurchargeExtraDepth" 
+            !%     As an intermediate step we use a default "StorageOverflowDepth" 
             !%     a the max surcharge at a Storage node.
             ! if ((node%YN(thisJunctionNode,nYN_has_storage)) .and. &
-            !     (setting%Junction%StorageSurchargeExtraDepth > zeroR) ) then
+            !     (setting%Junction%StorageOverflowDepth > zeroR) ) then
             !     !% --- use the default extra surcharge depth    
-            !     elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) &
-            !         = setting%Junction%StorageSurchargeExtraDepth 
+            !     elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown) &
+            !         = setting%Junction%StorageOverflowDepth 
             ! else
             !     !% --- if NOT a storage node or if IS a storage node
-            !     !%     but the setting%Junction%StorageSurchargeExtraDepth = 0.0
+            !     !%     but the setting%Junction%StorageOverflowDepth = 0.0
             !     !%     then the junction cannot surcharge.
-            !     elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) = zeroR
+            !     elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown) = zeroR
             ! end if
         !end if    
 
@@ -4348,7 +4360,7 @@ contains
             !%     the head is inherited from the JM. Thus, a JB can have open
             !%     channel flow characteristics but a head based on the associated
             !%     closed JM.
-            if (elemSR(JMidx,esr_JunctionMain_SurchargeExtraDepth) > zeroR) then 
+            if (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown) > zeroR) then 
                 !% --- where JM is allowed to surcharge
                 elemYN(JBidx,eYN_canSurcharge) = .true.
             else 
@@ -4429,7 +4441,7 @@ contains
             !print *, 'in initial', JBidx, elemR(JBidx,er_BreadthMax)
 
         end do
-        
+
         !% --- set a JM length based on longest branches (20220711brh)
         LupMax = elemR(JMidx+1,er_Length) * real(elemSI(JMidx+1,esi_JunctionBranch_Exists),8)                              
         do ii=2,max_up_branch_per_node
@@ -4699,11 +4711,6 @@ contains
                 print *, 'CODE ERROR: Unexpected case default'
                 call util_crashpoint(6098734)
         end select
-
-
-        
-        !print *, 'JM ',JMidx, elemR(JMidx,er_BreadthMax)
-        !stop 2397840
 
         if (setting%Debug%File%initial_condition) &
         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -6975,6 +6982,105 @@ contains
         end if
 
     end function init_IC_limited_fulldepth
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_IC_ponding_errorcheck ()
+        !%------------------------------------------------------------------
+        !% Description
+        !% Checks overall area scale of ponding. Too small of area will
+        !% cause oscillations
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, pointer      :: Npack, thisJM(:)
+            integer               :: mm, ii, JMidx, JBidx
+            integer, dimension(1) :: JMar
+
+            real(8)               :: AreaStore, VolStore, maxDepth
+            real(8)               :: PondLength, PondAreaMin
+            real(8), pointer      :: ScaleFactor
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            Npack => npack_elemP(ep_JM)
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases
+            ScaleFactor => setting%Junction%PondingScaleFactor
+            thisJM      => elemP(1:Npack,ep_JM)
+        !%------------------------------------------------------------------
+        !% --- Cycle through the JM junctions
+        do mm=1,Npack 
+            !% --- single unit array for argument to storage_plan_area()
+            JMar(1) = thisJM(mm)
+            JMidx   = thisJM(mm)
+
+            !print *, 'ponded area ', elemSR(JMidx,esr_JunctionMain_PondedArea)
+
+            !% --- zero ponded area junctions cannot pond, so no error check is needed
+            if (elemSR(JMidx,esr_JunctionMain_PondedArea) == zeroR) cycle
+
+            !% --- baseline ponding length is ScaleFactor times the length scale of the storage/junction
+            select case (elemSI(JMidx,esi_JunctionMain_Type))
+
+                case (NoStorage)
+                    print *, 'CODE ERROR: NoStorage not implemented'
+                    call util_crashpoint(6629873)
+
+                case (ImpliedStorage)
+                    PondLength = ScaleFactor * sqrt(elemSR(JMidx,esr_Storage_Plan_Area))
+
+                case (TabularStorage, FunctionalStorage)
+
+                    !% --- max depth of the storage unit
+                    maxDepth = elemR(JMidx,er_Zcrown) - elemR(JMidx,er_Zbottom)
+
+                    !% --- temporarily store IC volume and storage area
+                    VolStore  = elemR (JMidx,er_Volume)
+                    AreaStore = elemSR(JMidx,esr_Storage_Plan_Area)
+
+                    !% --- get the max volume at max depth
+                    !%     this must be stored in the elemR(JMidx,er_Volume) location
+                    !%     for subsequent call to storage_plan_area_from_volume ()
+                    elemR(JMidx,er_Volume) =  storage_volume_from_depth_singular (JMidx, maxDepth)
+
+                    !% --- get the storage plan area at maximum volume
+                    !%     this alters elemSR(JMidx,esr_Storage_Plan_Area)
+                    call storage_plan_area_from_volume (Jmar, 1)
+
+                    !% --- the pond length for this storage depends on length scale at maximum volume
+                    PondLength = max(PondLength, ScaleFactor * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)))
+
+                    !% --- return the volume and storage area
+                    elemR (JMidx,er_Volume)             = VolStore
+                    elemSR(JMidx,esr_Storage_Plan_Area) = AreaStore    
+
+                case default 
+                    print *, 'CODE ERROR: Unexpected case default'
+            end select
+
+            !% --- minimum area required is a circle of diameter PondLength
+            PondAreaMin = setting%Constant%Pi * (PondLength**2) / fourR
+
+            if (elemSR(JMidx,esr_JunctionMain_PondedArea) < PondAreaMin) then 
+                print *, ' '
+                print *, 'USER CONFIGURATION ERROR'
+                print *, 'The user-supplied ponded area for a junction is less than required.'
+                print *, 'Junction node index is ',elemI(JMidx,ei_node_Gidx_Bipquick)
+                print *, 'Junction name is       ',trim(node%Names(elemI(JMidx,ei_node_Gidx_Bipquick))%str)
+                print *, 'User-supplied ponded area is ',elemSR(JMidx,esr_JunctionMain_PondedArea)
+                print *, 'Minimum required is          ',PondAreaMin
+                print *, 'The minimum required can be adjusted using setting%Junction%PondingScaleFactor'
+                print *, 'However, caution is required as as small scale factor can result in oscillating'
+                print *, 'behavior during ponding'
+                call util_crashpoint(8829874)
+            end if
+
+        end do
+
+      !  stop 2930874
+
+    end subroutine
 !%
 !%==========================================================================
 !%==========================================================================

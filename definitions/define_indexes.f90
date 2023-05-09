@@ -202,7 +202,7 @@ module define_indexes
         enumerator :: nr_StorageExponent
         enumerator :: nr_StorageFevap
         enumerator :: nr_PondedArea
-        enumerator :: nr_SurchargeExtraDepth
+        enumerator :: nr_OverflowHeightAboveCrown
         enumerator :: nr_MaxInflow
         enumerator :: nr_Eta
         enumerator :: nr_Depth
@@ -435,7 +435,8 @@ module define_indexes
         enumerator :: er_VolumeOverFlowTotal        !% total volume lost to overflow       20220124brh 
         enumerator :: er_VolumeArtificialInflow     !% artificial inflow in transition to zero depth in this step
         enumerator :: er_VolumeArtificialInflowTotal
-        enumerator :: er_VolumePonded               !% total volume in ponding
+        enumerator :: er_VolumePonded               !% volume ponding this time step
+        enumerator :: er_VolumePondedTotal          !% Volume ponded total
         enumerator :: er_VolumeStore                !% temporary storage used for adjacent AC and ETM elements
         enumerator :: er_WaveSpeed                  !% wave speed in element
         enumerator :: er_YoverYfull                 !% ratio of depth to full depth for tabular geometry
@@ -485,30 +486,14 @@ module define_indexes
     !% These are the for the packed arrays general elements
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        !enumerator :: ep_AC = 1                     !% all AC elements
-        !enumerator :: ep_ALLtm = 1                      !% all time-marching elements
-        !enumerator :: ep_CC_AC                      !% all CC elements that are AC
-        !enumerator :: ep_CC_ACsurcharged            !% all CC elements that are AC
         enumerator :: ep_CC = 1                        !% all CC elements
         enumerator :: ep_CCDiag                     !% all CC or Diag elements
         enumerator :: ep_CCJB                       !% all CC or JB elements
         enumerator :: ep_CCJM                       !% all CC or JM elements
         enumerator :: ep_CCJBDiag                   !% all CC, JB, or Diagnostic elements
         enumerator :: ep_CCDiagJM                   !% all CC ,JM or Diagnostic elements
-        !enumerator :: ep_CC_ALLtm_ACsurcharged      !% all CC elements that are AC and surcharged
-        !enumerator :: ep_CC_ETM                     !% all CC elements that are ETM
-        !enumerator :: ep_CC_ETM_PSsurcharged        !% CC elements that are ETM and surcharged
         enumerator :: ep_CC_H                   !% all CC elements that are time-marched for H
-        !enumerator :: ep_CC_Q_AC                    !% all CC elements that are AC for Q
         enumerator :: ep_CC_Q                   !% all CC elements that are time-marched for Q
-        !enumerator :: ep_CCJB_ACsurcharged          !% all CC and JB elements that are AC
-        !enumerator :: ep_CCJB_ALLtm                 !% all CC and JB elements that ar any TM
-        !enumerator :: ep_CCJB_AC                    !% all CC and JB elements that are AC
-        !enumerator :: ep_CCJB_ALLtm_ACsurcharged      !% all CC and JB elements that are AC and surcharged
-        !enumerator :: ep_CCJB_eETM_i_fAC            !% Any CC or JB element that is ETM and has an AC face.
-        !enumerator :: ep_CCJB_ETM                   !% CC and JB elements that are ETM
-        !enumerator :: ep_CCJB_ETM_PSsurcharged        !% CC and JB elements that are ETM and surcharged
-        !enumerator :: ep_CCJM_H_AC_open             !% CC and JM elements that are AC for H and open channel
         enumerator :: ep_CCJM_H                 !% CC and JM elements that are time-marching for H
         !enumerator :: ep_CC_isClosedSetting          !% CC elements that have er_Setting = 0.0 indicating closed off
         enumerator :: ep_Culvert_Inlet              !% all CC elements that are also culvert inlets
@@ -529,15 +514,6 @@ module define_indexes
         enumerator :: ep_JB_CC_Adjacent              !% all JB adjacent to CC elements
         enumerator :: ep_JB_Upstream_CC_Adjacent     !% all JB upstream branches adjacent to CC elements
         enumerator :: ep_JB_Downstream_CC_Adjacent   !% all JB downstream branches adjacent to CC elements
-        !enumerator :: ep_JB_AC                      !% junction branches using AC method
-        !enumerator :: ep_JB_ALLtm                   !% Junction branches with any time march (static)
-        !enumerator :: ep_JB_ETM                     !% junction branches using ETM method
-        !enumerator :: ep_AC_ACnonSurcharged         !% all surcharged with AC
-        !enumerator :: ep_ALLtm_NonSurcharged        !% all time march nonsurcharged (neither PS nor AC surcharge)
-        !enumerator :: ep_ETM_PSnonSurcharged        !% all surcharged with ETM
-        !enumerator :: ep_SmallDepth_CC_ALLtm_posSlope !% small depth conduit cells with any time march and positive bottom slope
-        !enumerator :: ep_SmallDepth_CC_ALLtm_negSlope !% small depth conduit cells with any time march and negative (adverse) bottom slope
-        !enumerator :: ep_SmallDepth_CC_ALLtm
         enumerator :: ep_SmallDepth_CC
         !enumerator :: ep_SmallDepth_CC_AC
         !enumerator :: ep_SmallDepth_JM_ALLtm  !% 20220122brh
@@ -791,7 +767,7 @@ module define_indexes
     enum, bind(c)
         enumerator ::  esr_JunctionMain_PondedArea = 1
         !enumerator ::  esr_JunctionMain_PondedVolume
-        enumerator ::  esr_JunctionMain_SurchargeExtraDepth
+        enumerator ::  esr_JunctionMain_OverflowHeightAboveCrown
         enumerator ::  esr_JunctionMain_OverflowOrifice_Length
         enumerator ::  esr_JunctionMain_OverflowOrifice_Height
         enumerator ::  esr_JunctionMain_OverflowRate
