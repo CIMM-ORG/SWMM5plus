@@ -4338,9 +4338,11 @@ contains
             end if
 
             !% --- check if the connected element is Diagnostic weir, pump or orifice
-            if ((elemI(Aidx,ei_elementType) == weir)    .or. &
-                (elemI(Aidx,ei_elementTYpe) == orifice) .or. &
-                (elemI(Aidx,ei_elementType) == pump)           ) then 
+            if ((elemI(Aidx,ei_elementType)[ci] == weir)    .or. &
+                (elemI(Aidx,ei_elementTYpe)[ci] == orifice) .or. &
+                (elemI(Aidx,ei_elementType)[ci] == pump)    .or. &
+                (elemI(Aidx,ei_elementType)[ci] == outlet)       &
+                ) then 
                 elemSI(JBidx,esi_JunctionBranch_Diag_adjacent) = oneI
             else
                 elemSI(JBidx,esi_JunctionBranch_Diag_adjacent) = zeroI
