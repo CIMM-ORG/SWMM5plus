@@ -1123,24 +1123,6 @@ enable_testing()
 # )
 
 
-# # FAILED 20230502 but looks OK
-# add_test(NAME user5_reduced04
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_reduced04.inp -s ./ctest/internal_testing/brh05/settings_dx150.json -o ./ctest/outbrh5/
-# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-# )
-
-# # Failed 20230502 but looks OK
-# add_test(NAME user5_reduced05
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_reduced05.inp -s ./ctest/internal_testing/brh05/settings_dx150.json -o ./ctest/outbrh5/
-# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-# )
-
-# # failed 20230502  but looks OK for Q
-# add_test(NAME user5_reduced06
-# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_reduced06.inp -s ./ctest/internal_testing/brh05/settings_dx150.json -o ./ctest/outbrh5/
-# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-# )
-
 
 
 
@@ -1449,3 +1431,23 @@ enable_testing()
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh06/T013_pumptype4.inp -s ./ctest/internal_testing/brh06/settings_dx10.json -o ./ctest/outbrh6/
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
+
+
+# FAILED 20230502 but looks OK
+add_test(NAME user5_reduced04
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_reduced04.inp -s ./ctest/internal_testing/brh05/settings_dx100.json -o ./ctest/outbrh5/
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+# # Failed 20230502 but looks OK
+# add_test(NAME user5_reduced05
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_reduced05.inp -s ./ctest/internal_testing/brh05/settings_dx150.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # failed 20230502  but looks OK for Q
+# add_test(NAME user5_reduced06
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/user5_reduced06.inp -s ./ctest/internal_testing/brh05/settings_dx150.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+

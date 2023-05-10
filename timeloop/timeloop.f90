@@ -1111,7 +1111,7 @@ contains
 
         if ((matchHydrologyStep) .and. (useHydrology) .and. (.not. inSpinUpYN)) then 
 
-            print *, 'in matching hydrology step'
+            !print *, 'in matching hydrology step'
 
             !% --- for combined hydrology and hydraulics compute the CFL if we take a single
             !%     step to match the next hydrology time

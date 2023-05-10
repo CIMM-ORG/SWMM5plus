@@ -1,0 +1,131 @@
+[TITLE]
+;;Project Title/Notes
+Example User5
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CFS
+INFILTRATION         HORTON
+FLOW_ROUTING         DYNWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           08/11/1998
+START_TIME           00:00:00
+REPORT_START_DATE    08/11/1998
+REPORT_START_TIME    00:00:00
+END_DATE             08/11/1998
+END_TIME             04:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:01:00
+WET_STEP             00:01:00
+DRY_STEP             00:01:00
+ROUTING_STEP         0:00:01 
+
+INERTIAL_DAMPING     NONE
+NORMAL_FLOW_LIMITED  FROUDE
+FORCE_MAIN_EQUATION  H-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         12.557
+MAX_TRIALS           8
+HEAD_TOLERANCE       0.005
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              1
+
+[FILES]
+;;Interfacing Files
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+CONSTANT         0.1
+DRY_ONLY         NO
+
+[RAINGAGES]
+;;Name           Format    Interval SCF      Source    
+;;-------------- --------- ------ ------ ----------
+GAGE1            VOLUME    0.05000  1.0      TIMESERIES RainSeries1     
+
+[SUBCATCHMENTS]
+;;Name           Rain Gage        Outlet           Area     %Imperv  Width    %Slope   CurbLen  SnowPack        
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- -------- ----------------
+1SB14#1          GAGE1            1SB14            3.5      40.8     125.0    0.54659  0   ;;                                                            
+
+[SUBAREAS]
+;;Subcatchment   N-Imperv   N-Perv     S-Imperv   S-Perv     PctZero    RouteTo    PctRouted 
+;;-------------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+1SB14#1          0.018      0.035      0.1        0.2        25         OUTLET    ;;
+  
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+;;-------------- ---------- ---------- ---------- ---------- ----------
+1SB14             690.50     59.50      0.0        0          0      ;;   
+brh02J            660.0      60.0       0.0        0          0      ;;
+                      
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+O.O_RM           649.5        FREE                      YES                                
+
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+557               1SB14             brh02J            2000.0      0.014      0.0        0.0        0.0        0    
+558              brh02J              O.O_RM          1000.0       0.014        0        0.0        0.0        0    
+  
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------                
+557               RECT_CLOSED    30.0              20          0          0          1         
+558               RECT_CLOSED    30.0              20          0          0          1     
+
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+RainSeries1      08/11/1998 00:00        0.35100   
+RainSeries1                 00:03        0.41080   
+RainSeries1                 00:06        0.41020   
+RainSeries1                 00:09        0.32230   
+RainSeries1                 00:12        0.23440   
+RainSeries1      08/11/1998 00:15         0.17580   
+RainSeries1                 00:18        0.17580   
+RainSeries1                 00:21        0.11720   
+RainSeries1                 00:24        0.08790   
+RainSeries1                 00:27        0.11720   
+RainSeries1      08/11/1998 00:30        0.05860   
+RainSeries1                 00:33        0.08790   
+RainSeries1                 00:36        0.06060   
+RainSeries1                 00:39        0.05660   
+RainSeries1                 00:42        0.05800   
+RainSeries1      08/11/1998 00:45        0.05920   
+RainSeries1                 00:48        0.02930   
+RainSeries1                 00:51        0.02930   
+RainSeries1                 00:54        0.05860   
+RainSeries1                 00:57        0.02930   
+RainSeries1                 01:00      0.0
+RainSeries1                 04:12      0.0 
+
+
+[REPORT]
+;;Reporting Options
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[PROFILES]
+;;Name
+;;------------ ----------
+"profile_1"    557 558
+
