@@ -495,6 +495,7 @@ contains
 
         ! call util_utest_CLprint ('initial_condition at end')
 
+        ! print *, elemR(63,er_Volume)
         ! stop 6669871
 
         ! print *, 'TEST20230327'
@@ -726,13 +727,22 @@ contains
         !% --- find the number of links in an image
         pLink = size(packed_link_idx)
         
-        !% --- cycle through the links
+        !% --- cycle through the links, only for CC elements
         do mm = 1,pLink
             thisLink => packed_link_idx(mm)
-            Npack    =  count(elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+            Npack    =  count(                                               &
+                                (elemI(:,ei_link_Gidx_BIPquick) == thisLink) &
+                                .and.                                        &
+                                (elemI(:,ei_elementType) == CC)              &
+                             )
 
             if (Npack > 0) then
-                elemI(1:Npack,ei_Temp03) = pack(eIdx,elemI(:,ei_link_Gidx_BIPquick) == thisLink)
+                elemI(1:Npack,ei_Temp03) = pack(eIdx, &
+                                (elemI(:,ei_link_Gidx_BIPquick) == thisLink) &
+                                .and.                                        &
+                                (elemI(:,ei_elementType) == CC)              &
+                            )
+
                 thisP => elemI(1:Npack,ei_Temp03)
 
                 !% --- store the correct depth
@@ -1292,10 +1302,12 @@ contains
                     elemI(:,ei_elementType)            = pump
                     elemI(:,ei_QeqType)                = diagnostic
                     elemI(:,ei_HeqType)                = notused
-                    elemYN(:,eYN_canSurcharge)         = .true.
+                    elemYN(:,eYN_canSurcharge)         = .false.
                     elemSR(:,esr_Pump_Rampup_Time)     = setting%Pump%RampupTime
                     elemSR(:,esr_Pump_MinShutoffTime)  = setting%Pump%MinShutoffTime
                     elemSR(:,esr_Pump_TimeSinceStartOrShutdown) = zeroR
+                    elemR(:,er_Volume) = zeroR
+                    elemYN(:,eYN_isPSsurcharged)        = .false.
                 endwhere
                 N_diag = N_diag + 1
 
@@ -3079,6 +3091,7 @@ contains
 
                 !% --- set nominal element length
                 elemR(ii,er_Length)         = setting%Discretization%NominalElemLength
+                elemR(ii,er_Volume)         = zeroR
 
                 if (curveID < zeroI) then
                     !% integer data
@@ -5747,7 +5760,7 @@ contains
         if (setting%Solver%SolverSelect == ETM) then
 
             !% --- initialization where starting condition is surcharged
-            where (elemR(:,er_Head) > elemR(:,er_Zcrown))
+            where ((elemR(:,er_Head) > elemR(:,er_Zcrown)) .and. (elemYN(:,eYN_canSurcharge)))
                 elemYN(:,eYN_isPSsurcharged) = .true.
                 elemR (:,er_SlotDepth)      = elemR(:,er_Head) - elemR(:,er_Zcrown)
             endwhere

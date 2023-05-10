@@ -1850,7 +1850,7 @@ contains
          !       elemR(iet(10),er_Volume), &
          !          0.d0, &
          !          0.d0, &
-         !       elemR(iet(11),er_Flowrate)
+         !       elemR(iet(11),er_Volume)
 
 
                   ! return
@@ -2068,28 +2068,28 @@ contains
 
          !          print *, ' '
 
-         ! write(*,"(A,31f11.4)") ' Flowrate '  ,          &
-         !       faceR(ift(1),fr_Flowrate), &
-         !    elemR(iet(1),er_Flowrate), &
-         !       faceR(ift(2),fr_Flowrate), &
-         !       faceR(ift(2),fr_Flowrate), &
-         !    elemR(iet(2),er_Flowrate), &
-         !       faceR(ift(3),fr_Flowrate), &
-         !       faceR(ift(3),fr_Flowrate), &
-         !    elemR(iet(3),er_Flowrate), &
-         !       faceR(ift(4),fr_Flowrate), &
-         !       faceR(ift(4),fr_Flowrate), &
-         !    elemR(iet(4),er_Flowrate),&
-         !    elemR(iet(5),er_Flowrate),&
-         !    elemR(iet(6),er_Flowrate), &
-         !       faceR(ift(5),fr_Flowrate), &
-         !       faceR(ift(5),fr_Flowrate), &
-         !    elemR(iet(7),er_Flowrate), &
-         !       faceR(ift(6),fr_Flowrate), &
-         !       faceR(ift(6),fr_Flowrate), &
-         !    elemR(iet(8),er_Flowrate), &
-         !       faceR(ift(7),fr_Flowrate), &
-         !       faceR(ift(7),fr_Flowrate)
+         ! write(*,"(A,31f11.4)") ' Zcrown '  ,          &
+         !       faceR(ift(1),fr_Zcrown), &
+         !    elemR(iet(1),er_Zcrown), &
+         !       faceR(ift(2),fr_Zcrown), &
+         !       faceR(ift(2),fr_Zcrown), &
+         !    elemR(iet(2),er_Zcrown), &
+         !       faceR(ift(3),fr_Zcrown), &
+         !       faceR(ift(3),fr_Zcrown), &
+         !    elemR(iet(3),er_Zcrown), &
+         !       faceR(ift(4),fr_Zcrown), &
+         !       faceR(ift(4),fr_Zcrown), &
+         !    elemR(iet(4),er_Zcrown),&
+         !    elemR(iet(5),er_Zcrown),&
+         !    elemR(iet(6),er_Zcrown), &
+         !       faceR(ift(5),fr_Zcrown), &
+         !       faceR(ift(5),fr_Zcrown), &
+         !    elemR(iet(7),er_Zcrown), &
+         !       faceR(ift(6),fr_Zcrown), &
+         !       faceR(ift(6),fr_Zcrown), &
+         !    elemR(iet(8),er_Zcrown), &
+         !       faceR(ift(7),fr_Zcrown), &
+         !       faceR(ift(7),fr_Zcrown)
 
          !       print *, ' '
 
@@ -2763,6 +2763,24 @@ contains
                   faceR(ift(4),fr_Depth_u), &
                   faceR(ift(4),fr_Depth_d), &
                elemR(iet(8),er_Depth)
+
+               write(*,"(A,31f11.4)") '  Zcrown  '  ,          &
+               elemR(iet(1),er_Zcrown), &
+               elemR(iet(2),er_Zcrown),&
+                  faceR(ift(1),fr_Zcrown_u), &
+                  faceR(ift(1),fr_Zcrown_d), &
+               elemR(iet(3),er_Zcrown), &
+                  faceR(ift(2),fr_Zcrown_u), &
+                  faceR(ift(2),fr_Zcrown_d), &
+               elemR(iet(4),er_Zcrown), & 
+               elemR(iet(5),er_Zcrown), & 
+               elemR(iet(6),er_Zcrown), & 
+                  faceR(ift(3),fr_Zcrown_u), &
+                  faceR(ift(3),fr_Zcrown_d), &
+               elemR(iet(7),er_Zcrown), & 
+                  faceR(ift(4),fr_Zcrown_u), &
+                  faceR(ift(4),fr_Zcrown_d), &
+               elemR(iet(8),er_Zcrown)
 
 
                print *, ' '
