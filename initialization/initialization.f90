@@ -327,6 +327,11 @@ contains
         call init_IC_toplevel ()       
         call util_crashstop(4429873)
 
+        ! do ii=1,N_elem(this_image())
+        !     print *, ii, elemI(ii,ei_elementType), trim(reverseKey(elemI(ii,ei_elementType)))
+        ! end do
+        ! stop 239874
+
         !%-----------------------------------------------------------------------
         !%        CAN CALL PACKED MAPS ep_... and fp_... AFTER THIS POINT
         !%-----------------------------------------------------------------------
@@ -370,6 +375,11 @@ contains
             !% continue without any output files                                      
         end if
         call util_crashstop(103897)
+
+        ! print *, ' '
+        ! print *, elemR(52,er_Volume), elemR(63,er_Volume)
+        ! print *, trim(reverseKey(elemI(52,ei_elementType))), ' ',trim(reverseKey(elemI(63,ei_elementType)))
+        ! stop 2298734
 
         !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
         !% MOVED 20221223 brh to just above diagnostic_toplevel call in

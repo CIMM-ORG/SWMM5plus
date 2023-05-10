@@ -25,6 +25,7 @@ module update
     public :: update_auxiliary_variables_CC
     public :: update_auxiliary_variables_JMJB
     public :: update_interpweights_JB
+    public :: update_interpweights_Diag
     public :: update_element_psi_CC
     public :: update_element_velocity_from_flowrate
     !public :: update_element_energyHead_CC
@@ -739,7 +740,7 @@ module update
             logical, intent(in) :: forceJBQyn !% --- if true then forces JB weight to max
             integer             :: ii, mm, jB
             real(8), pointer    :: grav, wavespeed(:), PCelerity(:), velocity(:), length(:), depth(:)
-            real(8), pointer    :: w_uQ(:), w_dQ(:), w_uG(:), w_dG(:), w_uH(:), w_dH(:), w_uP(:), w_dP(:)
+            real(8), pointer    :: w_uQ(:), w_dQ(:), w_uG(:), w_dG(:), w_uH(:), w_dH(:)
             logical, pointer    :: isSlot(:)
         !%------------------------------------------------------------------
         !% Aliases
@@ -755,8 +756,8 @@ module update
             w_dG      => elemR(:,er_InterpWeight_dG)
             w_uH      => elemR(:,er_InterpWeight_uH)
             w_dH      => elemR(:,er_InterpWeight_dH)
-            w_uP      => elemR(:,er_InterpWeight_uP)
-            w_dP      => elemR(:,er_InterpWeight_dP)
+            !w_uP      => elemR(:,er_InterpWeight_uP)
+            !w_dP      => elemR(:,er_InterpWeight_dP)
             isSlot    => elemYN(:,eYN_isPSsurcharged)  !% Preissmann
         !%------------------------------------------------------------------
 
@@ -886,6 +887,38 @@ module update
         !stop 5098723
 
     end subroutine update_interpweights_JB
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine update_interpweights_Diag (thisP, Npack)
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% Sets the interpolation weights for diagnostic elements
+        !%-----------------------------------------------------------------
+        !% Declarations
+          integer, intent(in) :: thisP(:), Npack
+          real(8), pointer    :: w_uQ(:), w_dQ(:), w_uG(:), w_dG(:), w_uH(:), w_dH(:)
+        !%-----------------------------------------------------------------
+        !% Aliases
+          w_uQ      => elemR(:,er_InterpWeight_uQ)
+          w_dQ      => elemR(:,er_InterpWeight_dQ)
+          w_uG      => elemR(:,er_InterpWeight_uG)
+          w_dG      => elemR(:,er_InterpWeight_dG)
+          w_uH      => elemR(:,er_InterpWeight_uH)
+          w_dH      => elemR(:,er_InterpWeight_dH)
+        !%-----------------------------------------------------------------
+
+          w_uQ(thisP) = setting%Limiter%Interpweight%Minimum
+          w_dQ(thisP) = setting%Limiter%Interpweight%Minimum
+
+          w_uG(thisP) = setting%Limiter%Interpweight%Maximum
+          w_dG(thisP) = setting%Limiter%Interpweight%Maximum
+
+          w_uH(thisP) = setting%Limiter%Interpweight%Maximum
+          w_dH(thisP) = setting%Limiter%Interpweight%Maximum
+
+    end subroutine update_interpweights_Diag
 !%
 !%==========================================================================
 !%==========================================================================

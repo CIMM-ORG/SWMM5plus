@@ -708,6 +708,12 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
+
+# add_test(NAME extran6_pump_type1_mod
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_pump_type1_mod.inp -s ./ctest/internal_testing/level02_test/settings_10.json -o ./ctest/output/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
 # # FAILED 20230424
 # add_test(NAME extran6_pump_type2_final
 # COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/level02_test/extran6_pump_type2_final.inp -s ./ctest/internal_testing/level02_test/settings_default.json -o ./ctest/output/
@@ -1399,22 +1405,27 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-add_test(NAME T010b_CC_Dmax0_sur100_dx0010
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T010b_CC_Dmax0_sur100_dx0010.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# add_test(NAME T010b_CC_Dmax0_sur100_dx0010
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T010b_CC_Dmax0_sur100_dx0010.inp -s ./ctest/internal_testing/brh05/settings_dx10.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
-add_test(NAME T010b_CC_Dmax0_sur100_dx0100
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T010b_CC_Dmax0_sur100_dx0100.inp -s ./ctest/internal_testing/brh05/settings_dx100.json -o ./ctest/outbrh5/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# add_test(NAME T010b_CC_Dmax0_sur100_dx0100
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T010b_CC_Dmax0_sur100_dx0100.inp -s ./ctest/internal_testing/brh05/settings_dx100.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
-add_test(NAME T010b_CC_Dmax0_sur100_dx0333
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T010b_CC_Dmax0_sur100_dx0333.inp -s ./ctest/internal_testing/brh05/settings_dx333.json -o ./ctest/outbrh5/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# add_test(NAME T010b_CC_Dmax0_sur100_dx0333
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T010b_CC_Dmax0_sur100_dx0333.inp -s ./ctest/internal_testing/brh05/settings_dx333.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
-add_test(NAME T012_CC_Dmax0_sur1a_dx0100
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T012_CC_Dmax0_sur1a_dx0100.inp -s ./ctest/internal_testing/brh05/settings_dx100.json -o ./ctest/outbrh5/
+# add_test(NAME T012_CC_Dmax0_sur1a_dx0100
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh05/T012_CC_Dmax0_sur1a_dx0100.inp -s ./ctest/internal_testing/brh05/settings_dx100.json -o ./ctest/outbrh5/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+add_test(NAME T013_pumptype1.inp
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh06/T013_pumptype1.inp -s ./ctest/internal_testing/brh06/settings_dx10.json -o ./ctest/outbrh6/
 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )

@@ -31,7 +31,7 @@ contains
 !% PUBLIC
 !%==========================================================================
 !%
-    subroutine control_update ()
+    subroutine control_update (istep)
         !%------------------------------------------------------------------
         !% Description:
         !% Implements the control functionality in EPA-SWMM.
@@ -45,6 +45,7 @@ contains
         !% elem(:,er_TargetSetting) values are updated.
         !%------------------------------------------------------------------
         !% Declarations:
+            integer, intent(in) :: istep
             character(64) :: subroutine_name = 'control_update'
         !%------------------------------------------------------------------
 
@@ -69,7 +70,7 @@ contains
         call control_update_setting ()
 
         !% --- adjust the values in the elemR array for new elemR(:,er_Setting)
-        call control_update_element_values ()
+        call control_update_element_values (istep)
 
         !%------------------------------------------------------------------
 
@@ -493,7 +494,7 @@ contains
 !%==========================================================================     
 !%==========================================================================    
 !%   
-    subroutine control_update_element_values ()
+    subroutine control_update_element_values (istep)
         !%------------------------------------------------------------------
         !% Description:
         !% Update of values in elemR array for changes in elemR(:,er_Setting)
@@ -502,7 +503,8 @@ contains
         !% can update settings without changing the actual flow conditions
         !% NOTE THIS IS LIMITED TO CONTROL ACTION POINTS ONLY
         !%------------------------------------------------------------------
-        !% Declarastions:
+        !% Declarations:
+            integer, intent(in) :: istep
             integer :: ii
             integer, pointer :: Eidx, elemType, hasChanged, dface
             real(8), pointer :: thisSetting
@@ -547,7 +549,7 @@ contains
 
             case (pump)
                 if (hasChanged == oneI) then 
-                    call pump_toplevel(Eidx)
+                    call pump_toplevel(Eidx,istep)
                 else
                     !% no change 
                 end if

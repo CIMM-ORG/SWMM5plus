@@ -527,6 +527,12 @@ module define_settings
         !logical :: Output
     end type ProfileType
 
+    !% setting%Pump 
+    type PumpSettingType 
+        real(8) :: RampupTime = 5.d0  !% seconds for pump ramp up. If too small, instabilities can result (0 causes seg fault)
+        real(8) :: MinShutoffTime = 60.d0  !% seconds for pump to be idle before starting again 
+    end type PumpSettingType
+
     !% setting%Simulation
     type SimulationType
         logical :: stopAfterInitializationYN = .false.
@@ -681,7 +687,7 @@ module define_settings
         real(8) :: CFL_inflow_max = 0.4d0
         !rm 20220209brh real(8) :: decreaseFactor = 0.8  
         real(8) :: increaseFactor = 1.2d0 
-        real(8) :: InitialDt = 10.d0
+        real(8) :: InitialDt = 1.d0  !% recommend 1 second to reduce chance of initial instability (should be less than pump rampup time)
         integer :: NstepsForCheck = 10
         integer(kind=8) :: LastCheckStep = 0  !% NOT A USER SETTING
     end type VariableDTType
@@ -728,6 +734,7 @@ module define_settings
         type(PartitioningType)   :: Partitioning
         type(PreissmannSlotType) :: PreissmannSlot
         type(ProfileType)        :: Profile
+        type(PumpSettingType)    :: Pump
         type(SimulationType)     :: Simulation
         type(SmallDepthType)     :: SmallDepth! controls for small (non-zero) depths
         type(SolverType)         :: Solver ! switch for solver
@@ -756,7 +763,7 @@ contains
         !% are provided below
         !% -----------------------------------------------------------------
 
-    setting%Time%Hydraulics%Dt = 10.0d0
+    !setting%Time%Hydraulics%Dt = 1.0d0   !% CONTROLLED BY setting%VariableDt%InitialDt
     setting%Time%Hydrology%Dt = 600.0d0
 
     setting%Weir%Transverse%WeirExponent = 1.5d0

@@ -346,7 +346,7 @@ contains
                             !% --- evaluate all the controls
                             !%     required for all images because monitorI data are spread
                             !%     across all images.
-                            call control_update ()
+                            call control_update (oneI)
                             !% --- set the next time the controls will be evaluated
                             setting%Time%ControlRule%NextTime = setting%Time%Now  &
                                 + real(setting%SWMMinput%ControlRuleStep,8)

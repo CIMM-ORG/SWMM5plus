@@ -87,7 +87,7 @@ module runge_kutta2
         end do
             
       
-             ! call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
+            !  call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
 
         !%==================================    
         !% --- Diagnostic and junction adjustments before RK2
@@ -197,6 +197,16 @@ module runge_kutta2
                  ! call util_utest_CLprint ('------- PPP.01 after face zerodepth ')
 
             if (N_nJM > 0) then
+
+                ! print *, ' '
+                ! print *, 'down ',faceP(1:npack_faceP(fp_JB_downstream_is_zero_IorS),fp_JB_downstream_is_zero_IorS )
+                ! print *, ' '
+                ! print *, 'up   ',faceP(1:npack_faceP(fp_JB_upstream_is_zero_IorS),fp_JB_upstream_is_zero_IorS )
+                ! print *, ' '
+                ! print *, 'both ',faceP(1:npack_faceP(fp_JB_bothsides_are_zero_IorS),fp_JB_bothsides_are_zero_IorS )
+                ! print *, ' '
+
+
                 !% --- set face geometry and flowrates where adjacent element is zero
                 !%     only applies to faces with JB on one side
                 call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &

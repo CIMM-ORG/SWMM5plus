@@ -53,7 +53,8 @@ module initial_condition
     use utility_interpolate
     use utility_key_default
     use utility_crash, only: util_crashpoint
-    use utility_unit_testing, only: util_utest_CLprint
+   
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -402,6 +403,12 @@ contains
             call update_Froude_number_element (thisP) 
         end if
 
+        Npack => npack_elemP(ep_Diag)
+        if (Npack > 0) then 
+            thisp => elemP(1:Npack,ep_JM)
+            call update_interpweights_Diag (thisP, Npack)
+        end if
+
         ! print *, 'TEST20230327 CCCC'
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
         ! print *, elemR(10,er_Head), faceR(11,fr_Head_u), elemR(11,er_Head)
@@ -488,7 +495,7 @@ contains
 
         ! call util_utest_CLprint ('initial_condition at end')
 
-        !stop 6669871
+        ! stop 6669871
 
         ! print *, 'TEST20230327'
         ! print *, elemR(8,er_head),  faceR(9, fr_Head_u), elemR(10,er_Head)
@@ -1286,6 +1293,9 @@ contains
                     elemI(:,ei_QeqType)                = diagnostic
                     elemI(:,ei_HeqType)                = notused
                     elemYN(:,eYN_canSurcharge)         = .true.
+                    elemSR(:,esr_Pump_Rampup_Time)     = setting%Pump%RampupTime
+                    elemSR(:,esr_Pump_MinShutoffTime)  = setting%Pump%MinShutoffTime
+                    elemSR(:,esr_Pump_TimeSinceStartOrShutdown) = zeroR
                 endwhere
                 N_diag = N_diag + 1
 
@@ -4248,8 +4258,21 @@ contains
                 end if
             end if
 
+            ! print *, ' '
+            ! print *, 'checking here '
+            ! print *, 'JBidx, AIdx, Ci', JBidx,Aidx, Ci
+            ! print *, 'faceup ', elemI(JBidx,ei_Mface_uL)
+            ! if (elemI(JBidx,ei_Mface_uL) .ne. nullvalueI) print *, 'elem up' ,faceI(elemI(JBidx,ei_Mface_uL),fi_Melem_uL)
+            ! print *, 'facedn ',elemI(JBIdx,ei_Mface_dL)
+            ! if (elemI(JBidx,ei_Mface_dL) .ne. nullvalueI) print *, 'elem dn' ,faceI(elemI(JBidx,ei_Mface_dL),fi_Melem_dL)
+
             !% --- set the junction branch element type
             elemI(JBidx,ei_elementType) = JB
+
+            ! print *, ' '
+            ! print *, 'TTT'
+            ! print *, 'JBIdx, Aidx ',JBidx, Aidx
+            ! print *,' '
 
             ! print *, 'exist ', elemSI(JBidx,esi_JunctionBranch_Exists)
 
@@ -4259,6 +4282,11 @@ contains
 
             BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
             JBgeometryType => link%I(BranchIdx,li_geometry)
+
+            ! print *, ' '
+            ! print *, 'UUU'
+            ! print *, 'JBIdx, Aidx ',JBidx, Aidx
+            ! print *,' '
 
             ! print *, 'linkgeo', link%I(BranchIdx,li_geometry), reverseKey(link%I(BranchIdx,li_geometry))
 
@@ -4278,6 +4306,11 @@ contains
             else
                 elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
             end if
+
+            ! print *, ' '
+            ! print *, 'VVV'
+            ! print *, 'JBIdx, Aidx ',JBidx, Aidx
+            ! print *,' '
 
             !% --- set the initial head and to the same as the junction main
             elemR(JBidx,er_Head)    = elemR(JMidx,er_Head)
@@ -4304,13 +4337,46 @@ contains
             !%     JB inherits geometry type from connected branch
             elemI(JBidx,ei_geometryType)        = elemI(Aidx,ei_geometryType)[Ci]
 
+            ! print *, ' '
+            ! print *, 'WWW'
+            ! print *, 'JBIdx, Aidx ',JBidx, Aidx
+            ! print *, elemI(Aidx,ei_geometryType)[Ci]
+            ! print *,' '
+
+            !% --- check if the connected element is CC
+            if (elemI(Aidx,ei_elementType)[ci] == CC) then 
+                elemSI(JBidx,esi_JunctionBranch_CC_adjacent) = oneI
+            else
+                elemSI(JBidx,esi_JunctionBranch_CC_adjacent) = zeroI
+            end if
+
+
+            !% --- check if the connected element is Diagnostic weir, pump or orifice
+            if ((elemI(Aidx,ei_elementType)[ci] == weir)    .or. &
+                (elemI(Aidx,ei_elementTYpe)[ci] == orifice) .or. &
+                (elemI(Aidx,ei_elementType)[ci] == pump)    .or. &
+                (elemI(Aidx,ei_elementType)[ci] == outlet)       &
+                ) then 
+                elemSI(JBidx,esi_JunctionBranch_Diag_adjacent) = oneI
+            else
+                elemSI(JBidx,esi_JunctionBranch_Diag_adjacent) = zeroI
+            end if
+
+
             !% --- handle nullvalue geometry (can occur when adjacent element is diagnostic)
             !%     Looks for the next link upstream. If it is a channel or
             !%     conduit then its geometry can be assigned to the JB.
+            !%     NOTE: cannot access diagnostic elements in this procedure
+            !%     after this point.
             if (elemI(Aidx,ei_geometryType)[Ci] == undefinedKey) then 
                 call init_IC_JB_nullvalue_geometry &
                     (Aidx, Ci, thisJunctionNode, JBidx, isupstream)
             end if
+
+            ! print *, ' '
+            ! print *, 'XXX'
+            ! print *, 'JBIdx, Aidx ',JBidx, Aidx
+            ! print *,' '
 
             !% --- branch has same number of barrels as the connected element
             elemI(JBidx,ei_barrels)             = elemI(Aidx,ei_barrels)[Ci]
@@ -4329,24 +4395,21 @@ contains
                 print *, 'JBidx null face both down and up ',JBidx
                 stop 650987
             end if
+            ! print *, ' '
+            ! print *, 'YYY'
+            ! print *, 'JBIdx, Aidx ',JBidx, Aidx
+            ! print *,' '
 
-            !% --- check if the connected element is CC
-            if (elemI(Aidx,ei_elementType)[ci] == CC) then 
-                elemSI(JBidx,esi_JunctionBranch_CC_adjacent) = oneI
-            else
-                elemSI(JBidx,esi_JunctionBranch_CC_adjacent) = zeroI
-            end if
 
-            !% --- check if the connected element is Diagnostic weir, pump or orifice
-            if ((elemI(Aidx,ei_elementType)[ci] == weir)    .or. &
-                (elemI(Aidx,ei_elementTYpe)[ci] == orifice) .or. &
-                (elemI(Aidx,ei_elementType)[ci] == pump)    .or. &
-                (elemI(Aidx,ei_elementType)[ci] == outlet)       &
-                ) then 
-                elemSI(JBidx,esi_JunctionBranch_Diag_adjacent) = oneI
-            else
-                elemSI(JBidx,esi_JunctionBranch_Diag_adjacent) = zeroI
-            end if
+
+
+
+            ! print *, ' '
+            ! print *, ' in IC at 2239874'
+            ! print *, JBidx, elemSI(JBidx,esi_JunctionBranch_Diag_adjacent)
+            ! print *, 'Aidx, ci ',Aidx,ci 
+            ! print *, trim(reverseKey(elemI(Aidx,ei_elementType)[ci]))
+            ! print *, ' '
 
             !% --- Ability to surcharge is set by JM
             !%     Note that JB (if surcharged) isn't subject to the max surcharge depth 

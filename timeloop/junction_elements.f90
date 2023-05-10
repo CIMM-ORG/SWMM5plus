@@ -35,7 +35,7 @@ module junction_elements
 
   
 
-    integer :: printJM = 32 !4 ! 101 !81 ! 6 !137 !51 ! 62 !% 51 ! 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
+    integer :: printJM = 52 !4 ! 101 !81 ! 6 !137 !51 ! 62 !% 51 ! 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
 
     contains
 !%==========================================================================
@@ -570,13 +570,13 @@ module junction_elements
 
             call lljunction_main_head_bounds (JMidx, Hbound)
 
-            ! print *, ' '
-            ! print *, 'Head bounds'
-            ! print *, Hbound(1), elemR(JMidx,er_Head), Hbound(2)
-            ! print *, ' '
+
+            ! if (JMidx==printJM) print *,'Hbound          ', Hbound
 
             !% --- convert Hbound to a deltaH bound
             Hbound = Hbound - elemR(JMidx,er_Head)
+
+            ! if (JMidx==printJM) print *,'Hbound as delta ', Hbound
 
 
             !% --- compute net flowrate from branches (both CC and Diag)
@@ -633,13 +633,13 @@ module junction_elements
                 dH = zeroR
             end if
 
-               ! if (JMidx==printJM) print *, '   dH           ',dH
+            !    if (JMidx==printJM) print *, '   dH           ',dH
 
             !% --- limit dH
             dH = max(dH, Hbound(1))
             dH = min(dH, Hbound(2))
 
-              !  if (JMidx==printJM) print *, '   dH lim       ',dH
+            !    if (JMidx==printJM) print *, '   dH lim       ',dH
 
 
             !% --- update JM head and depth

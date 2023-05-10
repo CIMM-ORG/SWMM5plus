@@ -2444,7 +2444,10 @@ module face
         select case (facePcol)
         case (fp_CC_downstream_is_zero_IorS,fp_JB_downstream_is_zero_IorS)
             !% --- use the downstream flow from the upstream element (or zero if upstream flow)
-            where ((elemR(eup(thisP),er_Flowrate) .ge. zeroR) .and. (elemR(eup(thisP),er_Head) > elemR(edn(thisP),er_Zbottom)))
+            !% 20230510brh NOTE: cutting out limit on Head>Zbottom as it caused issues with Pump that has zero head
+            !% If this revision causes other problems, we may need to have a distinction for Dig elements upstream
+            !where ((elemR(eup(thisP),er_Flowrate) .ge. zeroR) .and. (elemR(eup(thisP),er_Head) > elemR(edn(thisP),er_Zbottom)))
+            where (elemR(eup(thisP),er_Flowrate) .ge. zeroR)
                 faceR(thisP,fr_Flowrate) = elemR(eup(thisP),er_Flowrate)
             elsewhere
                 faceR(thisP,fr_Flowrate) = zeroR
@@ -2452,7 +2455,9 @@ module face
 
         case (fp_CC_upstream_is_zero_IorS,fp_JB_upstream_is_zero_IorS)
             !% --- use the upstream flow from the downstream element (or zero if downstream flow)
-            where ((elemR(edn(thisP),er_Flowrate) .le. zeroR) .and. (elemR(edn(thisP),er_Head) > elemR(eup(thisP),er_Zbottom)))
+            !% 20230510brh see note abovve
+            !where ((elemR(edn(thisP),er_Flowrate) .le. zeroR) .and. (elemR(edn(thisP),er_Head) > elemR(eup(thisP),er_Zbottom)))
+            where (elemR(edn(thisP),er_Flowrate) .le. zeroR) 
                 faceR(thisP,fr_Flowrate) = elemR(edn(thisP),er_Flowrate)
             elsewhere
                 faceR(thisP,fr_Flowrate) = zeroR

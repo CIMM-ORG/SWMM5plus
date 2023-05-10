@@ -831,6 +831,9 @@ module define_indexes
         enumerator ::  esr_Pump_xMax                       !% maximum pt. on pump curve
         enumerator ::  esr_Pump_dQdHp                      !% rate of change of Q with pump head
         enumerator ::  esr_Pump_Zcrest
+        enumerator ::  esr_Pump_Rampup_Time                !% Time interval for pump startup 
+        enumerator ::  esr_Pump_MinShutoffTime             !% Minimum shutoff time before pump can restart
+        enumerator ::  esr_Pump_TimeSinceStartOrShutdown   !% Time since last change in status
         enumerator ::  esr_Pump_lastplusone                !% must be last enum item
     end enum
     integer, parameter :: Ncol_elemSR_Pump = esr_Pump_lastplusone-1

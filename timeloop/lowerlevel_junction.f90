@@ -1253,12 +1253,19 @@ module lowerlevel_junction
 
             jhead_lowlimit_TF = .false.
 
+            
+
             !% FIND ALL BRANCHES WITH INFLOW HEAD THAT COULD LIMIT THe
             !% JUNCTION HEAD
             !% --- cycle through branches (cannot be concurrent)
             !%     fadj* are faces for adjustment, zeroI is null value
             do ii=1,max_branch_per_node
+                ! print *, ' '
+                ! print *, 'diag adjacent ',JMidx+ii, elemSI(JMidx+ii,esi_JunctionBranch_Diag_adjacent)
+                ! print *, ' '
                 if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle 
+                !% --- diagnostic elements cannot be head limiters
+                if (elemSI(JMidx+ii,esi_JunctionBranch_Diag_adjacent) .eq. oneI) cycle
                 headJM => elemR(JMidx,er_Head)
                 if (mod(ii,2)== 0) then 
                     !% --- downstream branch
@@ -1266,6 +1273,11 @@ module lowerlevel_junction
                     fidx => elemI(JMidx+ii,ei_Mface_dL)
                     JBidx = JMidx+ ii
                     headAdj => faceR(fidx,fr_Head_Adjacent)
+
+                    ! print *, ' '
+                    ! print *, 'Head Adj ',JBidx, headAdj
+                    ! print *, ' '
+
                     if (elemR(JBidx,er_Flowrate) > zeroR) then
                         !% --- outflow on downstream branch 
                         !%     provides only a lower limit
