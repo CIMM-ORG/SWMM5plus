@@ -2013,6 +2013,7 @@ contains
                 choosen_name = trim(ADJUSTL(link_names(1:delimitator_loc)))
                 link_names   = trim(ADJUSTL(link_names(delimitator_loc+1:)))
 
+                !print *, 'choosen, link ',choosen_name, link_names
                 
                 !% Now we need to check that the user wrote the profile correctly
                 !% This means checking if the link name exists and the profile is correctly written upstream -> downstream

@@ -17,7 +17,7 @@ START_TIME           00:00:00
 REPORT_START_DATE    08/11/1998
 REPORT_START_TIME    00:00:00
 END_DATE             08/11/1998
-END_TIME             03:30:00
+END_TIME             18:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -68,6 +68,7 @@ GAGE1            VOLUME    0.05000  1.0      TIMESERIES RainSeries1
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
 1SB14            690.50     59.50      0.0        0          0      ;;   
+;;brh01            637.8      1000        12.2        1000          0      ;;
                       
 
 [OUTFALLS]
@@ -79,16 +80,19 @@ O.O_RM           649.5        FREE                 YES                          
 [STORAGE]
 ;;Name           Elev.    MaxDepth   InitDepth  Shape      Curve Name/Params            N/A      Fevap    Psi      Ksat     IMD     
 ;;-------------- -------- ---------- ----------- ---------- ---------------------------- -------- --------          -------- --------
-brh02            637.8     1000        1.4     FUNCTIONAL   0       0  100000.0;;
+brh01            637.8     1000       1.4     FUNCTIONAL   0       0  100000.0
 ;;brh02            637.8     1000        12.2     FUNCTIONAL   0       0  100000.0
+   
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-557               1SB14             brh02            2000.0      0.014      0.0        0.0        0.0        0     ;;  
-brhOutfall        brh02              O.O_RM          1000.0       0.014     0        0.0        0.0        0     ;; 
-  
+557               1SB14             brh01            2000.0      0.014      0.0        0.0        0.0        0     ;;  
+brhOutfall        brh01              O.O_RM          2000.0      0.014        0        0.0        0.0        0     ;; 
+;;557               1SB14             brh02            2000.0      0.014      0.0        0.0        0.0        0     ;;  
+;;brhOutfall        brh02              O.O_RM          1000.0       0.014     0        0.0        0.0        0     ;; 
 
+  
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
 ;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------                
@@ -121,6 +125,7 @@ RainSeries1                 00:54        0.05860
 RainSeries1                 00:57        0.02930   
 RainSeries1                 01:00      0.0
 RainSeries1                 04:12      0.0 
+RainSeries1                 12:12      0.0 
 
 
 [REPORT]

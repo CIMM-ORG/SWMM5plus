@@ -268,9 +268,24 @@ contains
             ! integer :: iet(8) = (/ 52,54,     63,    2,1,3,   12,  13/)
             ! integer :: ift(4) = (/        52,     1,        2,   11/)
 
-            integer :: iet(8) = (/4,  5,   6,    8,7,9,   18, 19 /)
-            integer :: ift(5) = (/  6,   6,   7,       8,   17 /)
-        
+            !% user5_reduced# at 100 m
+            ! integer :: iet(8) = (/4,  5,   6,    8,7,9,   18, 19 /)
+            ! integer :: ift(5) = (/  5,   6,   7,       8,   17 /)
+
+            !% user5 reduced at 150 m
+            ! integer :: iet(8) = (/2,  3,   4,    6,5,7,   16, 17 /)
+            ! integer :: ift(5) = (/  2,   3,   5,       6,   15 /)
+
+
+            !% user5_reduced1a at 5 m
+            integer :: iet(8) = (/230,  231,   232,    234,233,235,     244,    245 /)
+            integer :: ift(5) = (/  229,   230,     231,            232,    241 /)
+
+            ! integer :: iet(5) =(/    226, 227, 228, 229, 230  /)
+            ! integer :: ift(6) = (/ 224, 225, 226, 227, 228, 229/)
+
+            ! integer :: iet(5) =(/    221, 222, 223, 224, 225  /)
+            ! integer :: ift(6) = (/ 219, 220, 221, 222, 223, 224/)
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
         !% Preliminaries:
@@ -291,11 +306,11 @@ contains
       !   print *, elemR(52,er_Volume), elemR(63,er_Volume)
       !   print *, trim(reverseKey(elemI(52,ei_elementType))), ' ',trim(reverseKey(elemI(63,ei_elementType)))
        
-          if (setting%Time%Step < 990) return
+         !  if (setting%Time%Step < 879) return
 
 
 
-         !   if (setting%Time%Step > 994) then
+         !   if (setting%Time%Step > 880) then
          !     stop  6098723
          !   end if
 
@@ -304,13 +319,11 @@ contains
             write(*,"(A,A, e12.5)") ' ',trim(inputstring)     
             write(*,"(A,i7,A, f12.5, A, f12.5, A)") '        step = ',setting%Time%Step ,&
             '; dt = ',setting%Time%Hydraulics%Dt,&
-            '; time = ',setting%Time%Now / 60.d0, ' min'      
+            '; time = ',setting%Time%Now , ' sec'      
 
+            !print *, setting%Time%Step, elemR(1,er_Flowrate), elemR(1,er_Depth)
+            !print *, setting%Time%Now / (3600.d0), elemR(17,er_Flowrate), elemR(5,er_Depth)
 
-            print *, ' '
-            print *, 'is zero depth at 6 ',elemYN(6,eYN_isZeroDepth), elemR(6,er_Depth)
-            print *, ' '
-         
          !   return
 
 
@@ -362,7 +375,7 @@ contains
          !            stop 239874
          !           return
 
-               ! print *, ' '
+         !       print *, ' '
                ! print *, 'link,node names'
                ! do ii=1,N_elem(1)
                !    if (elemI(ii,ei_link_Gidx_SWMM) < nullvalueI) then 
@@ -1006,45 +1019,45 @@ contains
 
      
      
-         write(*,"(A,31f11.4)") '  Head    '  ,          &
-            elemR(iet(1),er_Head), &
-               faceR(ift(1),fr_Head_u), &
-               faceR(ift(1),fr_Head_d), &
-            elemR(iet(2),er_Head), &
-               faceR(ift(2),fr_Head_u), &
-               faceR(ift(2),fr_Head_d), &
-            elemR(iet(3),er_Head), &
-               faceR(ift(3),fr_Head_u), &
-               faceR(ift(3),fr_Head_d), &
-            elemR(iet(4),er_Head), &
-            elemR(iet(5),er_Head), &
-            elemR(iet(6),er_Head), &
-               faceR(ift(4),fr_Head_u), &
-               faceR(ift(4),fr_Head_d), &
-            elemR(iet(7),er_Head),&
-               faceR(ift(5),fr_Head_u), &
-               faceR(ift(5),fr_Head_d), &
-            elemR(iet(8),er_Head)
+         write(*,"(A,31e11.3)") '  Head    '  ,          &
+            elemR(iet(1),er_Head) - 198.12d0, &
+               faceR(ift(1),fr_Head_u)- 198.12d0, &
+               faceR(ift(1),fr_Head_d)- 198.12d0, &
+            elemR(iet(2),er_Head)- 198.12d0, &
+               faceR(ift(2),fr_Head_u)- 198.12d0, &
+               faceR(ift(2),fr_Head_d)- 198.12d0, &
+            elemR(iet(3),er_Head)- 198.12d0, &
+               faceR(ift(3),fr_Head_u)- 198.12d0, &
+               faceR(ift(3),fr_Head_d)- 198.12d0, &
+            elemR(iet(4),er_Head)- 198.12d0, &
+            elemR(iet(5),er_Head)- 198.12d0, &
+            elemR(iet(6),er_Head)- 198.12d0, &
+               faceR(ift(4),fr_Head_u)- 198.12d0, &
+               faceR(ift(4),fr_Head_d)- 198.12d0, &
+            elemR(iet(7),er_Head)- 198.12d0,&
+               faceR(ift(5),fr_Head_u)- 198.12d0, &
+               faceR(ift(5),fr_Head_d)- 198.12d0, &
+            elemR(iet(8),er_Head)- 198.12d0
 
-            ! write(*,"(A,31f11.4)") '  SlotD   '  ,          &
-            ! elemR(iet(1),er_SlotDepth), &
-            ! 0.d0, &
-            !    0.d0, &
-            ! elemR(iet(2),er_SlotDepth), &
-            ! 0.d0, &
-            !    0.d0, &
-            ! elemR(iet(3),er_SlotDepth), &
-            !    0.d0, &
-            !    0.d0, &
-            ! elemR(iet(4),er_SlotDepth), &
-            ! elemR(iet(5),er_SlotDepth), &
-            ! elemR(iet(6),er_SlotDepth), &
-            ! 0.d0, &
-            !    0.d0, &
-            ! elemR(iet(7),er_SlotDepth),&
-            ! 0.d0, &
-            !    0.d0, &
-            ! elemR(iet(8),er_SlotDepth)
+            write(*,"(A,31f11.4)") '  SlotD   '  ,          &
+            elemR(iet(1),er_SlotDepth), &
+            0.d0, &
+               0.d0, &
+            elemR(iet(2),er_SlotDepth), &
+            0.d0, &
+               0.d0, &
+            elemR(iet(3),er_SlotDepth), &
+               0.d0, &
+               0.d0, &
+            elemR(iet(4),er_SlotDepth), &
+            elemR(iet(5),er_SlotDepth), &
+            elemR(iet(6),er_SlotDepth), &
+            0.d0, &
+               0.d0, &
+            elemR(iet(7),er_SlotDepth),&
+            0.d0, &
+               0.d0, &
+            elemR(iet(8),er_SlotDepth)
 
             ! write(*,"(A,31f11.4)") '  SlotA   '  ,          &
             ! elemR(iet(1),er_SlotArea), &
@@ -1086,25 +1099,25 @@ contains
             !    faceR(ift(5),fr_Zcrown_d), &
             ! elemR(iet(8),er_Zcrown)
 
-         write(*,"(A,31f11.4)") '   Zbot   '  ,          &
-            elemR(iet(1),er_Zbottom), &
-               faceR(ift(1),fr_Zbottom), &
-               faceR(ift(1),fr_Zbottom), &
-            elemR(iet(2),er_Zbottom), &
-               faceR(ift(2),fr_Zbottom), &
-               faceR(ift(2),fr_Zbottom), &
-            elemR(iet(3),er_Zbottom), &
-               faceR(ift(3),fr_Zbottom), &
-               faceR(ift(3),fr_Zbottom), &
-            elemR(iet(4),er_Zbottom), &
-            elemR(iet(5),er_Zbottom), &
-            elemR(iet(6),er_Zbottom), &
-               faceR(ift(4),fr_Zbottom), &
-               faceR(ift(4),fr_Zbottom), &
-            elemR(iet(7),er_Zbottom),&
-               faceR(ift(5),fr_Zbottom), &
-               faceR(ift(5),fr_Zbottom), &
-            elemR(iet(8),er_Zbottom)
+         ! write(*,"(A,31f11.4)") '   Zbot   '  ,          &
+         !    elemR(iet(1),er_Zbottom), &
+         !       faceR(ift(1),fr_Zbottom), &
+         !       faceR(ift(1),fr_Zbottom), &
+         !    elemR(iet(2),er_Zbottom), &
+         !       faceR(ift(2),fr_Zbottom), &
+         !       faceR(ift(2),fr_Zbottom), &
+         !    elemR(iet(3),er_Zbottom), &
+         !       faceR(ift(3),fr_Zbottom), &
+         !       faceR(ift(3),fr_Zbottom), &
+         !    elemR(iet(4),er_Zbottom), &
+         !    elemR(iet(5),er_Zbottom), &
+         !    elemR(iet(6),er_Zbottom), &
+         !       faceR(ift(4),fr_Zbottom), &
+         !       faceR(ift(4),fr_Zbottom), &
+         !    elemR(iet(7),er_Zbottom),&
+         !       faceR(ift(5),fr_Zbottom), &
+         !       faceR(ift(5),fr_Zbottom), &
+         !    elemR(iet(8),er_Zbottom)
 
             write(*,"(A,31f11.4)") ' Depth    '  ,          &
             elemR(iet(1),er_Depth), &
@@ -1188,8 +1201,10 @@ contains
                faceR(ift(5),fr_Flowrate), &
             elemR(iet(8),er_Flowrate)
 
-            ! print *, ' '
+            print *, ' '
 
+            return
+  
          !    write(*,"(A,31e11.3)") '   dQ     '  ,          &
          !    elemR(iet(1),er_DeltaQ), &
          !       faceR(ift(1),fr_DeltaQ), &
@@ -1234,25 +1249,25 @@ contains
 
             ! print *, ' '
 
-         write(*,"(A,31e11.3)") '   Volu   '  ,          &
-            elemR(iet(1),er_Volume), &
-               0.d0, &
-               0.d0, &
-            elemR(iet(2),er_Volume), &
-               0.d0, &
-               0.d0, &
-            elemR(iet(3),er_Volume), &
-               0.d0, &
-               0.d0, &
-            elemR(iet(4),er_Volume), &
-            elemR(iet(5),er_Volume), &
-            elemR(iet(6),er_Volume), &
-               0.d0, &
-               0.d0, &
-            elemR(iet(7),er_Volume),&
-               0.d0, &
-               0.d0, &
-            elemR(iet(8),er_Volume)
+         ! write(*,"(A,31e11.3)") '   Volu   '  ,          &
+         !    elemR(iet(1),er_Volume), &
+         !       0.d0, &
+         !       0.d0, &
+         !    elemR(iet(2),er_Volume), &
+         !       0.d0, &
+         !       0.d0, &
+         !    elemR(iet(3),er_Volume), &
+         !       0.d0, &
+         !       0.d0, &
+         !    elemR(iet(4),er_Volume), &
+         !    elemR(iet(5),er_Volume), &
+         !    elemR(iet(6),er_Volume), &
+         !       0.d0, &
+         !       0.d0, &
+         !    elemR(iet(7),er_Volume),&
+         !       0.d0, &
+         !       0.d0, &
+         !    elemR(iet(8),er_Volume)
 
            
 
@@ -1278,29 +1293,29 @@ contains
 
             print *, ' '
           
-         write(*,"(A,31f11.4)") '   Vel    '  ,          &
-            elemR(iet(1),er_Velocity), &
-               faceR(ift(1),fr_Velocity_u), &
-               faceR(ift(1),fr_Velocity_d), &
-            elemR(iet(2),er_Velocity), &
-               faceR(ift(2),fr_Velocity_u), &
-               faceR(ift(2),fr_Velocity_d), &
-            elemR(iet(3),er_Velocity), &
-               faceR(ift(3),fr_Velocity_u), &
-               faceR(ift(3),fr_Velocity_d), &   
-            elemR(iet(4),er_Velocity), &
-            elemR(iet(5),er_Velocity), &
-            elemR(iet(6),er_Velocity), &
-               faceR(ift(4),fr_Velocity_u), &
-               faceR(ift(4),fr_Velocity_d), &
-            elemR(iet(7),er_Velocity),&
-               faceR(ift(5),fr_Velocity_u), &
-               faceR(ift(5),fr_Velocity_d), &
-            elemR(iet(8),er_Velocity)
+         ! write(*,"(A,31f11.4)") '   Vel    '  ,          &
+         !    elemR(iet(1),er_Velocity), &
+         !       faceR(ift(1),fr_Velocity_u), &
+         !       faceR(ift(1),fr_Velocity_d), &
+         !    elemR(iet(2),er_Velocity), &
+         !       faceR(ift(2),fr_Velocity_u), &
+         !       faceR(ift(2),fr_Velocity_d), &
+         !    elemR(iet(3),er_Velocity), &
+         !       faceR(ift(3),fr_Velocity_u), &
+         !       faceR(ift(3),fr_Velocity_d), &   
+         !    elemR(iet(4),er_Velocity), &
+         !    elemR(iet(5),er_Velocity), &
+         !    elemR(iet(6),er_Velocity), &
+         !       faceR(ift(4),fr_Velocity_u), &
+         !       faceR(ift(4),fr_Velocity_d), &
+         !    elemR(iet(7),er_Velocity),&
+         !       faceR(ift(5),fr_Velocity_u), &
+         !       faceR(ift(5),fr_Velocity_d), &
+         !    elemR(iet(8),er_Velocity)
 
-            print *, ' '
+         !    print *, ' '
 
-            return
+         !    return
 
          !    write(*,"(A,31e11.3)") '   wave   '  ,          &
          !    elemR(iet(1),er_WaveSpeed), &
@@ -2446,29 +2461,25 @@ contains
 !%  
    ! write(*,"(A9,30A11)"),'    ','faceU','faceD','elem','faceU','faceD','elem','faceU','faceD','elem','faceU','faceD','elem', 'faceU','faceD','elem','faceU','faceD','elem','faceU','faceD','elem'
 
-   ! print *, ' here '
-   ! print *, ift
-   ! print *, iet
-   ! print *, ' '
-         !%  e5, f6 no junctions
-         !  write(*,"(A,31f11.4)") '  Head    '  ,          &
-            !       faceR(ift(1),fr_Head_u), &
-            !       faceR(ift(1),fr_Head_d), &
-            !    elemR(iet(1),er_Head), &
-            !       faceR(ift(2),fr_Head_u), &
-            !       faceR(ift(2),fr_Head_d), &
-            !    elemR(iet(2),er_Head), &
-            !       faceR(ift(3),fr_Head_u), &
-            !       faceR(ift(3),fr_Head_d), &
-            !    elemR(iet(3),er_Head),&
-            !       faceR(ift(4),fr_Head_u), &
-            !       faceR(ift(4),fr_Head_d), &
-            !    elemR(iet(4),er_Head),&
-            !       faceR(ift(5),fr_Head_u), &
-            !       faceR(ift(5),fr_Head_d), &
-            !    elemR(iet(5),er_Head), &
-            !       faceR(ift(6),fr_Head_u), &
-            !       faceR(ift(6),fr_Head_d)
+
+         !  write(*,"(A,31e11.3)") '  Head    '  ,          &
+         !          faceR(ift(1),fr_Head_u) - 198.12d0, &
+         !          faceR(ift(1),fr_Head_d)- 198.12d0, &
+         !       elemR(iet(1),er_Head)- 198.12d0, &
+         !          faceR(ift(2),fr_Head_u)- 198.12d0, &
+         !          faceR(ift(2),fr_Head_d)- 198.12d0, &
+         !       elemR(iet(2),er_Head)- 198.12d0, &
+         !          faceR(ift(3),fr_Head_u)- 198.12d0, &
+         !          faceR(ift(3),fr_Head_d)- 198.12d0, &
+         !       elemR(iet(3),er_Head)- 198.12d0,&
+         !          faceR(ift(4),fr_Head_u)- 198.12d0, &
+         !          faceR(ift(4),fr_Head_d)- 198.12d0, &
+         !       elemR(iet(4),er_Head)- 198.12d0,&
+         !          faceR(ift(5),fr_Head_u)- 198.12d0, &
+         !          faceR(ift(5),fr_Head_d)- 198.12d0, &
+         !       elemR(iet(5),er_Head)- 198.12d0, &
+         !          faceR(ift(6),fr_Head_u)- 198.12d0, &
+         !          faceR(ift(6),fr_Head_d)- 198.12d0
    
             ! write(*,"(A,31f11.4)") '  Zbot    '  ,          &
             !       faceR(ift(1),fr_Zbottom), &
@@ -2510,25 +2521,26 @@ contains
 
             !       print *, ' '
          
-            ! write(*,"(A,31f11.4)") '  Flow    '  ,          &
-            !       faceR(ift(1),fr_Flowrate), &
-            !       faceR(ift(1),fr_Flowrate), &
-            !    elemR(iet(1),er_Flowrate), &
-            !       faceR(ift(2),fr_Flowrate), &
-            !       faceR(ift(2),fr_Flowrate), &
-            !    elemR(iet(2),er_Flowrate), &
-            !       faceR(ift(3),fr_Flowrate), &
-            !       faceR(ift(3),fr_Flowrate), &
-            !    elemR(iet(3),er_Flowrate),&
-            !       faceR(ift(4),fr_Flowrate), &
-            !       faceR(ift(4),fr_Flowrate), &
-            !    elemR(iet(4),er_Flowrate),&
-            !       faceR(ift(5),fr_Flowrate), &
-            !       faceR(ift(5),fr_Flowrate), &
-            !    elemR(iet(5),er_Flowrate), &
-            !       faceR(ift(6),fr_Flowrate), &
-            !       faceR(ift(6),fr_Flowrate)
+         !    write(*,"(A,31e11.3)") '  Flow    '  ,          &
+         !          faceR(ift(1),fr_Flowrate), &
+         !          faceR(ift(1),fr_Flowrate), &
+         !       elemR(iet(1),er_Flowrate), &
+         !          faceR(ift(2),fr_Flowrate), &
+         !          faceR(ift(2),fr_Flowrate), &
+         !       elemR(iet(2),er_Flowrate), &
+         !          faceR(ift(3),fr_Flowrate), &
+         !          faceR(ift(3),fr_Flowrate), &
+         !       elemR(iet(3),er_Flowrate),&
+         !          faceR(ift(4),fr_Flowrate), &
+         !          faceR(ift(4),fr_Flowrate), &
+         !       elemR(iet(4),er_Flowrate),&
+         !          faceR(ift(5),fr_Flowrate), &
+         !          faceR(ift(5),fr_Flowrate), &
+         !       elemR(iet(5),er_Flowrate), &
+         !          faceR(ift(6),fr_Flowrate), &
+         !          faceR(ift(6),fr_Flowrate)
 
+         ! return
 
             !    write(*,"(A,31e11.4)") '  Vel     '  ,          &
             !       faceR(ift(1),fr_Velocity_u), &

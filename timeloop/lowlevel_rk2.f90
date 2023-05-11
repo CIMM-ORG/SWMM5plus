@@ -347,7 +347,7 @@ module lowlevel_rk2
 
         ! !print *, ' Ksource ',elemR(780,outCol)
         !  print *, 'in ll_momentum_Ksource_CC'
-        !  print *, elemR(iet(4),outCol)
+        !  print *, 'Ksource ', elemR(4,outCol)
 
     end subroutine ll_momentum_Ksource_CC
 !%
@@ -413,21 +413,21 @@ module lowlevel_rk2
 
         ! print *, ' '
         ! print *, 'in ll_momentum_source_cc'
-        ! print *, 'faces: ',iup(58), idn(58)
-        ! print *,  fQ(iup(58)), fUdn(iup(58))
-        ! print *, '1st term ',fQ(iup(58)) * fUdn(iup(58))
-        ! print *,  -fQ(idn(58)), fUup(idn(58))
-        ! print *, '2nd term ',-fQ(idn(58)) * fUup(idn(58))
-        ! print *, 'balance of 1-2 ',fQ(iup(58)) * fUdn(iup(58)) - fQ(idn(58)) * fUup(idn(58))
-        ! print *, 'pieces ',fQ(iup(58)), fUdn(iup(58))
-        ! print *, 'pieces ',fQ(idn(58)), fUup(idn(58))
-        ! print *, 'pieces ',fAdn(iup(58)) , fHdn(iup(58))
-        ! print *, 'pieces ',fAup(idn(58)) , fHup(idn(58))
-        ! print *, '3rd term ',fAdn(iup(58)) * fHdn(iup(58))
-        ! print *, '4th term ',-fAup(idn(58)) * fHup(idn(58))
-        ! print *, 'balance of 1-2 with coef ',grav * (oneR - delta) * (fAdn(iup(58)) * fHdn(iup(58)) - fAup(idn(58)) * fHup(idn(58)))
-        ! print *, 'source ',eKsource(58)
-        ! print *, 'output ',elemR(58,outCol)
+        ! !print *, 'faces: ',iup(4), idn(4)
+        ! !print *,  !'fQu, fUdn   : ',fQ(iup(4)), fUdn(iup(4))
+        ! print *,  '1st term    : ',fQ(iup(4)) * fUdn(iup(4))
+        ! !print *,  !'-fQdn, fUup : ',-fQ(idn(4)), fUup(idn(4))
+        ! print *,  '2nd term    : ',-fQ(idn(4)) * fUup(idn(4))
+        ! print *, 'balance of 1-2 ',fQ(iup(4)) * fUdn(iup(4)) - fQ(idn(4)) * fUup(idn(4))
+        ! print *, 'pieces A',fQ(iup(4)), fUdn(iup(4))
+        ! print *, 'pieces B',fQ(idn(4)), fUup(idn(4))
+        ! print *, 'pieces C',fAdn(iup(4)) , fHdn(iup(4))
+        ! print *, 'pieces D',fAup(idn(4)) , fHup(idn(4))
+        ! print *, '3rd term ',fAdn(iup(4)) * fHdn(iup(4))
+        ! print *, '4th term ',-fAup(idn(4)) * fHup(idn(4))
+        ! print *, 'balance of 1-2 with coef ',grav * (oneR - delta) * (fAdn(iup(4)) * fHdn(iup(4)) - fAup(idn(4)) * fHup(idn(4)))
+        ! print *, 'source ',eKsource(4)
+        ! print *, 'output ',elemR(4,outCol)
         ! print *, ' '
 
         if (setting%Debug%File%lowlevel_rk2) &
@@ -643,25 +643,27 @@ module lowlevel_rk2
         Msource => elemR(:,er_SourceMomentum)
         GammaM  => elemR(:,er_GammaM)
 
-        print *, ' '
-        print *, 'in ll_momentum_solve_CC'
-        print *, ' Msource ', Msource(6)
-        print *, ' Gamma   ', GammaM(6)
-        print *, 'velocity last ',velocityLast(6)
-        print *, ' Vprod   ',volumeLast(6) * velocityLast(6)
-        print *, 'crk,delt ', crk(istep),delt
-        print *, ' '
+        ! print *, ' '
+        ! print *, 'in ll_momentum_solve_CC'
+        ! print *, ' Msource ', Msource(4)
+        ! print *, ' Gamma   ', GammaM(4)
+        ! print *, 'velocity last ',velocityLast(4)
+        ! print *, ' Vprod   ',volumeLast(6) * velocityLast(4)
+        ! print *, 'crk,delt ', crk(istep),delt
+        ! print *, ' '
 
         elemR(thisP,outCol) =  &
                 ( volumeLast(thisP) * velocityLast(thisP) + crk(istep) * delt * Msource(thisP) ) &
                 / ( oneR + crk(istep) * delt * GammaM(thisP) )
+        
 
-        print *, 'in ll_momentum_solve_CC'
-        print *, elemR(6,outCol) 
+        ! print *, 'in ll_momentum_solve_CC'
+        ! print *, elemR(4,outCol) 
+        ! print *, ' '
         ! print *, volumeLast(6), velocityLast(2189), Msource(2198)
         ! print *, crk(istep), delt, GammaM(2189)  
         ! print *, volumeLast(2189) * velocityLast(2189), crk(istep) * delt * Msource(2189) 
-        print *, ' '
+        ! print *, ' '
 
     end subroutine ll_momentum_solve_CC
 !%
@@ -684,17 +686,28 @@ module lowlevel_rk2
         !%------------------------------------------------------------------
         !% compute velocity
 
-        print *, ' '
-        print *, 'in momentum velocity'
-        print *, ' input    ', momentum(6)
-        print *, ' flowrate ', momentum(6) / elemR(6,er_Length)
-        print *, ' volume   ', volume(6)
-        print *, ' '
+        ! print *, ' '
+        ! print *, 'in momentum velocity'
+        ! print *, ' input    ', momentum(4)
+        ! print *, ' flowrate ', momentum(4) / elemR(4,er_Length)
+        ! print *, ' volume   ', volume(4), setting%Limiter%VolumeFractionInTimeStep * volume(4) / setting%Time%Hydraulics%Dt
+        ! print *, ' '
 
-        elemR(thisP,inoutCol) = momentum(thisP) / volume(thisP)
+        !% --- volume limiter preventin small volumes from generating flow spikes
+        where ((abs(momentum(thisP) / elemR(thisP,er_Length))) &
+                 .ge. (setting%Limiter%VolumeFractionInTimeStep  * volume(thisP) / setting%Time%Hydraulics%Dt))
+            elemR(thisP,inoutCol) = sign((setting%Limiter%VolumeFractionInTimeStep  * volume(thisP) / setting%Time%Hydraulics%Dt), momentum(thisP) )
+        elsewhere
+            elemR(thisP,inoutCol) = momentum(thisP) / volume(thisP)
+        endwhere
+
+        !% --- minimum flowrate 
+        where  ((abs(momentum(thisP) / elemR(thisP,er_Length))) < 1e-8)
+            elemR(thisP,inoutCol) = zeroR 
+        endwhere
 
 
-        !print *, ' velocity ',elemR(780,inoutCol)
+        ! print *, ' velocity ',elemR(4,inoutCol)
         ! print*
         ! print*, 'in ll_momentum_velocity_CC'
         ! print*, elemR(thisP,inoutCol), 'new velocity'

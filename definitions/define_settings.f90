@@ -40,7 +40,8 @@ module define_settings
 
     !% setting%Adjust%Head
     type AdjustHeadType
-        logical :: ApplyYN = .false. !.false.
+        logical :: ApplyYN = .true. !.false.
+        !% --- recommend using vshape_surcharge_CC.  The "all" option leads to larger-scale oscillations
         integer :: Approach = vshape_surcharge_CC !% doesnotexist  !% options: doesnotexist !%vshape_all_CC  vshape_surcharge_CC, vshape_freesurface_CC
         real(8) :: Coef = 1.0d0
     end type AdjustHeadType
@@ -466,6 +467,10 @@ module define_settings
         type(LimiterInterpWeightType) :: InterpWeight
         type(LimiterVelocityType)     :: Velocity
         type(LimiterDtType)           :: Dt
+        !% --- limiter%VolumeFractionInTimeStep: limits momentum/velocity in RK solution to a rate consistent with the
+        !%     VolumeFractionInTimeStep * volume / dt. This helps prevent oscillations in very small depths.
+        !%     Should generally be less than one.  1/4 seems to work well.
+        real(8)                       :: VolumeFractionInTimeStep = 0.5d0  
     end type LimiterType
 
     type LinkType
@@ -545,7 +550,7 @@ module define_settings
 
     ! setting%SmallDepth
     type SmallDepthType
-        logical :: useMomentumCutoffYN = .true. !% causes reversed flow with JB 20230410brh
+        logical :: useMomentumCutoffYN = .false. !% causes reversed flow with JB 20230410brh
         real(8) :: MomentumDepthCutoff = 0.01d0 ! m  !% prior to 20230327 using 0.03
         real(8) :: ManningsN = 0.1d0
         real(8) :: PumpVolumeFactor = 0.5d0  !% 
@@ -1424,6 +1429,12 @@ contains
         call json%get('Limiter.Velocity.UseLimitMaxYN', logical_value, found)
         if (found) setting%Limiter%Velocity%UseLimitMaxYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Velocity.UseLimitMaxYN not found'
+
+         !%                       Limiter.VolumeFractionInTimeStep
+        call json%get('Limiter.VolumeFractionInTimeStep', real_value, found)
+        if (found) setting%Limiter%VolumeFractionInTimeStep = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.VolumeFractionInTimeStep not found'
+
 
 
     !% Link. =====================================================================
