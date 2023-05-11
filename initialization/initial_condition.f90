@@ -225,16 +225,11 @@ contains
        
         !% --- identify the small and zero depths (must be done before pack)
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth'
-        ! if (setting%SmallDepth%useMomentumCutoffYN) then
-        !     call adjust_smalldepth_identify_all ()
-        ! else
-            !% --- if not using small depth algorithm, then cuttoff is the same as zero depth
-            setting%SmallDepth%MomentumDepthCutoff = setting%ZeroValue%Depth
-        ! end if
-        !call adjust_zerodepth_identify_all ()
+        !% --- if not using small depth algorithm, then cuttoff is the same as zero depth
+        if (.not. setting%SmallDepth%useMomentumCutoffYN) setting%SmallDepth%MomentumDepthCutoff = setting%ZeroValue%Depth
         call adjust_element_toplevel (CC)
-            ! call util_utest_CLprint ('initial_condition after adjust_smalldepth and _zerodepth')    
-        call adjust_element_toplevel (JB)
+        call adjust_element_toplevel (JB) !% 20230511brh
+        call adjust_element_toplevel (JM) !% 20230511brh
 
             ! call util_utest_CLprint ('initial_condition after adjust_smalldepth and _zerodepth')
 
@@ -473,7 +468,10 @@ contains
 
         !% --- update the initial condition in all diagnostic elements
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
-        call diagnostic_toplevel (ep_Diag, fp_Diag_IorS, 2)
+        !call diagnostic_toplevel (ep_Diag, fp_Diag_IorS, 2)
+        call diagnostic_by_type (ep_Diag, 1)
+        !% reset any face values affected
+        call face_interpolation (ep_Diag,.true.,.true.,.true.,.true.,.true.)
 
            ! call util_utest_CLprint ('initial_condition after diagnostic_toplevel')
 
@@ -2115,6 +2113,7 @@ contains
         !% -- set the face values for the crown (full depth)
         faceR(fUp(thisP),fr_Zcrown_d) = faceR(fUp(thisP),fr_Zbottom) + elemR(thisP,er_FullDepth)
         faceR(fDn(thisP),fr_Zcrown_u) = faceR(fDn(thisP),fr_Zbottom) + elemR(thisP,er_FullDepth)
+
 
         !% --- reset the temporary space
         !%     Note, real must be first as int is used for thisP
@@ -4517,6 +4516,12 @@ contains
             
 
             !print *, 'in initial', JBidx, elemR(JBidx,er_BreadthMax)
+
+            if (isupstream) then
+                faceR(Fidx,fr_Zcrown_d) = faceR(Fidx,fr_Zbottom)+ elemR(JBidx,er_FullDepth)
+            else
+                faceR(Fidx,fr_Zcrown_u) = faceR(Fidx,fr_Zbottom)+ elemR(JBidx,er_FullDepth)
+            end if
 
         end do
 

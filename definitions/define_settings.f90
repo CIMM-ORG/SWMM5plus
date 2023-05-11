@@ -545,8 +545,8 @@ module define_settings
 
     ! setting%SmallDepth
     type SmallDepthType
-        logical :: useMomentumCutoffYN = .false. !5 causes reversed flow with JB 20230410brh
-        real(8) :: MomentumDepthCutoff = 0.001d0 ! m  !% prior to 20230327 using 0.03
+        logical :: useMomentumCutoffYN = .true. !% causes reversed flow with JB 20230410brh
+        real(8) :: MomentumDepthCutoff = 0.01d0 ! m  !% prior to 20230327 using 0.03
         real(8) :: ManningsN = 0.1d0
         real(8) :: PumpVolumeFactor = 0.5d0  !% 
         real(8) :: LateralInflowSmallDepth = 0.05d0

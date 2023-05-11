@@ -26,7 +26,7 @@ module diagnostic_elements
 
     private
 
-    public :: diagnostic_toplevel
+    !public :: diagnostic_toplevel
     public :: diagnostic_fix_JB_adjacent
     public :: diagnostic_by_type 
 
@@ -52,6 +52,9 @@ module diagnostic_elements
         if (setting%Profile%useYN) call util_profiler_start (pfc_diagnostic_toplevel)
         !%-----------------------------------------------------------------------------
         !%
+
+        print *, 'obsolete '
+        stop 2098374
         !thisCol => col_elemP(ep_Diag)
         !Npack   => npack_elemP(elemPCol)
 

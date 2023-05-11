@@ -743,7 +743,8 @@ contains
                 call bc_interpolate_timeseries ( &
                     headValue(ii), BC%headTimeSeries, tnow, ii, lower_idx, upper_idx(ii), thisBCtype )
 
-                thisDepth = max(headValue(ii) - zbottom, setting%SmallDepth%MomentumDepthCutoff)
+                !%thisDepth = max(headValue(ii) - zbottom, setting%SmallDepth%MomentumDepthCutoff)
+                thisDepth = max(headValue(ii) - zbottom, setting%ZeroValue%Depth)  !% 20230511brh
 
                 ! !% --- the time series are elevation (not depth)
                 ! headValue(ii) = headValue(ii) - setting%Solver%ReferenceHead
@@ -777,7 +778,8 @@ contains
                 !% --- Note that SWMM.inp for FIXED BC is the elevation (not depth)
                 headValue(ii) = interface_get_headBC(ii, setting%Time%Start)
 
-                thisDepth = max(headValue(ii) - zbottom,setting%SmallDepth%MomentumDepthCutoff)
+               ! thisDepth = max(headValue(ii) - zbottom,setting%SmallDepth%MomentumDepthCutoff)
+                thisDepth = max(headValue(ii) - zbottom,setting%ZeroValue%Depth)  !% 20230511brh
 
                 ! !% --- BC head is the depth + Zbottom - referencehead
                 ! headValue(ii) = zbottom  + thisDepth - setting%Solver%ReferenceHead                

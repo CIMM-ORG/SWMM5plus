@@ -502,11 +502,7 @@ module define_indexes
         enumerator :: ep_Diag                       !% diagnostic elements (static)
         enumerator :: ep_Diag_notJBadjacent                 !% diagnostic elements not adjacent to JB (static)
         enumerator :: ep_Diag_JBadjacent            !% diagnostic elements adjacent to JB element (static)
-        !enumerator :: ep_ETM                        !% all ETM elements
         enumerator :: ep_JM                         !% all JM elements
-        !enumerator :: ep_JM_AC                      !% junction mains using AC method
-        !enumerator :: ep_JM_ALLtm                   !% Junction mains with any time march (static)
-        !enumerator :: ep_JM_ETM                     !% junction mains using ETM method
         enumerator :: ep_JB                         !% any valid JB branch
         enumerator :: ep_JB_Downstream               !% all the downstream JB elements 
         enumerator :: ep_JB_Upstream               !% all the downstream JB elements 
@@ -515,24 +511,10 @@ module define_indexes
         enumerator :: ep_JB_Upstream_CC_Adjacent     !% all JB upstream branches adjacent to CC elements
         enumerator :: ep_JB_Downstream_CC_Adjacent   !% all JB downstream branches adjacent to CC elements
         enumerator :: ep_SmallDepth_CC
-        !enumerator :: ep_SmallDepth_CC_AC
-        !enumerator :: ep_SmallDepth_JM_ALLtm  !% 20220122brh
-        enumerator :: ep_SmallDepth_JM    !% 20220122brh
-        !enumerator :: ep_SmallDepth_JB_ETM 
-        !enumerator :: ep_SmallDepth_JM_AC     !% 20220122brh
-        !enumerator :: ep_ZeroDepth_CC_ALLtm         !% zero depth with any time march
+        enumerator :: ep_SmallDepth_JM    
         enumerator :: ep_ZeroDepth_CC
         enumerator :: ep_ZeroDepth_JB
-        !enumerator :: ep_ZeroDepth_CC_AC
-        !enumerator :: ep_ZeroDepth_JM_ALLtm         !% zero depth JM
         enumerator :: ep_ZeroDepth_JM
-        !enumerator :: ep_ZeroDepth_JM_AC
-        !enumerator :: ep_ACsurcharged              !% all surcharged with AC
-        !enumerator :: ep_ALLtmSurcharged           !% all time march surcharged
-        !enumerator :: ep_PSsurcharged             !% all surcharged with ETM
-        !enumerator :: ep_CCJM_H_ACsurcharged       !% all CCJM surcharged for H and AC solution
-        !enumerator :: ep_CCJM_H_AC                  !% all CCJM solved for head with AC
-        !enumerator :: ep_CCJB_eAC_i_fETM            !% all AC next to ETM
         enumerator :: ep_BClat                      !% all elements with lateral BC
         
         enumerator :: ep_CC_DownstreamOfJunction  !% all CC element downstream of a JB 

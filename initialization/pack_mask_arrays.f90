@@ -4510,31 +4510,6 @@ contains
                 end if
 
             case (JB)
-                ! !% ep_SmallDepth_JB_ETM ====================================
-                ! !% - all Small depth that are JB and ETM time march
-                ! ptype => col_elemP(ep_SmallDepth_JB_ETM)
-                ! npack => npack_elemP(ptype)
-
-                ! if (setting%SmallDepth%useMomentumCutoffYN) then
-                !     npack = count( &
-                !             (elemYN(:,eYN_isSmallDepth)) &
-                !             .and. &
-                !             (elemI(:,ei_elementType) == JB) &
-                !             .and. &
-                !             (elemI(:,ei_tmType) == ETM) )
-
-                !     if (npack > 0) then
-                !         elemP(1:npack,ptype) = pack(eIdx,  &
-                !             (elemYN(:,eYN_isSmallDepth)) &
-                !             .and. &
-                !             (elemI(:,ei_elementType) == JB) &
-                !             .and. &
-                !             (elemI(:,ei_tmType) == ETM))
-                !     end if
-                ! else 
-                !     npack = zeroI
-                ! end if
-
                 if (isZeroDepth) then
                     !% ep_ZeroDepth_JB ====================================
                     !% - all Zero depth that are JB

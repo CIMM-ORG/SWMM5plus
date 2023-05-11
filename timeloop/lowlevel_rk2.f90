@@ -643,25 +643,25 @@ module lowlevel_rk2
         Msource => elemR(:,er_SourceMomentum)
         GammaM  => elemR(:,er_GammaM)
 
-        ! print *, ' '
-        ! print *, 'in ll_momentum_solve_CC'
-        ! print *, ' Msource ', Msource(2189)
-        ! print *, ' Gamma   ', GammaM(2189)
-        ! print *, 'velocity last ',velocityLast(2189)
-        ! print *, ' Vprod   ',volumeLast(61) * velocityLast(2189)
-        ! print *, 'crk,delt ', crk(istep),delt
-        ! print *, ' '
+        print *, ' '
+        print *, 'in ll_momentum_solve_CC'
+        print *, ' Msource ', Msource(6)
+        print *, ' Gamma   ', GammaM(6)
+        print *, 'velocity last ',velocityLast(6)
+        print *, ' Vprod   ',volumeLast(6) * velocityLast(6)
+        print *, 'crk,delt ', crk(istep),delt
+        print *, ' '
 
         elemR(thisP,outCol) =  &
                 ( volumeLast(thisP) * velocityLast(thisP) + crk(istep) * delt * Msource(thisP) ) &
                 / ( oneR + crk(istep) * delt * GammaM(thisP) )
 
-        ! print *, 'in ll_momentum_solve_CC'
-        ! print *, elemR(2189,outCol) 
-        ! print *, volumeLast(2189), velocityLast(2189), Msource(2198)
+        print *, 'in ll_momentum_solve_CC'
+        print *, elemR(6,outCol) 
+        ! print *, volumeLast(6), velocityLast(2189), Msource(2198)
         ! print *, crk(istep), delt, GammaM(2189)  
         ! print *, volumeLast(2189) * velocityLast(2189), crk(istep) * delt * Msource(2189) 
-        ! print *, ' '
+        print *, ' '
 
     end subroutine ll_momentum_solve_CC
 !%
@@ -684,7 +684,12 @@ module lowlevel_rk2
         !%------------------------------------------------------------------
         !% compute velocity
 
-        !print *, ' flowrate ', momentum(780) / elemR(780,er_Length)
+        print *, ' '
+        print *, 'in momentum velocity'
+        print *, ' input    ', momentum(6)
+        print *, ' flowrate ', momentum(6) / elemR(6,er_Length)
+        print *, ' volume   ', volume(6)
+        print *, ' '
 
         elemR(thisP,inoutCol) = momentum(thisP) / volume(thisP)
 

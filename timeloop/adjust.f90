@@ -49,7 +49,8 @@ module adjust
     public :: adjust_zerodepth_face_fluxes_CC
     ! public :: adjust_zerodepth_face_fluxes_JMJB
 
-    public :: adjust_smalldepth_identify_all
+    ! public :: adjust_smalldepth_identify_all
+    
     public :: adjust_smalldepth_element_fluxes_CC
     public :: adjust_smalldepth_face_fluxes_CC
    
@@ -243,44 +244,44 @@ module adjust
             stop 529873
               ! call util_utest_CLprint('-------------0000')
 
-        if (isReset) then
-            !call adjust_zerodepth_identify_all ()
+        ! if (isReset) then
+        !     !call adjust_zerodepth_identify_all ()
            
-            if (setting%SmallDepth%useMomentumCutoffYN) then
-                call adjust_smalldepth_identify_all ()
-            end if
+        !     if (setting%SmallDepth%useMomentumCutoffYN) then
+        !         call adjust_smalldepth_identify_all ()
+        !     end if
             
-            call pack_small_or_zero_depth_elements (CC,.true.)
-            call pack_small_or_zero_depth_elements (JM,.true.)
+        !     call pack_small_or_zero_depth_elements (CC,.true.)
+        !     call pack_small_or_zero_depth_elements (JM,.true.)
 
-            if (setting%SmallDepth%useMomentumCutoffYN) then
-                call pack_small_or_zero_depth_elements (CC,.false.)
-                call pack_small_or_zero_depth_elements (JM,.false.)
-            end if
+        !     if (setting%SmallDepth%useMomentumCutoffYN) then
+        !         call pack_small_or_zero_depth_elements (CC,.false.)
+        !         call pack_small_or_zero_depth_elements (JM,.false.)
+        !     end if
 
-            call pack_CC_zeroDepth_interior_faces ()
+        !     call pack_CC_zeroDepth_interior_faces ()
             
-        end if
-               ! call util_utest_CLprint('-------------1111')
+        ! end if
+        !        ! call util_utest_CLprint('-------------1111')
 
-        call adjust_zerodepth_element_values (CC) 
+        ! call adjust_zerodepth_element_values (CC) 
 
-             ! call util_utest_CLprint('-------------AAAA')
+        !      ! call util_utest_CLprint('-------------AAAA')
         
-        call adjust_zerodepth_element_values (JM) 
+        ! call adjust_zerodepth_element_values (JM) 
 
-             ! call util_utest_CLprint('-------------BBBB')
+        !      ! call util_utest_CLprint('-------------BBBB')
 
 
-        if (setting%SmallDepth%useMomentumCutoffYN) then 
-            call adjust_smalldepth_element_fluxes_CC (isZeroFlux)
-        end if
+        ! if (setting%SmallDepth%useMomentumCutoffYN) then 
+        !     call adjust_smalldepth_element_fluxes_CC (isZeroFlux)
+        ! end if
 
-            ! call util_utest_CLprint('-------------CCCC')
+        !     ! call util_utest_CLprint('-------------CCCC')
         
-        call adjust_limit_velocity_max_CC () 
+        ! call adjust_limit_velocity_max_CC () 
 
-            ! ! ! ! ! ! call util_utest_CLprint('-------------DDDD')
+        !     ! ! ! ! ! ! call util_utest_CLprint('-------------DDDD')
 
 
         !%------------------------------------------------------------------
@@ -734,11 +735,13 @@ module adjust
             isSmallDepth => elemYN(:,eYN_isSmallDepth)
         !%------------------------------------------------------------------
 
-        isSmallDepth = .false.
+            print *, 'obsolete'
+            stop 4098273
+        ! isSmallDepth = .false.
 
-        where ((eDepth .le. depthS) .and. (eDepth > depth0) )
-            isSmallDepth   = .true.
-        endwhere
+        ! where ((eDepth .le. depthS) .and. (eDepth > depth0) )
+        !     isSmallDepth   = .true.
+        ! endwhere
 
         !%----------------------------------------------------------------------
         !% Closing
