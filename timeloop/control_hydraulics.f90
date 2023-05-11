@@ -108,6 +108,9 @@ contains
         !% --- allocate and initialize the actionI(:,:) array from control action data
         call control_init_action_points(nThenAction, nElseAction, nRules)
 
+        !% sunc before monitor element setup
+        sync all
+
         !% --- set the elements and images for the monitoring points
         call control_init_monitor_elements()
 
@@ -161,6 +164,7 @@ contains
         ! do ii=1,size(monitorI,1)
         !     print *, ' '
         !     print *, 'ii = ',ii
+        !     print *, 'image = ', this_image()
         !     print *, monitorI(ii,mi_idx)
         !     print *, monitorI(ii,mi_image)
         !     print *, monitorI(ii,mi_elem_idx)
@@ -174,7 +178,6 @@ contains
 
             if (monitorI(ii,mi_image) == this_image()) then
                 Eidx => monitorI(ii,mi_elem_idx)
-                !print *, 'Eidx ',Eidx
                 !% -- store data in coarray to pass through to other images
                 !%    This approach is taken because we cannot broadcast only
                 !%    part of an array.
@@ -187,19 +190,20 @@ contains
                 monitorPassR(5) = elemR(Eidx,er_Flowrate)
                 monitorPassR(6) = elemR(Eidx,er_Setting)
                 monitorPassR(7) = elemR(Eidx,er_TimeLastSet)
-                !% --- broadcast to all images
-                call co_broadcast(monitorPassR, source_image = ii)     
             else
                 !% continue
             end if
+        end do 
 
-            ! print *, 'monitorPassR'
-            ! print *, monitorPassR
+        !% sync all the porcessors
+        sync all
 
-            !% --- pause all the images and wait for the image corresponding
-            !%     to this monitoring point to finish its broadcast
-            sync all
+        !% --- cycle through the monitor points to ccopy data from the monitoring image
+        do ii=1,N_MonitorPoint
 
+            !% --- broadcast the monitoring image data accross all images
+            call co_broadcast(monitorPassR, monitorI(ii,mi_image)) 
+            
             !% --- store the broadcast data to local non-coarrays
             monitorR(ii,mr_Depth)       = monitorPassR(1)
             monitorR(ii,mr_Head)        = monitorPassR(2)
@@ -210,7 +214,6 @@ contains
             monitorR(ii,mr_TimeLastSet) = monitorPassR(7)
         end do
 
-     
         !% --- at this point, the monitorR array on every image has exactly the same data
         !%     so a control action can be conducted on any image.                
         
@@ -939,11 +942,11 @@ contains
         !% the EPA-SWMM *.inp file or choose a node for the control.
         !%------------------------------------------------------------------
         !% Declarations
-            integer :: ii
+            integer :: ii, NelemIdx, elemStart, elemEnd
             integer, pointer :: linknodesimType(:), LNidx(:), eIdx(:)
             integer, pointer :: nodeType(:), numElement(:)
             integer, pointer :: monitorImage(:), linkImage(:), nodeImage(:)
-            integer, pointer :: elemStart(:), elemEnd(:), Lidx, Nidx
+            integer, pointer :: Lidx, Nidx
             character(64) :: subroutine_name = 'control_init_monitor_elements'
         !%------------------------------------------------------------------
         !% Aliases
@@ -952,8 +955,6 @@ contains
             eIdx   => monitorI(:,mi_elem_idx)
             monitorImage => monitorI(:,mi_image)
             numElement   => link%I(:,li_N_element)
-            elemStart    => link%I(:,li_first_elem_idx)
-            elemEnd      => link%I(:,li_last_elem_idx)
             nodeType     => node%I(:,ni_node_type)
             linkImage    => link%I(:,li_P_image)
             nodeImage    => node%I(:,ni_P_image)
@@ -970,13 +971,15 @@ contains
                 monitorImage(ii) = linkImage(Lidx)
                 if (numElement(Lidx) == 1) then
                     !% --- only one element in link, so use that as monitor element
-                    eIdx(ii)  = elemStart(Lidx)
+                    eIdx(ii)  = link%I(Lidx,li_first_elem_idx)[monitorImage(ii)]
                 else
                     !% --- choose the central element 
                     !%     note that integer division gives bias to the
                     !%     smaller of two central values (upstream) if an even number
                     !%     of elements
-                    eIdx(ii) = (elemStart(Lidx) + elemEnd(Lidx)) / twoI
+                    elemStart = link%I(Lidx,li_first_elem_idx)[monitorImage(ii)]
+                    elemEnd   = link%I(Lidx,li_last_elem_idx)[monitorImage(ii)]
+                    eIdx(ii)  = (elemStart + elemEnd) / twoI
                 end if
             case (0) !% is node
                 Nidx => LNidx(ii)
@@ -992,7 +995,7 @@ contains
                         print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for link index'
                         call util_crashpoint(598723)
                     else
-                        eIdx(ii) = elemStart(Lidx)
+                        eIdx(ii) = link%I(Lidx,li_first_elem_idx)[monitorImage(ii)]
                     end if
 
                 case (nJ2, nBCdn)
@@ -1002,17 +1005,18 @@ contains
                         print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for link index'
                         call util_crashpoint(98273)
                     else
-                        eIdx(ii) = elemEnd(Lidx)
+                        eIdx(ii) = link%I(Lidx,li_last_elem_idx)[monitorImage(ii)]
                     end if
 
                 case (nJM,nStorage)
+                    NelemIdx = node%I(Nidx,ni_elem_idx)[monitorImage(ii)]
                     !if (node%I(Nidx,ni_elemface_idx) == nullvalueI) then
-                    if (node%I(Nidx,ni_elem_idx) == nullvalueI) then
+                    if (NelemIdx== nullvalueI) then
                         print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for node index'
                         call util_crashpoint(429933)
                     else
                         !eIdx(ii) =  node%I(Nidx,ni_elemface_idx)
-                        eIdx(ii) =  node%I(Nidx,ni_elem_idx)
+                        eIdx(ii) = NelemIdx
                     end if
 
                 case default
@@ -1030,7 +1034,7 @@ contains
                 ! print *, 'monitor ii=  ',ii
                 ! print *, 'linknodesimType       ',linknodesimType(ii)
                 ! print *, 'element #    ',eIdx(ii)
-                ! print *, 'element Type ',trim(reverseKey(elemI(eIdx(ii),ei_elementType)))
+                ! print *, 'element Type ',trim(reverseKey(elemI(eIdx(ii),ei_elementType)[monitorImage(ii)]))
                 ! if (linknodesimType(ii)) then
                 !     print *, 'link #, type ',LNidx(ii), trim(link%Names(LnIdx(ii))%str)
                 ! else

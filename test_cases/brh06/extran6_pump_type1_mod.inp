@@ -185,7 +185,7 @@ Units      None
 9694.740           2084.210           "Inflow" "" "Arial" 12 0 0
 
 [PROFILES]
-;;Name
+;;Name         Links
 ;;------------ ----------
 "profile_1"    8040 8060 8061 1570 1630
 "profile_2"    8100 8130 1570 1630 1030
