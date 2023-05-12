@@ -1451,6 +1451,11 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
+# Passed 20230512 --- oscillations and differences are explainable based on profile views.
+#  For example, 740pipe has upstream supercritical with jump to downstream subcritical and surcharged
+#  which leads to waves and is not well-represented by simply averaging the flowrates and
+#  depths. Also, pipe .21NAT is a deep pipe where 1e-3 ft (0.01 in) free surface oscillations lead to large  (+/-1 cfs)
+#  flowrate oscillations
 add_test(NAME user5_reduced01a
 COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh06/user5_reduced01a.inp -s ./ctest/internal_testing/brh06/settings_dx5.json -o ./ctest/outbrh6/
 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}

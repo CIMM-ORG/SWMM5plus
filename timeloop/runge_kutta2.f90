@@ -89,8 +89,7 @@ module runge_kutta2
         !print *, setting%Time%Step, setting%Time%Hydraulics%Dt
       
             !  call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
-        ! print *, ' ',setting%Time%Step,  maxval(elemR(elemP(1:npack_elemP(ep_CC),ep_CC),er_Flowrate))
-           
+            
         !%==================================    
         !% --- Diagnostic and junction adjustments before RK2
         istep = zeroI

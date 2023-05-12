@@ -447,15 +447,20 @@ module lowlevel_rk2
         !%-------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: outCol, thisCol, Npack
-            real(8), pointer :: velocity(:), mn(:), rh(:),  grav
+            real(8), pointer :: velocity(:), velocityold(:), mn(:), rh(:)
+            real(8), pointer :: grav, ReversalFactor, SmallVelocity 
             integer, pointer :: thisP(:)
             character(64) :: subroutine_name = 'll_momentum_gammaCM_CC'
         !%------------------------------------------------------------------
         !% Aliases
-            thisP    => elemP(1:Npack,thisCol)
-            velocity => elemR(:,er_velocity)
-            rh       => elemR(:,er_HydRadius)
-            grav     => setting%constant%gravity
+            thisP       => elemP(1:Npack,thisCol)
+            velocity    => elemR(:,er_velocity)
+            velocityOld => elemR(:,er_velocity_N0)
+            rh          => elemR(:,er_HydRadius)
+            grav        => setting%constant%gravity
+            ReversalFactor => setting%Solver%ManningsN%FlowReversalFactor 
+            SmallVelocity  => setting%Solver%ManningsN%SmallVelocity
+
             if (.not. setting%Solver%ManningsN%useDynamicManningsN) then
                 mn   => elemR(:,er_ManningsN)
             else
@@ -464,11 +469,24 @@ module lowlevel_rk2
             
         !%---------------------------------------------------------------------
 
-        !% ---- standard Manning's n approach
-        elemR(thisP,outCol) =                                       &
-                grav * (mn(thisP)**twoR) * abs(velocity(thisP))     &
-                /                                                   &
-                ( rh(thisP)**fourthirdsR )                         
+        
+
+        where ((velocity(thisP) > SmallVelocity) .and. (velocityOld(thisP) > SmallVelocity))
+            !% ---- standard Manning's n approach 
+            !%      for consistent downstream flow
+            elemR(thisP,outCol) =                                       &
+                    grav * (mn(thisP)**twoR) * abs(velocity(thisP))     &
+                    /                                                   &
+                    ( rh(thisP)**fourthirdsR )    
+        elsewhere
+            !% TESTING 20230511 increasing n on backflow or reversal
+            !%     using average of last and this velocity so that zero
+            !%     velocity at one time step will still have a drag component
+            elemR(thisP,outCol) =                                       &
+                    grav * ((ReversalFactor*mn(thisP))**twoR) * onehalfR * (abs(velocity(thisP)) + abs(velocityOld(thisP)))     &
+                    /                                                   &
+                    ( rh(thisP)**fourthirdsR )
+        endwhere                     
     
         !    print *, 'in ',trim(subroutine_name)
         !    print *, 'Gamma element values'

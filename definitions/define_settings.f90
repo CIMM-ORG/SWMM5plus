@@ -143,6 +143,8 @@ module define_settings
         logical :: useDynamicManningsN = .false. !% TRUE is not working
         real(8) :: alpha = 1.0d0
         real(8) :: beta  = 1.0d0
+        real(8) :: FlowReversalFactor = 100.d0 !% multiplier for Manning's n on flow reversal or small velocity
+        real(8) :: SmallVelocity      = 1.0d-3 !% small velocity below which Manning's n in increased.
     end type ManningsNtype
 
     !% setting%Junction%Overflow
