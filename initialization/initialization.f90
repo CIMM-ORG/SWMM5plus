@@ -23,6 +23,7 @@ module initialization
     use pack_mask_arrays
     use utility_crash
     use xsect_tables
+
     ! use utility_unit_testing, only: util_utest_CLprint
     
     ! use control_hydraulics, only: control_init_monitoring_and_action_from_EPASWMM
@@ -214,6 +215,8 @@ contains
         call init_partitioning()
         call util_crashstop(5297)
 
+            ! call util_utest_CLprint ('in initialization()')
+
         !% HACK -- need to ensure that any phantom link defined is NOT a culvert.
         !% i.e., the original portion of the link from SWMM must be defined as the
         !% culvert. Not sure how to handle the remainder!
@@ -236,6 +239,8 @@ contains
         end if  
         call util_crashstop(1973)
 
+            ! call util_utest_CLprint ('in initialization()')
+
         !%==================================================================================
         !%                    NETWORK DEFINITION ON EACH PROCESSOR IMAGE
         !%==================================================================================
@@ -243,6 +248,8 @@ contains
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin network define"
         call network_define_toplevel ()
         call util_crashstop(3293)
+
+            ! call util_utest_CLprint ('in initialization()')
 
         !%   LINK-ELEM DATA BROADCAST
         !%   ensures that all images have the unique data they need from other images after
@@ -916,7 +923,7 @@ contains
                 print *, 'possibly a bug in the code'
                 print *, 'Node # ',ii
                 print *, 'initial depth ',node%R(ii,nr_InitialDepth) 
-                call util_crashpoint(7798723)
+                call util_crashpoint(77987232)
             end if
 
             ! write(*,*) 'call api_nodef_invertElev == ', reverseKey_api(api_nodef_invertElev)

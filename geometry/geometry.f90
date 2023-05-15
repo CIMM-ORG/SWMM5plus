@@ -1829,11 +1829,11 @@ module geometry
 
                     ! if (velocity(tB) > setting%Limiter%Velocity%Maximum) then
                     !     velocity(tB) = 0.99d0 * setting%Limiter%Velocity%Maximum 
-                    !     print *, ' '
-                    !     print *, 'SMALL VELOCITY JB -- AREA IS ',area(tB), setting%ZeroValue%Area
-                    !     print *, 'Depth is ',depth(tB), ellDepth(tB)
-                    !     print *, setting%ZeroValue%Depth
-                    !     print *, ' '
+                    !     ! print *, ' '
+                    !     ! print *, 'SMALL VELOCITY JB -- AREA IS ',area(tB), setting%ZeroValue%Area
+                    !     ! print *, 'Depth is ',depth(tB), ellDepth(tB)
+                    !     ! print *, setting%ZeroValue%Depth
+                    !     ! print *, ' '
                     ! end if
                             
                 end do
@@ -3900,8 +3900,12 @@ module geometry
             outvalue = max(outvalue,ZeroValueTopWidth)
         
         case (irregular)
+            
             outvalue = irregular_geometry_from_depth_singular &
                 (idx,tt_width, indepth, elemR(idx,er_FullTopWidth), ZeroValueTopwidth)
+
+            ! print *, 'calling irregular ',idx, tt_width, indepth
+            ! print *, 'full topwidth ',elemR(idx,er_FullTopWidth), outvalue
 
         !% -----CLOSED CONDUITS ---------------------------------------------
         case (arch, basket_handle, catenary, circular, eggshaped, gothic,  &

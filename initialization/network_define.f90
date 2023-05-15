@@ -20,6 +20,8 @@ module network_define
     use utility_profiler
     use utility_crash, only: util_crashpoint
 
+    ! use utility_unit_testing, only: util_utest_CLprint
+
     implicit none
 
     private
@@ -52,24 +54,22 @@ contains
         !% get the slope of each link given the node Z values
         call init_network_linkslope ()
 
-        !print *, 'AAA'
+            ! call util_utest_CLprint ('network_define after linkslope')
 
         !% divide the link node networks in elements and faces
         call init_network_datacreate ()
 
-        !print *, 'BBB'
+            ! call util_utest_CLprint ('network_define after datacreate')
 
         !% replaces ni_elemface_idx of nJ2 nodes for the upstream elem
         !% of the face associated with the node
         call init_network_update_nj2_elem ()
 
-        !print *, 'CCC'
+            ! call util_utest_CLprint ('network_define after nj2_elem')
 
         !% look for small CC elements in the network and elongates them
         !% to a user defined value
         ! REMOVED 20230507brh call init_network_CC_elem_length_adjust ()
-
-        !print *, 'DDD'
 
         !% --- set up control/monitoring points 
         !%     connect to elements on different images
@@ -268,42 +268,23 @@ contains
         !% Setting the local image value
         image = this_image()
 
-        !print *, 'aaa'
-
         !% initialize the global indexes of elements and faces
         call init_network_set_global_indexes &
             (image, ElemGlobalCounter, FaceGlobalCounter)
 
-        !print *, 'bbb'
-
         !% set the dummy element
         call init_network_set_dummy_elem ()
-
-        !print *, 'ccc'
 
         !% handle all the links and nodes in a partition
         call init_network_handle_partition &
             (image, ElemLocalCounter, FacelocalCounter, ElemGlobalCounter, FaceGlobalCounter)
 
-            ! print *, ' ======================================='
-            ! print *, elemI(15,ei_Lidx), elemI(15,ei_Mface_uL),elemI(15,ei_Mface_dL)
-            ! print *, elemI(16,ei_Lidx), elemI(16,ei_Mface_uL),elemI(16,ei_Mface_dL)
-            ! print *, ' ======================================='
-            ! !stop 
-            !call util_crashpoint(77869)
-
-            !print *, 'ddd'
-
         !% finish mapping all the junction branch and faces that were not
         !% handeled in handle_link_nodes subroutine
         call init_network_map_nodes (image)
 
-        !print *, 'eee'
-
         !% set interior face logical
         call init_network_set_interior_faceYN ()
-
-        !print *, 'fff'
 
         !% shared faces are mapped by copying data from different images
         !% thus a sync all is needed
@@ -312,12 +293,9 @@ contains
         !% set the same global face idx for shared faces across images
         call init_network_map_shared_faces (image)
 
-        !print *, 'ggg'
-
         !% identify the boundary element connected to a shared faces
         call init_network_identify_boundary_element
 
-        !print *, 'hhh'
 
         !%------------------------------------------------------------------
         !% Closing

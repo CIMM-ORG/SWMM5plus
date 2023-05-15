@@ -849,7 +849,7 @@ module adjust
             ! case (AC)
             !     !thisCol => col_elemP(ep_SmallDepth_CC_AC)
             !     print *, 'CODE ERROR: AC Not implemented'
-            !     call util_crashpoint(6698723)
+            !     call util_crashpoint(66987234)
             ! case default
             !     print *, 'CODE ERROR: time march type unknown for # ', whichTM
             !        print *, 'which has key ',trim(reverseKey(whichTM))
@@ -1157,7 +1157,7 @@ module adjust
             ! case (ALLtm)
             !     !thisCol => col_elemP(ep_ZeroDepth_JM_ALLtm)
             !     print *, 'CODE ERROR: AC Not implemented'
-            !     call util_crashpoint(6698723)
+            !     call util_crashpoint(66987235)
             ! case (ETM)
                 thisCol => col_elemP(ep_ZeroDepth_JM)
             ! case (AC)

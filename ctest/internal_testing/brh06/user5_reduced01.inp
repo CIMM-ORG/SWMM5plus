@@ -17,7 +17,7 @@ START_TIME           00:00:00
 REPORT_START_DATE    08/11/1998
 REPORT_START_TIME    00:00:00
 END_DATE             08/11/1998
-END_TIME             23:00:00
+END_TIME             12:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -1633,3 +1633,9 @@ WEIR3            2538788.780        430991.960
 2543042.250        432386.870         "768pipe" "" "Arial" 10 1 0
 2542764.660        433457.640         "700pipe" "" "Arial" 10 1 0
 
+[PROFILES]
+;;Name           Links     
+;;-------------- ----------
+"profile_1       " 561
+"profile_1       " 740pipe GBPIPE .21NAT DEERWPIPE
+"profile_1       " .13_NAT PATH_PIPE 0.06_NAT

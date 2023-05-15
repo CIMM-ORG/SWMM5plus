@@ -86,12 +86,12 @@ contains
                     print *, 'Implied inflow velocity exceeds the setting.Limiter.Velocity.Maximum'
                     print *, 'for one or more inflow elements'
                     print *, 'Error at BC bi_idx ',BC%flowI(ii,bi_idx)
-                    print *, 'Node name  ', trim(node%Names(BC%headI(ii,bi_node_idx))%str)
+                    print *, 'Node name  ', trim(node%Names(BC%flowI(ii,bi_node_idx))%str)
                     print *, 'Inflow value (CMS) = ',BC%flowR(ii,br_value)
                     print *, 'cross-sectional area of section ',elemR(BC%flowI(ii,bi_elem_idx),er_FullArea)
                     print *, 'Velocity limiter to use this inflow must be > ',BC%flowR(ii,br_value) / elemR(BC%flowI(ii,bi_elem_idx),er_FullArea)
                     print *, 'Current value of limiter ',setting%Limiter%Velocity%Maximum
-                    call util_crashpoint(6698723)
+                    call util_crashpoint(66987236)
                 end if
             end do
         end if

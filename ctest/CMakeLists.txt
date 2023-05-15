@@ -1456,7 +1456,24 @@ enable_testing()
 #  which leads to waves and is not well-represented by simply averaging the flowrates and
 #  depths. Also, pipe .21NAT is a deep pipe where 1e-3 ft (0.01 in) free surface oscillations lead to large  (+/-1 cfs)
 #  flowrate oscillations
-add_test(NAME user5_reduced01a
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh06/user5_reduced01a.inp -s ./ctest/internal_testing/brh06/settings_dx5.json -o ./ctest/outbrh6/
+# add_test(NAME user5_reduced01a
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh06/user5_reduced01a.inp -s ./ctest/internal_testing/brh06/settings_dx5.json -o ./ctest/outbrh6/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# # Passed 20230512
+# add_test(NAME user5_reduced01
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh06/user5_reduced01.inp -s ./ctest/internal_testing/brh06/settings_dx5.json -o ./ctest/outbrh6/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+# add_test(NAME user5
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh06/user5.inp -s ./ctest/internal_testing/brh06/settings_dx5.json -o ./ctest/outbrh6/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+add_test(NAME user5_flowpath102_only
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh06/user5_flowpath102_only.inp -s ./ctest/internal_testing/brh06/settings_dx5.json -o ./ctest/outbrh6/
 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )

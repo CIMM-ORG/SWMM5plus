@@ -308,8 +308,18 @@ contains
         !% --- normalized depth
         depthnorm     = depth/fulldepth(indx)
 
+        ! print *, ' '
+        ! print *, 'depthnorm here ',depthnorm
+        ! print *, 'tableindex ',elemI(indx,ei_transect_idx), table_idx
+
         !% --- max is used because xsect quadratic interp for small values can produce zero
         outvalue = maxvalue * max( xsect_table_lookup_singular (depthnorm, thisTable(:)),ZeroValueGeometry)
+
+        ! print *, 'maxvalue ',maxvalue
+        ! print *, ' '
+        ! print *, 'TABLE '
+        ! print *, thisTable(:)
+        ! print *, ' '
 
         !% --- set minimum
         outvalue = max(outvalue,ZeroValueGeometry)

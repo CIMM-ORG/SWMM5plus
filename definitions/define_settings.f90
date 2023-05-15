@@ -161,6 +161,16 @@ module define_settings
         real(8) :: coef4
     end type
 
+    !% setting%Junction%PlanArea
+    type PlanAreaType
+        logical :: UseLargeBranchStorageTF = .true.  !% estimated plan area for junctions without defined plan area (false causes blowup for large diameter conduits)
+        real(8) :: AreaMinimum               !% NOT A USER SETTING !% the surfaceArea_minimum from EPA-SWMM, minimum for ImpliedStorage plan area
+        real(8) :: AreaFactorMaximum = 10.d0 !% maximum multiplier by which branch-implied plan are can be greater than surfaceAreaMinimum
+        real(8) :: LargeBranchDepth  = 1.5d0 !% Depth (m) for considering large branch width. Branches whose Z bottom is above this depth are ignored
+                                             !% Note that if the LargeBranchDepth is too large, then trapezodial and irregular channels will have
+                                             !% large topwidths that will cause large plan areas at their junctions.
+    end type
+
     !% setting%PreissmannSlot
     type PreissmannSlotType
         logical :: useSlotTF = .true.
@@ -377,7 +387,7 @@ module define_settings
     !% setting%Discretization
     type DiscretizationType
         !logical :: StopOnLengthAdjustTF = .false.  !% Can be used to force code to stop if link lengths are adjusted.
-        !% NOTE CHannel overflow not tested and is disabled as of 20230508
+        !% NOTE Channel overflow not tested and is disabled as of 20230508
         logical :: AllowChannelOverflowTF = .false. !% if true, then open channels (CC) can overflow (lose water) NOT IN EPA SWMM
         !logical :: AdjustLinkLengthForJunctionBranchYN = .false.          !% OBSOLETE DO NOT USE TRUE -- if true then JB (junction branch) length is subtracted from link length
         !real(8) :: JunctionBranchLengthFactor  = 1.d0    !% MUST USE 1.0   !% fraction of NominalElemLength used for JB
@@ -445,7 +455,6 @@ module define_settings
 
     ! setting%Junction
     type JunctionType
-        logical :: UseJunctionMomentumTF = .false.   !% turns on/off junction main velocity term
         !% 20230405 brh  Default is FALSE to force JM, and TRUE to Force Storage 
         logical :: ForceNodesJM = .false.  !% forces CC nodes between two conduits to be nJM rather than nJ2 faces
         !%                                 !% note CC nodes will only be nJ2 faces if SurchargeDepth = InfinitExtraDepthValue
@@ -453,14 +462,14 @@ module define_settings
         !% NOTE ForceStorage must be true as of 20230507. Future extension may include junction solution that does
         !% not require the minimum surface area of the ImpliedStorage type
         logical :: ForceStorage = .true.   !% forces nJM junctions without explicit storage to have implied storage
-        integer :: FunStorageN  = 10    !% number of curve entries for functional storage   
-        real(8) :: kFactor      = 0.0   !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
+        integer :: FunStorageN  = 10       !% number of curve entries for functional storage   
+        real(8) :: kFactor      = 0.0      !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
         real(8) :: InfiniteExtraDepthValue = 1000.d0  !% Surcharge Depth if this value or higher is treated as impossible to overflow
-        real(8) :: SurfaceArea_Minimum !% from EPA-SWMM, minimum for ImpliedStorage
-        real(8) :: BreadthFactor = 1.5d0 !% multiplier of breadthMax used to multiply diameter of largest branch for computing ImpliedJunction area
-        !% PondingScaleFactor is multiplier of junction/storage length scale (sqrt of area) to get minimum length scale of ponding
+
+        !% Ponding ScaleFactor is multiplier of junction/storage length scale (sqrt of area) to get minimum length scale of ponding
         real(8) :: PondingScaleFactor = 10.d0 
         type(OverflowType) :: Overflow
+        type(PlanAreaType) :: PlanArea
     end type JunctionType
 
     ! setting%Limiter
@@ -1216,32 +1225,7 @@ contains
         !% do not read           File.UnitNumber...
 
     !% Junctions. =====================================================================
-        !%                            Junction.Method
-        ! call json%get('Junction.Method', c, found)
-        ! if (found) then            
-        !     call util_lower_case(c)
-        !     if (c == 'implicit0') then
-        !         setting%Junction%Method = Implicit0
-        !     else if (c == 'explicit1') then
-        !         setting%Junction%Method = Explicit1
-        !     else if (c == 'explicit2') then
-        !         setting%Junction%Method = Explicit2
-        !     else
-        !         write(*,"(A)") 'Error - json file - setting.Link.DefaultInitDepthType of ',trim(c)
-        !         write(*,"(A)") '..is not in allowed options of:'
-        !         write(*,"(A)") '... linear, uniform, exponential, fixedhead'
-        !         stop 93775
-        !     end if
-        ! end if
-
         
-
-        !%                       Junction.UseJunctionMomentumTF
-        call json%get('Junction.UseJunctionMomentumTF', logical_value, found)
-        if (found) setting%Junction%UseJunctionMomentumTF = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.UseJunctionMomentumTF not found'
-
-       
         !%                       Junction.ForceNodesJM
         call json%get('Junction.ForceNodesJM', logical_value, found)
         if (found) setting%Junction%ForceNodesJM = logical_value
@@ -1252,32 +1236,11 @@ contains
         if (found) setting%Junction%ForceStorage = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.ForceStorage not found'
 
-        !%                       Junction.isDynamicYN
-        ! call json%get('Junction.isDynamicYN', logical_value, found)
-        ! if (found) setting%Junction%isDynamicYN = logical_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.isDynamicYN not found'
-
-        ! !%                       Junction.CFLlimit
-        ! call json%get('Junction.CFLlimit', real_value, found)
-        ! if (found) setting%Junction%CFLlimit = real_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.CFLlimit not found'
-
-        !%                       Junction.StorageOverflowDepth
-        ! call json%get('Junction.StorageOverflowDepth', real_value, found)
-        ! if (found) setting%Junction%StorageOverflowDepth = real_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.StorageOverflowDepth not found'
-
         !%                       Junction.FunStorageN
         call json%get('Junction.FunStorageN', integer_value, found)
         if (found) setting%Junction%FunStorageN = integer_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.CFLlimit not found'
         
-        !rm 20220207brh
-        ! !%                       Junction.HeadCoef
-        ! call json%get('Junction.HeadCoef', real_value, found)
-        ! if (found) setting%Junction%HeadCoef = real_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.HeeadCoef not found'
-
         !%                       Junction.kFactor
         call json%get('Junction.kFactor', real_value, found)
         if (found) setting%Junction%kFactor = real_value
@@ -1287,6 +1250,13 @@ contains
         call json%get('Junction.InfiniteExtraDepthValue', real_value, found)
         if (found) setting%Junction%InfiniteExtraDepthValue = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.InfiniteExtraDepthValue not found'
+
+         !%                       Junction.PondingScaleFactor
+        call json%get('Junction.PondingScaleFactor', real_value, found)
+        if (found) setting%Junction%PondingScaleFactor = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.PondingScaleFactor not found'
+
+
 
         !%                       Junction.Overflow.OrificeLength
         call json%get('Junction.Overflow.OrificeLength', real_value, found)
@@ -1330,22 +1300,26 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.coef4 not found'
 
 
+        !%                       Junction.UseLargeBranchStorageTF
+        call json%get('Junction.PlanArea.UseLargeBranchStorageTF', logical_value, found)
+        if (found) setting%Junction%PlanArea%UseLargeBranchStorageTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.PlanArea.UseLargeBranchStorageTF not found'
 
-
-
-
-
-
-
-        !%                       Junction.SurfaceArea_Minimum
-        call json%get('Junction.SurfaceArea_Minimum', real_value, found)
-        if (found) setting%Junction%SurfaceArea_Minimum = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.SurfaceArea_Minimum not found'
+        !%                       Junction.PlanArea_Minimum
+        call json%get('Junction.PlanArea.AreaMinimum', real_value, found)
+        if (found) setting%Junction%PlanArea%AreaMinimum = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.PlanArea5.AreaMinimum not found'
 
         !%                       Junction.BreadthFactor
-        call json%get('Junction.BreadthFactor', real_value, found)
-        if (found) setting%Junction%BreadthFactor = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.BreadthFactor not found'
+        call json%get('Junction.PlanArea.AreaFactorMaximum', real_value, found)
+        if (found) setting%Junction%PlanArea%AreaFactorMaximum = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.PlanArea.AreaFactorMaximum not found'
+
+        !%                       Junction.LargeBranchDepth
+        call json%get('Junction.PlanArea.LargeBranchDepth', real_value, found)
+        if (found) setting%Junction%PlanArea%LargeBranchDepth = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.PlanArea.LargeBranchDepth not found'
+
 
     !% Limiter. =====================================================================
         !rm 20220207brh

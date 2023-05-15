@@ -15,8 +15,9 @@ module junction_elements
     use preissmann_slot
     use update
     use lowerlevel_junction
-    use utility_unit_testing, only: util_utest_CLprint
     use utility_crash, only: util_crashpoint
+
+    ! use utility_unit_testing, only: util_utest_CLprint
 
 !%----------------------------------------------------------------------------- 
 !% Description:
@@ -35,7 +36,7 @@ module junction_elements
 
   
 
-    integer :: printJM = 52 !4 ! 101 !81 ! 6 !137 !51 ! 62 !% 51 ! 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
+    integer :: printJM = 786 !4 ! 101 !81 ! 6 !137 !51 ! 62 !% 51 ! 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
 
     contains
 !%==========================================================================
@@ -126,7 +127,7 @@ module junction_elements
         sync all
         !% 
         !% ==============================================================
-        
+    
         !% --- store the junction dQdH used in Backwards Euler
         if (N_nJM > 0) then            
             call lljunction_branch_dQdH ()  
@@ -172,9 +173,8 @@ module junction_elements
             elemR(thisp(mm),er_Volume) = elemR(thisp(mm),er_Volume_N0) &
                 + elemR(thisP(mm),er_FlowrateLateral) * dt
 
-            !  print *, ' '
-            !  print *, 'JM volume'
-            !  print *, elemR(thisP(mm),er_Volume)   
+                ! print *, 'JM ',thisp(mm)
+                ! if (printJM == thisP(mm)) print *, 'JM volume      ', elemR(thisP(mm),er_Volume) 
 
             !% --- volume change due to overflow or ponding
             select case (elemSI(thisP(mm),esi_JunctionMain_OverflowType))
@@ -203,6 +203,8 @@ module junction_elements
                     call util_crashpoint(772223)
             end select
 
+                ! if (printJM == thisP(mm)) print *, 'JM volume  2   ', elemR(thisP(mm),er_Volume) 
+
             !% --- volume change due to branch flows
             do kk=1,max_branch_per_node
                 if (elemSI(thisP(mm)+kk,esi_JunctionBranch_Exists) .ne. oneI) cycle
@@ -217,8 +219,9 @@ module junction_elements
                 end if
             end do
 
-            ! print *, elemR(thisP(mm),er_Volume)
-            ! print *,' '
+                ! if (printJM == thisP(mm)) print *, 'JM volume  3   ', elemR(thisP(mm),er_Volume) 
+
+           
             
         end do
 
@@ -694,7 +697,10 @@ module junction_elements
                     elemR(JMidx,er_VolumeOverflow) = Qoverflow(JMidx)  * dt * crk(istep)
                 case (PondedWeir,PondedOrifice)
                     elemR(JMidx,er_VolumePonded)   = Qoverflow(JMidx)  * dt * crk(istep)
+                case (NoOverflow)
+                    !% no action
                 case default
+                    print *, elemSI(JMidx,esi_JunctionMain_OverflowType), trim(reverseKey(elemSI(JMidx,esi_JunctionMain_OverflowType)))
                     print *, 'CODE ERROR: unexpected case default'
                     stop 397894
             end select
@@ -702,6 +708,8 @@ module junction_elements
                 ! if (JMidx==printJM) print *,'    new overflow',elemR(JMidx,er_VolumeOverflow)
 
             resid = lljunction_conservation_residual (JMidx) 
+
+             !if (JMidx==printJM) print *,'          residual',resid
 
             ! if (resid > 1.0d-12) then
             !     print *, 'JMidx ',JMidx
@@ -785,7 +793,9 @@ module junction_elements
                         ! if (JMidx == printJM) then 
                         !     print *, 'Q update 2'
                         !     do ii=1,max_branch_per_node
-                        !         print *, ii, elemR(thisJM(mm)+ii,er_Flowrate)
+                        !         if (elemSI(thisJM(mm)+ii,esi_JunctionBranch_Exists) == oneI) then
+                        !             print *, ii, elemR(thisJM(mm)+ii,er_Flowrate)
+                        !         endif
                         !     end do
                         ! end if
                

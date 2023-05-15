@@ -6,6 +6,8 @@ module lowerlevel_junction
     use define_xsect_tables
     use define_settings, only: setting
     use face, only: face_push_elemdata_to_face
+    use geometry, only: geo_depth_from_volume_by_element_CC
+    use geometry_lowlevel, only: llgeo_head_from_depth_pure
     use update, only: update_Froude_number_element, update_wavespeed_element, update_auxiliary_variables_CC
     use utility_crash, only: util_crashpoint
 
@@ -43,7 +45,7 @@ module lowerlevel_junction
     public :: lljunction_push_inflowCC_flowrates_to_face
     public :: lljunction_push_adjacent_elemdata_to_face
 
-    integer :: printJM = 212
+    integer :: printJM = 420
     
     contains
 !%==========================================================================
@@ -64,7 +66,7 @@ module lowerlevel_junction
 
             real(8) :: bsign
 
-            integer :: frHead, frArea, ii
+            integer :: frHead, frArea, frHeadAdj, ii, mm
         !%-----------------------------------------------------------------
         !% Aliases
             !% --- array for the JM index
@@ -92,6 +94,7 @@ module lowerlevel_junction
                 fidx => elemI(:,ei_Mface_uL)
                 frHead = fr_Head_u !% -- use u for jump purposes? QUESTION
                 frArea = fr_Area_u !% QUESTION
+                frHeadAdj = fr_Head_Adjacent
             else
                 !% --- downstream JB
                 bsign = -oneR
@@ -106,25 +109,51 @@ module lowerlevel_junction
                 fidx => elemI(:,ei_Mface_dL)
                 frHead = fr_Head_d !% --- use d for jump purposes? QUESTION
                 frArea = fr_Area_d !% QUESTION
+                frHeadAdj = fr_Head_Adjacent
             end if
 
-            !% --- head difference from junction main to face
+            !% --- head difference from junction main to element
             deltaH => elemR(:,er_Temp01)
             deltaH = zeroR
             where (elemR(thisJB,er_Depth) > setting%ZeroValue%Depth)
-                deltaH(thisJB) =  elemR(JMar(thisJB),er_Head) - faceR(fidx(thisJB),frHead)
+                where (faceR(fidx(thisJB),frHeadAdj) > faceR(fidx(thisJB),fr_Zbottom))
+                    deltaH(thisJB) =  elemR(JMar(thisJB),er_Head) - faceR(fidx(thisJB),frHeadAdj)
+                elsewhere
+                    !% --- where adjacent head is lower than face zbottom
+                    deltaH(thisJB) = elemR(JMar(thisJB),er_Head) - (faceR(fidx(thisJB),fr_Zbottom)+ setting%ZeroValue%Depth)
+                endwhere
+                !deltaH(thisJB) =  elemR(JMar(thisJB),er_Head) - faceR(fidx(thisJB),frHead)
+                
             endwhere
 
-            ! if (.not. isUpstreamBranch) then 
-            !     print *, 'deltaH(6)',deltaH(6), elemR(6,er_Depth)
-            !     print *, 'JM        ', JMar(6), elemR(JMar(6),er_Head)
-            !     print *, 'fidx      ',fidx(6), faceR(fidx(6),frHead)
-            ! end if
+            ! do mm=1,size(thisJB)
+            !     if (printJM == Jmar(thisJB(mm))) then
+            !         if (.not. isUpstreamBranch) then 
+            !             print *, 'AAA ', isUpstreamBranch
+            !             print *, 'deltaH()  ', deltaH(thisJB(mm)), elemR(thisJB(mm),er_Depth)
+            !             print *, 'JM, JB',  JMar(thisJB(mm)), thisJB(mm),  elemR(JMar(thisJB(mm)),er_Head)
+            !             print *, ' '
+            !            ! print *, 'fidx      ',  fidx(6), faceR(fidx(6),frHead)
+            !         end if
+            !     end if
+            ! end do
 
             !% --- limit dH if it is more than 1/2 of depth in branch
             where (deltaH(thisJB) > onehalfR   * elemR(thisJB,er_Depth))
                 deltaH(thisJB)    = onefourthR * elemR(thisJB,er_Depth)
             end where
+
+            ! do mm=1,size(thisJB)
+            !     if (printJM == Jmar(thisJB(mm))) then
+            !         if (.not. isUpstreamBranch) then 
+            !             print *, 'BBB ', isUpstreamBranch
+            !             print *, 'deltaH()  ', deltaH(thisJB(mm)), elemR(thisJB(mm),er_Depth)
+            !             !print *, 'JM, JB',  JMar(thisJB(mm)), thisJB(mm),  elemR(JMar(thisJB(mm)),er_Head)
+            !             print *, ' '
+            !            ! print *, 'fidx      ',  fidx(6), faceR(fidx(6),frHead)
+            !         end if
+            !     end if
+            ! end do
 
             !% --- Subcritical outflow junction (super overwrites below)
             !%     Requires more than a trivial deltaH and there must be more than
@@ -158,6 +187,22 @@ module lowerlevel_junction
                     faceR(fidx(thisJB),fr_Velocity_u) = elemR(thisJB,er_Velocity)
                     faceR(fidx(thisJB),fr_Velocity_d) = elemR(thisJB,er_Velocity)
             endwhere 
+
+            ! do mm=1,size(thisJB)
+            !     if (printJM == Jmar(thisJB(mm))) then
+            !         if (.not. isUpstreamBranch) then 
+            !             print *, 'CCC ', isUpstreamBranch
+            !             print *, 'deltaH()  ', deltaH(thisJB(mm)), elemR(thisJB(mm),er_Depth)
+            !             print *, 'Flowrate  ', elemR(thisJB(mm),er_Flowrate)
+            !             print *, 'area      ', faceR(fidx(thisJB(mm)),frArea)
+            !             !print *, 'JM, JB',  JMar(thisJB(mm)), thisJB(mm),  elemR(JMar(thisJB(mm)),er_Head)
+            !             print *, ' '
+            !            ! print *, 'fidx      ',  fidx(6), faceR(fidx(6),frHead)
+            !         end if
+            !     end if
+            ! end do
+
+
 
             !% --- for a trivial outflow and a trivial dH, set flow to zero
             !%     Note -- does not affect inflows or deltaH < zeroR
@@ -737,13 +782,17 @@ module lowerlevel_junction
 
             integer, pointer :: fup(:), fdn(:)
 
+            integer, dimension(1) :: JMar
+
             integer :: kk
             real(8) :: QratioIn, QratioOut, dQoverflow, Hinc
             real(8) :: MinHeadForOverflow, OverflowDepth, PondedHead
 
             real(8), dimension(max_branch_per_node) :: dQ, dH, areaQ
+            real(8), dimension(1) :: Rarray
             real(8), parameter :: localEpsilon = 1.0d-6
-            real(8) :: zbottom, Aout, Ain, AoutOverflow, AinPonded
+            real(8) :: zbottom, Aout, Ain, AoutOverflow, AinPonded, Astorage
+            real(8) :: dQstorage
             integer :: zcount, Qcount, bcount
             logical, dimension(max_branch_per_node) :: bFixYN
 
@@ -761,7 +810,7 @@ module lowerlevel_junction
 
         repeatYN = .true.
 
-            ! ! print *, ' '
+            ! print *, ' '
             ! print *, '============FIX CONSERVATION'
             ! print *, 'JUNCTION ',JMidx
             ! print *, 'starting resid ',resid 
@@ -772,6 +821,12 @@ module lowerlevel_junction
 
         Aout   = zeroR
         Ain    = zeroR
+
+        if ((printJM == JMidx) .and. (Qoverflow .ne. zeroR)) then 
+            print *, ' Step ',setting%Time%Step
+            print *, 'Qoverflow AAA ',Qoverflow
+            print *, 'HEAD          ',elemR(JMidx,er_Head)
+        end if
 
         !% --- note that by definition: QnetIn > 0 and QnetOut < 0 
         !%     resid > 0 implies too much inflow
@@ -811,7 +866,8 @@ module lowerlevel_junction
             !% --- if Qoverflow == 0 no action required
         endif
 
-            ! print *, '0001  Resid    ',resid
+            ! print *, '0001  Resid    ',JMidx, resid
+            ! print *, 'node name ',trim(node%Names(elemI(JMidx,ei_node_Gidx_Bipquick))%str)
 
             ! print *, 'head ',elemR(JMidx,er_Head)
 
@@ -820,9 +876,10 @@ module lowerlevel_junction
             (JMidx, MinHeadForOverflow, OverflowDepth, PondedHead)
 
             ! print *, MinHeadForOverflow, OverFlowDepth, PondedHead
-            ! print *, Qoverflow
+            if ((printJM == JMidx) .and. (Qoverflow .ne. zeroR)) print *, 'Qoverflow here ',Qoverflow
             
         do while (repeatYN)
+
 
             !% --- get flow areas of overflows or ponding
             if (Qoverflow > zeroR) then 
@@ -833,8 +890,11 @@ module lowerlevel_junction
                     case (PondedOrifice)
                         AinPonded =  -OverFlowDepth * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length)
                     case default 
-                        print *, 'CODE ERROR: unexpected case default'
-                        call util_crashpoint(7798723)
+                        print *, 'CODE ERROR: unexpected case default: Overflow with No overflow Type'
+                        print *, 'JMidx ',JMIdx, ' ',trim(node%Names(elemI(JMidx,ei_node_Gidx_Bipquick))%str)
+                        print *, 'Qoverflow ', Qoverflow 
+                        print *, 'Head      ', elemR(JMidx,er_Head)
+                        call util_crashpoint(77987233)
                 end select
                 AoutOverflow = zeroR
 
@@ -955,7 +1015,9 @@ module lowerlevel_junction
                 ! print *, ' '
                 ! print *, 'Ain, Aout ',Ain, Aout
                 ! print *, ' '
-            
+
+            !% --- area associated with increased/decreased storage
+            Astorage = elemSR(JMidx,esr_Storage_Plan_Area)
 
             if ((Ain < setting%ZeroValue%Area) .and. (Aout < setting%ZeroValue%Area)) then 
                 !% degenerate condition 
@@ -974,7 +1036,7 @@ module lowerlevel_junction
                     !%     for an upstream branch the Q is inherently negative and the
                     !%     branch sign is positive so the dQ > 0 is needed to reduce
                     !%     the (negative) outflow on an upstream branch
-                    dQ(kk) = - resid * real(branchsign(kk),8) * areaQ(kk) / (Ain + Aout) 
+                    dQ(kk) = - resid * real(branchsign(kk),8) * areaQ(kk) / (Ain + Aout + Astorage) 
 
                      ! print *, 'dQ(kk) ',kk, dQ(kk)
 
@@ -986,7 +1048,7 @@ module lowerlevel_junction
                     !%     negative residual indicates too much outflow,
                     !%     which requires a positive dQ to reduce the
                     !%     outflow magnitude
-                    dQoverflow =  - resid * AoutOverflow / (Ain + Aout)
+                    dQoverflow =  - resid * AoutOverflow / (Ain + Aout + Astorage)
 
                     !% --- check to see if too much overflow was removed
                     !%     i.e., a positive residual (too much inflow)
@@ -1005,7 +1067,7 @@ module lowerlevel_junction
                     !%     so dQ>0 is required to increase inflow rate.
                     !%     Conversely, a positive residual requires reduction of inflow
                     !%     so dQ < 0 is needed
-                    dQoverflow = -resid * AinPonded / (Ain + Aout)    
+                    dQoverflow = -resid * AinPonded / (Ain + Aout + Astorage)    
 
                     !% --- check to see if too much ponding was removed
                     !%     i.e., a positive residual (too much inflow)
@@ -1029,6 +1091,9 @@ module lowerlevel_junction
 
         end do
 
+        !% --- positive residual (too much inflow) causes increased storage rate
+        Qstorage = Qstorage + resid *  Astorage / (Ain + Aout + Astorage)
+
             ! print *, ' '
             ! print *, 'dQ '
             ! do  kk=1,max_branch_per_node
@@ -1046,7 +1111,7 @@ module lowerlevel_junction
 
         !% --- update overflow
         Qoverflow = Qoverflow + dQoverflow
-
+        
 
         !% --- recompute the residual
         resid = lljunction_conservation_residual (JMidx)
