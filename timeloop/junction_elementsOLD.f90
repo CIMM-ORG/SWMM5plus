@@ -17,7 +17,7 @@ module junction_elements
     use lowerlevel_junction
     use utility_crash, only: util_crashpoint
 
-    use utility_unit_testing, only: util_utest_CLprint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
 !%----------------------------------------------------------------------------- 
 !% Description:
@@ -36,7 +36,7 @@ module junction_elements
 
   
 
-    integer :: printJM = 51 
+    integer :: printJM = 786 !4 ! 101 !81 ! 6 !137 !51 ! 62 !% 51 ! 3 ! 13 !47 !13! 79 ! 168 ! 13 !% testing
 
     contains
 !%==========================================================================
@@ -53,10 +53,7 @@ module junction_elements
         !% equation argument for nominal outflow flowrates, and (4) compute
         !% the dQ/dH needed for the first step junction solution. 
         !%-----------------------------------------------------------------
-        !% Declarations
-            integer(kind=8), pointer :: step
         !%-----------------------------------------------------------------
-            step => setting%Time%Step
         !%-----------------------------------------------------------------
 
         !% --- flowrate/velocity of the JM
@@ -83,8 +80,6 @@ module junction_elements
         sync all
         call face_shared_face_sync (fp_noBC_IorS)
         sync all
-
-            ! call util_utest_CLprint ('------- jjj.03 after face shared face sync')
         !% ==============================================================
 
         !% --- ensure that all JB are consistent with adjacent face before the
@@ -92,7 +87,7 @@ module junction_elements
         if (N_nJM > 0) then 
             call face_pull_facedata_to_JBelem (ep_JB, fr_Flowrate,   elemR(:,er_Flowrate))
             call face_pull_facedata_to_JBelem (ep_JB, fr_Velocity_d, elemR(:,er_Velocity))
-                ! call util_utest_CLprint ('------- jjj.04  after face_pull_facedata_to_JBelem in lljunction')
+                ! call util_utest_CLprint ('------- jjj.03  after face_pull_facedata_to_JBelem in lljunction')
         end if
 
         !% --- store junction-adjacent element data on face
@@ -101,15 +96,13 @@ module junction_elements
         !%     TO BE MOVED TO junction_branch_adjacent 
         if (N_nJM > 0) then 
             call lljunction_push_adjacent_elemdata_to_face ()
-                ! call util_utest_CLprint ('------- jjj.05 after lljunction_push_adjacent_elemdata_to_face')
+                ! call util_utest_CLprint ('------- jjj.04 after lljunction_push_adjacent_elemdata_to_face')
         end if
 
         !% saz 20230507
         !% --- push JB adjacent diag data to faces
         if (npack_elemP(ep_Diag_JBadjacent) > 0) then
             call face_push_diag_adjacent_data_to_face (ep_Diag_JBadjacent)
-
-            ! call util_utest_CLprint ('------- jjj.06 after ace_push_diag_adjacent_data_to_face')
         end if
 
         !% --- JB ENERGY EQUATION compute flows/velocities on JB/CC outflow elements/faces from 
@@ -117,7 +110,7 @@ module junction_elements
         !% TO BE MOVED TO junction_branch_element_flowrates
         if (N_nJM > 0) then 
             call lljunction_branch_energy_outflow ()
-                ! call util_utest_CLprint ('------- jjj.07 after lljunction_branch_energy_outflow')
+                ! call util_utest_CLprint ('------- jjj.05 after lljunction_branch_energy_outflow')
         end if
     
         !% AT THIS POINT: We now have JB elements and faces that are consistent. The Diag-adjacent and
@@ -134,20 +127,18 @@ module junction_elements
         sync all
         !% 
         !% ==============================================================
-
+    
         !% --- store the junction dQdH used in Backwards Euler
         if (N_nJM > 0) then            
             call lljunction_branch_dQdH ()  
-                ! call util_utest_CLprint ('------- jjj.08 after lljunction_branch_dQdH')
+                ! call util_utest_CLprint ('------- jjj.06 after lljunction_branch_dQdH')
         end if
 
-        ! !% --- ensure DeltaQ are zero 
-        ! if (N_nJM > 0) then        
-        !     faceR(:,fr_DeltaQ) = zeroR
-        !     elemR(:,er_DeltaQ) = zeroR
-        ! end if
-
-
+        !% --- ensure DeltaQ are zero 
+        if (N_nJM > 0) then        
+            faceR(:,fr_DeltaQ) = zeroR
+            elemR(:,er_DeltaQ) = zeroR
+        end if
 
     end subroutine junction_preliminaries
 !%
@@ -229,13 +220,8 @@ module junction_elements
             end do
 
                 ! if (printJM == thisP(mm)) print *, 'JM volume  3   ', elemR(thisP(mm),er_Volume) 
-            
-            ! if (thisP(mm) == printJM) then 
-            !     print *, ' '
-            !     write(*,"(A,3e11.3)") 'JMvolume  difference', &
-            !     elemR(thisp(mm),er_Volume) - elemR(thisP(mm),er_FullVolume), elemR(thisP(mm),er_Volume_N0)-elemR(thisP(mm),er_FullVolume)
-            !     print *, ' '
-            ! end if
+
+           
             
         end do
 
@@ -272,7 +258,7 @@ module junction_elements
             call face_force_JBelem_to_face (ep_JM, .true.)
             call face_force_JBelem_to_face (ep_JM, .false.)
 
-                ! call util_utest_CLprint ('------- aaa.02 after face for JBelem in junction')
+                ! call util_utest_CLprint ('------- aaa.02 after face for JBeleme in junction')
         end if
         
         !% ==============================================================
@@ -282,8 +268,6 @@ module junction_elements
         sync all
         call face_shared_face_sync (fp_noBC_IorS)
         sync all
-
-            ! call util_utest_CLprint ('------- aaa.03 after face sync in junction')
         !% 
         !% ==============================================================
 
@@ -345,106 +329,38 @@ module junction_elements
             !% --- new junction volume from conservative face fluxes
             call junction_main_volume_advance (ep_JM, Npack)
 
-            ! call util_utest_CLprint ('------- ccc.01 after junction_main_volume_advance')
-
-                ! print *, 'volume advance ',elemR(printJM,er_Volume), elemR(printJM,er_FullVolume)
-                ! write(*,"(A,3f16.6)") 'AAAA ',elemR(printJM,er_Head), elemR(printJM,er_Depth)
-
-                ! print *, ' '
-                ! print *, 'dvdt AAA ',(elemR(printJM,er_Volume) - elemR(printJM,er_Volume_N0)) / setting%Time%Hydraulics%Dt
-                ! print *, elemR(printJM,er_Volume), elemR(printJM,er_FullVolume)
-                ! print *, elemR(printJM,er_SlotVolume), elemR(PrintJM,er_SlotVolume_N0)
-                ! print *, elemR(printJM,er_dSlotVolume)
-
-            !% --- new junction plan area (non-surcharged functional, tabular storage only)
+            !% --- new junction plan area
             call geo_plan_area_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
             !print *, 'plan area ',elemSR(thisP(1),esr_Storage_Plan_Area)
-
-                ! call util_utest_CLprint ('------- ccc.02 after geo_plan_area_from_volume_JM')
-
-                ! write(*,"(A,3f16.6)") 'BBBB ',elemR(printJM,er_Head), elemR(printJM,er_Depth)
             
             !% --- saz20230504 compute slots based on solved volume
             !% --- slot calculations based on junction volume
-            !%     Computes slotVol, 
-            !%     includes the JunctionMain_Surcharge_Plan_Area
             call slot_JM_ETM (ep_JM, Npack)
-
-
-                ! call util_utest_CLprint ('------- ccc.03 after slot_JM_ETM')
-
-                ! write(*,"(A,3f16.6)") 'CCCC ',elemR(printJM,er_Head), elemR(printJM,er_Depth)
-
-                ! print *, ' '
-                ! print *, 'dvdt BBB ',(elemR(printJM,er_Volume) - elemR(printJM,er_Volume_N0)) / setting%Time%Hydraulics%Dt
-                ! print *, elemR(printJM,er_Volume), elemR(printJM,er_FullVolume)
-                ! print *, elemR(printJM,er_SlotVolume), elemR(PrintJM,er_SlotVolume_N0)
-                ! print *, elemR(printJM,er_dSlotVolume)
-
             
             !% --- new junction depth 
             !% NOTE: THIS USES storage_implied_depth_from_volume
-            !% that limits depth based on fulldepth, Slot is added back in slot_JM_adjustments
+            !% that limits depth based on fulldepth
             call geo_depth_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
-
-                ! call util_utest_CLprint ('------- ccc.04  after geo_depth_from_volume_JM')
-
-                ! write(*,"(A,3f16.6)") 'DDDD ',elemR(printJM,er_Head), elemR(printJM,er_Depth)
         
             !% --- new JM head, ellDepth and area
             elemR(thisP,er_Head)     = llgeo_head_from_depth_pure (thisP,elemR(thisP,er_Depth))
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
             elemR(thisP,er_Area)     = elemR(thisP,er_Depth) * sqrt(elemSR(thisP,esr_Storage_Plan_Area))
 
-                ! call util_utest_CLprint ('------- ccc.05  after head, depth, area updates for JM')
-
             !% --- add the Preissmann slot depths back to head 
             call slot_JM_adjustments (ep_JM, Npack)
-
-                ! call util_utest_CLprint ('------- ccc.06  after slot_JM_adjustments')
-
-                ! write(*,"(A,3f16.6)") 'EEEE ',elemR(printJM,er_Head), elemR(printJM,er_Depth)
-
-                ! print *, ' '
-                ! print *, 'dvdt CCC ',(elemR(printJM,er_Volume) - elemR(printJM,er_Volume_N0)) / setting%Time%Hydraulics%Dt
-                ! print *, elemR(printJM,er_Volume), elemR(printJM,er_FullVolume)
-                ! print *, elemR(printJM,er_SlotVolume), elemR(PrintJM,er_SlotVolume_N0)
-                ! print *, elemR(printJM,er_dSlotVolume)
 
             !% --- adjust JM for small or zero depth
             call adjust_element_toplevel (JM)
 
-
-                ! call util_utest_CLprint ('------- ccc.07  after adjust_element_toplevel')
-
-                ! write(*,"(A,3f16.6)") 'FFFF ',elemR(printJM,er_Head), elemR(printJM,er_Depth)
-
             !% --- assign JB values based on new JM head
             call geo_assign_JB_from_head (ep_JM) !% HACK  revise using ep_JB
-
-                ! call util_utest_CLprint ('------- ccc.08  after geo_assign_JB_from_head')
-
-                ! write(*,"(A,3f16.6)") 'GGGG ',elemR(printJM,er_Head), elemR(printJM,er_Depth)
 
             !% --- Preissmann slot computations
             call slot_JB_computation (ep_JM)
 
-                ! call util_utest_CLprint ('------- ccc.08  after slot_JB_computation')
-
-                ! write(*,"(A,3f16.6)") 'HHHH ',elemR(printJM,er_Head), elemR(printJM,er_Depth)
-
             !% --- adjust JB for small or zero depth
             call adjust_element_toplevel (JB)
-
-                 ! call util_utest_CLprint ('------- ccc.08  after adjust_element_toplevel (JB)')
-
-                ! write(*,"(A,3f16.6)") 'IIII ',elemR(printJM,er_Head), elemR(printJM,er_Depth)
-
-                !  print *, ' '
-                ! print *, 'dvdt DDD ',(elemR(printJM,er_Volume) - elemR(printJM,er_Volume_N0)) / setting%Time%Hydraulics%Dt
-                ! print *, elemR(printJM,er_Volume), elemR(printJM,er_FullVolume)
-                ! print *, elemR(printJM,er_SlotVolume), elemR(PrintJM,er_SlotVolume_N0)
-                ! print *, elemR(printJM,er_dSlotVolume)
             
         end if
 
@@ -504,7 +420,7 @@ module junction_elements
             thisP => elemP(1:Npack,ep_JM)
         !%------------------------------------------------------------------
 
-            ! call util_utest_CLprint ('------- bbb.01 Junction top level at start')
+            ! call util_utest_CLprint ('------- aaa Junction top level at start')
 
         !% --- Consistency, store face values identical
         !% --- store face flowrate in JB for upstream (1) and downstream (2)
@@ -515,33 +431,31 @@ module junction_elements
             call lljunction_branch_getface (elemR(:,er_Flowrate),fr_Flowrate,thisP(mm),ei_Mface_dL,2)
         end do
         
-            ! call util_utest_CLprint ('------- bbb.02 Junction top level after getface')
+            ! call util_utest_CLprint ('------- bbb Junction top level after getface')
 
         !% --- compute the new junction element volume and head, JB flowrates
         !%     Does not change JB face values or JB values other than flowrate.
         call junction_calculation (thisP, Npack, istep)
 
-            ! call util_utest_CLprint ('------- bbb.03 after junction calculation')
+            ! call util_utest_CLprint ('------- ccc after junction calculation')
 
         !% HACK --- PREISSMANN SLOT.  May need something here or in junction_calculation_4
 
         !% --- for cases where dH is limited, reset JB flowrates for mass conservation
         call junction_mass_conservation (ep_JM, istep)
 
-            ! call util_utest_CLprint ('------- bbb.04 after junction_mass_conservation ')
+            ! call util_utest_CLprint ('------- ddd after junction_mass_conservation ')
 
         !% --- update auxiliary variable on JM and JB
         !%     ASSUMES THAT HEAD, VOLUME, DEPTH ON JM ARE ALREADY ASSIGNED
         !%     JB TAKES ON JM HEAD
         call geo_assign_JB_from_head (ep_JM) !% HACK  revise using ep_JB
 
-            ! call util_utest_CLprint ('------- bbb.05  after geo_assign_JB_from_head')
-
         !% saz 20230504 -- since geometry_toplevel_JMJB is obsolete,
         !% we need JB slot computations here
         call slot_JB_computation (ep_JM)
 
-            ! call util_utest_CLprint ('------- bbb.05  after slot_JB_computation')
+            ! call util_utest_CLprint ('------- eee  after geo_assign_JB_from_head')
 
         ! !% --- adjust JB and JM for small or zero depth
         ! call adjust_element_toplevel (JB)
@@ -560,18 +474,18 @@ module junction_elements
                 !% --- adjust JM for small or zero depth (may be redundant)
                 call adjust_element_toplevel (JM)
 
-                    ! ! call util_utest_CLprint ('------- bbb.06  after adjust update for JM')
+                    ! call util_utest_CLprint ('------- fff.01  after adjust update for JM')
     
                 call update_wavespeed_element(thisP)
 
-                    ! ! call util_utest_CLprint ('------- bbb.07  after adjust update for JM')
+                    ! call util_utest_CLprint ('------- fff.02  after adjust update for JM')
 
                 call update_Froude_number_element (thisP) 
 
-                    ! ! call util_utest_CLprint ('------- bbb.08  after adjust update for JM')
+                    ! call util_utest_CLprint ('------- fff.03  after adjust update for JM')
             end if
     
-            ! call util_utest_CLprint ('------- bbb.09  after adjust update for JM')
+            ! call util_utest_CLprint ('------- fff  after adjust update for JM')
 
 
         !% NOTE TRUE FORCES Q weight on JB to minimum, which
@@ -591,7 +505,7 @@ module junction_elements
             
         end if
 
-        ! call util_utest_CLprint ('------- bbb.10  after update for JB')
+        ! call util_utest_CLprint ('------- ggg  after update for JB')
 
        
 
@@ -619,16 +533,11 @@ module junction_elements
             real(8), pointer :: Qstorage(:), Qoverflow(:), Qlateral(:)
 
             real(8) :: Qnet, QnetBranches
-            real(8) :: dQdHoverflow, dQdHstorage
-            real(8) :: divisor, dH, resid, MinHeadForOverflow
+            real(8) :: dQdHoverflow, dQdHbranches,  dQdHstorage
+            real(8) :: divisor, dH, resid
             real(8), pointer :: dt, crk(:)
 
             real(8), dimension(2) :: Hbound
-
-            logical :: isCrossingIntoSurcharge, isCrossingOutofSurcharge
-            logical :: isCrossingIntoOverflowOrPonding, isCrossingOutofOverflowOrPonding
-            logical :: isOverflow, isPonding, canOverflowOrPond
-            
 
             real(8), parameter :: localEpsilon = 1.0d-6
         !%-----------------------------------------------------------------
@@ -643,25 +552,6 @@ module junction_elements
 
         do mm=1,Npack
             JMidx = thisJM(mm)
-            isCrossingIntoSurcharge          = .false.
-            isCrossingOutofSurcharge         = .false.
-            isCrossingIntoOverflowOrPonding  = .false.
-            isCrossingOutofOverflowOrPonding = .false.
-            isOverflow                       = .false.
-            isPonding                        = .false.
-            
-
-            ! print *, ' '
-            ! print *, 'REQUIRE VOLUME = VOLUME_N0 as starting condition'
-            ! print *, elemR(JMidx,er_Volume), elemR(JMidx,er_Volume_N0)
-            ! print *, ' '
-
-            
-            if (elemSI(JMidx,esi_JunctionMain_OverflowType) == NoOverflow) then 
-                canOverflowOrPond = .false.
-            else 
-                canOverflowOrPond = .true.
-            end if
 
                 ! if (JMidx==printJM) then
                 !     print *, ' '
@@ -683,170 +573,143 @@ module junction_elements
 
             call lljunction_main_head_bounds (JMidx, Hbound)
 
-                ! if (JMidx==printJM) print *,'Hbound          ', Hbound
+
+            ! if (JMidx==printJM) print *,'Hbound          ', Hbound
 
             !% --- convert Hbound to a deltaH bound
             Hbound = Hbound - elemR(JMidx,er_Head)
 
-                ! if (JMidx==printJM) print *,'Hbound as delta ', Hbound
+            ! if (JMidx==printJM) print *,'Hbound as delta ', Hbound
 
-            !% --- get the net flowrate from all sources
-            !%     including branches, overflow/ponding and lateral
-            !%     if no overflow/ponding, logicals are returned as false
-            call lljunction_main_netFlowrate &
-                 (JMidx, Qnet, MinHeadForOverflow, canOverflowOrPond, isOverflow, isPonding)
 
-                ! if (JMidx==printJM) print *,'Qnet            ', Qnet
+            !% --- compute net flowrate from branches (both CC and Diag)
+            QnetBranches = lljunction_main_sumBranches (JMidx,er_Flowrate, elemR)
 
-                !if (JMidx==printJM) print *, 'MinHeadForOverflow ',MinHeadForOverflow
+                ! if (JMidx==printJM) print *, '   QnetBranches ',QnetBranches
 
-            !% --- Junction step 1A
-            call lljunction_main_dHcompute &
-                (JMidx, dH, dQdHoverflow,  dQdHstorage, Qnet, Hbound, istep, &
-                isOverflow, isPonding, .false., .false.)
+            !% --- compute overflow/ponding rate (negative is outflow)
+            Qoverflow(JMidx) = lljunction_main_Qoverflow (JMidx,1)
 
-                ! if (printJM == JMidx) print *, 'dH AAAA  ',dH
+                ! if (JMidx==printJM) print *, '   Qoverflow   ',Qoverflow(JMidx)
 
-            !% --- truncate dH for crossing into or out of surcharge or
-            !%     overflow or ponding. This sets up for a second step
-            if (canOverflowOrPond) then 
-                !% --- crossing from free surface to overflow/ponding
-                if ((elemR(JMidx,er_Head)    .le. MinHeadForOverflow)      & 
-                    .and.                                                  &
-                    (elemR(JMidx,er_Head + dH)  > MinHeadForOverflow)      &
-                ) then
-                    isCrossingIntoOverflowOrPonding  = .true.
-                    isCrossingOutofOverflowOrPonding = .false.
+            !% --- net flowrate (Qnet > 0 is net inflow)
+            Qnet = QnetBranches + Qoverflow(JMidx) + Qlateral(JMidx) 
 
-                    !stop 2298734
+                ! if (JMidx==printJM) print *, '   Qnet         ',Qnet
 
-                else
-                    isCrossingIntoOverflowOrPonding = .false.
-                end if
-                !% --- crossing from overflow/ponding to free surface
-                if ((elemR(JMidx,er_Head)      > MinHeadForOverflow)      & 
-                    .and.                                                  &
-                    (elemR(JMidx,er_Head + dH) < MinHeadForOverflow)      &
-                ) then
-                    isCrossingOutofOverflowOrPonding  = .true.
-                    isCrossingIntoOverflowOrPonding   = .false.
+            !% --- if zero net flow, then storage and flowrates do not change.
+            !%     Set storage rate to zero, volume to old volume, and
+            !%     DeltaQ to zero. No need to do anything to flowrates
+            !%     Then we're done with this junction
+            if (Qnet == zeroR) then 
+                Qstorage(JMidx) = zeroR
+                elemR(JMidx,er_Volume) = elemR(JMidx,er_Volume_N0)
+                do ii=1,max_branch_per_node
+                    if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
+                    elemR(JMidx+ii,er_DeltaQ) = zeroR
+                end do
+                ! print *, 'skipping JM ',JMidx
+                cycle !% to next junction
+            end if
 
-                    ! print *, 'checking overflow/ponding ',MinHeadForOverFlow
-                    ! print *, JMidx, elemR(JMidx,er_Head), dH
-                    !stop 55097823
-                else
-                    isCrossingOutofOverflowOrPonding = .false.
-                end if
+            !% --- compute storage rate of change with head
+            dQdHstorage = lljunction_main_dQdHstorage (JMidx,iStep)
 
-                if (isCrossingintoOverflowOrPonding .or. isCrossingOutofOverflowOrPonding) then 
-                    !% --- limit this dH to the distance to the crown
-                    !%     and set volume, depth to full values
-                    dH = elemR(JMidx,er_Zcrown) - MinHeadForOverflow 
-                end if
+            !    if (JMidx==printJM) print *, '   dQdHstorage ',dQdHstorage
+
+            !% --- compute overflow rate with change in head
+            dQdHoverflow = lljunction_main_dQdHoverflow (JMidx)
+
+                ! if (JMidx==printJM) print *, '   dQdHoverflow ',dQdHoverflow
+
+            !% --- compute net dQdH of branches
+            dQdHbranches = lljunction_main_sumBranches(JMidx,esr_JunctionBranch_dQdH, elemSR)
+
+            !% --- divisor
+            divisor =  dQdHstorage -  dQdHbranches - dQdHoverflow
+
+                ! if (JMidx==printJM) print *, '   divisor     ',divisor
+
+            if (abs(divisor) > localEpsilon ) then 
+                dH = Qnet / divisor
             else
-                isCrossingIntoOverflowOrPonding    = .false.
-                isCrossingOutofOverflowOrPonding   = .false.
+                dH = zeroR
             end if
 
-            !% --- if not overflow/ponding, check for surcharge transition
-            if ((.not. isCrossingIntoOverflowOrPonding)  & 
-                .and.                                    &
-                (.not. isCrossingOutofOverflowOrPonding) &
-            ) then
+            !    if (JMidx==printJM) print *, '   dH           ',dH
 
-                if (elemYN(JMidx,eYN_canSurcharge)) then
-                    !% --- if head starts below or at crown we limit
-                    !%     the rise in head during the first part of this
-                    !%     solution and handle any excess in the second part.
-                    !%     Note that this is consistent with using the
-                    !%     standard storage plan area
-                    if ((elemR(JMidx,er_Head)     .le. elemR(JMidx,er_Zcrown))    &
-                        .and.                                                     &
-                       ((elemR(Jmidx,er_Head) + dH) >  elemR(Jmidx,er_Zcrown))    &
-                    ) then
-                        isCrossingIntoSurcharge  = .true.
-                        isCrossingOutofSurcharge = .false.
-                    else  
-                        isCrossingIntoSurcharge = .false.
-                    endif
-                    !% --- if head is above the crown, limit the drop in the
-                    !%     head to exactly the crown during the first part of
-                    !%     this solution, and handl the excess drop in the
-                    !%     second part
-                    !%     Note that this is consistent with using the surcharge
-                    !%     plan area
-                    if ((elemR(JMidx,er_Head)        > elemR(JMidx,er_Zcrown))  &
-                        .and.                                                   &
-                        ((elemR(Jmidx,er_Head) + dH) < elemR(Jmidx,er_Zcrown))  &
-                    ) then
-                         isCrossingOutofSurcharge = .true.
-                         isCrossingIntoSurcharge  = .false.
-                    else
-                        isCrossingOutofSurcharge = .false.
-                    end if
-                    if (isCrossingintoSurcharge .or. isCrossingOutofSurcharge) then 
-                        !% --- limit this dH to the distance to the crown
-                        !%     and set volume, depth to full values
-                        dH = elemR(JMidx,er_Zcrown) - elemR(JMidx,er_Head) 
-                    end if
-                else
-                    isCrossingIntoSurcharge  = .false.
-                    isCrossingOutofSurcharge = .false.
-                end if  
+            !% --- limit dH
+            dH = max(dH, Hbound(1))
+            dH = min(dH, Hbound(2))
 
-                ! if (printJM == JMidx) print *, 'crossing ',isCrossingIntoSurcharge, isCrossingOutofSurcharge
-                ! if (printJM == JMidx) print *, 'dH BBBB  ',dH
-            else 
-                isCrossingIntoSurcharge  = .false.
-                isCrossingOutofSurcharge = .false.
-            end if
+            !    if (JMidx==printJM) print *, '   dH lim       ',dH
 
-            !% --- update values (head, depth, volume and deltaQ) 
-            !%     Note that if not a Crossing... then the dH is used
-            !%     When any Crossing... is true then set to the threshold values
-            call lljunction_main_update_intermediate &
-                (JMidx, istep, dH, dQdHoverflow, dQdHstorage, MinHeadForOverflow, isOverflow, isPonding, &
-                 isCrossingIntoOverflowOrPonding, isCrossingOutofOverflowOrPonding, &
-                 isCrossingIntoSurcharge, isCrossingOutofSurcharge)
-        
-    
-                ! if (printJM == JMidx) print *, 'dH CCCC ',dH
 
-            !% --- second part: additional dH when crossing surcharge
-            if ((isCrossingIntoSurcharge)         .or. (isCrossingOutofSurcharge) .or.            &
-                (isCrossingIntoOverflowOrPonding) .or. (isCrossingOutofOverflowOrPonding)) then 
+            !% --- update JM head and depth
+            elemR(JMidx,er_Head)  = elemR(JMidx,er_Head)  + dH
+            elemR(JMidx,er_Depth) = elemR(JMidx,er_Depth) + dH
 
-                call lljunction_main_netFlowrate &
-                 (JMidx, Qnet, MinHeadForOverflow, canOverflowOrPond, isOverflow, isPonding)
+            elemR(JMidx,er_Depth) = max(elemR(JMidx,er_Depth),0.99d0*setting%ZeroValue%Depth)
+            elemR(JMidx,er_EllDepth) = elemR(JMidx,er_Depth)
 
-                !% --- Compute additional dH after crossing surcharge/free threshold
-                call lljunction_main_dHcompute &
-                        (JMidx, dH, dQdHoverflow, dQdHstorage, Qnet, Hbound, istep, &
-                         isOverflow, isPonding, isCrossingIntoSurcharge, isCrossingOutofSurcharge)
+            !% --- compute JB element DeltaQ using dQdH
+            call lljunction_branch_update_DeltaQ (JMidx,dH)  
 
-                    ! if (printJM == JMidx) print *, 'dH DDDD  ',dH
+                ! if (JMidx==printJM) print *, '   delta Q: ',elemR(JMidx+1,er_DeltaQ), elemR(JMidx+2,er_DeltaQ)
 
-                !% --- update values (head, depth, volume, deltaQ) based on dH
-                !%     Use isCrossing... = .false. so that full values are
-                !%     note used
-                call lljunction_main_update_intermediate &
-                    (JMidx, istep, dH, dQdHoverflow, dQdHstorage, MinHeadForOverflow, isOverflow, isPonding, &
-                    .false., .false., .false., .false.)
-          
-                    ! print *, 'update 2 flowrate ',elemR(JMidx+1,er_Flowrate), elemR(JMidx+2,er_Flowrate)
-            else
-                !% --- no action
-            end if
-            
-            call lljunction_main_update_final (JMidx, istep)
+            !% --- update JB elements Q using Delta Q
+            call lljunction_branch_update_flowrate (JMidx)
+
+                ! if (JMidx==printJM) then
+                !     do ii=1,max_branch_per_node
+                !         if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
+                !         print *, '   Q for JB=', JMidx+ii,elemR(JMidx+ii,er_Flowrate)
+                !     end do
+                !     print *, ' '
+                ! end if
+
+            !% --- update junction main overflow rate
+            Qoverflow(JMidx) = Qoverflow(JMidx) + dH * dQdHoverflow
+
+            !    if (JMidx==printJM) print *,'    Qover      ',Qoverflow(JMidx)
+
+            !% --- update net Q branches (included CC and Diag)
+            QnetBranches = lljunction_main_sumBranches (JMidx,er_Flowrate,elemR)
+
+                ! if (JMidx==printJM) print *,'    newQNet     ',QnetBranches
+
+            !% --- update junction main storage flow rate
+            Qstorage(JMidx) = lljunction_main_update_storage_rate  &
+                                    (JMidx, dH, QnetBranches,istep) 
+
+                ! if (JMidx==printJM) print *,'    new Qstore   ',Qstorage(JMidx)
+
+                ! if (JMidx==printJM) print *,'    old Volume  ',elemR(JMidx,er_Volume)
+
+            !% --- update the junction main volume based on the storage rate
+            elemR(JMidx,er_Volume) =  lljunction_main_volume_from_storageRate (JMidx,istep)
+
+                ! if (JMidx==printJM) print *,'    new Volume  ',elemR(JMidx,er_Volume)
+
+            !% --- update the overflow volume based on rate and time step
+            select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
+                case (OverflowWeir,OverflowOrifice)
+                    elemR(JMidx,er_VolumeOverflow) = Qoverflow(JMidx)  * dt * crk(istep)
+                case (PondedWeir,PondedOrifice)
+                    elemR(JMidx,er_VolumePonded)   = Qoverflow(JMidx)  * dt * crk(istep)
+                case (NoOverflow)
+                    !% no action
+                case default
+                    print *, elemSI(JMidx,esi_JunctionMain_OverflowType), trim(reverseKey(elemSI(JMidx,esi_JunctionMain_OverflowType)))
+                    print *, 'CODE ERROR: unexpected case default'
+                    stop 397894
+            end select
 
                 ! if (JMidx==printJM) print *,'    new overflow',elemR(JMidx,er_VolumeOverflow)
 
             resid = lljunction_conservation_residual (JMidx) 
 
-                !  if (JMidx==printJM) print *,' '
-                !  if (JMidx==printJM) print *,' ---------------- residual',resid
-                !  if (JMidx==printJM) print *,' '
+             !if (JMidx==printJM) print *,'          residual',resid
 
             ! if (resid > 1.0d-12) then
             !     print *, 'JMidx ',JMidx

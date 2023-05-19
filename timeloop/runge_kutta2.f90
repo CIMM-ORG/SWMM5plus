@@ -88,7 +88,7 @@ module runge_kutta2
             
         !print *, setting%Time%Step, setting%Time%Hydraulics%Dt
       
-          !  call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
+           !call util_utest_CLprint ('======= AAA  start of RK2 ==============================')    
             
         !%==================================    
         !% --- Diagnostic and junction adjustments before RK2
@@ -114,7 +114,7 @@ module runge_kutta2
         !%     the faces require synchronizing.
         call junction_preliminaries ()
 
-            ! ! call util_utest_CLprint ('------- BBB after junction preliminaries')
+            ! call util_utest_CLprint ('------- CCC after junction preliminaries')
 
 
         !%==================================  
@@ -126,7 +126,7 @@ module runge_kutta2
         
             !% --- Half-timestep advance on CC for U and UVolume
             call rk2_step_ETM_CC (istep)  
-                ! ! call util_utest_CLprint ('------- III  after rk2_step')
+                ! ! ! call util_utest_CLprint ('------- DDD  after rk2_step')
 
             !% --- Update all CC aux variables
             !%     Note, these updates CANNOT depend on face values
@@ -134,11 +134,13 @@ module runge_kutta2
             call update_auxiliary_variables_CC (                  &
                 ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
                 .true., .false., dummyIdx)
-                ! ! call util_utest_CLprint ('------- JJJ  after update_aux...CC step')
+                ! ! ! call util_utest_CLprint ('------- EEE  after update_aux...CC step')
 
             !% --- zero and small depth adjustment for elements
             call adjust_element_toplevel (CC)
-                ! ! call util_utest_CLprint ('------- KKK  after adjust element CC (before 2nd step junction)')
+                if (istep == 2) then 
+                    ! call util_utest_CLprint ('------- OOO  after adjust element CC (before 2nd step junction)')
+                end if
 
             !% --- JUNCTION 2nd STEP
             if (N_nJM > 0) then 
@@ -153,25 +155,25 @@ module runge_kutta2
                 else if (istep == 2) then 
                     !% --- conservative storage advance for junction
                     call junction_second_step ()
-                    ! ! call util_utest_CLprint ('------- PPP  after junction second step')
+                    ! call util_utest_CLprint ('------- PPP  after junction second step')
                 end if
             end if
 
             !% --- interpolate all data to faces
             sync all
             call face_interpolation(fp_noBC_IorS, .true., .true., .true., .false., .true.) 
-                ! ! call util_utest_CLprint ('------- OOO  after face interp')
+                ! ! ! call util_utest_CLprint ('------- FFF  after face interp')
 
             !% saz 20230507
             if (N_diag > 0) then 
                 !% --- update flowrates for aa diagnostic elements
                 call diagnostic_by_type (ep_Diag, istep)  
-                    ! ! call util_utest_CLprint ('------- BBB  after diagnostic')
+                    ! ! ! call util_utest_CLprint ('------- GGG  after diagnostic')
     
                 !% --- push the diagnostic flowrate data to faces -- true is upstream, false is downstream
                 call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .true.)
                 call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .false.)
-                    ! ! call util_utest_CLprint ('------- CCC  after face_push_elemdata_to_face')
+                    ! ! ! call util_utest_CLprint ('------- HHH  after face_push_elemdata_to_face')
             end if
 
             !% ==============================================================
@@ -198,31 +200,23 @@ module runge_kutta2
 
             call face_zeroDepth (fp_CC_downstream_is_zero_IorS, &
                 fp_CC_upstream_is_zero_IorS,fp_CC_bothsides_are_zero_IorS)
-                ! ! call util_utest_CLprint ('------- PPP.01 after face zerodepth ')
+               !!    ! ! call util_utest_CLprint ('------- III.01 after face zerodepth ')
 
             if (N_nJM > 0) then
-
-                ! print *, ' '
-                ! print *, 'down ',faceP(1:npack_faceP(fp_JB_downstream_is_zero_IorS),fp_JB_downstream_is_zero_IorS )
-                ! print *, ' '
-                ! print *, 'up   ',faceP(1:npack_faceP(fp_JB_upstream_is_zero_IorS),fp_JB_upstream_is_zero_IorS )
-                ! print *, ' '
-                ! print *, 'both ',faceP(1:npack_faceP(fp_JB_bothsides_are_zero_IorS),fp_JB_bothsides_are_zero_IorS )
-                ! print *, ' '
-
 
                 !% --- set face geometry and flowrates where adjacent element is zero
                 !%     only applies to faces with JB on one side
                 call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &
                     fp_JB_upstream_is_zero_IorS,fp_JB_bothsides_are_zero_IorS)
-                    ! ! call util_utest_CLprint ('------- PPP.02 after face zerodepth ')
+                !!   ! ! call util_utest_CLprint ('------- III.02 after face zerodepth ')
             end if                
 
             !% --- enforce open (1) closed (0) "setting" value from EPA-SWMM
             !%     for all CC and Diag elements (not allowed on junctions)
             call face_flowrate_for_openclosed_elem (ep_CCDiag)
-                ! ! call util_utest_CLprint ('------- QQQ after openclosed setting (before 1st step junction solution)')
-
+                if (istep == 1) then 
+                    ! call util_utest_CLprint ('------- JJJ after openclosed setting (before 1st step junction solution)')
+                end if
             !% QUESTION: DO WE NEED ANOTHER SYNC HERE? OR CAN face_flowrate_for_openclosedL_elem
             !% BE MOVED UPWARDS IN STEPPING SO THAT IT GETS SYNCED?
 
@@ -232,26 +226,27 @@ module runge_kutta2
                 !%     Note that this must be called in every image, including
                 !%     those that do not have junctions as it contains a sync
                 call junction_first_step ()
+                 ! call util_utest_CLprint ('------- KKK  before adjust Vfilter CC (after junction first step)')
             end if
-                 ! ! call util_utest_CLprint ('------- VVV.01  before adjust Vfilter CC after junction first step')
-
             !% --- Filter flowrates to remove grid-scale checkerboard
             call adjust_Vfilter_CC ()
 
-                ! ! call util_utest_CLprint ('------- VVV.02  after adjust Vfilter CC')
+                !!   ! ! call util_utest_CLprint ('------- LLL  after adjust Vfilter CC')
 
             if (istep == 1) then 
                 !% -- fluxes at end of first RK2 step are the conservative fluxes enforced
                 !%    in second step
                 call rk2_store_conservative_fluxes (ALL) 
-                    ! all util_utest_CLprint ('------- WWW  after  step 1 store conservative fluxes all')
+                    ! all util_utest_CLprint ('------- MMM  after  step 1 store conservative fluxes all')
             end if
 
-                ! ! call util_utest_CLprint ('------- YYY end of RK step')
+            if (istep == 1) then
+                ! call util_utest_CLprint ('------- NNN end of first RK step')
+            end if
 
         end do
 
-         ! ! call util_utest_CLprint ('========== ZZZ  end of RK2 ============================')
+        ! call util_utest_CLprint ('========== ZZZ  end of RK2 ============================')
 
         !% --- overall volume conservation
         volume2 = zeroR

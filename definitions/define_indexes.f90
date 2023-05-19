@@ -638,6 +638,7 @@ module define_indexes
         enumerator ::  esi_JunctionMain_Curve_ID                   !% id of the junction storage cure if exists
         enumerator ::  esi_JunctionMain_Total_Branches             !% total number of branches connected to the junction main
         enumerator ::  esi_JunctionMain_OverflowType               !% NoOverflow, Ponding, OverflowWeir
+        enumerator ::  esi_JunctionMain_HeadLimit                  !% assigned 1 if upper limit on head, -1 if lower limit, 0 if none
         enumerator ::  esi_JunctionBranch_Exists                   !% assigned 1 if branch exists
         enumerator ::  esi_JunctionBranch_CC_adjacent              !% assigned 1 if CC is adjacent element
         enumerator ::  esi_JunctionBranch_Diag_adjacent            !% assigned 1 if Diagnostic is adjacent element

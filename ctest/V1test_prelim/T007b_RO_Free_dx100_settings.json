@@ -1,0 +1,11 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "T007b_RO_Free_dx100: single pipe, high flow, nodes are SWMM5+ faces",
+        "Short" : "T007b_RO_Free_dx100"
+    },
+    "Discretization" : {
+        "NominalElemLength" : 100.00
+    }  
+}

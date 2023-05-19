@@ -32,17 +32,11 @@ module lowerlevel_junction
     public :: lljunction_conservation_residual
     public :: lljunction_conservation_fix
 
-    public :: lljunction_main_dHcompute
-    public :: lljunction_main_update_intermediate
-    public :: lljunction_main_update_final
-
     public :: lljunction_main_dQdHoverflow
     public :: lljunction_main_dQdHstorage
     public :: lljunction_main_head_bounds
-    public :: lljunction_main_netFlowrate
     public :: lljunction_main_Qoverflow
     public :: lljunction_main_sumBranches
-
     public :: lljunction_main_update_Qdependent_values
     public :: lljunction_main_update_storage_rate 
     public :: lljunction_main_velocity
@@ -51,7 +45,7 @@ module lowerlevel_junction
     public :: lljunction_push_inflowCC_flowrates_to_face
     public :: lljunction_push_adjacent_elemdata_to_face
 
-    integer :: printJM = 51
+    integer :: printJM = 420
     
     contains
 !%==========================================================================
@@ -66,7 +60,7 @@ module lowerlevel_junction
         !%-----------------------------------------------------------------
         !% Declarations:
             integer, pointer :: Npack, JMar(:), thisJB(:), fidx(:)
-            real(8), pointer :: deltaH(:), grav, energyQ(:)
+            real(8), pointer :: deltaH(:), grav
 
             logical :: isUpstreamBranch 
 
@@ -78,7 +72,6 @@ module lowerlevel_junction
             !% --- array for the JM index
             JMar   => elemSI(:,esi_JunctionBranch_Main_Index)    
             grav   => setting%Constant%gravity
-            energyQ=> elemR(:,er_Temp03)
         !%-----------------------------------------------------------------
         !%-----------------------------------------------------------------
 
@@ -133,8 +126,6 @@ module lowerlevel_junction
                 
             endwhere
 
-            ! print *, 'deltaH AAA ',deltaH(6616)
-
             ! do mm=1,size(thisJB)
             !     if (printJM == Jmar(thisJB(mm))) then
             !         if (.not. isUpstreamBranch) then 
@@ -151,8 +142,6 @@ module lowerlevel_junction
             where (deltaH(thisJB) > onehalfR   * elemR(thisJB,er_Depth))
                 deltaH(thisJB)    = onefourthR * elemR(thisJB,er_Depth)
             end where
-
-            ! print *, 'deltaH BBB ',deltaH(6616)
 
             ! do mm=1,size(thisJB)
             !     if (printJM == Jmar(thisJB(mm))) then
@@ -176,15 +165,11 @@ module lowerlevel_junction
                     !% --- outflow from JB  in upstream direction
                     !% --- or outflow from JB in downstream direction
                     !%     NOTE: without junction main approach velocity
-                    energyQ(thisJB) = - bsign * faceR(fidx(thisJB),frArea)                  &
+                    elemR(thisJB,er_Flowrate) = - bsign * faceR(fidx(thisJB),frArea)                  &
                             * sqrt(                                                                     &
                                     (twoR * grav * deltaH(thisJB))                                      &
                                     /(oneR + elemSR(thisJB,esr_JunctionBranch_Kfactor))                 &
                                     )   
-
-                    !% TEST AVERAGE WITH OLD FLOW 20230516brh
-                    elemR(thisJB,er_Flowrate)  = onehalfR * (energyQ(thisJB) + elemR(thisJB,er_Flowrate) )      
-                          
 
                     where (elemR(thisJB,er_Area) > setting%ZeroValue%Area)
                         elemR(thisJB,er_Velocity) = elemR(thisJB,er_Flowrate) / elemR(thisJB,er_Area)
@@ -202,8 +187,6 @@ module lowerlevel_junction
                     faceR(fidx(thisJB),fr_Velocity_u) = elemR(thisJB,er_Velocity)
                     faceR(fidx(thisJB),fr_Velocity_d) = elemR(thisJB,er_Velocity)
             endwhere 
-
-            ! write(*,"(A,3f12.3)") 'Vel, area, flowrate',elemR(6616,er_Velocity), elemR(6616,er_Area), elemR(6616,er_Flowrate)
 
             ! do mm=1,size(thisJB)
             !     if (printJM == Jmar(thisJB(mm))) then
@@ -652,9 +635,7 @@ module lowerlevel_junction
     subroutine lljunction_branch_update_DeltaQ (JMidx, dH)   
         !%------------------------------------------------------------------
         !% Description:
-        !% Updates the delta Q for a JB based on the dQ/dH
-        !% NOTE THAT delta Q is cumulative to account for 2-steps
-        !% in dH when crossing in/out of surcharge
+        !% Updates the Qfor a JB based on the dQ/dH
         !%------------------------------------------------------------------
             integer, intent(in) :: JMidx
             real(8), intent(in) :: dH
@@ -664,8 +645,7 @@ module lowerlevel_junction
         do ii=1,max_branch_per_node
             if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle   
             
-            elemR(JMidx+ii,er_DeltaQ) = &
-                  + elemSR(JMidx+ii,esr_JunctionBranch_dQdH) * dH 
+            elemR(JMidx+ii,er_DeltaQ) = elemSR(JMidx+ii,esr_JunctionBranch_dQdH) * dH 
 
             ! print *, ' '
             ! print *, 'JB ',JMidx+ii 
@@ -842,11 +822,11 @@ module lowerlevel_junction
         Aout   = zeroR
         Ain    = zeroR
 
-        ! if ((printJM == JMidx) .and. (Qoverflow .ne. zeroR)) then 
-        !     print *, ' Step ',setting%Time%Step
-        !     print *, 'Qoverflow AAA ',Qoverflow
-        !     print *, 'HEAD          ',elemR(JMidx,er_Head)
-        ! end if
+        if ((printJM == JMidx) .and. (Qoverflow .ne. zeroR)) then 
+            print *, ' Step ',setting%Time%Step
+            print *, 'Qoverflow AAA ',Qoverflow
+            print *, 'HEAD          ',elemR(JMidx,er_Head)
+        end if
 
         !% --- note that by definition: QnetIn > 0 and QnetOut < 0 
         !%     resid > 0 implies too much inflow
@@ -896,15 +876,17 @@ module lowerlevel_junction
             (JMidx, MinHeadForOverflow, OverflowDepth, PondedHead)
 
             ! print *, MinHeadForOverflow, OverFlowDepth, PondedHead
-            ! if ((printJM == JMidx) .and. (Qoverflow .ne. zeroR)) print *, 'Qoverflow here ',Qoverflow
+            if ((printJM == JMidx) .and. (Qoverflow .ne. zeroR)) print *, 'Qoverflow here ',Qoverflow
             
         do while (repeatYN)
+
+
             !% --- get flow areas of overflows or ponding
             if (Qoverflow > zeroR) then 
                 !% --- inflow from ponding only (OverflowDepth < 0)
                 select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
                     case (PondedWeir)
-                        AinPonded =  -OverflowDepth * twoR * sqrt( pi * elemSR(JMidx,esr_Storage_Plan_Area))
+                        AinPonded =  -OverflowDepth * twoR * sqrt( pi * elemSR(JMidx,esr_JunctionMain_Surcharge_Plan_Area))
                     case (PondedOrifice)
                         AinPonded =  -OverFlowDepth * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length)
                     case default 
@@ -920,7 +902,7 @@ module lowerlevel_junction
                 !% --- outflow either as overflow or to ponding (OverflowDepth > 0)
                 select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
                     case (OverflowWeir, PondedWeir)
-                        AoutOverflow = OverflowDepth * twoR * sqrt( pi * elemSR(JMidx,esr_Storage_Plan_Area))
+                        AoutOverflow = OverflowDepth * twoR * sqrt( pi * elemSR(JMidx,esr_JunctionMain_Surcharge_Plan_Area))
                     case (OverflowOrifice, PondedOrifice)
                         AoutOverflow = OverFlowDepth * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length)
                     case default 
@@ -1181,316 +1163,6 @@ module lowerlevel_junction
              + elemR (JMidx,er_FlowrateLateral)
 
     end function lljunction_conservation_residual
-
-!%    
-!%==========================================================================
-!%==========================================================================
-!% 
-    subroutine lljunction_main_netFlowrate &
-        (JMidx, Qnet, MinHeadForOverflow, canOverflowOrPond, isOverflow, isPonding)
-        !%------------------------------------------------------------------
-        !% Description
-        !% Computes net flowrate in (positive) or out (negative) to
-        !% a junction from all sources
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in)    :: JMidx
-            real(8), intent(inout) :: Qnet, MinHeadForOverflow
-            logical, intent(in)    :: canOverflowOrPond
-            logical, intent(inout) :: isOverflow, isPonding
-
-            real(8), pointer       :: Qoverflow(:), Qlateral(:)
-
-            real(8)                :: QnetBranches
-        !%------------------------------------------------------------------
-        !% Aliases
-            !% --- note that Qoverflow includes ponding rate
-            Qoverflow   => elemSR(:,esr_JunctionMain_OverflowRate) !% negative is outflow
-            Qlateral    => elemR (:,er_FlowrateLateral) !% negative is outflow)
-        !%------------------------------------------------------------------
-
-        !% --- compute net flowrate from branches (both CC and Diag)
-        QnetBranches = lljunction_main_sumBranches (JMidx,er_Flowrate, elemR)
-
-        ! if (JMidx==printJM) print *, '   QnetBranches ',QnetBranches
-
-        !% --- compute overflow/ponding rate (negative is outflow)
-        if (canOverflowOrPond) then
-            Qoverflow(JMidx) = lljunction_main_Qoverflow &
-                (JMidx,MinHeadForOverflow,oneI,isOverflow,isPonding)
-        else
-            Qoverflow(JMidx) = zeroR
-        end if
-
-            ! if (JMidx==printJM) print *, '   Qoverflow   ',Qoverflow(JMidx)
-
-        !% --- net flowrate (Qnet > 0 is net inflow)
-        Qnet = QnetBranches + Qoverflow(JMidx) + Qlateral(JMidx) 
-
-         ! if (JMidx==printJM) print *, '   Qnet         ',Qnet
-        
-    end subroutine lljunction_main_netFlowrate
-!%    
-!%==========================================================================
-!%==========================================================================
-!% 
-    subroutine lljunction_main_dHcompute  &
-        (JMidx, dH, dQdHoverflow, dQdHstorage, Qnet, Hbound, istep, &
-         isOverflow, isPonding, isCrossingIntoSurcharge, isCrossingOutofSurcharge)
-        !%------------------------------------------------------------------
-        !% Description
-        !% Top level computation of dH in first step of junction solution
-        !%------------------------------------------------------------------
-        !% Declarations
-            integer, intent(in)    :: JMidx, istep
-            logical, intent(in)    :: isOverflow, isPonding
-            logical, intent(in)    :: isCrossingIntoSurcharge, isCrossingOutofSurcharge
-            real(8), intent(inout) :: dH, dQdHoverflow, dQdHstorage
-            real(8), intent(in)    :: Qnet
-            real(8), dimension(2), intent(in) :: Hbound
-
-            real(8), pointer :: Qstorage(:)
-
-            real(8) :: dQdHbranches
-            real(8) :: divisor
-
-            integer :: ii
-
-            real(8), parameter :: localEpsilon = 1.0d-6
-        !%------------------------------------------------------------------
-        !% Aliases
-            Qstorage    => elemSR(:,esr_JunctionMain_StorageRate) !% positive is increasing storage
-        !%------------------------------------------------------------------   
-
-            ! print *, ' '
-            ! print *, 'in dH compute'
-            
-        !% --- if zero net flow, then storage and flowrates do not change.
-        !%     Set storage rate to zero, volume to old volume, and
-        !%     DeltaQ to zero. No need to do anything to flowrates
-        !%     Then we're done with this junction
-        if (Qnet == zeroR) then 
-            Qstorage(JMidx) = zeroR
-            dH = zeroR
-            !% --- delta Q is NOT accumulative 
-            
-            return !% nothing more for this junction
-        end if
-
-        !% --- compute storage rate of change at the present head
-        dQdHstorage = lljunction_main_dQdHstorage &
-            (JMidx,istep,isOverflow,isPonding, &
-            isCrossingIntoSurcharge,isCrossingOutofSurcharge)
-
-            ! if (JMidx==printJM) print *, '   dQdHstorage ',dQdHstorage
-
-        if (isOverflow .or. isPonding) then
-            !% --- compute overflow rate of change with change in head
-            dQdHoverflow = lljunction_main_dQdHoverflow (JMidx)
-        else
-            dQdHoverflow = zeroR
-        end if
-
-            ! if (JMidx==printJM) print *, '   dQdHoverflow ',dQdHoverflow
-
-        !% --- compute net dQdH of branches
-        dQdHbranches = lljunction_main_sumBranches(JMidx,esr_JunctionBranch_dQdH, elemSR)
-
-        !% --- divisor
-        divisor =  dQdHstorage -  dQdHbranches - dQdHoverflow
-
-            ! if (JMidx==printJM) print *, '   divisor     ',divisor
-
-        if (abs(divisor) > localEpsilon ) then 
-            dH = Qnet / divisor
-        else
-            dH = zeroR
-        end if
-
-            ! if (JMidx==printJM) print *, '   dH           ',dH
-
-        !% --- limit dH
-        if (dH < Hbound(1)) then 
-            !% --- lower limit
-            dH = Hbound(1)
-            elemSI(JMidx,esi_JunctionMain_HeadLimit) = -oneI
-        elseif (dH > Hbound(2)) then 
-            dH = Hbound(2)
-            elemSI(JMidx,esi_JunctionMain_HeadLimit) = +oneI
-        else
-            elemSI(JMidx,esi_JunctionMain_HeadLimit) = zeroI
-        end if
-
-            ! if (JMidx==printJM) print *, '   dH lim       ',dH
-
-        ! print *, 'out of dH compute '
-        ! print *, ' '
-    end subroutine lljunction_main_dHcompute
-!%    
-!%==========================================================================
-!%==========================================================================
-!% 
-    subroutine lljunction_main_update_intermediate &
-        (JMidx, istep, dH, dQdHoverflow, dQdHstorage, MinHeadForOverflow, &
-         isOverflow, isPonding, &
-         isCrossingIntoOverflowOrPonding, isCrossingOutofOverflowOrPonding, &
-         isCrossingIntoSurcharge, isCrossingOutofSurcharge)
-        !%------------------------------------------------------------------
-        !% Description
-        !% updates depth, head, and deltaQ for a given dH on junction JMidx
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in) :: JMidx, istep
-            real(8), intent(in) :: dH, dQdHstorage, dQdHOverflow, MinHeadForOverflow
-            logical, intent(in) :: isPonding, isOverflow
-            logical, intent(in) :: isCrossingIntoOverflowOrPonding, isCrossingOutofOverflowOrPonding
-            logical, intent(in) :: isCrossingIntoSurcharge, isCrossingOutofSurcharge
-
-            real(8), pointer    :: Qstorage(:), Qoverflow(:)
-            real(8)             :: QnetBranches
-        !%------------------------------------------------------------------
-        !% Aliases
-            Qstorage    => elemSR(:,esr_JunctionMain_StorageRate)
-            !% --- note that Qoverflow includes ponding rate
-            Qoverflow   => elemSR(:,esr_JunctionMain_OverflowRate) !% negative is outflow
-        !%------------------------------------------------------------------
-
-        !% --- update JM head and depth
-        elemR(JMidx,er_Head)  = elemR(JMidx,er_Head)  + dH
-        elemR(JMidx,er_Depth) = min(elemR(JMidx,er_Head) - elemR(JMidx,er_Zbottom), elemR(JMidx,er_FullDepth))
-
-        elemR(JMidx,er_Depth) = max(elemR(JMidx,er_Depth),0.99d0*setting%ZeroValue%Depth)
-        elemR(JMidx,er_EllDepth) =  elemR(JMidx,er_Depth)
-
-        if (isPonding .or. isOverflow) then
-            !% --- update junction main overflow rate
-            Qoverflow(JMidx) = Qoverflow(JMidx) + dH * dQdHoverflow
-        end if
-
-        !% --- compute JB element DeltaQ using dQdH
-        elemR((JMidx+1):(JMidx+max_branch_per_node), er_DeltaQ) = zeroR
-        call lljunction_branch_update_DeltaQ (JMidx,dH)  
-
-        !% --- update the flowrates
-        call lljunction_branch_update_flowrate (JMidx) 
-
-        !% --- update net Q branches (included CC and Diag)
-        QnetBranches = lljunction_main_sumBranches (JMidx,er_Flowrate,elemR)
-
-        !% --- update junction main storage flow rate
-        Qstorage(JMidx) = lljunction_main_update_storage_rate  &
-            (JMidx, dH, QnetBranches,istep) 
-        !% --- update the junction main storage rate
-        ! Qstorage(JMidx) = Qstorage(JMidx) + dH * dQdHstorage
-
-        elemR(JMidx,er_Volume) =  lljunction_main_volume_from_storageRate (JMidx,istep)
-
-        !% --- overwrite for threshold crossing for exact values
-        if (isCrossingIntoSurcharge .or. isCrossingOutofSurcharge )then 
-            elemR(JMidx,er_Volume)   = elemR(JMidx,er_FullVolume)
-            elemR(JMidx,er_Depth)    = elemR(JMidx,er_FullDepth)
-            elemR(JMidx,er_EllDepth) = elemR(Jmidx,er_FullDepth)
-            elemR(JMidx,er_Head)     = elemR(JMidx,er_FullDepth) + elemR(JMidx,er_Zbottom)
-
-        elseif (isCrossingIntoOverflowOrPonding) then
-            elemR(JMidx,er_Volume)   = elemR(JMidx,er_FullVolume) !% HACK what happens to slot volume?
-            elemR(JMidx,er_Depth)    = MinHeadForOverFlow - elemR(JMidx,er_Zbottom)
-            elemR(JMidx,er_EllDepth) = elemR(JMidx,er_Depth)
-            elemR(JMidx,er_Head)     = MinHeadForOverflow
-            
-        elseif (isCrossingOutofOverflowOrPonding) then
-            elemR(JMidx,er_Volume)   = elemR(JMidx,er_FullVolume) !% HACK what happens to slot volume?
-            elemR(JMidx,er_Depth)    = MinHeadForOverFlow - elemR(JMidx,er_Zbottom)
-            elemR(JMidx,er_EllDepth) = elemR(JMidx,er_Depth)
-            elemR(JMidx,er_Head)     = MinHeadForOverflow
-        else 
-            !% no action 
-        end if
-
-
-    end subroutine lljunction_main_update_intermediate
-!%    
-!%==========================================================================
-!%==========================================================================
-!% 
-    subroutine lljunction_main_update_final &
-        (JMidx, istep)
-        !%------------------------------------------------------------------
-        !% Description
-        !% Top level computation of dH in first step of junction solution
-        !%------------------------------------------------------------------
-        !% Declarations
-            integer, intent(in) :: JMidx, istep
-
-            real(8), pointer    :: Qoverflow(:)
-            real(8), pointer    :: dt, crk(:)
-
-            !real(8) :: QnetBranches
-
-            integer             :: ii
-        !%------------------------------------------------------------------
-        !% Aliases
-            !Qstorage    => elemSR(:,esr_JunctionMain_StorageRate) !% positive is increasing storage
-            !% --- note that Qoverflow includes ponding rate
-            Qoverflow   => elemSR(:,esr_JunctionMain_OverflowRate) !% negative is outflow
-            !Qlateral    => elemR (:,er_FlowrateLateral) !% negative is outflow)
-            dt          => setting%Time%Hydraulics%Dt
-            crk         => setting%Solver%crk2
-        !%------------------------------------------------------------------   
- 
-        
-
-        ! !% --- update net Q branches (included CC and Diag)
-        ! QnetBranches = lljunction_main_sumBranches (JMidx,er_Flowrate,elemR)
-
-
-        !% --- update junction main storage flow rate
-        ! Qstorage(JMidx) = lljunction_main_update_storage_rate  &
-        !     (JMidx, dH, QnetBranches,istep) 
-
-        ! !% --- update the junction main volume based on the storage rate
-        !     elemR(JMidx,er_Volume) =  lljunction_main_volume_from_storageRate (JMidx,istep)
-
-
-            ! if (JMidx==printJM) then
-            !     do ii=1,max_branch_per_node
-            !         if (elemSI(JMidx+ii,esi_JunctionBranch_Exists) .ne. oneI) cycle
-            !         print *, '   Q for JB=', JMidx+ii,elemR(JMidx+ii,er_Flowrate)
-            !     end do
-            !     print *, ' '
-            ! end if
-
-        
-
-        !    if (JMidx==printJM) print *,'    Qover      ',Qoverflow(JMidx)
-
-        !% --- update net Q branches (included CC and Diag)
-        ! QnetBranches = lljunction_main_sumBranches (JMidx,er_Flowrate,elemR)
-
-            ! if (JMidx==printJM) print *,'    newQNet     ',QnetBranches
-
-            ! if (JMidx==printJM) print *,'    old Volume  ',elemR(JMidx,er_Volume)
-
-        !% --- update the junction main volume based on the storage rate
-        ! elemR(JMidx,er_Volume) =  lljunction_main_volume_from_storageRate (JMidx,istep)
-
-            ! if (JMidx==printJM) print *,'    new Volume, full volume  ',elemR(JMidx,er_Volume), elemR(JMidx,er_FullVolume)
-
-        !% --- update the overflow volume based on rate and time step
-        select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
-            case (OverflowWeir,OverflowOrifice)
-                elemR(JMidx,er_VolumeOverflow) = Qoverflow(JMidx)  * dt * crk(istep)
-            case (PondedWeir,PondedOrifice)
-                elemR(JMidx,er_VolumePonded)   = Qoverflow(JMidx)  * dt * crk(istep)
-            case (NoOverflow)
-                !% no action
-            case default
-                print *, elemSI(JMidx,esi_JunctionMain_OverflowType), trim(reverseKey(elemSI(JMidx,esi_JunctionMain_OverflowType)))
-                print *, 'CODE ERROR: unexpected case default'
-                stop 397894
-        end select
-
-    end subroutine lljunction_main_update_final   
 !%    
 !%==========================================================================
 !%==========================================================================
@@ -1578,74 +1250,39 @@ module lowerlevel_junction
 !%========================================================================== 
 !%==========================================================================
 !% 
-    real(8) function lljunction_main_dQdHstorage &
-            (JMidx,istep, isOverflow, isPonding, &
-             isCrossingIntoSurcharge, isCrossingOutofSurcharge)  
+    real(8) function lljunction_main_dQdHstorage (JMidx,iStep)  
         !%------------------------------------------------------------------
         !% Description
         !% Computes the storage rate of junction with tabular or functional
         !% storage
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: JMidx, istep
-            logical, intent(in) :: isOverflow, isPonding
-            logical, intent(in) :: isCrossingIntoSurcharge, isCrossingOutofSurcharge
-            real(8)             :: planArea
+            integer, intent(in) :: JMidx, iStep
         !%------------------------------------------------------------------  
 
         if (elemSI(JMidx,esi_JunctionMain_Type) .eq. NoStorage) then
-            !% --- no storage rate for implied storage junctions is not finished
-            print *, 'CODE ERROR: NoStorage junction type is not supported'
-            call util_crashpoint(11001093)
+            !% --- no storage rate for implied storage junctions
             lljunction_main_dQdHstorage = zeroR
             return
-        endif
-            
-        if (elemYN(JMidx,eYN_canSurcharge)) then
-            if ((elemR(JMidx,er_Head) .le. elemR(JMidx,er_Zcrown)) & 
-                .or. isOverflow .or. isPonding) then
-                !% --- plan area where head is below the surcharge threshold
-                !% --- standard plan area
-                planArea = elemSR(JMidx,esr_Storage_Plan_Area)      
-                ! print *, 'AAA standard plan area ',planArea  
+        else
+            ! if (JMidx == printJM) then
+            !     print *, ' '
+            !     print *, 'in dQdHstorage ',JMidx, elemYN(JMidx,eYN_isSurcharged)
+            !     print *, elemR(JMidx,er_Head), elemR(JMidx,er_Zcrown)
+            !     print *, ' '
+            ! end if
+
+            if (.not.elemYN(JMidx,eYN_isSurcharged)) then
+                !% --- Storage rate term based on time step
+                lljunction_main_dQdHstorage = elemSR(JMidx,esr_Storage_Plan_Area) &
+                    / (setting%Solver%crk2(iStep) * setting%Time%Hydraulics%Dt)
             else
-                !% --- plan area where head is across the surcharge threshold
-                !%     depends on whether it also across the overflow/pond 
-                !%     threshold
-                if (isOverflow .or. isPonding) then
-                    planArea = elemSR(JMidx,esr_Storage_Plan_Area)
-                else
-                    !% --- surcharge plan area
-                    planArea = elemSR(JMidx,esr_JunctionMain_Surcharge_Plan_Area)
-                    ! print *, 'BBB surcharge plan area ',planArea
-                end if
+                !% saz 20230504
+                !% --- Storage rate term based on time step
+                lljunction_main_dQdHstorage = elemSR(JMidx,esr_JunctionMain_Surcharge_Plan_Area) &
+                                            / (setting%Solver%crk2(iStep) * setting%Time%Hydraulics%Dt)
             end if
-
-            !% --- Adjustments when crossing surcharge threshold
-            !%     Note that the isCrossing... are both false when
-            !%     called for the junction step 1A
-            !%     The slot is not defined at the first junction
-            !%     step, for a newly surcharged junction, 
-            !%     so we use an ad hoc value of 1/2 the storage plan area
-            if ((isCrossingIntoSurcharge) .and. &
-                    (.not. isOverflow) .and. (.not. isPonding)) then 
-                planArea = onehalfR * elemSR(JMidx,esr_Storage_Plan_Area)
-                ! print *, 'CCC surcharge plan area ',planArea
-            elseif (isCrossingOutofSurcharge) then 
-                planArea = elemSR(JMidx,esr_Storage_Plan_Area)
-                ! print *, 'DDD standard plan area ',planArea  
-            else 
-                !% --- no change
-            end if
-        else 
-            !% --- if not able to surcharge, use the standard plan area
-            planArea = elemSR(JMidx,esr_Storage_Plan_Area)
         end if
-
-            ! print *, 'EEE out plan area ',planArea  
-
-        lljunction_main_dQdHstorage = planArea / (setting%Solver%crk2(istep) * setting%Time%Hydraulics%Dt)
-
 
     end function lljunction_main_dQdHstorage   
     !%    
@@ -1794,8 +1431,7 @@ module lowerlevel_junction
 !%==========================================================================
 !%==========================================================================
 !% 
-    real(8) function lljunction_main_Qoverflow &
-        (JMidx, MinHeadForOverflow, istep, isOverflow, isPonding)  
+    real(8) function lljunction_main_Qoverflow (JMidx, istep)  
         !%------------------------------------------------------------------
         !% Description
         !% Computes the overflow/ponding rate of a junction that is stored
@@ -1804,12 +1440,10 @@ module lowerlevel_junction
         !% for broad-crested weir
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in)    :: JMidx, istep
-            real(8), intent(inout) :: MinHeadForOverflow
-            logical, intent(inout) :: isOverflow, isPonding
-            real(8), pointer       :: Horifice(:), Lorifice(:), coef1, coef3, WeirFactor
-            real(8)                :: OverflowDepth, PondedHead
-            real(8)                :: tempOverflow
+            integer, intent(in) :: JMidx, istep
+            real(8), pointer    :: Horifice(:), Lorifice(:), coef1, coef3, WeirFactor
+            real(8)             :: MinHeadForOverflow, OverflowDepth, PondedHead
+            real(8)             :: tempOverflow
 
             real(8), pointer    :: dt, crk
         !%------------------------------------------------------------------  
@@ -1832,9 +1466,7 @@ module lowerlevel_junction
         !% --- Head below the surcharge, only possibility is a ponding inflow
         if (elemR(JMidx,er_Head) .le. MinHeadForOverflow) then
             !% --- no outflowing overflow 
-            isOverflow = .false.
             if ( elemSR(JMidx,esr_JunctionMain_PondedArea) == zeroR) then 
-                isPonding = .false.
                 !% --- no ponding inflow or outflow
                 lljunction_main_Qoverflow = zeroR
                 return
@@ -1842,8 +1474,6 @@ module lowerlevel_junction
             else
                 !% --- possible ponding inflow as waterfall into junction
                 if (PondedHead > MinHeadForOverflow) then 
-                    isPonding  = .true.
-                    isOverflow = .false.
                     !% --- ponding inflow as waterfall
                     select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
 
@@ -1874,8 +1504,6 @@ module lowerlevel_junction
                     return
 
                 else
-                    isPonding  = .false.
-                    isOverflow = .false.
                     !% --- no ponding inflow or outflow
                     lljunction_main_Qoverflow = zeroR
                     return
@@ -1904,15 +1532,11 @@ module lowerlevel_junction
         select case (elemSI(JMidx,esi_JunctionMain_OverflowType))
 
             case (NoOverflow)
-                isPonding  = .false.
-                isOverflow = .false.
                 !% --- NoOverflow implies no ponding or overflow
                 lljunction_main_Qoverflow = zeroR
                 return
 
             case (OverflowWeir)
-                isPonding  = .false.
-                isOverflow = .true.
                 !% --- weir overflow based on weir length as circumference of storage plan area
                 !%     Q = C L H^{3/2}
                 !%     L = 2 (pi A)^{1/2}
@@ -1925,9 +1549,7 @@ module lowerlevel_junction
                        * (OverFlowDepth**threehalfR)
                 return
 
-            case (PondedWeir)     
-                isPonding  = .true.
-                isOverflow = .false.      
+            case (PondedWeir)           
                 !% --- similar to OverflowWeir above, but allows in or outflow 
                 if (OverflowDepth < zeroR) then 
                     !% --- inflow from ponding (+ value)
@@ -1958,8 +1580,6 @@ module lowerlevel_junction
                 end if
 
             case (OverflowOrifice)
-                isPonding  = .false.
-                isOverflow = .true.
                 !% --- orifice overflow assuming a single orifice
                 !%     Using Brater and King Eq. 4.17 
                 !%     Q = (2/3) L sqrt(2g) H^(3/2)
@@ -1987,8 +1607,6 @@ module lowerlevel_junction
                 end if
              
             case (PondedOrifice)
-                isPonding  = .true.
-                isOverflow = .false.
                 !% --- similar to OverflowOrifice but allows in or outflows with ponding
                 if (OverflowDepth < zeroR) then
                     !% --- inflows from ponding require + value
@@ -2153,7 +1771,6 @@ module lowerlevel_junction
         !%------------------------------------------------------------------
             integer, intent(in) :: JMidx, istep
             real(8), intent(in) :: dH, QnetBranches
-            real(8)             :: planArea
             integer :: ii
         !%------------------------------------------------------------------
         select case (elemSI(JMidx,esi_JunctionMain_Type))
@@ -2164,34 +1781,16 @@ module lowerlevel_junction
             case (TabularStorage,FunctionalStorage,ImpliedStorage)
                 !% --- compute the storage flowrate
                 if (istep == 1) then
-                    !% --- set the plan area
-                    if (elemR(JMidx,er_Head) < elemR(JMidx,er_Zcrown)) then
-                        !% --- for non-surcharged
-                        planArea = elemSR(JMidx,esr_Storage_Plan_Area)
-                    elseif (elemR(JMidx,er_Head) > elemR(JMidx,er_Zcrown)) then
-                        !% --- for surcharged
-                        planArea = elemSR(JMidx,esr_JunctionMain_Surcharge_Plan_Area)
+                    !% --- compute rate from dH
+                    if (.not. elemYN(JMidx,eYN_isSurcharged)) then
+                        lljunction_main_update_storage_rate                                        &
+                            = (elemSR(JMidx,esr_Storage_Plan_Area) * dH)                    &
+                                / (setting%Solver%crk2(istep) * setting%Time%Hydraulics%Dt)
                     else
-                        !% --- head is exactly at crown
-                        if (dH > zeroR) then 
-                            !% --- rising head use the surcharge area
-                            planArea = elemSR(JMidx,esr_JunctionMain_Surcharge_Plan_Area)
-                        else
-                            !% --- dropping head use the standard area
-                            planArea = elemSR(JMidx,esr_Storage_Plan_Area)
-                        end if
+                        lljunction_main_update_storage_rate                                        &
+                            = (elemSR(JMidx,esr_JunctionMain_Surcharge_Plan_Area) * dH)                    &
+                                / (setting%Solver%crk2(istep) * setting%Time%Hydraulics%Dt)
                     end if
-                    !% --- on a rising surcharge, the surcharge plan area is not
-                    !%     yet set, so use half of the storage plan area
-                    if (planArea .eq. zeroR) then 
-                        planArea = onehalfR * elemSR(JMidx,esr_Storage_Plan_Area)
-                    end if
-
-                    !print *, 'AAA Plan Area ',planArea, dH
-                    !print *, elemSR(JMidx,esr_Storage_Plan_Area), elemSR(JMidx,esr_JunctionMain_Surcharge_Plan_Area)
-                    lljunction_main_update_storage_rate = planArea * dH &
-                            /(setting%Solver%crk2(istep) * setting%Time%Hydraulics%Dt)
-
                     return
                 elseif (istep == 2) then 
                     !% --- compute rate from mass conservation
@@ -2242,8 +1841,6 @@ module lowerlevel_junction
 
         do mm=1,Npack 
             JMidx = elemP(mm,thisColP)
-
-            if (elemYN(JMidx,eYN_isZeroDepth)) cycle
 
             elemR(JMidx,er_Flowrate) = zeroR 
             elemR(JMidx,er_Velocity) = zeroR
@@ -2320,15 +1917,11 @@ module lowerlevel_junction
                     inletVelocity = min(weightedVelocity,junctionVelocity)
                 end if
 
-                
-
-                !% --- excessive velocites are likely in error, so set to zero
-                if (abs(inletVelocity) > setting%Limiter%Velocity%Maximum) then
-                    !inletVelocity = sign(0.99d0 * setting%Limiter%Velocity%Maximum, inletVelocity) 
-                    inletVelocity = zeroR
-                end if
-
                 elemR(JMidx,er_Velocity) = inletVelocity
+
+                if (abs(inletVelocity) > setting%Limiter%Velocity%Maximum) then
+                    inletVelocity = sign(0.99d0 * setting%Limiter%Velocity%Maximum, inletVelocity) 
+                end if
 
                 elemR(JMidx,er_Flowrate)     = inletVelocity * elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area))
                 elemR(JMidx,er_FroudeNumber) = inletVelocity / sqrt(setting%Constant%gravity * elemR(JMidx,er_Depth))

@@ -165,8 +165,8 @@ module define_settings
     type PlanAreaType
         logical :: UseLargeBranchStorageTF = .true.  !% estimated plan area for junctions without defined plan area (false causes blowup for large diameter conduits)
         real(8) :: AreaMinimum               !% NOT A USER SETTING !% the surfaceArea_minimum from EPA-SWMM, minimum for ImpliedStorage plan area
-        real(8) :: AreaFactorMaximum = 10.d0 !% maximum multiplier by which branch-implied plan are can be greater than surfaceAreaMinimum
-        real(8) :: LargeBranchDepth  = 1.5d0 !% Depth (m) for considering large branch width. Branches whose Z bottom is above this depth are ignored
+        real(8) :: AreaFactorMaximum = 100.d0 !% maximum multiplier by which branch-implied plan are can be greater than surfaceAreaMinimum
+        real(8) :: LargeBranchDepth  = 1.0d0 !% Depth (m) used for breadth in plan area computation fo large branch width.
                                              !% Note that if the LargeBranchDepth is too large, then trapezodial and irregular channels will have
                                              !% large topwidths that will cause large plan areas at their junctions.
     end type
@@ -179,6 +179,7 @@ module define_settings
         real(8) :: TargetCelerity = 15.0d0
         real(8) :: Alpha = 3.0d0
         real(8) :: DecayRate = 5.0
+        real(8) :: MinimumInitialPreissmannNumber = 3.0d0
     end type PreissmannSlotType
 
     !% setting%Output%Report

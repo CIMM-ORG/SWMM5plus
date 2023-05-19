@@ -1361,6 +1361,8 @@ contains
             !% do not round
         end if
 
+        !% HACK HARD CODE TEST 20230517brh
+       ! newDT = 0.1d0
 
         ! ! ! print *, 'neededSteps ',neededSteps
         ! ! !% --- if dt is large and there is more than 2 steps, then round to an integer number
@@ -1752,6 +1754,7 @@ contains
             integer, pointer :: Npack, thisP(:)
             real(8), pointer :: velocity(:), wavespeed(:), length(:), PCelerity(:)
             integer :: itemp(1), ip, fup, fdn, eup, edn, ii
+            integer(8), pointer :: step
 
             real(8), parameter :: smallDepth = 0.0001
         !%-------------------------------------------------------------------
@@ -1762,71 +1765,21 @@ contains
             length             => elemR(:,er_Length)
             PCelerity          => elemR(:,er_Preissmann_Celerity)
         !%------------------------------------------------------------------- 
+        step => setting%Time%Step
         if (dt .le. zeroR) then 
             thisDT => setting%Time%Hydraulics%Dt
         else    
             thisDT => dt
         end if
 
-        ! do ii=1,N_elem(1)
-        !     print *, ii, trim(reverseKey(elemI(ii,ei_elementType))), elemR(ii,er_WaveSpeed)
-        ! end do
-
-            ! print *, ' '
-            ! print *, 'in tl_get_max_CFL_CC, Npack = ', Npack
-
-            ! print *, ' element type '
-            ! print *, elemI(thisP,ei_elementType)
-            ! print *, trim(reverseKey(elemI(thisP(1),ei_elementType)))
-
-            ! print *, 'depth '
-            ! print *, elemR(thisP,er_Depth)
-            ! do ii=1,size(thisP)
-            !     print *, thisP(ii),elemR(thisP(ii),er_Depth)
-            ! end do
-
-            ! print *, 'head '
-            ! print *, elemR(thisP,er_Head)
-
-            ! print *, 'thisP '
-            ! print *, thisP
-            ! print *, ' '
-            ! print *, 'Velocity  '
-            ! print *, velocity(thisP)
-            ! print *, ' '
-            ! print *, 'WaveSpeed '
-            ! print *, ' '
-            ! print *, wavespeed(thisP)
-            ! print *, ' '
-            ! print *, 'Preiss C  '
-            ! print *, PCelerity(thisP)
-            ! print *, ' '
-            ! print *, 'max values'
-            ! print *, maxval(velocity(thisP)), maxval(wavespeed(thisP)) , maxval(PCelerity(thisP))
-
-            ! print *,  ' '
-            ! print *, 'wavespeed from iet'
-            ! print *, wavespeed(iet)
-
-            ! write(*,"(A,30f12.5)") 'Vcfl ' , velocity(iet) * thisDT / length(iet)
-            ! write(*,"(A,30f12.5)") 'Hcfl ' , wavespeed(iet) * thisDT / length(iet)
-            ! write(*,"(A,30f12.5)") 'Ccfl ' , PCelerity(iet) * thisDT / length(iet)
-            ! print * ,' '
-            ! print *, 'thisP '
-            ! print *, thisP
-            ! write(*,"(A,30f12.5)") 'Vcfl ' , velocity(thisP) * thisDT / length(thisP)
-            ! write(*,"(A,30f12.5)") 'Hcfl ' , wavespeed(thisP) * thisDT / length(thisP)
-            ! print *, 'thisDT = ',thisDT
-            ! print *, length(thisP)
-            ! print *, wavespeed(thisP)
-            ! write(*,"(A,30f12.5)") 'Ccfl ' , PCelerity(thisP) * thisDT / length(thisP)
-
         !% HACK experiment to evaluate effect of JM wavespeed on time step
         elemR(:,er_Temp01) = wavespeed
+        elemR(:,er_Temp02) = PCelerity
         where (elemI(thisP,ei_elementType) .eq. JM)
             wavespeed(thisP) = zeroR
+            Pcelerity(thisP) = zeroR
         endwhere
-
+    
         !% --- set the outvalue
         if (Npack > 0) then 
             if (setting%Solver%PreissmannSlot%useSlotTF) then
@@ -1841,7 +1794,31 @@ contains
                 outvalue = maxval((abs(velocity(thisP)) + abs(wavespeed(thisP))) * thisDT / length(thisP))
             end if
             ! print *, ' '
-            ! print *, 'max vel, wave ', maxval(abs(velocity(thisP))), maxval(abs(wavespeed(thisP)))  
+            ! write(*,"(A,i6,A,f8.4,A)") 'step = ',step,'  oldDT = ',thisDT,'      U+Wc     U+Pc'
+            ! write(*,"(A, 3f11.3)") 'CFL using old DT                ', &     
+            !                 maxval((abs(velocity(thisP))+abs(wavespeed(thisP))) * thisDT / length(thisP)), &
+            !                 maxval((abs(velocity(thisP))+abs(PCelerity(thisP))) * thisDT / length(thisP))  
+            ! write(*,"(A, 3f11.3)") 'max vel+wave/L, vel+Pcelerity/L ', &
+            !                 maxval((abs(velocity(thisP))+abs(wavespeed(thisP))) * thisDT / length(thisP)), &
+            !                 maxval((abs(velocity(thisP))+abs(PCelerity(thisP))) * thisDT / length(thisP))  
+
+            ! write(*,"(A, 3i11)") 'max loc                     ', &
+            !                 thisP(maxloc( (abs(velocity(thisP))+abs(wavespeed(thisP))) / length(thisP) )), &
+            !                 thisP(maxloc( (abs(velocity(thisP))+abs(PCelerity(thisP))) / length(thisP) ))     
+                            
+            ! write(*,"(A, 3f11.3)") 'length at max loc               ', &
+            !                 length(thisP(maxloc( (abs(velocity(thisP))+abs(wavespeed(thisP))) / length(thisP) ))), &
+            !                 length(thisP(maxloc( (abs(velocity(thisP))+abs(PCelerity(thisP))) / length(thisP) )))     
+            ! write(*,"(A, 3f11.3)") 'velocity at max loc             ', &
+            !                 velocity(thisP(maxloc( (abs(velocity(thisP))+abs(wavespeed(thisP))) / length(thisP) ))), &
+            !                 velocity(thisP(maxloc( (abs(velocity(thisP))+abs(PCelerity(thisP))) / length(thisP) )))  
+            ! write(*,"(A, 3f11.3)") 'wavespeed at max loc            ', &
+            !                 wavespeed(thisP(maxloc( (abs(velocity(thisP))+abs(wavespeed(thisP))) / length(thisP) ))), &
+            !                 wavespeed(thisP(maxloc( (abs(velocity(thisP))+abs(PCelerity(thisP))) / length(thisP) )))                  
+            ! write(*,"(A, 3f11.3)") 'Pcelerity at max loc            ', &
+            !                 PCelerity(thisP(maxloc( (abs(velocity(thisP))+abs(wavespeed(thisP))) / length(thisP) ))), &
+            !                 PCelerity(thisP(maxloc( (abs(velocity(thisP))+abs(PCelerity(thisP))) / length(thisP) )))   
+                                       
             ! print *, ' '      
         else
             outvalue = zeroR
@@ -1850,8 +1827,10 @@ contains
         !% HACK EXPERIMENT CHANGING JM WaveSpeed -- KEEP THIS 20230505
         where (elemI(thisP,ei_elementType) .eq. JM)
             wavespeed(thisP) = elemR(thisP,er_Temp01)
+            Pcelerity(thisP) = elemR(thisP,er_Temp02)
         endwhere
         elemR(:,er_Temp01) = zeroR
+        elemR(:,er_Temp02) = zeroR
 
         ! if (Npack == zeroI) then 
         !     !% --- no nonzero depths, so control time step by inflows

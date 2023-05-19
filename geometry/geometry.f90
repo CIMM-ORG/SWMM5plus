@@ -50,7 +50,7 @@ module geometry
 
     !public :: geometry_toplevel
     public :: geometry_toplevel_CC
-    public :: geometry_toplevel_JMJB
+    !public :: geometry_toplevel_JMJB
     public :: geo_assign_JB_from_head
     public :: geo_JM_depth_area_from_volume
     public :: geo_common_initialize
@@ -224,35 +224,35 @@ module geometry
 !%==========================================================================
 !%
     subroutine geometry_toplevel_JMJB ()
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Computes geometry on junction JM elements for the  
-        !% time-marching scheme 
-        !%------------------------------------------------------------------
-        !% Declarations
-        !%------------------------------------------------------------------
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Computes geometry on junction JM elements for the  
+    !     !% time-marching scheme 
+    !     !%------------------------------------------------------------------
+    !     !% Declarations
+    !     !%------------------------------------------------------------------
 
-        print *, 'OBSOLETE geometry_toplevel_JMJB'
-        stop 298372
-        !% --- JB VALUES
-        !%    assign the non-volume geometry on junction branches JB based on JM head
-        !%    Values limited by full volume. Volume assigned is area * length
-        call geo_assign_JB_from_head (ep_JM)
+    !     print *, 'OBSOLETE geometry_toplevel_JMJB'
+    !     stop 298372
+    !     !% --- JB VALUES
+    !     !%    assign the non-volume geometry on junction branches JB based on JM head
+    !     !%    Values limited by full volume. Volume assigned is area * length
+    !     call geo_assign_JB_from_head (ep_JM)
 
-            ! call util_utest_CLprint ('------- in geometry after geo_assign_JB_from_head')
+    !         ! call util_utest_CLprint ('------- in geometry after geo_assign_JB_from_head')
         
-        !% --- JB slot adjustments
-        !%     make the slot adjustments for JB after the geometry is assigned
-        !%     this slot adjustment is based on the head on the JB
-        call slot_JB_computation (ep_JM)
+    !     !% --- JB slot adjustments
+    !     !%     make the slot adjustments for JB after the geometry is assigned
+    !     !%     this slot adjustment is based on the head on the JB
+    !     call slot_JB_computation (ep_JM)
 
 
-        !% --- JM values
-       ! call geo_JM_depth_area_from_volume ()
-        !% --- new junction plan area
-        call geo_plan_area_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
-        !% --- ne junction depth 
-        call geo_depth_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
+    !     !% --- JM values
+    !    ! call geo_JM_depth_area_from_volume ()
+    !     !% --- new junction plan area
+    !     call geo_plan_area_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
+    !     !% --- ne junction depth 
+    !     call geo_depth_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
 
 
         end subroutine geometry_toplevel_JMJB 
@@ -1304,7 +1304,7 @@ module geometry
             real(8) :: depthnorm, zeroHydRadius
             integer :: tB, ii, kk, tBA(1)
 
-            logical :: isUpBranch
+            logical :: isUpBranch, isWaterfall
 
             integer :: printJB = 5
 
@@ -1372,6 +1372,8 @@ module geometry
                 !% cycle through the possible junction branches
                 do kk=1,max_branch_per_node
 
+                     
+
                     if (mod(kk,2)==0) then 
                         isUpBranch = .false.
                     else
@@ -1380,6 +1382,9 @@ module geometry
                     
                     tB = tM + kk !% junction branch ID
                     tBA(1) = tB  !% array for pure array functions
+
+                   ! if (tB == 6615) print *, 'tB, Head ',tB, elemR(6612,er_Head)
+                   ! if (tB == 6615) print *, Zbtm(tB),sedimentDepth(tB)
 
                     ! print *, 'tB ',tB 
 
@@ -1411,6 +1416,10 @@ module geometry
 
                         head(tB) = head(tM)
 
+                        iswaterfall = .false.
+
+                        !if (tB == 6615) print *, 'in geo ', head(tB)
+
                         ! if (tB == printJB) print *, 'HEAD BBB',head(tB)
 
                     else
@@ -1426,7 +1435,8 @@ module geometry
 
                         !% 20230322 brh using velocity on face  
                         if     ((      isUpBranch) .and. (fVel_d(fup(tB)) > zeroR)) then 
-                            !% --- upstream branch with inflow
+                            !% --- upstream branch with waterfall inflow to junction main
+                            iswaterfall = .true.
 
                             ! if (tB == printJB) then 
                             !     print *, ' '
@@ -1452,7 +1462,9 @@ module geometry
                             ! if (tB == printJB) print *, 'HEAD CCC',head(tB)
 
                         elseif ((.not. isUpbranch) .and. (fVel_u(fdn(tB)) < zeroR)) then
-                            !% --- downstream branch with inflow
+                            !% --- downstream branch with inflow waterfall into junction main
+
+                            iswaterfall = .true.
                             if (fHead_u(fdn(tB)) > fZcrown_u(fdn(tB))) then
                                 !% --- surcharged inflow of downstream branch
                                 !%     reduce by Kfactor
@@ -1467,6 +1479,7 @@ module geometry
                                 ! if (tB == printJB) print *, 'HEAD DDD',head(tB)
 
                         else 
+                            iswaterfall = .false.
                             !% --- no flow, set below zerovalue
                             head(tB) = zBtm(tB) + sedimentDepth(tB) + 0.99d0 * setting%ZeroValue%Depth
 
@@ -1812,29 +1825,40 @@ module geometry
                     ! print *, 'is small depth ',elemYN(tB,eYN_isSmallDepth)
                     ! print *, ' '
 
-                    !% --- universal computation of velocity
-                    if (area(tB) > setting%ZeroValue%Area) then 
-                        velocity(tB) = flowrate(tB) / area(tB)
-
-                        ! !% -- set slightly larger depths to velocity consistent with FR=1
-                        ! if ((area(tB) < tenR * setting%ZeroValue%Area) .or. &
-                        !     (elldepth(tB) < tenR * setting%ZeroValue%Depth) ) then 
-                        !     velocity(tB) =sign(oneR,flowrate(tB)) * sqrt(grav * elldepth(tB))
-                        ! end if
-
+                    if (iswaterfall) then 
+                        !% --- limit velocity and flowrate by Fr=1
+                        !%     Note this may be inconsistent with flowrate
+                        !%     set by mass conservation of junction
+                        if (isUpBranch) then
+                            velocity(tB) = sqrt(grav * depth(tB))
+                        else
+                            velocity(tB) = -sqrt(grav * depth(tB))
+                        end if
                     else
-                        velocity(tB) = zeroR
+                        !% --- universal computation of velocity
+                        if (area(tB) > setting%ZeroValue%Area) then 
+                            velocity(tB) = flowrate(tB) / area(tB)
+
+                            ! !% -- set slightly larger depths to velocity consistent with FR=1
+                            ! if ((area(tB) < tenR * setting%ZeroValue%Area) .or. &
+                            !     (elldepth(tB) < tenR * setting%ZeroValue%Depth) ) then 
+                            !     velocity(tB) =sign(oneR,flowrate(tB)) * sqrt(grav * elldepth(tB))
+                            ! end if
+
+                        else
+                            velocity(tB) = zeroR
+                        end if
                     end if
 
 
-                    ! if (velocity(tB) > setting%Limiter%Velocity%Maximum) then
-                    !     velocity(tB) = 0.99d0 * setting%Limiter%Velocity%Maximum 
-                    !     ! print *, ' '
-                    !     ! print *, 'SMALL VELOCITY JB -- AREA IS ',area(tB), setting%ZeroValue%Area
-                    !     ! print *, 'Depth is ',depth(tB), ellDepth(tB)
-                    !     ! print *, setting%ZeroValue%Depth
-                    !     ! print *, ' '
-                    ! end if
+                    if (abs(velocity(tB)) > setting%Limiter%Velocity%Maximum) then
+                        velocity(tB) = sign(0.99d0 * setting%Limiter%Velocity%Maximum, velocity(tB)) 
+                        ! print *, ' '
+                        ! print *, 'SMALL VELOCITY JB -- AREA IS ',area(tB), setting%ZeroValue%Area
+                        ! print *, 'Depth is ',depth(tB), ellDepth(tB)
+                        ! print *, setting%ZeroValue%Depth
+                        ! print *, ' '
+                    end if
                             
                 end do
             end do
@@ -1908,7 +1932,7 @@ module geometry
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)  
         end if
 
-        !% --- For implies storage with fixed plan area
+        !% --- For implied storage with fixed plan area
         thisCol => col_elemPGx(epg_JM_impliedStorage)
         Npack   => npack_elemPGx(thisCol)
         if (Npack > 0) then

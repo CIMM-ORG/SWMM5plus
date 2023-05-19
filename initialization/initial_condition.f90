@@ -541,17 +541,13 @@ contains
         !     end if
         ! end do
 
-        ! do ii=1,N_elem(this_image())
-        !     if (elemI(ii,ei_link_Gidx_BIPquick) .ne. nullvalueI ) then
-        !         if (elemI(ii,ei_elementType) .eq. pump) then
-        !             print *, ii, elemI(ii,ei_link_Gidx_BIPquick), &
-        !             trim(link%Names(elemI(ii,ei_link_Gidx_BIPquick))%str) &
-        !             ,' ',trim(reverseKey(elemI(ii,ei_elementType)))
-        !         end if
-        !     end if
-        ! end do 
+    !     do ii=1,N_elem(this_image())
+    !         print *, ii, elemR(ii,er_Length)
+    !     end do 
     !    stop 49734
       
+        ! print *, elemR(6349,er_Length)
+        ! stop 2098374
 
    
 
@@ -4639,7 +4635,7 @@ contains
 
                 elemR(JMidx,er_Length) = sqrt(elemR(JMidx,er_FullArea))
 
-                !% -- initial conditions volume
+                !% -- initial conditions volume -- 
                 elemR(JMidx,er_Volume)     = storage_volume_from_depth_singular (JMidx,elemR(JMidx,er_Depth))  
                 elemR(JMidx,er_Volume_N0)  = elemR(JMidx,er_Volume)
                 elemR(JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
@@ -5595,7 +5591,7 @@ contains
         !% get the geometry data for conduit links and calculate element volumes
         !%-----------------------------------------------------------------
         !% Declarations:
-            integer :: ii
+            integer :: ii, thisSize
             integer, pointer    :: SlotMethod
             real(8), pointer    :: TargetPCelerity, grav, Alpha
             character(64) :: subroutine_name = 'init_IC_slot'
@@ -5610,18 +5606,31 @@ contains
         grav                => setting%Constant%gravity
 
         !% initialize slots
-        elemR(1:size(elemR,1)-1,er_SlotVolume)            = zeroR
-        elemR(1:size(elemR,1)-1,er_SlotArea)              = zeroR
-        elemR(1:size(elemR,1)-1,er_SlotWidth)             = zeroR
-        elemR(1:size(elemR,1)-1,er_dSlotArea)             = zeroR
-        elemR(1:size(elemR,1)-1,er_dSlotDepth)            = zeroR
-        elemR(1:size(elemR,1)-1,er_dSlotVolume)           = zeroR
-        elemR(1:size(elemR,1)-1,er_SlotVolume_N0)         = zeroR
-        elemR(1:size(elemR,1)-1,er_Preissmann_Celerity)   = zeroR
-        elemR(1:size(elemR,1)-1,er_Surcharge_Time)        = zeroR      
-        elemR(1:size(elemR,1)-1,er_SlotDepth_N0)          = elemR(1:size(elemR,1)-1,er_SlotDepth)    
-        elemR(1:size(elemR,1)-1,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
+        thisSize = size(elemR,1)-1
+        elemR(1:thisSize,er_SlotVolume)            = zeroR
+        elemR(1:thisSize,er_SlotArea)              = zeroR
+        elemR(1:thisSize,er_SlotWidth)             = zeroR
+        elemR(1:thisSize,er_dSlotArea)             = zeroR
+        elemR(1:thisSize,er_dSlotDepth)            = zeroR
+        elemR(1:thisSize,er_dSlotVolume)           = zeroR
+        elemR(1:thisSize,er_SlotVolume_N0)         = zeroR
+        elemR(1:thisSize,er_Preissmann_Celerity)   = zeroR
+        elemR(1:thisSize,er_Surcharge_Time)        = zeroR      
+        elemR(1:thisSize,er_SlotDepth_N0)          = elemR(1:thisSize,er_SlotDepth)    
+        elemR(1:thisSize,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
                                                               * elemR(1:size(elemR,1)-1,er_FullDepth)))
+
+        where (elemR(1:thisSize,er_Preissmann_Number_initial) < setting%PreissmannSlot%MinimumInitialPreissmannNumber)
+            elemR(1:thisSize,er_Preissmann_Number_initial) = setting%PreissmannSlot%MinimumInitialPreissmannNumber   
+        endwhere   
+                                               
+        ! print *, ' '
+        ! print *, elemR(50,er_Preissmann_Number_initial) 
+        ! print *, TargetPCelerity
+        ! print *, Alpha 
+        ! print *, sqrt(grav * elemR(50,er_FullDepth))
+        ! print *, ' '
+        ! stop 2098734                                                     
     
         !% only calculate slots for ETM time-march
         if (setting%Solver%SolverSelect == ETM) then
@@ -5637,11 +5646,11 @@ contains
 
             case (StaticSlot)
 
-                elemR(1:size(elemR,1)-1,er_Preissmann_Number) = oneR
+                elemR(1:thisSize,er_Preissmann_Number) = oneR
 
                 where (elemYN(:,eYN_isPSsurcharged))
                     elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
-                    elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
+                    elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2)
                     elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth) 
                     elemR(:,er_SlotVolume)          = elemR(:,er_SlotArea) * elemR(:,er_Length)
                     !% --- add slot volume to total volume (which was set to full volume)
@@ -5650,8 +5659,9 @@ contains
 
             case (DynamicSlot)
 
-                elemR(1:size(elemR,1)-1,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:size(elemR,1)-1,er_FullDepth)))
-                elemR(1:size(elemR,1)-1,er_Preissmann_Number_N0)  = elemR(1:size(elemR,1)-1,er_Preissmann_Number)
+                !elemR(1:thisSize,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:thisSize,er_FullDepth))) 
+                elemR(1:thisSize,er_Preissmann_Number)     = elemR(1:thisSize,er_Preissmann_Number_initial)
+                elemR(1:thisSize,er_Preissmann_Number_N0)  = elemR(1:thisSize,er_Preissmann_Number)
                 where (elemYN(:,eYN_isPSsurcharged))
                     elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
                     elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
@@ -6706,6 +6716,7 @@ contains
                     !% topwidth and area are ignored for JM
                     elemR(thisP,er_Temp01) = abs(nullvalueR)
                     elemR(thisP,er_Temp02) = abs(nullvalueR)
+                    !% HACK DOES NOT INCLUDE SURCHARGE VOLUME IN SLOT
                     elemR(thisP,er_Temp03) = storage_volume_from_depth_singular(thisP,depth0)
                 case default
                     print *, 'CODE ERROR: unexpected case default'
@@ -7064,8 +7075,6 @@ contains
                     
                     !% --- check if branch zbottom is below the cutoff for
                     !%     considering large branches (i.e., we neglect overflow branches)
-                    if ( elemR(JBidx,er_Zbottom) <  &
-                        (elemR(JMidx,er_Zbottom) + setting%Junction%PlanArea%LargeBranchDepth)+0.01d0) then
 
                         !% --- handle closed conduits separate from open
                         select case (elemI(JBidx,ei_geometryType))
@@ -7098,7 +7107,6 @@ contains
                         end select
                         !% --- use the largest breadth connected to this junction
                         largestBreadth = max(largestBreadth,trialBreadth)
-                    end if
                 end do
 
                 !% -- create a storage plan area that is 1/2 of a semicircle of the largest
@@ -7126,7 +7134,7 @@ contains
             end if
 
                 ! print *, 'PlanAreaOut'
-                ! print *, JMidx, trim(node%Names(elemI(JMidx,ei_node_Gidx_Bipquick))%str), &
+               ! print *, JMidx, trim(node%Names(elemI(JMidx,ei_node_Gidx_Bipquick))%str), &
                 !     elemSR(JMidx,esr_Storage_Plan_Area), &
                 !     pi  * (largestBreadth**2) / eightR 
 
@@ -7144,7 +7152,11 @@ contains
             elemR (JMidx,er_Volume_N1)  = elemR(JMidx,er_Volume)
             elemR (JMidx,er_Area)       = elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area))
             elemR (JMidx,er_Topwidth)   = sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) 
+
+            ! print *, 'planArea ',JMidx, elemSR(JMidx,esr_Storage_Plan_Area)
         end do
+
+        ! stop 2309874
 
         !%------------------------------------------------------------------
         !% Closing

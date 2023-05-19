@@ -1,0 +1,14 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "T007a_RO_Free_dx100_forceJunction: single pipe, medium flow, nodes are SWMM5+ junctions",
+        "Short" : "T007a_RO_Free_dx100_forceJunction"
+    },
+    "Discretization" : {
+        "NominalElemLength" : 100.00
+    },
+    "Junction" : {
+        "ForceNodesJM" : true
+    }  
+}

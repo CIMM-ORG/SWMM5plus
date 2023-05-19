@@ -21,9 +21,9 @@ module update
 
     private
 
-    public :: update_auxiliary_variables
+    ! public :: update_auxiliary_variables
     public :: update_auxiliary_variables_CC
-    public :: update_auxiliary_variables_JMJB
+    !public :: update_auxiliary_variables_JMJB
     public :: update_interpweights_JB
     public :: update_interpweights_Diag
     public :: update_element_psi_CC
@@ -305,54 +305,54 @@ module update
 !%==========================================================================
 !%==========================================================================
 !% 
-    subroutine update_auxiliary_variables_JMJB  (forceJByn)
+    ! subroutine update_auxiliary_variables_JMJB  (forceJByn)
         !%------------------------------------------------------------------
         !% Description:
         !% Updates the variables for JM junctions after their solution
         !%------------------------------------------------------------------
         !% Declarations
-            logical, intent(in) :: forceJByn !% .true. forces interpweightQ to favor JB
-            integer, pointer    :: Npack, thisCol, thisCol_JB, thisP(:), thisCol_JM
-            !integer, pointer    :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
-            integer             :: mm
-            character(64) :: subroutine_name = 'update_auxiliary_variables_JMJB'
-        !%------------------------------------------------------------------
-        !% Aliases
-            !% --- set packed column for updated elements
-           ! elemPGx                => elemPGetm(:,:)
-           ! npack_elemPGx          => npack_elemPGetm(:)
-           ! col_elemPGx            => col_elemPGetm(:)
-            thisCol_JM             => col_elemP(ep_JM)
-            thisCol_JB             => col_elemP(ep_JB)
+            ! logical, intent(in) :: forceJByn !% .true. forces interpweightQ to favor JB
+        !     integer, pointer    :: Npack, thisCol, thisCol_JB, thisP(:), thisCol_JM
+        !     !integer, pointer    :: elemPGx(:,:), npack_elemPGx(:), col_elemPGx(:)
+        !     integer             :: mm
+        !     character(64) :: subroutine_name = 'update_auxiliary_variables_JMJB'
+        ! !%------------------------------------------------------------------
+        ! !% Aliases
+        !     !% --- set packed column for updated elements
+        !    ! elemPGx                => elemPGetm(:,:)
+        !    ! npack_elemPGx          => npack_elemPGetm(:)
+        !    ! col_elemPGx            => col_elemPGetm(:)
+        !     thisCol_JM             => col_elemP(ep_JM)
+        !     thisCol_JB             => col_elemP(ep_JB)
           
-        !%------------------------------------------------------------------
+        ! !%------------------------------------------------------------------
 
-        print *, 'OBSOLETE update_auxiliary_variables_JMJB'    
-        stop 35098723
-        !% --- geometry for both JM and JB
-        call geometry_toplevel_JMJB ()  
+        ! print *, 'OBSOLETE update_auxiliary_variables_JMJB'    
+        ! stop 35098723
+        ! !% --- geometry for both JM and JB
+        ! call geometry_toplevel_JMJB ()  
        
-            ! call util_utest_CLprint ('------- in update after geometry_toplevel_JMJB')
+        !     ! call util_utest_CLprint ('------- in update after geometry_toplevel_JMJB')
         
         
-        !% --- Froude number, wavespeed, and interpwights on JB
-        Npack => npack_elemP(thisCol_JB)
-        if (Npack > 0) then 
-            thisP => elemP(1:Npack, thisCol_JB)
-            call update_Froude_number_element (thisP) 
-            call update_wavespeed_element(thisP)
-            call update_interpweights_JB (thisP, Npack, forceJByn)
-        end if
+        ! !% --- Froude number, wavespeed, and interpwights on JB
+        ! Npack => npack_elemP(thisCol_JB)
+        ! if (Npack > 0) then 
+        !     thisP => elemP(1:Npack, thisCol_JB)
+        !     call update_Froude_number_element (thisP) 
+        !     call update_wavespeed_element(thisP)
+        !     call update_interpweights_JB (thisP, Npack, forceJByn)
+        ! end if
 
-        !% --- wave speed, Froude number on JM
-        Npack => npack_elemP(thisCol_JM)
-        if (Npack > 0) then
-            thisP => elemP(1:Npack, thisCol_JM)
-            call update_wavespeed_element(thisP)
-            call update_Froude_number_element (thisP) 
-        end if
+        ! !% --- wave speed, Froude number on JM
+        ! Npack => npack_elemP(thisCol_JM)
+        ! if (Npack > 0) then
+        !     thisP => elemP(1:Npack, thisCol_JM)
+        !     call update_wavespeed_element(thisP)
+        !     call update_Froude_number_element (thisP) 
+        ! end if
         
-    end subroutine update_auxiliary_variables_JMJB
+    ! end subroutine update_auxiliary_variables_JMJB
 ! !%
 ! !%==========================================================================
 !%==========================================================================

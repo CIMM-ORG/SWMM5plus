@@ -1473,7 +1473,57 @@ enable_testing()
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-add_test(NAME user5_flowpath102_only
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh06/user5_flowpath102_only.inp -s ./ctest/internal_testing/brh06/settings_dx5.json -o ./ctest/outbrh6/
+# add_test(NAME user5_flowpath102_only
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/brh06/user5_flowpath102_only.inp -s ./ctest/internal_testing/brh06/settings_dx5.json -o ./ctest/outbrh6/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+#=================================================================================================
+#  V1 TEST SET 
+#=================================================================================================
+# add_test(NAME user5a
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/V1test_prelim/user5a.inp -s ./ctest/V1test_prelim/user5a_settings.json -o ./ctest/outV1prelim/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# add_test(NAME T007_RO_Free_dx100_forceJunction
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/V1test_prelim/T007_RO_Free_dx100_forceJunction.inp -s ./ctest/V1test_prelim/T007_RO_Free_dx100_forceJunction_settings.json -o ./ctest/outV1prelim/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# add_test(NAME T007_RO_Free_dx100
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/V1test_prelim/T007_RO_Free_dx100.inp -s ./ctest/V1test_prelim/T007_RO_Free_dx100_settings.json -o ./ctest/outV1prelim/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# add_test(NAME T007a_RO_Free_dx100_forceJunction
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/V1test_prelim/T007a_RO_Free_dx100_forceJunction.inp -s ./ctest/V1test_prelim/T007a_RO_Free_dx100_forceJunction_settings.json -o ./ctest/outV1prelim/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# add_test(NAME T007a_RO_Free_dx100
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/V1test_prelim/T007a_RO_Free_dx100.inp -s ./ctest/V1test_prelim/T007a_RO_Free_dx100_settings.json -o ./ctest/outV1prelim/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+
+# add_test(NAME T007b_RO_Free_dx100_forceJunction
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/V1test_prelim/T007b_RO_Free_dx100_forceJunction.inp -s ./ctest/V1test_prelim/T007b_RO_Free_dx100_forceJunction_settings.json -o ./ctest/outV1prelim/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# add_test(NAME T007b_RO_Free_dx100
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/V1test_prelim/T007b_RO_Free_dx100.inp -s ./ctest/V1test_prelim/T007b_RO_Free_dx100_settings.json -o ./ctest/outV1prelim/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+add_test(NAME T007c_RO_Free_dx100_forceJunction
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/V1test_prelim/T007c_RO_Free_dx100_forceJunction.inp -s ./ctest/V1test_prelim/T007c_RO_Free_dx100_forceJunction_settings.json -o ./ctest/outV1prelim/
+WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_test(NAME T007c_RO_Free_dx100
+COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/V1test_prelim/T007c_RO_Free_dx100.inp -s ./ctest/V1test_prelim/T007c_RO_Free_dx100_settings.json -o ./ctest/outV1prelim/
 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )

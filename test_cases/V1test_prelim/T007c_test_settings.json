@@ -1,0 +1,19 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "T007c_test -- modifying for different conditions",
+        "Short" : "T007c_test"
+    },
+    "Discretization" : {
+        "NominalElemLength" : 100.00
+    },
+    "Junction" : {
+        "ForceNodesJM" : false
+    },
+    "Limiter" : {
+        "Dt" : {
+            "Minimum" : 0.00001
+        }
+    }  
+}

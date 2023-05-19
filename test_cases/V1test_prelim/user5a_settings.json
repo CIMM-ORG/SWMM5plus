@@ -1,0 +1,11 @@
+{
+    "JSON_FoundFileYN" : true,
+    "JSON_CheckAllInputYN" : false,
+    "CaseName" : {
+        "Long"  : "user5 example case",
+        "Short" : "user5"
+},
+    "Discretization" : {
+        "NominalElemLength" : 5.00
+    }
+}

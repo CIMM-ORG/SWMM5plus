@@ -368,6 +368,7 @@ module storage_geometry
         !%-------------------------------------------------------------------
         !% Description:
         !% computes the volume from the depth in an implied storage junction
+        !% ONLY APPLICABLE TO NON-SURCHARGED
         !%-------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: idx
