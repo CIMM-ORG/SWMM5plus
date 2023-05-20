@@ -108,8 +108,8 @@ J0                FLOW             "InflowJ0"               FLOW
 ;;-------------- ---------- ---------- ----------
 InflowJ0                   0.0        0.0   
 InflowJ0                   0.01       0.0
-InflowJ0                   0.05      40.0
-InflowJ0                   1.0       40.0
+InflowJ0                   0.05      20.0
+InflowJ0                   1.0       20.0
 InflowJ0                   1.10       0.0
 InflowJ0                   23.9       0.0
 
