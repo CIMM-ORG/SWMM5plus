@@ -7082,7 +7082,7 @@ contains
                             !% --- closed elements use the maximum breadth
                             case (circular, filled_circular, rectangular_closed, horiz_ellipse, &
                                 arch, eggshaped, horseshoe, gothic, catenary, semi_elliptical, &
-                                basket_handle, semi_circular, custom)
+                                vert_ellipse, basket_handle, mod_basket, semi_circular, custom)
                                 
                                 if (elemR(JBIdx,er_BreadthMax) == nullvalueR) cycle
                                 trialBreadth = elemR(JBidx,er_BreadthMax)

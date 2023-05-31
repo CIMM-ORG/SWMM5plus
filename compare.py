@@ -362,9 +362,8 @@ for x in all_dset_names:
         norm_rmse_link_Q = 100*rmse_link_Q  / np.maximum(0.1, np.maximum( np.amax(swmmF_link_Q), np.amax(swmmC_link_Q)))
         norm_rmse_link_Y = 100*rmse_link_Y  / np.maximum(0.1, np.maximum( np.amax(swmmF_link_Y), np.amax(swmmC_link_Y)))
 
-        # find if any of the nodes exceeds the mass balance tolerance
-        if any([link in link_name for link in surcharged_links]):
-            idx = surcharged_links.index(link_name)
+        # find if any of the surcharged link and remove from the comparison
+        if any([link == link_name for link in surcharged_links]):
             print(' ')
             print('-------------------------------------------------------------------------------')
             print(link_name, 'is surcharged and has been excluded from comparison')
@@ -477,7 +476,7 @@ for x in all_dset_names:
         # --- RMSE of head
         rmse_node_H = np.linalg.norm(swmmC_node_H - swmmF_node_H[:array_len_H]) / np.sqrt(len(swmmC_node_H))
 
-        if any([node in node_name for node in problem_nodes]):
+        if any([node == node_name for node in problem_nodes]):
             idx = problem_nodes.index(node_name)
             print(' ')
             print('-------------------------------------------------------------------------------')
@@ -554,5 +553,5 @@ else:
     print("Issues: some links or nodes are out of the L0, L1, and Linf norm range for given tolerance {Qtol,Ytol}")
     print(list_of_errors)
     print(' ')
-    sys.stderr.write(",\n".join(list_of_errors))
+    # sys.stderr.write(",\n".join(list_of_errors))
     exit(1)
