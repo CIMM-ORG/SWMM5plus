@@ -921,7 +921,7 @@ contains
                 print *, 'This may occur if the user provided an input of depth at an '
                 print *, 'outfall rather than stage elevation.  Otherwise, this is'
                 print *, 'possibly a bug in the code'
-                print *, 'Node # ',ii
+                print *, 'Node # ',ii, 'Node Name ', node%Names(ii)%str
                 print *, 'initial depth ',node%R(ii,nr_InitialDepth) 
                 call util_crashpoint(77987232)
             end if

@@ -585,7 +585,7 @@ SAUBOUT          221.0      FIXED      223.7            NO
 SCANOUT          222.1      FIXED      223.7            NO                       
 SRUBOUT          221.15     FIXED      223.7            NO                       
 CAUBOUT          223.287    FIXED      223.7            YES                      
-CCOROUT          223.849    FIXED      223.7            YES                      
+CCOROUT          223.849    FIXED      223.9            YES                      
 CMRYOUT          223.39     FIXED      223.7            YES                      
 
 [STORAGE]

@@ -50,7 +50,7 @@ module define_settings
     !% setting%Output%CommandLine
     type CommandLineType
         logical :: quietYN = .false.
-        integer :: interval = 10 !% steps between output
+        integer :: interval = 1000 !% steps between commandline output
     end type CommandLineType
 
     !% setting%Time%CPU

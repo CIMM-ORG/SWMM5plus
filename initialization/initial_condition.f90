@@ -3840,11 +3840,20 @@ contains
             !thisCol(ii) = er_FullHydDepth;        ii=ii+1
             thisCol(ii) = er_FullPerimeter;       ii=ii+1
         !%-----------------------------------------------------------------
-        
+
         !% --- if an adjacent element is a channel/conduit, use this for the background channel
         !$     geometry of the diagnostic element in which the weir/orifice/pump/outlet is embeded
         elemI(thisP,ei_geometryType) = elemI(Aidx,ei_geometryType)[Ci]
-        elemR(thisP,thisCol)         = elemR(Aidx,thisCol)[Ci]
+
+        !% saz 20230531: This kind of vector operation is not permissible with coarrays.
+        !% thus wring index by index operation
+        ! elemR(thisP,thisCol)         = elemR(Aidx,thisCol)[Ci]
+
+        elemR(thisP,er_AreaBelowBreadthMax) = elemR(Aidx,er_AreaBelowBreadthMax)[Ci]
+        elemR(thisP,er_BreadthMax)          = elemR(Aidx,er_BreadthMax)[Ci]
+        elemR(thisP,er_FullArea)            = elemR(Aidx,er_FullArea)[Ci]
+        elemR(thisP,er_FullDepth)           = elemR(Aidx,er_FullDepth)[Ci]
+        elemR(thisP,er_FullPerimeter)       = elemR(Aidx,er_FullPerimeter)[Ci]
 
         !% --- initialize other consistent terms based on local length and zbottom
         elemR(thisP,er_FullVolume)   = elemR(thisP,er_FullArea) * elemR(thisP,er_Length)
@@ -3875,6 +3884,58 @@ contains
         !%-----------------------------------------------------------------
         !% --- copy over special geometry data depending on geometry type
         select case (elemI(thisP,ei_geometryType))
+            case (arch)
+                elemSGR(thisP,esgr_Arch_SoverSfull)    = elemSGR(Aidx,esgr_Arch_SoverSfull)[Ci]
+            case (basket_handle)
+                !% no special geometry data to transfer
+            case (catenary)
+                elemSGR(thisP,esgr_Catenary_SoverSfull)    = elemSGR(Aidx,esgr_Catenary_SoverSfull)[Ci]
+            case (circular)
+                elemSGR(thisP,esgr_Circular_Diameter)      = elemSGR(Aidx,esgr_Circular_Diameter)[Ci]
+                elemSGR(thisP,esgr_Circular_Radius)        = elemSGR(Aidx,esgr_Circular_Radius)[Ci]
+            case (eggshaped)
+                !% no special geometry data to transfer
+            case (filled_circular)
+                elemSGR(thisP,esgr_Filled_Circular_TotalPipeDiameter)  = elemSGR(Aidx,esgr_Filled_Circular_TotalPipeDiameter)[Ci]
+                elemSGR(thisP,esgr_Filled_Circular_TotalPipeArea)      = elemSGR(Aidx,esgr_Filled_Circular_TotalPipeArea)[Ci]
+                elemSGR(thisP,esgr_Filled_Circular_TotalPipePerimeter) = elemSGR(Aidx,esgr_Filled_Circular_TotalPipePerimeter)[Ci]
+                elemSGR(thisP,esgr_Filled_Circular_TotalPipeHydRadius) = elemSGR(Aidx,esgr_Filled_Circular_TotalPipeHydRadius)[Ci]
+                elemSGR(thisP,esgr_Filled_Circular_bottomArea)         = elemSGR(Aidx,esgr_Filled_Circular_bottomArea)[Ci]
+                elemSGR(thisP,esgr_Filled_Circular_bottomPerimeter)    = elemSGR(Aidx,esgr_Filled_Circular_bottomPerimeter)[Ci]
+                elemSGR(thisP,esgr_Filled_Circular_bottomTopwidth)     = elemSGR(Aidx,esgr_Filled_Circular_bottomTopwidth)[Ci]
+            case (gothic)
+                elemSGR(thisP,esgr_Gothic_SoverSfull)    = elemSGR(Aidx,esgr_Gothic_SoverSfull)[Ci]
+            case (horiz_ellipse)
+                elemSGR(thisP,esgr_Horiz_Ellipse_SoverSfull)    = elemSGR(Aidx,esgr_Horiz_Ellipse_SoverSfull)[Ci]
+            case (horseshoe)
+                !% no special geometry data to transfer
+            case (mod_basket)
+                elemSGR(thisP,esgr_Mod_Basket_Ytop)     = elemSGR(Aidx,esgr_Mod_Basket_Ytop)[Ci]
+                elemSGR(thisP,esgr_Mod_Basket_Rtop)     = elemSGR(Aidx,esgr_Mod_Basket_Rtop)[Ci]
+                elemSGR(thisP,esgr_Mod_Basket_Atop)     = elemSGR(Aidx,esgr_Mod_Basket_Atop)[Ci]
+                elemSGR(thisP,esgr_Mod_Basket_ThetaTop) = elemSGR(Aidx,esgr_Mod_Basket_ThetaTop)[Ci]
+            case (rectangular_closed)
+                elemSGR(thisP,esgr_Rectangular_Breadth)    = elemSGR(Aidx,esgr_Rectangular_Breadth)[Ci]
+            case (rect_round)
+                elemSGR(thisP,esgr_Rectangular_Round_Ybot)     = elemSGR(Aidx,esgr_Rectangular_Round_Ybot)[Ci]
+                elemSGR(thisP,esgr_Rectangular_Round_Rbot)     = elemSGR(Aidx,esgr_Rectangular_Round_Rbot)[Ci]
+                elemSGR(thisP,esgr_Rectangular_Round_Abot)     = elemSGR(Aidx,esgr_Rectangular_Round_Abot)[Ci]
+                elemSGR(thisP,esgr_Rectangular_Round_ThetaBot) = elemSGR(Aidx,esgr_Rectangular_Round_ThetaBot)[Ci]
+            case (rect_triang)
+                elemSGR(thisP,esgr_Rectangular_Triangular_BottomDepth) = elemSGR(Aidx,esgr_Rectangular_Triangular_BottomDepth)[Ci]
+                elemSGR(thisP,esgr_Rectangular_Triangular_BottomArea)  = elemSGR(Aidx,esgr_Rectangular_Triangular_BottomArea)[Ci]
+                elemSGR(thisP,esgr_Rectangular_Triangular_BottomSlope) = elemSGR(Aidx,esgr_Rectangular_Triangular_BottomSlope)[Ci]
+            case (semi_circular)
+                elemSGR(thisP,esgr_Semi_Circular_SoverSfull) = elemSGR(Aidx,esgr_Semi_Circular_SoverSfull)[Ci]
+            case (semi_elliptical)
+                elemSGR(thisP,esgr_Semi_Elliptical_SoverSfull) = elemSGR(Aidx,esgr_Semi_Elliptical_SoverSfull)[Ci]
+            case (vert_ellipse)
+                elemSGR(thisP,esgr_Vert_Ellipse_SoverSfull) = elemSGR(Aidx,esgr_Vert_Ellipse_SoverSfull)[Ci]
+            case (force_main)
+                !% no special geometry data to transfer
+            case (parabolic)
+                elemSGR(thisP,esgr_Parabolic_Breadth)    = elemSGR(Aidx,esgr_Parabolic_Breadth)[Ci]
+                elemSGR(thisP,esgr_Parabolic_Radius)     = elemSGR(Aidx,esgr_Parabolic_Radius)[Ci]
             case (rectangular)
                 elemSGR(thisP,esgr_Rectangular_Breadth)    = elemSGR(Aidx,esgr_Rectangular_Breadth)[Ci]
             case (trapezoidal)
@@ -3886,11 +3947,6 @@ contains
                 elemSGR(thisP,esgr_Triangular_Slope)       = elemSGR(Aidx,esgr_Triangular_Slope)[Ci] 
             case (irregular)
                 elemI(thisP,ei_link_transect_idx)          = elemI(Aidx,ei_link_transect_idx)[Ci]
-            case (rectangular_closed)
-                elemSGR(thisP,esgr_Rectangular_Breadth)    = elemSGR(Aidx,esgr_Rectangular_Breadth)[Ci]
-            case (circular)
-                elemSGR(thisP,esgr_Circular_Diameter)      = elemSGR(Aidx,esgr_Circular_Diameter)[Ci]
-                elemSGR(thisP,esgr_Circular_Radius)        = elemSGR(Aidx,esgr_Circular_Radius)[Ci]
             case default
                 print *, 'CODE ERROR unexpected geometry'
                 print *, 'ei_geometryType index # ',elemI(thisP,ei_geometryType)
