@@ -1,0 +1,304 @@
+[TITLE]
+;;Project Title/Notes
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CMS
+INFILTRATION         MODIFIED_GREEN_AMPT
+FLOW_ROUTING         DYNWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           05/30/2023
+START_TIME           00:00:00
+REPORT_START_DATE    05/30/2023
+REPORT_START_TIME    00:00:00
+END_DATE             05/30/2023
+END_TIME             04:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:01:00
+WET_STEP             00:05:00
+DRY_STEP             01:00:00
+ROUTING_STEP         0:00:30 
+RULE_STEP            00:00:00
+
+INERTIAL_DAMPING     NONE
+NORMAL_FLOW_LIMITED  BOTH
+FORCE_MAIN_EQUATION  D-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         1.167
+MAX_TRIALS           8
+HEAD_TOLERANCE       0.0015
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              1
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+CONSTANT         0.0
+DRY_ONLY         NO
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+;;-------------- ---------- ---------- ---------- ---------- ----------
+J1               0          4          0.5        1000       0         
+J2               0          4          0.5        1000       0         
+J3               0          4          0.5        1000       0         
+J4               0          4          0.5        1000       0         
+J5               0          4          0.5        1000       0         
+J6               0          4          0.5        1000       0         
+J7               0          4          0.5        1000       0         
+J8               0          4          0.5        1000       0         
+J9               0          4          0.5        1000       0         
+J10              0          4          0.5        1000       0         
+J11              0          4          0.5        1000       0         
+J12              0          4          0.5        1000       0         
+J13              0          4          0.5        1000       0         
+J14              0          4          0.5        1000       0         
+J15              0          4          0.5        1000       0         
+J16              0          4          0.5        1000       0         
+J17              0          4          0.5        1000       0         
+J18              0          4          0.5        1000       0         
+J19              0          4          0.5        1000       0         
+J20              0          4          0.5        1000       0         
+J21              0          4          0.5        1000       0         
+J22              0          4          0.5        1000       0         
+J23              0          4          0.5        0          0         
+J24              0          4          0.5        0          0         
+J25              0          4          0.5        1000       0         
+J26              0          4          0.5        1000       0         
+J27              0          4          0.5        1000       0         
+J28              0          4          0.5        1000       0         
+J29              0          4          0.5        1000       0         
+J30              0          4          0.5        1000       0         
+J31              0          4          0.5        1000       0         
+J32              0          4          0.5        1000       0         
+J33              0          4          0.5        0          0         
+J34              0          4          0.5        0          0         
+J37              0          4          0.5        1000       0         
+J38              0          4          0.5        1000       0         
+J39              0          4          0.5        0          0         
+J40              0          4          0.5        0          0         
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+Out1             0          FREE                        NO                       
+Out2             0          FREE                        NO                       
+Out3             0          FREE                        NO                       
+Out4             0          FREE                        NO                       
+Out5             0          FREE                        NO                       
+Out6             0          FREE                        NO                       
+Out7             0          FREE                        NO                       
+Out8             0          FREE                        NO                       
+Out9             0          FREE                        NO                       
+Out10            0          FREE                        NO                       
+Out11            0          FREE                        NO                       
+Out12            0          FREE                        NO                       
+Out13            0          FREE                        NO                       
+Out14            0          FREE                        NO                       
+Out15            0          FREE                        NO                       
+Out16            0          FREE                        NO                       
+Out17            0          FREE                        NO                       
+Out19            0          FREE                        NO                       
+Out20            0          FREE                        NO                       
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+ARCH_1           J1               J2               100        0.012      0          0          0          0         
+ARCH_2           J2               Out1             100        0.012      0          0          0          0         
+BASKT_1          J3               J4               100        0.012      0          0          0          0         
+BASKT_2          J4               Out2             100        0.012      0          0          0          0         
+CTNRY_1          J5               J6               100        0.012      0          0          0          0         
+CTNRY_2          J6               Out3             100        0.012      0          0          0          0         
+CIRC_1           J7               J8               100        0.012      0          0          0          0         
+CIRC_2           J8               Out4             100        0.012      0          0          0          0         
+EGG_1            J9               J10              100        0.012      0          0          0          0         
+EGG_2            J10              Out5             100        0.012      0          0          0          0         
+F_CIRC_1         J11              J12              100        0.012      0          0          0          0         
+F_CIRC_2         J12              Out6             100        0.012      0          0          0          0         
+F_MAIN_1         J13              J14              100        0.012      0          0          0          0         
+F_MAIN_2         J14              Out7             100        0.012      0          0          0          0         
+GOTHIC_1         J15              J16              100        0.012      0          0          0          0         
+GOTHIC_2         J16              Out8             100        0.012      0          0          0          0         
+H_ELPS_1         J17              J18              100        0.012      0          0          0          0         
+H_ELPS_2         J18              Out9             100        0.012      0          0          0          0         
+H_SHOE_1         J19              J20              100        0.012      0          0          0          0         
+H_SHOE_2         J20              Out10            100        0.012      0          0          0          0         
+M_BSKT_1         J21              J22              100        0.012      0          0          0          0         
+M_BSKT_2         J22              Out11            100        0.012      0          0          0          0         
+RECT_O_1         J23              J24              100        0.012      0          0          0          0         
+RECT_O_2         J24              Out12            100        0.012      0          0          0          0         
+RECT_C_1         J25              J26              100        0.012      0          0          0          0         
+RECT_C_2         J26              Out13            100        0.012      0          0          0          0         
+R_ROUND_1        J27              J28              100        0.012      0          0          0          0         
+R_ROUND_2        J28              Out14            100        0.012      0          0          0          0         
+S_CIRC_1         J29              J30              100        0.012      0          0          0          0         
+S_CIRC_2         J30              Out15            100        0.012      0          0          0          0         
+S_ELPT_1         J31              J32              100        0.012      0          0          0          0         
+S_ELPT_2         J32              Out16            100        0.012      0          0          0          0         
+TRAPZ_1          J33              J34              100        0.012      0          0          0          0         
+TRAPZ_2          J34              Out17            100        0.012      0          0          0          0         
+V_ELPS_1         J37              J38              100        0.012      0          0          0          0         
+V_ELPS_2         J38              Out19            100        0.012      0          0          0          0         
+PARABL_1         J39              J40              100        0.012      0          0          0          0         
+PARABL_2         J40              Out20            100        0.012      0          0          0          0         
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
+ARCH_1           ARCH         3.556            5.461      93         0          1                    
+ARCH_2           ARCH         3.556            5.461      93         0          1                    
+BASKT_1          BASKETHANDLE 4                0          0          0          1                    
+BASKT_2          BASKETHANDLE 4                0          0          0          1                    
+CTNRY_1          CATENARY     4                0          0          0          1                    
+CTNRY_2          CATENARY     4                0          0          0          1                    
+CIRC_1           CIRCULAR     4                0          0          0          1                    
+CIRC_2           CIRCULAR     4                0          0          0          1                    
+EGG_1            EGG          4                0          0          0          1                    
+EGG_2            EGG          4                0          0          0          1                    
+F_CIRC_1         FILLED_CIRCULAR 4                1          0          0          1                    
+F_CIRC_2         FILLED_CIRCULAR 4                1          0          0          1                    
+F_MAIN_1         FORCE_MAIN   4                .120       0          0          1                    
+F_MAIN_2         FORCE_MAIN   4                .120       0          0          1                    
+GOTHIC_1         GOTHIC       4                0          0          0          1                    
+GOTHIC_2         GOTHIC       4                0          0          0          1                    
+H_ELPS_1         HORIZ_ELLIPSE 2.946            4.572      23         0          1                    
+H_ELPS_2         HORIZ_ELLIPSE 2.946            4.572      23         0          1                    
+H_SHOE_1         HORSESHOE    4                0          0          0          1                    
+H_SHOE_2         HORSESHOE    4                0          0          0          1                    
+M_BSKT_1         MODBASKETHANDLE 4                2          1          0          1                    
+M_BSKT_2         MODBASKETHANDLE 4                2          1          0          1                    
+RECT_O_1         RECT_OPEN    4                2          0          0          1                    
+RECT_O_2         RECT_OPEN    4                2          0          0          1                    
+RECT_C_1         RECT_CLOSED  4                2          0          0          1                    
+RECT_C_2         RECT_CLOSED  4                2          0          0          1                    
+R_ROUND_1        RECT_ROUND   3                2          1          0          1                    
+R_ROUND_2        RECT_ROUND   3                2          1          0          1                    
+S_CIRC_1         SEMICIRCULAR 4                0          0          0          1                    
+S_CIRC_2         CIRCULAR     4                0          0          0          1                    
+S_ELPT_1         SEMIELLIPTICAL 4                0          0          0          1                    
+S_ELPT_2         SEMIELLIPTICAL 4                0          0          0          1                    
+TRAPZ_1          TRAPEZOIDAL  4                2          1          1          1                    
+TRAPZ_2          TRAPEZOIDAL  4                2          1          1          1                    
+V_ELPS_1         VERT_ELLIPSE 4.572            2.946      23         0          1                    
+V_ELPS_2         VERT_ELLIPSE 4.572            2.946      23         0          1                    
+PARABL_1         PARABOLIC    4                4          0          0          1                    
+PARABL_2         PARABOLIC    4                4          0          0          1                    
+
+[INFLOWS]
+;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+J1               FLOW             hydGraph         FLOW     1.0      1.0              
+J3               FLOW             hydGraph         FLOW     1.0      1.0              
+J5               FLOW             hydGraph         FLOW     1.0      1.0              
+J7               FLOW             hydGraph         FLOW     1.0      1.0              
+J9               FLOW             hydGraph         FLOW     1.0      1.0              
+J11              FLOW             hydGraph         FLOW     1.0      1.0              
+J13              FLOW             hydGraph         FLOW     1.0      1.0              
+J15              FLOW             hydGraph         FLOW     1.0      1.0              
+J17              FLOW             hydGraph         FLOW     1.0      1.0              
+J19              FLOW             hydGraph         FLOW     1.0      1.0              
+J21              FLOW             hydGraph         FLOW     1.0      1.0              
+J23              FLOW             hydGraph         FLOW     1.0      1.0              
+J25              FLOW             hydGraph         FLOW     1.0      1.0              
+J27              FLOW             hydGraph         FLOW     1.0      1.0              
+J29              FLOW             hydGraph         FLOW     1.0      1.0              
+J31              FLOW             hydGraph         FLOW     1.0      1.0              
+J33              FLOW             hydGraph         FLOW     1.0      1.0              
+J37              FLOW             hydGraph         FLOW     1.0      1.0              
+J39              FLOW             hydGraph         FLOW     1.0      1.0              
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+hydGraph         05/30/2023 0:0        0.5         
+hydGraph                    02:0       0.5         
+hydGraph                    03:0       0.5 
+hydGraph                    04:0       0.0         
+
+[REPORT]
+;;Reporting Options
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS 0.000 0.000 10000.000 10000.000
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+J1               0.000              8000.000          
+J2               1000.000           8000.000          
+J3               0.000              7500.000          
+J4               1000.000           7500.000          
+J5               0.000              7000.000          
+J6               1000.000           7000.000          
+J7               0.000              6500.000          
+J8               1000.000           6500.000          
+J9               0.000              6000.000          
+J10              1000.000           6000.000          
+J11              0.000              5500.000          
+J12              1000.000           5500.000          
+J13              0.000              5000.000          
+J14              1000.000           5000.000          
+J15              0.000              4500.000          
+J16              1000.000           4500.000          
+J17              0.000              4000.000          
+J18              1000.000           4000.000          
+J19              0.000              3500.000          
+J20              1000.000           3500.000          
+J21              0.000              3000.000          
+J22              1000.000           3000.000          
+J23              0.000              2500.000          
+J24              1000.000           2500.000          
+J25              0.000              2000.000          
+J26              1000.000           2000.000          
+J27              0.000              1500.000          
+J28              1000.000           1500.000          
+J29              0.000              1000.000          
+J30              1000.000           1000.000          
+J31              0.000              500.000           
+J32              1000.000           500.000           
+J33              0.000              0.000             
+J34              1000.000           0.000             
+J37              0.000              -1000.000         
+J38              1000.000           -1000.000         
+J39              0.000              -1500.000         
+J40              1000.000           -1500.000         
+Out1             2000.000           8000.000          
+Out2             2000.000           7500.000          
+Out3             2000.000           7000.000          
+Out4             2000.000           6500.000          
+Out5             2000.000           6000.000          
+Out6             2000.000           5500.000          
+Out7             2000.000           5000.000          
+Out8             2000.000           4500.000          
+Out9             2000.000           4000.000          
+Out10            2000.000           3500.000          
+Out11            2000.000           3000.000          
+Out12            2000.000           2500.000          
+Out13            2000.000           2000.000          
+Out14            2000.000           1500.000          
+Out15            2000.000           1000.000          
+Out16            2000.000           500.000           
+Out17            2000.000           0.000             
+Out19            2000.000           -1000.000         
+Out20            2000.000           -1500.000         
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+
