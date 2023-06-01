@@ -406,7 +406,7 @@ contains
 
         Npack => npack_elemP(ep_Diag)
         if (Npack > 0) then 
-            thisp => elemP(1:Npack,ep_JM)
+            thisp => elemP(1:Npack,ep_Diag)
             call update_interpweights_Diag (thisP, Npack)
         end if
 
