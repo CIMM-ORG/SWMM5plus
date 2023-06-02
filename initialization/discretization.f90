@@ -1,4 +1,14 @@
 module discretization
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Performs discretization into multiple elements per link   
+    !%
+    !%==========================================================================
 
     use define_globals
     use define_indexes
@@ -7,60 +17,64 @@ module discretization
 
     implicit none
 
+    public init_discretization_nominal
+    private
+
 contains
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!%
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine init_discretization_nominal(link_idx)
-    !-----------------------------------------------------------------------------
-    !
-    ! Description:
-    !   This subroutine sets the number of elements per link.  The element length
-    !   is adjusted so that an integer number of elements is assigned to each link.
-    !
-    !-----------------------------------------------------------------------------
+    !%----------------------------------------------------------------------
+    !% Description:
+    !%   This subroutine sets the number of elements per link.  The element length
+    !%   is adjusted so that an integer number of elements is assigned to each link.
+    !%----------------------------------------------------------------------
+    !% Declarations
         integer, intent(in) :: link_idx
         real(8) :: remainder
         real(8), pointer :: elem_nominal_length
         integer, pointer :: min_elem_per_link
         character(64) :: subroutine_name = 'init_discretization_nominal'
-
-    !-----------------------------------------------------------------------------
-        !if (crashYN) return
+    !%----------------------------------------------------------------------
+    !% Preliminaries
         if (setting%Debug%File%discretization) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
+    !%----------------------------------------------------------------------
+    !% Aliases
         elem_nominal_length => setting%Discretization%NominalElemLength
         min_elem_per_link   => setting%Discretization%MinElementPerLink
+    !%----------------------------------------------------------------------
 
-        !% Adjusts the number of elements in a link based on the length
+        !% --- Adjusts the number of elements in a link based on the length
         remainder = mod(link%R(link_idx,lr_Length), elem_nominal_length)
 
-        !% If the elements fit evenly into the length of link
+        !% --- If the elements fit evenly into the length of link
         if ( remainder == zeroR ) then
             link%I(link_idx, li_N_element) = int(link%R(link_idx, lr_Length)/elem_nominal_length)
             link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
 
-        !% If the remainder is greater than half an element length
+        !% --- If the remainder is greater than half an element length
         elseif ( remainder .ge. onehalfR * elem_nominal_length ) then
             link%I(link_idx, li_N_element) = ceiling(link%R(link_idx,lr_Length)/elem_nominal_length)
             link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
 
-        !% If the remainder is less than half an element length
+        !% --- If the remainder is less than half an element length
         else
             link%I(link_idx, li_N_element) = floor(link%R(link_idx,lr_Length)/elem_nominal_length)
             link%R(link_idx, lr_ELementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
         end if
 
-        !% Additional check to ensure that every link has at least one element
+        !% --- Additional check to ensure that every link has at least one element
         if ( link%R(link_idx, lr_Length) .le. elem_nominal_length ) then
             link%I(link_idx, li_N_element) = oneI
             link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
         end if
 
-        !% only force a minimum number of elements per link if the minimum
-        !% number of elements per link settings is set to greater than one
+        !% --- only force a minimum number of elements per link if the minimum
+        !%     number of elements per link settings is set to greater than one
         if (min_elem_per_link > oneI) then
             !% check for links that has less elements than 
             !% the specified minimum number of elements
@@ -70,7 +84,7 @@ contains
             end if 
         end if
 
-        !% treatment of for special links
+        !% --- treatment of for special links
         if ((link%I(link_idx,li_link_type) == lWeir)    .or. &
             (link%I(link_idx,li_link_type) == lOrifice) .or. &
             (link%I(link_idx,li_link_type) == lOutlet)  .or. &
@@ -81,16 +95,20 @@ contains
 
         end if 
 
+        !%----------------------------------------------------------------------
+        !% Closing
         if (setting%Debug%File%discretization)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_discretization_nominal
 
-    !
-    !==========================================================================
-    !==========================================================================
-    !
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine init_discretization_adjustlinklength()
+
+        !% ARCHIVE -- this may be recalled in future code
 
         print *, 'OBSOLETE 20230507 brh'
         stop 539874
@@ -161,15 +179,9 @@ contains
         ! if (setting%Debug%File%discretization)  &
         !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_discretization_adjustlinklength
-    !
-    !==========================================================================
-    !==========================================================================
-    !
-    subroutine init_discretization_cfl()
-    end subroutine init_discretization_cfl
-    !
-    !==========================================================================
-    ! END OF MODULE
-    !==========================================================================
-    !
+!%
+!%==========================================================================
+!% END OF MODULE
+!%==========================================================================
+!%
 end module discretization

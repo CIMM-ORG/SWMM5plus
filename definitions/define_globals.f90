@@ -372,6 +372,8 @@ module define_globals
     real(8), parameter :: seconds_per_hour = 3600.d0
     real(8), parameter :: seconds_per_day  = 86400.d0
 
+    real(8), parameter :: meters_per_ft = 0.3048d0
+
     integer, parameter :: dummyI = 1  !% used when dummy argument isneeded
     integer, parameter :: zeroI = 0
     integer, parameter :: oneI = 1
@@ -453,8 +455,8 @@ module define_globals
     integer, parameter :: lDeferred   = -1
 
     ! Constants for Junction
-    integer, parameter :: J_elem_add = max_branch_per_node+1 ! Supplement elements for junction !%brh20211219
-    integer, parameter :: J_face_add = max_branch_per_node   ! Supplement faces for junction !%brh20211219
+    integer, parameter :: J_elem_add = max_branch_per_node+1 ! Supplement elements for junction 
+    integer, parameter :: J_face_add = max_branch_per_node   ! Supplement faces for junction
 
     ! default number of elements for different node types
     integer, parameter :: N_elem_nJ2      = 0 ! 2-link nodes are assigned to a single face
