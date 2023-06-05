@@ -1,4 +1,16 @@
 module control_hydraulics
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Calls routines for controls
+    !%
+    !% Methods:
+    !% Uses the EPA-SWMM-C controls logic in controls.c
+    !%==========================================================================
     use define_keys
     use define_globals
     use define_settings
@@ -14,11 +26,6 @@ module control_hydraulics
     use utility_crash,    only: util_crashpoint
 
     implicit none
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%    Handles controls/monitoring algorithms for hydraulics based
-    !%    on EPA-SWMM controls.c code
-    !%-----------------------------------------------------------------------------
 
     private
 
@@ -48,8 +55,6 @@ contains
             integer, intent(in) :: istep
             character(64) :: subroutine_name = 'control_update'
         !%------------------------------------------------------------------
-
-        ! print *, 'in control update '
 
         !% --- store monitoring element data across all images
         call control_update_monitor_across_images()
@@ -98,10 +103,6 @@ contains
         !%     involved with control and monitoring
         call interface_controls_count(nRules, nPremise, nThenAction, nElseAction)
 
-            ! print *, 'in ',trim(subroutine_name)
-            ! print *, '       nRules, nPremise, nThenAction, nElseAction'
-            ! print *, nRules, nPremise, nThenAction, nElseAction
-
         !% --- allocate and initialize the monitorI(:,:) array from control premise data
         call control_init_monitor_points(nPremise, nRules)
 
@@ -128,17 +129,6 @@ contains
             end if
         end do
 
-        ! do ii=1,N_actionPoint
-        !     print *, ii, actionI(ii,ai_idx)
-        !     print *, 'elem idx   ',actionI(ii,ai_elem_idx)
-        !     print *, 'image      ',actionI(ii,ai_image)
-        !     print *, 'link idx   ',actionI(ii,ai_link_idx)
-        !     print *, 'haschanged ',actionI(ii,ai_hasChanged)
-
-        ! end do
-        ! stop 298734
-
-
     end subroutine control_init_monitoring_and_action_from_EPASWMM
 !%    
 !%==========================================================================
@@ -160,21 +150,8 @@ contains
         !%------------------------------------------------------------------
         rdummy = nullvalueR
 
-        ! print *, 'in ',trim(subroutine_name)
-        ! do ii=1,size(monitorI,1)
-        !     print *, ' '
-        !     print *, 'ii = ',ii
-        !     print *, 'image = ', this_image()
-        !     print *, monitorI(ii,mi_idx)
-        !     print *, monitorI(ii,mi_image)
-        !     print *, monitorI(ii,mi_elem_idx)
-        !     print *, monitorI(ii,mi_linknodesimType)
-        !     print *, monitorI(ii,mi_linknode_idx)
-        ! end do
-
         !% --- cycle through the monitor points to communicate data
         do ii=1,N_MonitorPoint
-            !print *, ii
 
             if (monitorI(ii,mi_image) == this_image()) then
                 Eidx => monitorI(ii,mi_elem_idx)
@@ -216,7 +193,6 @@ contains
 
         !% --- at this point, the monitorR array on every image has exactly the same data
         !%     so a control action can be conducted on any image.                
-        
 
     end subroutine control_update_monitor_across_images
  !%    
@@ -242,11 +218,6 @@ contains
             character(64) :: subroutine_name = 'control_update_EPASWMM_monitor_data'
         !%------------------------------------------------------------------
 
-        !% DEBUGGING OUTPUT ================================================
-            ! print *, ' '
-            ! print *, 'in ',trim(subroutine_name), ': MONITOR DATA SENT TO EPA SWMM'    
-        !% DEBUGGING OUTPUT ================================================
-
         do ii=1,N_MonitorPoint
             !% --- get the monitoring data     
             tDepth       => monitorR(ii,mr_Depth)
@@ -264,19 +235,6 @@ contains
             call interface_controls_transfer_monitor_data &
                 (tDepth, tHead, tVolume, tInflow, tFlow, tSetting, &
                  tTimeLastSet, LinkNodeNum, linknodesimType)
-
-            !% DEBUGGING OUTPUT ================================================
-                ! print *, 'monitor ii  ',ii
-                ! print *, 'Depth       ',tDepth
-                ! print *, 'Head        ',tHead
-                ! print *, 'Volume      ',tVolume
-                ! print *, 'Inflow      ',tInflow
-                ! print *, 'Flow        ',tFlow
-                ! print *, 'Setting     ',tSetting
-                ! print *, 'timeLastSet ',tTimeLastSet
-                ! print *, 'linkNodeNum ',LinkNodeNum
-                ! print *, 'linknodesimType      ',linknodesimType
-            !% DEBUGGING OUTPUT ================================================
 
         end do
 
@@ -301,34 +259,19 @@ contains
             targetsetting => elemR(:,er_TargetSetting)
             timelastset   => elemR(:,er_TimeLastSet)
         !%------------------------------------------------------------------
-        !% DEBUGGING OUTPUT ================================================
-            ! print *, ' '
-            ! print *, 'in ',trim(subroutine_name)
-        !% DEBUGGING OUTPUT ================================================
 
         !% --- cycle through the action points
         do ii=1,N_ActionPoint
 
-                ! print *, 'action point ',ii
-            
             !% --- only modify elemR data for the image associated with the action point
             if (actionI(ii,ai_image) == this_image()) then
                 !% --- set the element and link indexes
                 Eidx => actionI(ii,ai_elem_idx)
                 Lidx => actionI(ii,ai_link_idx)
-                    ! print *, 'Eidx, Lidx, ',Eidx, Lidx
-                    ! print *, 'link name = ', trim(link%Names(Lidx)%str)
+            
                 !% --- get the new target setting and time last set
                 call interface_controls_get_action_results &
                     (targetsetting(Eidx),timelastset(Eidx),Lidx)
-
-                !% DEBUGGING OUTPUT ================================================
-                    ! print *, 'Action Point idx ',Eidx
-                    ! print *, 'Link idx         ',Lidx, '; link name = ', trim(link%Names(Lidx)%str)
-                    ! print *, 'targetSetting    ',targetsetting(Eidx)
-                    ! print *, 'timelastset      ',timelastset(Eidx)
-                    ! print *, 'elem setting before action taken ',elemR(Eidx,er_Setting)
-                !% DEBUGGING OUTPUT ================================================
 
             end if  
 
@@ -353,11 +296,6 @@ contains
             character(64) :: subroutine_name = 'control_update_setting'
         !%------------------------------------------------------------------
 
-        !% DEBUGGING OUTPUT ================================================
-            ! print *, ' '
-            ! print *, 'in ',trim(subroutine_name)
-        !% DEBUGGING OUTPUT ================================================
-
         !% --- cycle through the action points (few)
         do ii = 1,N_ActionPoint
 
@@ -372,17 +310,6 @@ contains
             timeLastSet     => elemR( Eidx,er_TimeLastSet)
             elemType        => elemI( Eidx,ei_elementType)
             isClosedConduit => elemYN(Eidx,eYN_canSurcharge)
-
-            !% DEBUGGING OUTPUT ================================================
-                ! print *, 'ACTION POINTS before action'
-                ! print *, 'Eidx           ',Eidx
-                ! print *, 'hasChanged      ', hasChanged
-                ! print *, 'thisSetting     ',thisSetting
-                ! print *, 'targetSetting   ',targetSetting
-                ! print *, 'timeLastSet     ',timeLastSet
-                ! print *, 'elemType        ',trim(reverseKey(elemType))
-                ! print *, 'isClosedConduit ',isClosedConduit
-            !% DEBUGGING OUTPUT ================================================
 
             !% --- error checking
             if ((targetSetting < zeroR) .or. (targetSetting > oneR)) then
@@ -404,91 +331,79 @@ contains
             !% --- update thisSetting for different element types
             !%     Note this does not update any other data.
             select case (elemType)
-            case (CC)  !--- channels and conduits
-                !% --- NOTE: closing a conduit changes the setting to 0, but
-                !%     does NOT change the output at this time step.
-                if (isClosedConduit) then
-                    !% --- closed conduit that can use a setting of 1 (open) or 0 closed
+                case (CC)  !--- channels and conduits
+                    !% --- NOTE: closing a conduit changes the setting to 0, but
+                    !%     does NOT change the output at this time step.
+                    if (isClosedConduit) then
+                        !% --- closed conduit that can use a setting of 1 (open) or 0 closed
+                        if (targetSetting .ne. thisSetting) then
+                            !% --- immediate open/close change for a link
+                            thisSetting = targetSetting 
+                            hasChanged = oneI
+                        else
+                            hasChanged = zeroI
+                        end if
+                        !% --- error check
+                        if ((thisSetting .ne. zeroR) .or. (thisSetting .ne. oneR)) then
+                            print *, 'CODE ERROR: a closed conduit element has an er_Setting of other than 0.0 or 1.0'
+                            call util_crashpoint(598723)
+                        end if
+                    else
+                        !% --- not a closed conduit (open channel)
+                        print *, 'CODE/USER ERROR: control action point on an open channel, which is not allowed'
+                        call util_crashpoint(587223)
+                    end if
+
+                case (pump)
+                    !% --- reset pump setting based on targetsetting
                     if (targetSetting .ne. thisSetting) then
-                        !% --- immediate open/close change for a link
-                        thisSetting = targetSetting 
+                        call pump_set_setting (Eidx)
                         hasChanged = oneI
                     else
                         hasChanged = zeroI
                     end if
-                    !% --- error check
-                    if ((thisSetting .ne. zeroR) .or. (thisSetting .ne. oneR)) then
-                        print *, 'CODE ERROR: a closed conduit element has an er_Setting of other than 0.0 or 1.0'
-                        call util_crashpoint(598723)
+
+                case (weir)
+                    !% --- reset weir setting based on targetsetting
+                    if (targetSetting .ne. thisSetting) then
+                        call weir_set_setting (Eidx)
+                        hasChanged = oneI
+                    else
+                        hasChanged = zeroI
                     end if
-                else
-                    !% --- not a closed conduit (open channel)
-                    print *, 'CODE/USER ERROR: control action point on an open channel, which is not allowed'
-                    call util_crashpoint(587223)
-                end if
 
-            case (pump)
-                !% --- reset pump setting based on targetsetting
-                if (targetSetting .ne. thisSetting) then
-                    call pump_set_setting (Eidx)
-                    hasChanged = oneI
-                else
-                    hasChanged = zeroI
-                end if
+                case (orifice)
+                    !% --- reset orifice setting based on targetsetting
+                    if (targetSetting .ne. thisSetting) then
+                        call orifice_set_setting (Eidx)
+                        hasChanged = oneI
+                    else
+                        hasChanged = zeroI
+                    end if
 
-            case (weir)
-                !% --- reset weir setting based on targetsetting
-                if (targetSetting .ne. thisSetting) then
-                    call weir_set_setting (Eidx)
-                    hasChanged = oneI
-                else
-                    hasChanged = zeroI
-                end if
+                case (outlet)
+                    !% --- reset orifice based on targetsetting
+                    if (targetSetting .ne. thisSetting) then
+                        call outlet_set_setting (Eidx)
+                        hasChanged = oneI
+                    else
+                        hasChanged = zeroI
+                    end if
 
-            case (orifice)
-                !% --- reset orifice setting based on targetsetting
-                if (targetSetting .ne. thisSetting) then
-                    call orifice_set_setting (Eidx)
-                    hasChanged = oneI
-                else
-                    hasChanged = zeroI
-                end if
+                case (JM)
+                    print *, 'CODE/USER ERROR: control action point on a junction main, which is not allowed'
+                    call util_crashpoint(558273)
+                    
+                case (JB)
+                    print *, 'CODE/USER ERROR control action point on a junction branch, which is not allowed'
+                    call util_crashpoint(682734)
 
-            case (outlet)
-                !% --- reset orifice based on targetsetting
-                if (targetSetting .ne. thisSetting) then
-                    call outlet_set_setting (Eidx)
-                    hasChanged = oneI
-                else
-                    hasChanged = zeroI
-                end if
-
-            case (JM)
-                print *, 'CODE/USER ERROR: control action point on a junction main, which is not allowed'
-                call util_crashpoint(558273)
-                
-            case (JB)
-                print *, 'CODE/USER ERROR control action point on a junction branch, which is not allowed'
-                call util_crashpoint(682734)
-
-            case default
-                print *, 'CODE ERROR: unexpected element type # ',elemType
-                if (elemType .ne. nullvalueI) print *, 'with keyword of ',trim(reverseKey(elemType))
-                call util_crashpoint(343723)
+                case default
+                    print *, 'CODE ERROR: unexpected element type # ',elemType
+                    if (elemType .ne. nullvalueI) print *, 'with keyword of ',trim(reverseKey(elemType))
+                    call util_crashpoint(343723)
 
             end select
-
-
-            !% DEBUGGING OUTPUT ================================================
-                ! print *, 'ACTION POINTS after action'
-                ! print *, 'Eidx           ',Eidx
-                ! print *, 'hasChanged      ', hasChanged
-                ! print *, 'thisSetting     ',thisSetting
-                ! print *, 'targetSetting   ',targetSetting
-                ! print *, 'timeLastSet     ',timeLastSet
-                ! print *, 'elemType        ',trim(reverseKey(elemType))
-                ! print *, 'isClosedConduit ',isClosedConduit
-            !% DEBUGGING OUTPUT ================================================           
        
         end do
 
@@ -515,15 +430,8 @@ contains
             character(64) :: subroutine_name = 'control_update_element_values'
         !%------------------------------------------------------------------
 
-            !% DEBUGGING OUTPUT ================================================
-                ! print *, ' '
-                ! print *, 'in ',trim(subroutine_name)
-            !% DEBUGGING OUTPUT ================================================
-
         !% --- cycle through the action points    
         do ii = 1,N_ActionPoint
-            !print *, ii ,' in ',trim(subroutine_name)
-            !print *, 'actionI(ii,ai_image) ',actionI(ii,ai_image)
 
             !% --- only conduct actions updates on the appropriate images
             if (actionI(ii,ai_image) .ne. this_image()) cycle
@@ -533,78 +441,63 @@ contains
             hasChanged      => actionI(ii,ai_hasChanged)
             elemType        => elemI(Eidx,ei_elementType)
             thisSetting     => elemR(Eidx,er_Setting)
-
-            ! print *, 'Eidx ',Eidx
-            ! print *, 'hasChanged ',hasChanged
-            ! print *, 'elemType   ',trim(reverseKey(elemType))
-            ! print *, 'thisSetting',thisSetting
             
             select case (elemType)
 
-            case (CC)
-                !% --- for regular CC elements, whether or not the setting has changed is irrelevant
-                !%     we force zero flux on downstream faces that have Setting = 0
-                !%     note that this is also done as part of face interpolation.
-                if (thisSetting == zeroR) then
-                    dface => elemI(Eidx,ei_Mface_dL)
-                    call adjust_face_for_zero_setting_singular(dface)
-                end if
+                case (CC)
+                    !% --- for regular CC elements, whether or not the setting has changed is irrelevant
+                    !%     we force zero flux on downstream faces that have Setting = 0
+                    !%     note that this is also done as part of face interpolation.
+                    if (thisSetting == zeroR) then
+                        dface => elemI(Eidx,ei_Mface_dL)
+                        call adjust_face_for_zero_setting_singular(dface)
+                    end if
 
-            case (pump)
-                if (hasChanged == oneI) then 
-                    call pump_toplevel(Eidx,istep)
-                else
-                    !% no change 
-                end if
+                case (pump)
+                    if (hasChanged == oneI) then 
+                        call pump_toplevel(Eidx,istep)
+                    else
+                        !% no change 
+                    end if
 
-            case (weir)
-                if (hasChanged == oneI) then 
-                    call weir_toplevel(Eidx)
-                else
-                    !% no change 
-                end if
+                case (weir)
+                    if (hasChanged == oneI) then 
+                        call weir_toplevel(Eidx)
+                    else
+                        !% no change 
+                    end if
 
-            case (orifice)
-                !print *, 'in here 98273'
-                if (hasChanged == oneI) then 
-                    call orifice_toplevel(Eidx)
-                else
-                    !% no change 
-                end if
-                !print *, 'done here 559873'
+                case (orifice)
+                    if (hasChanged == oneI) then 
+                        call orifice_toplevel(Eidx)
+                    else
+                        !% no change 
+                    end if
 
-            case (outlet)
-                if (hasChanged == oneI) then 
-                    call outlet_toplevel(Eidx)
-                else
-                    !% no change 
-                end if
+                case (outlet)
+                    if (hasChanged == oneI) then 
+                        call outlet_toplevel(Eidx)
+                    else
+                        !% no change 
+                    end if
 
-            case (JM)
-                print *, 'CODE/USER ERROR: control action point on a junction main, which is not allowed'
-                call util_crashpoint(558273)
-                
-            case (JB)
-                print *, 'CODE/USER ERROR control action point on a junction branch, which is not allowed'
-                call util_crashpoint(682734)
+                case (JM)
+                    print *, 'CODE/USER ERROR: control action point on a junction main, which is not allowed'
+                    call util_crashpoint(558273)
+                    
+                case (JB)
+                    print *, 'CODE/USER ERROR control action point on a junction branch, which is not allowed'
+                    call util_crashpoint(682734)
 
-            case default
-                print *, 'CODE ERROR: unexpected element type # ',elemType
-                if (elemType .ne. nullvalueI) print *, 'with keyword of ',trim(reverseKey(elemType))
-                call util_crashpoint(343723)
+                case default
+                    print *, 'CODE ERROR: unexpected element type # ',elemType
+                    if (elemType .ne. nullvalueI) print *, 'with keyword of ',trim(reverseKey(elemType))
+                    call util_crashpoint(343723)
 
             end select
 
-            !% DEBUGGING OUTPUT ================================================
-                ! print *, ' Eidx, haschanged ',Eidx, hasChanged, trim(reverseKey(elemType))
-                ! print *, ' thissetting ',thissetting
-                ! print *, 'elem setting ',elemR(Eidx,er_setting)
-            !% DEBUGGING OUTPUT ================================================
-
         end do
 
-        !print *, 'leaving ',trim(subroutine_name)
-        
     end subroutine control_update_element_values
 !%    
 !%==========================================================================     
@@ -650,12 +543,9 @@ contains
         do rr = 0, nRules-1
             !% --- each rule starts at the 0 premise level
             thisPremiseLevel = 0
-                ! print *, ' '
-                ! print *, 'rr ',rr, thisPremiseLevel
             success = 1
             do while (success == 1)
-                    ! print *, ' '
-                    ! print *, ' calling interface_controls_get_premise_data'
+
                 !% --- get the premise level data, and (if successful) increment thisPremiseLevel
                 call interface_controls_get_premise_data (                    &
                     location       (iLeft), location       (iRight),          &
@@ -664,13 +554,8 @@ contains
                     thisPremiseLevel, rr, success)
                 !% --- increment the storage location for the next premise data    
                 !%     if not successful the last location was not used
-                    !   print *, 'success ',success
+
                 if (success) then
-                        ! print *, 'thisPremiseLevel', thisPremiseLevel
-                        ! print *, iLeft, iRight
-                        ! print *, location(iLeft), location (iRight)
-                        ! print *, linknodesimType(iLeft), linknodesimType(iRight)
-                        ! print *, attribute(iLeft),attribute(iRight)
                     iLeft  = iLeft  + twoI
                     iRight = iRight + twoI
 
@@ -688,35 +573,13 @@ contains
                     attribute(iLeft) = nullvalueI
                     attribute(iRight)= nullvalueI
                 end if
-                    ! print *, 'end of while'
+
             end do
         end do
-
-            ! print *, ' '
-            ! print *, 'CONTROL monitoring points'
-            ! do ii=1,size(location)
-            !     print *, location(ii), linknodesimType(ii), attribute(ii)
-            ! end do
 
         !% --- find unique locations for premises, 
         !      note the max number is nullvalueI
         call util_unique_rank(location,irank,numUnique)
-
-            ! !% --- testing: printout the monitoring points
-            ! print *, 'CONTROL Unique monitoring points'
-            ! do ii=1,numUnique
-            !     print *, location(irank(ii)), linknodesimType(irank(ii)), attribute(irank(ii))
-            ! end do
-
-            ! print *, ' LINKS'
-            ! do ii = 1,N_link
-            !     print *, ii, link%I(ii,li_idx), trim(reverseKey(link%I(ii,li_link_type))), ' , ', trim(link%Names(ii)%str)
-            ! end do
-
-            ! print *, ' NODES'
-            ! do ii = 1,N_node
-            !     print *, ii, node%I(ii,ni_idx), trim(reverseKey(node%I(ii,ni_node_type))), ' , ', trim(node%Names(ii)%str)
-            ! end do
 
         !% --- set the number of monitoring points (removing the nullvalueI)
         !%     check for nullvalue in the unique location
@@ -726,19 +589,6 @@ contains
             N_MonitorPoint = numUnique
         end if
         
-        !% DEBUGGING OUTPUT ============================================
-            ! print *, ' '
-            ! print *, 'in control_init_monitor_points: MONITOR POINTS'
-            ! do ii=1,N_monitorPoint
-            !     if (linknodesimType(irank(ii))) then
-            !         thisName = trim(link%Names(location(irank(ii)))%str)
-            !     else
-            !         thisname = trim(node%Names(location(irank(ii)))%str)
-            !     end if
-            !     write(*,"(A,i6,A,4i6)"),' LinkNode #, linkNode Name, linknodesimType, attr: ',location(irank(ii)),trim(thisName),  linknodesimType(irank(ii)), attribute(irank(ii))
-            ! end do
-        !% END DEBUGGING ================================================
-
         if (N_MonitorPoint < 1) then
             !% --- this occurs if only SIMULATION premises are found
             !%     i.e., all the linknodesimTyp = -1
@@ -757,17 +607,15 @@ contains
             monitorI(:,mi_linknodesimType) = linknodesimType(irank(1:N_MonitorPoint))
 
             !% --- error checking
-            !      print *, 'checking that link/node location is in index set'
             do ii=1,N_MonitorPoint
-                !print *, 'monitorI linknodesimType: ',int(monitorI(ii,mi_linknodesimType))
                 select case (monitorI(ii,mi_linknodesimType))
-                case (0)  !node
-                    rr = count(node%I(:,ni_idx) == monitorI(ii,mi_linknode_idx))
-                case (1)  ! link
-                    rr = count(link%I(:,li_idx) == monitorI(ii,mi_linknode_idx))
-                case default
-                    print *, 'CODE ERROR: unexpected default case'
-                    call util_crashpoint(448229)
+                    case (0)  !node
+                        rr = count(node%I(:,ni_idx) == monitorI(ii,mi_linknode_idx))
+                    case (1)  ! link
+                        rr = count(link%I(:,li_idx) == monitorI(ii,mi_linknode_idx))
+                    case default
+                        print *, 'CODE ERROR: unexpected default case'
+                        call util_crashpoint(448229)
                 end select
                 if (rr .ne. 1) then
                     print *, 'CODE OR DATA ERROR: monitor point does not match node or link indexes'
@@ -825,8 +673,7 @@ contains
             !% --- get the "then" actions
             !% --- each rule starts at the 0 action level
             thisActionLevel = 0
-                ! print *, ' '
-                ! print *, 'rr ',rr, thisActionLevel
+
             success = 1
             do while (success == 1)
                 isThen = 1
@@ -850,21 +697,9 @@ contains
             end do   
         end do
 
-            ! print *, 'all action points in ',trim(subroutine_name)
-            ! do ii=1,npoint
-            !     print *, ii, location(ii), attribute(ii)
-            ! end do
-
         !% --- find unique locations for actions, 
         !      note the max number is nullvalueI
         call util_unique_rank(location,irank,numUnique)
-
-            ! !% --- testing: printout the action points
-            ! print *, 'Unique action points'
-            ! do ii=1,numUnique
-            !     print *, ii, location(irank(ii))
-            ! end do
-            ! print *, 'end unique'
 
         !% --- set the number of action points (removing the nullvalueI)
         !%     check for nullvalue in the unique location
@@ -873,14 +708,6 @@ contains
         else
             N_ActionPoint = numUnique
         end if
-
-            ! print *, 'N_actionPoint ',N_ActionPoint
-
-            ! !% --- testing: printout the action points
-            ! print *, 'Unique action points '
-            ! do ii=1,N_ActionPoint
-            !     print *, location(irank(ii)),  attribute(irank(ii))
-            ! end do
 
         !% --- error checking
         if (N_ActionPoint < 1) then
@@ -893,16 +720,6 @@ contains
         !% --- store the unique action points
         actionI(:,ai_link_idx) = location(irank(1:N_ActionPoint))
         actionI(1:N_ActionPoint,ai_idx) = (/ 1:N_ActionPoint /)
-
-        !% DEBUGGING OUTPUT ================================================
-            ! print *, ' '
-            ! print *, 'in control_init_action_points: ACTION POINTS'
-            ! print *, 'all action points'
-            ! do ii = 1,N_ActionPoint
-            !     write(*,"(A,3i6)") ' actionID, idx ',ii, actionI(ii,ai_idx)
-            !     print *, 'Link #, link Name ', actionI(ii,ai_link_idx), '; ', trim(link%Names(actionI(ii,ai_link_idx))%str)
-            ! end do
-        !% END DEBUGGING ===================================================o
 
         !% --- error checking
             ! print *, 'checking that link location is in index set'
@@ -983,64 +800,48 @@ contains
                 end if
             case (0) !% is node
                 Nidx => LNidx(ii)
-                !print *, 'nidx ',Nidx
-                !print *, 'node type ',trim(reverseKey(nodeType(Nidx)))
+
                 monitorImage(ii) = nodeImage(Nidx)
                 select case (nodeType(Nidx))
 
-                case (nJ1,nBCup)
-                    !% --- connect monitor for node to the first element of downstream link
-                    Lidx => node%I(Nidx,ni_N_link_d)
-                    if (Lidx == nullvalueI) then
-                        print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for link index'
-                        call util_crashpoint(598723)
-                    else
-                        eIdx(ii) = link%I(Lidx,li_first_elem_idx)[monitorImage(ii)]
-                    end if
+                    case (nJ1,nBCup)
+                        !% --- connect monitor for node to the first element of downstream link
+                        Lidx => node%I(Nidx,ni_N_link_d)
+                        if (Lidx == nullvalueI) then
+                            print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for link index'
+                            call util_crashpoint(598723)
+                        else
+                            eIdx(ii) = link%I(Lidx,li_first_elem_idx)[monitorImage(ii)]
+                        end if
 
-                case (nJ2, nBCdn)
-                    !% --- connect monitor for node to the last element of upstream link
-                    Lidx => node%I(Nidx,ni_N_link_u)
-                    if (Lidx == nullvalueI) then
-                        print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for link index'
-                        call util_crashpoint(98273)
-                    else
-                        eIdx(ii) = link%I(Lidx,li_last_elem_idx)[monitorImage(ii)]
-                    end if
+                    case (nJ2, nBCdn)
+                        !% --- connect monitor for node to the last element of upstream link
+                        Lidx => node%I(Nidx,ni_N_link_u)
+                        if (Lidx == nullvalueI) then
+                            print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for link index'
+                            call util_crashpoint(98273)
+                        else
+                            eIdx(ii) = link%I(Lidx,li_last_elem_idx)[monitorImage(ii)]
+                        end if
 
-                case (nJM,nStorage)
-                    NelemIdx = node%I(Nidx,ni_elem_idx)[monitorImage(ii)]
-                    !if (node%I(Nidx,ni_elemface_idx) == nullvalueI) then
-                    if (NelemIdx== nullvalueI) then
-                        print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for node index'
-                        call util_crashpoint(429933)
-                    else
-                        !eIdx(ii) =  node%I(Nidx,ni_elemface_idx)
-                        eIdx(ii) = NelemIdx
-                    end if
+                    case (nJM,nStorage)
+                        NelemIdx = node%I(Nidx,ni_elem_idx)[monitorImage(ii)]
+                        if (NelemIdx== nullvalueI) then
+                            print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for node index'
+                            call util_crashpoint(429933)
+                        else
+                            eIdx(ii) = NelemIdx
+                        end if
 
-                case default
-                    print *, 'CODE ERROR: Unexpected case default, ni_node_type of ',trim(reverseKey(nodeType(Nidx)))
+                    case default
+                        print *, 'CODE ERROR: Unexpected case default, ni_node_type of ',trim(reverseKey(nodeType(Nidx)))
+                        call util_crashpoint(72109872)
                 end select
 
             case default
                 print *, 'CODE ERROR: Unexpected case default, monitor(:,mi_linknodesimType) unsupported value of ',linknodesimType(ii)
                 call util_crashpoint(58723)
             end select
-
-            !% DEBUGGING OUTPUT ================================================
-                ! print *, ' '
-                ! print *, 'in ',trim(subroutine_name), ': MONITOR ELEMENTS'
-                ! print *, 'monitor ii=  ',ii
-                ! print *, 'linknodesimType       ',linknodesimType(ii)
-                ! print *, 'element #    ',eIdx(ii)
-                ! print *, 'element Type ',trim(reverseKey(elemI(eIdx(ii),ei_elementType)[monitorImage(ii)]))
-                ! if (linknodesimType(ii)) then
-                !     print *, 'link #, type ',LNidx(ii), trim(link%Names(LnIdx(ii))%str)
-                ! else
-                !     print *, 'node #, type ',LNidx(ii), trim(node%Names(LnIdx(ii))%str)
-                ! end if
-            !% END DEBUGGING ===================================================
 
         end do
 
@@ -1079,38 +880,23 @@ contains
             linkImage    => link%I(:,li_P_image)
         !%------------------------------------------------------------------
 
-        !% DEBUGGING OUTPUT ================================================
-            ! print *, 'in ',trim(subroutine_name), ': ACTION ELEMENTS'
-        !% DEBUGGING OUTPUT ================================================
-
         !% --- cycle through the action points
         do ii=1,N_ActionPoint
-            !print *, ii, actionI(ii,ai_link_idx)
 
             !% --- get the link for this action point
             Lidx => actionI(ii,ai_link_idx)
-            !print *, 'link index ',Lidx
 
             !% --- store the image that this link is partitioned to
             actionImage(ii) = linkImage(Lidx)
-            !print *, 'actionImage ',actionImage(ii)
-            !print *, 'numElement  ',numElement(Lidx)
 
             !% --- find the element on this link to use
             if (numElement(Lidx) == 1) then
                 !% --- only one element in link, so use that as action element
                 eIdx(ii) = elemStart(Lidx)
-                !print *, 'elemstart ',elemStart(Lidx)
             else
                 !% --- choose central element
                 eIdx(ii) = (elemStart(Lidx) + elemEnd(Lidx)) / twoI
             end if
-
-            !% DEBUGGING OUTPUT ================================================
-                ! print *, 'action ii      ',ii
-                ! print *, 'action Link     ',Lidx
-                ! print *, 'element #, type ',eIdx(ii),trim(reverseKey(elemI(eIdx(ii),ei_elementType)))
-            !% END DEBUGGING ===================================================
 
         end do
 

@@ -1,5 +1,13 @@
 module rectangular_round_conduit
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Geometry for rectangular round closed conduit
+    !%==========================================================================
     use define_settings, only: setting
     use define_globals
     use define_indexes
@@ -10,26 +18,11 @@ module rectangular_round_conduit
 
     implicit none
 
-    !%----------------------------------------------------------------------------- 
-    !% Description:
-    !% rectangular_round channel geometry
-    !%
-
     private
 
     public :: rect_round_depth_from_volume
     public :: rect_round_topwidth_from_depth
     public :: rect_round_perimeter_from_depth
-    
-    ! public :: rect_round_area_from_depth
-    ! public :: rect_round_area_from_depth_singular
-    
-    ! public :: rect_round_topwidth_from_depth_singular 
-    
-    ! public :: rect_round_perimeter_from_depth_singular
-    ! public :: rect_round_hyddepth_from_topwidth
-    ! !public :: rect_round_hyddepth_from_topwidth_singular
-    ! public :: rect_round_hydradius_from_depth_singular
 
     contains
 
@@ -40,7 +33,7 @@ module rectangular_round_conduit
     subroutine rect_round_depth_from_volume (thisP)
         !%------------------------------------------------------------------
         !% Description:
-        !% Only applies on open channels (or non-surcharged rectangular_round conduits)
+        !% Only applies on closed conduit of rect_round cross section
         !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
@@ -69,28 +62,30 @@ module rectangular_round_conduit
             pi          => setting%Constant%pi
         !%----------------------------------------------------------------------
 
-        !% initialize AoverAfull
+        !% --- initialize AoverAfull
         AoverAfull(thisP) = zeroR
-        !% bottom circular section
+
+        !% --- bottom circular section
         where (volume(thisP) > (aBot(thisP) * length(thisP)))
             depth(thisP) = yBot(thisP) + (volume(thisP) / length(thisP) - aBot(thisP)) / breadth(thisP)
             botSection(thisP) = .false.
-        !% top rectangular part
+
+        !% --- top rectangular part
         elsewhere
-            !% find unfilled top-area/area of full circular top
+            !% --- find unfilled top-area/area of full circular top
             AoverAfull(thisP) = (volume(thisP) / length(thisP)) / (pi * rBot(thisP) ** twoR)
             botSection(thisP) = .true.
         end where
 
         !% --- pack where the circular top with AoverAfull <= 4% which will use analytical solution
         !%     from French, 1985 by using the central angle theta.
-        !% HACK -- this needs to be replaced with temporary storage rather than dynamic allocation
+        !%     HACK -- this needs to be replaced with temporary storage rather than dynamic allocation
         Npack_analytical = count((AoverAfull(thisP) <= 0.04) .and. botSection(thisP))
         thisP_analytical = pack(thisP,(AoverAfull(thisP) <= 0.04 .and. botSection(thisP)))
 
         !% --- pack where the rest of the elements having AoverAfull > 0.04 which will use
         !%     lookup table for interpolation.
-        !% HACK -- this needs to be replaced with temporary storage rather than dynamic allocation
+        !%     HACK -- this needs to be replaced with temporary storage rather than dynamic allocation
         Npack_lookup = count((AoverAfull(thisP) > 0.04) .and. botSection(thisP))
         thisP_lookup = pack(thisP,(AoverAfull(thisP) > 0.04 .and. botSection(thisP)))
 
@@ -100,17 +95,17 @@ module rectangular_round_conduit
         end if 
 
         if (Npack_lookup > zeroI) then        
-            !% retrive the normalized Y/Yfull from the lookup table
+            !% --- retrive the normalized Y/Yfull from the lookup table
             call xsect_table_lookup &
                 (YoverYfull, AoverAfull, YCirc, thisP_lookup)  
         end if
 
-        !% finally get the depth 
+        !% --- finally get the depth 
         where (botSection(thisP))
             depth(thisP) = twoR * rBot(thisP) * YoverYfull(thisP)
         end where
 
-        !% ensure the full depth is not exceeded
+        !% --- ensure the full depth is not exceeded
         depth(thisP) = min(depth(thisP),fulldepth(thisP))
                 
     end subroutine rect_round_depth_from_volume
@@ -119,7 +114,6 @@ module rectangular_round_conduit
 !%==========================================================================
 !%
     subroutine rect_round_topwidth_from_depth (thisP)
-        !%  
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a rectangular_round channel
@@ -140,10 +134,10 @@ module rectangular_round_conduit
         where (depth(thisP) <= zeroR)
             topwidth(thisP) = setting%ZeroValue%Topwidth
         elsewhere (depth(thisP) > yBot(thisP))
-            !% top rectangular section
+            !% --- top rectangular section
             topwidth(thisP) = breadth(thisP)
         elsewhere (depth(thisP) <= yBot(thisP)) 
-            !% bottom circular section
+            !% --- bottom circular section
             topwidth(thisP) = twoR * sqrt(depth(thisP) * (twoR * rBot(thisP) - depth(thisP)))
         end where
 
@@ -192,243 +186,6 @@ module rectangular_round_conduit
         end where
 
     end subroutine rect_round_perimeter_from_depth
-!%    
-!%==========================================================================   
-
-
-
-!%==========================================================================
-!%
-!     elemental real(8) function rect_round_area_from_depth (indx) result (outvalue)
-!         !%-----------------------------------------------------------------------------
-!         !% Description:
-!         !% Computes area from known depth for rectangular cross section
-!         !%-----------------------------------------------------------------------------
-!         integer, intent(in) :: indx  ! may be a packed array of indexes
-!         real :: theta
-!         !%-----------------------------------------------------------------------------
-        
-!         if (elemR(indx,er_Depth) > elemSGR(indx,esgr_Rectangular_Round_Ybot)) then
-!             outvalue = elemSGR(indx,esgr_Rectangular_Round_Abot) + (elemR(indx,er_Depth) &
-!                      - elemSGR(indx,esgr_Rectangular_Round_Ybot)) * elemSGR(indx,esgr_Rectangular_Round_BreadthMax)
-!         else
-!             theta    = twoR * acos(oneR - elemR(indx,er_Depth) / elemSGR(indx,esgr_Rectangular_Round_Rbot))
-!             outvalue = onehalfR * (elemSGR(indx,esgr_Rectangular_Round_Rbot) ** twoR) * (theta - sin(theta))
-!         endif
-
-!     end function rect_round_area_from_depth
-! !%
-! !%==========================================================================!%==========================================================================
-!%
-!     elemental real(8) function rect_round_area_from_depth (indx) result (outvalue)
-!         !%-----------------------------------------------------------------------------
-!         !% Description:
-!         !% Computes area from known depth for rectangular cross section
-!         !%-----------------------------------------------------------------------------
-!         integer, intent(in) :: indx  ! may be a packed array of indexes
-!         real :: theta
-!         !%-----------------------------------------------------------------------------
-        
-!         if (elemR(indx,er_Depth) > elemSGR(indx,esgr_Rectangular_Round_Ybot)) then
-!             outvalue = elemSGR(indx,esgr_Rectangular_Round_Abot) + (elemR(indx,er_Depth) &
-!                      - elemSGR(indx,esgr_Rectangular_Round_Ybot)) * elemSGR(indx,esgr_Rectangular_Round_BreadthMax)
-!         else
-!             theta    = twoR * acos(oneR - elemR(indx,er_Depth) / elemSGR(indx,esgr_Rectangular_Round_Rbot))
-!             outvalue = onehalfR * (elemSGR(indx,esgr_Rectangular_Round_Rbot) ** twoR) * (theta - sin(theta))
-!         endif
-
-!     end function rect_round_area_from_depth
-! !%
-! !%=================================================================================================================================
-! !%
-!     subroutine rect_round_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-!         !%  
-!         !%-----------------------------------------------------------------------------
-!         !% Description:
-!         !% Computes the hydraulic (average) depth from a known depth in a rectangular_round channel
-!         !%-----------------------------------------------------------------------------
-!         integer, target, intent(in) :: elemPGx(:,:)
-!         integer, intent(in) ::  Npack, thisCol
-!         integer, pointer :: thisP(:)
-!         real(8), pointer :: area(:), hyddepth(:), depth(:),  topwidth(:), fullHydDepth(:)
-!         !%-----------------------------------------------------------------------------
-!         thisP       => elemPGx(1:Npack,thisCol) 
-!         area        => elemR(:,er_Area)
-!         depth       => elemR(:,er_Depth)
-!         hyddepth    => elemR(:,er_HydDepth)
-!         topwidth    => elemR(:,er_Topwidth)
-!         fullHydDepth => elemR(:,er_FullHydDepth)
-!         !%-----------------------------------------------------------------------------
-
-!         !% when conduit is empty
-!         where (depth(thisP) <= setting%ZeroValue%Depth)
-!             hyddepth(thisP) = setting%ZeroValue%Depth
-
-!         !% when conduit is not empty
-!         elsewhere (depth(thisP) > setting%ZeroValue%Depth)
-!             !% limiter for when the conduit is full
-!             hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
-!         endwhere
-
-!     end subroutine rect_round_hyddepth_from_topwidth
-! !%    
-! !%==========================================================================  
-! !% SINGULAR
-
-! ! !%==========================================================================
-! ! !%
-! !     real(8) function rect_round_topwidth_from_depth_singular &
-! !         (indx, depth) result (outvalue)
-! !         !%-----------------------------------------------------------------------------
-! !         !% Description:
-! !         !% Computes the topwidth for a rectangular_round cross section of a single element
-! !         !%-----------------------------------------------------------------------------
-! !         integer, intent(in) :: indx 
-! !         real(8), intent(in) :: depth
-! !         real(8), pointer :: breadth(:), yBot(:), rBot(:)
-! !         !%-----------------------------------------------------------------------------
-! !         yBot        => elemSGR(:,esgr_Rectangular_Round_Ybot)
-! !         rBot        => elemSGR(:,esgr_Rectangular_Round_Ybot) 
-! !         breadth     => elemSGR(:,esgr_Rectangular_Round_BreadthMax)
-! !         !%-----------------------------------------------------------------------------
-         
-! !         if (depth <= zeroR) then
-! !             outvalue = setting%ZeroValue%Topwidth
-! !         else if (depth > yBot(indx)) then
-! !             !% top rectangular section
-! !             outvalue = breadth(indx)
-! !         else 
-! !             !% bottom circular section
-! !             outvalue = twoR * sqrt(depth * (twoR * rBot(indx) - depth))
-! !         end if
-
-! !     end function rect_round_topwidth_from_depth_singular
-! ! !%
-! ! !%==========================================================================
-! !%==========================================================================
-! !%
-!     ! real(8) function rect_round_perimeter_from_depth_singular &
-!     !     (indx, depth) result (outvalue)
-!     !     !%  
-!     !     !%-----------------------------------------------------------------------------
-!     !     !% Description:
-!     !     !% Computes wetted perimeter from known depth for a rectangular_round cross section of
-!     !     !% a single element 
-!     !     !%-----------------------------------------------------------------------------
-!     !     !%-----------------------------------------------------------------------------
-!     !     integer, intent(in) :: indx
-!     !     real(8), intent(in) :: depth
-!     !     real(8), pointer :: breadth(:)
-!     !     real(8), pointer :: fullDepth(:), yBot(:), rBot(:)
-!     !     real(8) :: theta
-!     !     !%-----------------------------------------------------------------------------
-!     !     fullDepth   => elemR(:,er_FullDepth)
-!     !     breadth     => elemSGR(:,esgr_Rectangular_Round_BreadthMax)
-!     !     yBot        => elemSGR(:,esgr_Rectangular_Round_Ybot)
-!     !     rBot        => elemSGR(:,esgr_Rectangular_Round_Rbot)  
-!     !     !%-----------------------------------------------------------------------------
-        
-!     !     if (depth <= zeroR) then
-!     !         outvalue = zeroR
-
-!     !     else if (depth > yBot(indx)) then
-!     !         !% top rectangular section
-!     !         theta    = twoR * asin(breadth(indx) / twoR / rBot(indx))
-!     !         outvalue = rBot(indx) * theta + twoR * (min(depth, fullDepth(indx)) - yBot(indx))
-
-!     !         if (depth >= fullDepth(indx)) then
-!     !             !% if the depth exceeds the full depth, the top part will contribute
-!     !             !% to overall wetted perimeter
-!     !             outvalue = outvalue + breadth(indx)
-!     !         end if
-!     !     else 
-!     !         !% bottom circular section
-!     !         theta    = twoR * acos(oneR - depth / rBot(indx))
-!     !         outvalue = rBot(indx) * theta
-!     !     end if
-
-!     ! end function rect_round_perimeter_from_depth_singular
-! !%    
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     ! real(8) function rect_round_hyddepth_from_depth_singular &
-!     !         (indx, depth) result (outvalue)
-!     !     !%  
-!     !     !%-----------------------------------------------------------------------------
-!     !     !% Description:
-!     !     !% Computes hydraulic depth from known depth for rectangular_round cross section of 
-!     !     !% a single element
-!     !     !%-----------------------------------------------------------------------------   
-!     !         integer, intent(in) :: indx     
-!     !         real(8), intent(in) :: depth
-!     !         real(8), pointer    :: area, topwidth, fullHydDepth(:)
-!     !     !%-----------------------------------------------------------------------------
-!     !     !%--------------------------------------------------
-
-!     !     topwidth = rect_round_topwidth_from_depth_singular (indx, indepth)
-!     !     area     = rect_round_area_from_depth_singular (indx, depth)
-
-!     !     if (depth <= setting%ZeroValue%Depth) then
-!     !         !% --- empty
-!     !         outvalue = setting%ZeroValue%Depth
-!     !     elseif (depth >= elemR(indx,er_FullDepth))
-!     !         !% --- full
-!     !         outvalue = elemR(indx,er_FullHydDepth)
-!     !     else
-!     !         outvalue = area / topwidth
-!     !     endif
-
-!     ! end function rect_round_hyddepth_from_depth_singular 
-! !%    
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     real(8) function rect_round_hydradius_from_depth_singular &
-!         (indx, depth) result (outvalue)
-!         !%  
-!         !%-----------------------------------------------------------------------------
-!         !% Description:
-!         !% Computes hydraulic radius from known depth for a rectangular_round cross section of
-!         !% a single element 
-!         !%-----------------------------------------------------------------------------
-!         integer, intent(in) :: indx
-!         real(8), intent(in) :: depth
-!         real(8), pointer :: breadth(:), fullDepth(:), yBot(:), rBot(:), aBot(:)
-!         real(8) :: theta, perimeter, area, topDepth
-!         !%-----------------------------------------------------------------------------
-!         fullDepth   => elemR(:,er_FullDepth)
-!         breadth     => elemSGR(:,esgr_Rectangular_Round_BreadthMax)
-!         aBot        => elemSGR(:,esgr_Rectangular_Round_Abot)
-!         yBot        => elemSGR(:,esgr_Rectangular_Round_Ybot)
-!         rBot        => elemSGR(:,esgr_Rectangular_Round_Rbot)  
-!         !%-----------------------------------------------------------------------------
-        
-!         if (depth <= zeroR) then
-!             outvalue = zeroR
-
-!         else if (depth > yBot(indx)) then
-!             !% top rectangular section
-!             theta     = twoR * asin(breadth(indx) / twoR / rBot(indx))
-!             topDepth  = min(depth, fullDepth(indx)) - yBot(indx)
-!             perimeter = rBot(indx) * theta + twoR * topDepth
-
-!             if (depth >= fullDepth(indx)) then
-!                 !% if the depth exceeds the full depth, the top part will contribute
-!                 !% to overall wetted perimeter
-!                 perimeter = perimeter + breadth(indx)
-!             end if
-
-!             !% find the area
-!             area     = aBot(indx) + topDepth * breadth(indx)
-!             outvalue = area / perimeter
-!         else 
-!             !% bottom circular section
-!             theta = twoR * acos(oneR - depth / rBot(indx))
-!             outvalue = onehalfR * rBot(indx) * (oneR - sin(theta)) / theta
-!         end if
-
-!     end function rect_round_hydradius_from_depth_singular
 !%    
 !%==========================================================================
 !% END MODULE

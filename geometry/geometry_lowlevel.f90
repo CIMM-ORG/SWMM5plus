@@ -1,4 +1,23 @@
 module geometry_lowlevel
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% General, low-level geometry procedures
+    !%
+    !% Methods:
+    !% ..._pure functions (without singular) work on either a single element or 
+    !%    a packed array of elements in the "thisP" argument
+    !%    Requires that all values are stored in the elemR or elemSGR arrays
+    !%
+    !%..._singular functions work only on a single element and use the depth
+    !%    provided in the argument, which is NOT necessarily the depth in the
+    !%    corresponding elemR(indx,er_Depth) storage
+    !%
+    !%==========================================================================
 
     use define_globals
     use define_indexes
@@ -12,19 +31,6 @@ module geometry_lowlevel
 
     implicit none
 
-!%-----------------------------------------------------------------------------
-!% Description:
-!% Geometry lowlevel computations
-!% NOTES:
-!% ..._pure functions (without singular) work on either a single element or 
-!%    a packed array of elements in the "thisP" argument
-!%    Requires that all values are stored in the elemR or elemSGR arrays
-!%
-!%..._singular functions work only on a single element and use the depth
-!%    provided in the argument, which is NOT necessarily the depth in the
-!%    corresponding elemR(indx,er_Depth) storage
-!%
-
     private
 
     !% --- universal functions (apply to any cross-section)
@@ -33,9 +39,7 @@ module geometry_lowlevel
     public :: llgeo_hydradius_from_area_and_perimeter_pure
     public :: llgeo_perimeter_from_hydradius_and_area_pure
     public :: llgeo_hyddepth_from_area_and_topwidth_pure
-    !public :: llgeo_FullEll_pure
     public :: llgeo_elldepth_pure
-    !public :: llgeo_pressure_head_from_hyddepth_pure
 
     !% --- table look-ups (subroutines for arrays)
     public :: llgeo_tabular_depth_from_volume
@@ -98,13 +102,11 @@ module geometry_lowlevel
     public :: llgeo_triangular_perimeter_from_depth_pure
 
     !% --- perimeter from depth -- CLOSED CONDUITS
-    !public :: llgeo_circular_perimeter_from_depth_singular
     public :: llgeo_filled_circular_perimeter_from_depth_singular
     public :: llgeo_mod_basket_perimeter_from_depth_singular
     public :: llgeo_rectangular_closed_perimeter_from_depth_singular
     public :: llgeo_rect_round_perimeter_from_depth_singular
     public :: llgeo_rectangular_triangular_perimeter_from_depth_singular
-    !public :: llgeo_semi_circular_perimeter_from_depth_singular
 
     
     contains
@@ -124,10 +126,10 @@ module geometry_lowlevel
             real(8), dimension(size(thisP))   :: llgeo_head_from_depth_pure
         !%------------------------------------------------------------------
 
-            llgeo_head_from_depth_pure &
-                 = depth                          &
-                 + elemR(thisP,er_SedimentDepth)  &
-                 + elemR(thisP,er_Zbottom)  
+        llgeo_head_from_depth_pure &
+                = depth                          &
+                + elemR(thisP,er_SedimentDepth)  &
+                + elemR(thisP,er_Zbottom)  
 
     end function llgeo_head_from_depth_pure
 !%
@@ -209,29 +211,6 @@ module geometry_lowlevel
 !%==========================================================================
 !%==========================================================================
 !%
-    ! pure function llgeo_FullEll_pure &
-    !         (thisP)   
-    !     !%------------------------------------------------------------------
-    !     !% Description
-    !     !% computation of full value of ell as alternative hydraulic depth
-    !     !%------------------------------------------------------------------
-    !         integer, intent(in) :: thisP(:)
-    !         real(8), dimension(1:size(thisP)) :: llgeo_FullEll_pure
-    !     !%------------------------------------------------------------------
-    !     !%------------------------------------------------------------------
-
-    !     llgeo_FullEll_pure &
-    !              = (                                                     &
-    !                 elemR(thisP,er_Zcrown) - elemR(thisP,er_ZbreadthMax) &
-    !                )                                                     &
-    !                * elemR(thisP,er_BreadthMax)                          &
-    !                + elemR(thisP,er_AreaBelowBreadthMax) / elemR(thisP,er_BreadthMax) 
-
-    ! end function llgeo_FullEll_pure
-!%
-!%==========================================================================
-!%==========================================================================
-!%
     pure function llgeo_elldepth_pure (thisP)
         !%------------------------------------------------------------------
         !% Description:
@@ -243,16 +222,6 @@ module geometry_lowlevel
         !% Declarations
             integer, intent(in) :: thisP(:)
             real(8), dimension(size(thisP)) :: llgeo_elldepth_pure
-            !real(8), pointer :: head, area, topwidth
-            !real(8), pointer :: ZbreadthMax, breadthMax, areaBelowBreadthMax
-        !%------------------------------------------------------------------    
-        !% Aliases
-            ! head                => elemR(indx,er_Head)
-            ! area                => elemR(indx,er_Area)
-            ! topwidth            => elemR(indx,er_Topwidth)
-            ! ZbreadthMax         => elemR(indx,er_ZbreadthMax)
-            ! breadthMax          => elemR(indx,er_BreadthMax)
-            ! areaBelowBreadthMax => elemR(indx,er_AreaBelowBreadthMax)
         !%------------------------------------------------------------------
 
         where (elemR(thisP,er_Head) .le.  elemR(thisP,er_ZbreadthMax))
@@ -269,13 +238,6 @@ module geometry_lowlevel
         where (llgeo_elldepth_pure > elemR(thisP,er_Depth))
             llgeo_elldepth_pure = elemR(thisP,er_Depth)
         endwhere
-
-        ! if (head .le. ZbreadthMax) then
-        !     outvalue =  area / topwidth
-        ! else
-        !     outvalue = ( (head - ZbreadthMax) * breadthMax &
-        !                     + areaBelowBreadthMax ) / breadthMax
-        ! end if
 
     end function llgeo_elldepth_pure
 !%
@@ -507,9 +469,9 @@ module geometry_lowlevel
         !% --- retrieve the normalized section factor
         call xsect_table_lookup (SoverSfull, AoverAfull, STable, thisP) 
 
-        !% find the section factor 
-        !% sF_full = Afull * (rFull) ^ (2/3)
-        !% sF = sF_full * sF/sF_full
+        !% --- find the section factor 
+        !%     sF_full = Afull * (rFull) ^ (2/3)
+        !%     sF = sF_full * sF/sF_full
         SectionFactor(thisP) = &
                 ( fullArea(thisP) & 
                   * ((fullhydradius(thisP))**twoThirdR) &
@@ -553,13 +515,13 @@ module geometry_lowlevel
         !% --- compute the relative volume
         AoverAfull = volume / (length * fullArea)
       
-        !% retrive the normalized Y/Yfull from the lookup table
+        !% --- retrive the normalized Y/Yfull from the lookup table
         YoverYfull = xsect_table_lookup_singular (AoverAfull, Ytable)  
 
-        !% finally get the depth by multiplying the normalized depth with full depth
+        !% --- get the depth by multiplying the normalized depth with full depth
         depth = YoverYfull * fulldepth
 
-        !% ensure the full depth is not exceeded
+        !% --- ensure the full depth is not exceeded
         llgeo_tabular_depth_from_volume_singular = min(depth,fulldepth)   
 
     end function llgeo_tabular_depth_from_volume_singular
@@ -756,12 +718,12 @@ module geometry_lowlevel
             real(8), dimension(size(thisP)) :: llgeo_parabolic_depth_from_volume_pure
         !%------------------------------------------------------------------
 
-            llgeo_parabolic_depth_from_volume_pure                         &
-                  = ( threefourthR                                         &
-                    * ( volume / elemR(thisP,er_Length)    &
-                        )                                                  &
-                        / elemSGR(thisP,esgr_Parabolic_Radius)             &
-                    ) ** twothirdR
+        llgeo_parabolic_depth_from_volume_pure                         &
+                = ( threefourthR                                         &
+                * ( volume / elemR(thisP,er_Length)    &
+                    )                                                  &
+                    / elemSGR(thisP,esgr_Parabolic_Radius)             &
+                ) ** twothirdR
 
     end function llgeo_parabolic_depth_from_volume_pure
 !%
@@ -819,22 +781,22 @@ module geometry_lowlevel
             real(8), dimension(size(thisP)) :: llgeo_trapezoidal_depth_from_volume_pure
         !%------------------------------------------------------------------
 
-            llgeo_trapezoidal_depth_from_volume_pure                                         &
-                = - onehalfR *                                                               &
-                ( elemSGR(thisP,esgr_Trapezoidal_Breadth)                                    &
-                      / (onehalfR * (  elemSGR(thisP,esgr_Trapezoidal_LeftSlope)             &
-                                     + elemSGR(thisP,esgr_Trapezoidal_RightSlope)))          &
-                       - sqrt( (elemSGR(thisP,esgr_Trapezoidal_Breadth)                      &
-                               / (onehalfR * (  elemSGR(thisP,esgr_Trapezoidal_LeftSlope)    &
-                                             + elemSGR(thisP,esgr_Trapezoidal_RightSlope)))  &
-                               ) ** twoR                                                     &
-                               + fourR * volume                              &
-                                  / (onehalfR * elemR(thisP,er_Length)                       &
-                                     * (  elemSGR(thisP,esgr_Trapezoidal_LeftSlope)          &
-                                        + elemSGR(thisP,esgr_Trapezoidal_RightSlope))        &
-                                    )                                                        &
-                             )                                                               &
-                )
+        llgeo_trapezoidal_depth_from_volume_pure                                         &
+            = - onehalfR *                                                               &
+            ( elemSGR(thisP,esgr_Trapezoidal_Breadth)                                    &
+                    / (onehalfR * (  elemSGR(thisP,esgr_Trapezoidal_LeftSlope)             &
+                                    + elemSGR(thisP,esgr_Trapezoidal_RightSlope)))          &
+                    - sqrt( (elemSGR(thisP,esgr_Trapezoidal_Breadth)                      &
+                            / (onehalfR * (  elemSGR(thisP,esgr_Trapezoidal_LeftSlope)    &
+                                            + elemSGR(thisP,esgr_Trapezoidal_RightSlope)))  &
+                            ) ** twoR                                                     &
+                            + fourR * volume                              &
+                                / (onehalfR * elemR(thisP,er_Length)                       &
+                                    * (  elemSGR(thisP,esgr_Trapezoidal_LeftSlope)          &
+                                    + elemSGR(thisP,esgr_Trapezoidal_RightSlope))        &
+                                )                                                        &
+                            )                                                               &
+            )
 
     end function llgeo_trapezoidal_depth_from_volume_pure   
 !%  
@@ -990,14 +952,14 @@ module geometry_lowlevel
             sedimentArea  => elemSGR(indx,esgr_Filled_Circular_bottomArea)
         !%------------------------------------------------------------------
 
-        !% calculate a temporary geometry by considering the whole cicrular cross-section
+        !% --- calculate a temporary geometry by considering the whole cicrular cross-section
         totalFullArea  = fullArea  + sedimentArea
         totalFullDepth = fullDepth + sedimentDepth
 
-        !% find Y/Yfull
+        !% --- find Y/Yfull
         YoverYfull = (depth + sedimentDepth) / totalFullDepth
 
-        !% get A/Afull from the lookup table using Y/Yfull
+        !% --- get A/Afull from the lookup table using Y/Yfull
         AoverAfull = xsect_table_lookup_singular (YoverYfull, ACirc)
 
         !% --- get the area by multiplying the normalized area with full area
@@ -1160,83 +1122,10 @@ module geometry_lowlevel
 
         else
             !% --- truncate at full area
-            !outvalue = bottomArea + (fulldepth - bottomDepth) * breadth   
             outvalue = fullArea
         endif
 
     end function llgeo_rectangular_triangular_area_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    ! real(8) function llgeo_circular_area_from_depth_singular &
-    !     (indx, depth) result (outvalue)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Computes area from known depth for circular cross section of a single element
-    !     !% The input indx is the row index in full data 2D array.
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer, intent(in) :: indx
-    !         real(8), intent(in) :: depth
-    !         real(8), pointer    :: fullArea, fulldepth
-    !         real(8) :: YoverYfull
-    !     !%------------------------------------------------------------------
-    !     !% Aliases
-    !         fullArea   => elemR(indx,er_FullArea)
-    !         fulldepth  => elemR(indx,er_FullDepth)
-    !     !%------------------------------------------------------------------
-
-    !     !% --- find Y/Yfull
-    !     YoverYfull = depth / fulldepth
-
-    !     !% --- prevent overfull
-    !     YoverYfull = min(YoverYfull, oneR)
-
-    !     !% --- prevent underfull
-    !     YoverYfull = max(YoverYfull, setting%ZeroValue%Depth/fulldepth)
-
-    !     !% --- get A/Afull from the lookup table using Y/Yfull and
-    !     !%     unnormalize with full area
-    !     outvalue = fullArea * xsect_table_lookup_singular (YoverYfull, ACirc) 
-
-
-    ! end function llgeo_circular_area_from_depth_singular
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-    ! real(8) function llgeo_semi_circular_area_from_depth_singular &
-    !         (indx, depth) result (outvalue)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Computes area from known depth for semi_circular cross section of a single element
-    !     !% The input indx is the row index in full data 2D array.
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer, intent(in) :: indx
-    !         real(8), intent(in) :: depth
-    !         real(8), pointer    :: fullArea, fulldepth
-    !         real(8)             :: AoverAfull, YoverYfull
-    !     !%-----------------------------------------------------------------
-    !     !% Aliases
-    !         fullArea   => elemR(indx,er_FullArea)
-    !         fulldepth  => elemR(indx,er_FullDepth)
-    !     !%-----------------------------------------------------------------
-
-    !     !% find Y/Yfull
-    !     YoverYfull(indx) = depth / fulldepth(indx)
-
-    !     !% --- prevent overfull
-    !     YoverYfull = min(YoverYfull, oneR)
-
-    !     !% --- prevent underfull
-    !     YoverYfull = max(YoverYfull, setting%ZeroValue%Depth/fulldepth)
-
-    !     !% --- lookup area and unnormalize
-    !     outvalue = fullArea * xsect_table_lookup_singular (YoverYfull, ASemiCircular)
-
-    ! end function semi_circular_area_from_depth_singular
 !%
 !%==========================================================================
 !% TOPWIDTH FROM DEPTH -- OPEN CHANNELS
@@ -1517,88 +1406,6 @@ module geometry_lowlevel
 
     end function llgeo_rectangular_triangular_topwidth_from_depth_singular
 !%
-!%========================================================================== 
-!%==========================================================================
-!%
-    ! real(8) function llgeo_circular_topwidth_from_depth_singular &
-    !     (indx,depth) result (outvalue)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Computes the topwidth for a circular cross section of a single element
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer, intent(in) :: indx
-    !         real(8), intent(in) :: depth
-    !         real(8), pointer    :: maxTopwidth, fulldepth
-    !         real(8) :: YoverYfull
-    !     !%------------------------------------------------------------------
-    !     !% Aliases
-    !         fulldepth   => elemR(indx,er_FullDepth)
-    !         maxTopwidth => elemSGR(indx,esgr_Circular_Diameter)
-    !     !%------------------------------------------------------------------
-
-    !     !% --- find Y/Yfull
-    !     YoverYfull = depth / fulldepth
-
-    !     !% --- prevent overfull
-    !     YoverYfull = min(YoverYfull, oneR)
-
-    !     !% --- prevent underfull
-    !     YoverYfull = max(YoverYfull, setting%ZeroValue%Depth/fulldepth)
-
-    !     !% --- retriving T/Tmax from the lookup table using Y/Yfull and
-    !     !%     unnormalizing with max topwidth
-    !     outvalue = maxTopwidth * xsect_table_lookup_singular (YoverYfull, TCirc) !% 20220506brh removed NTCirc
-
-    !     !% if topwidth <= zero, set it to zerovalue
-    !     outvalue = max(outvalue, setting%ZeroValue%Topwidth)
-
-    !     !% --- if topwidth < full value, set it to full value
-    !     outvalue = max(outvalue, fullTopWidth)
-    
-
-    ! end function llgeo_circular_topwidth_from_depth_singular
-!%
-!%==========================================================================   
-!%==========================================================================
-!%
-    ! real(8) function llgeo_semi_circular_topwidth_from_depth_singular &
-    !     (indx,depth) result (outvalue)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Computes the topwidth for a semi_circular cross section of a single element
-    !     !%------------------------------------------------------------------
-    !         integer, intent(in) :: indx
-    !         real(8), intent(in) :: depth
-    !         real(8), pointer    :: fulldepth, maxTopwidth, fullTopwidth
-    !         real(8)             :: YoverYfull
-    !     !%-----------------------------------------------------------------
-    !     fulldepth    => elemR(indx,er_FullDepth)
-    !     maxTopwidth  => elemR(indx,er_BreadthMax)
-    !     fullTopwidth => elemR(indx,er_FullTopwidth)
-    !     !%-----------------------------------------------------------------
-
-    !     !% find Y/Yfull
-    !     YoverYfull(indx) = depth / fulldepth(indx)
-
-    !     !% --- prevent overfull
-    !     YoverYfull = min(YoverYfull, oneR)
-
-    !     !% --- prevent underfull
-    !     YoverYfull = max(YoverYfull, setting%ZeroValue%Depth/fulldepth)
-
-    !     !% --- lookup table and unnoralize by maximum topwidth
-    !     outvalue = maxTopwidth * xsect_table_lookup_singular (YoverYfull, TSemiCircular) 
-
-    !     !% --- if topwidth <= zero, set it to zerovalue
-    !     outvalue = max(outvalue, setting%ZeroValue%Topwidth)
-
-    !     !% --- if topwidth < full value, set it to full value
-    !     outvalue = max(outvalue, fullTopwidth)
-    
-
-    ! end function llgeo_semi_circular_topwidth_from_depth_singular
-!%
 !%==========================================================================
 !% PERIMETER FROM DEPTH -- OPEN CHANNEL
 !%==========================================================================
@@ -1689,9 +1496,6 @@ module geometry_lowlevel
                +sqrt(oneR + elemSGR(thisP,esgr_Trapezoidal_RightSlope)**2) &
               )
 
-        !perimeter(thisP) = breadth(thisP) + depth(thisP) * (sqrt(oneR + lslope(thisP)**twoR) &
-        !                + sqrt(oneR + rslope(thisP)**twoR))
-
     end function llgeo_trapezoidal_perimeter_from_depth_pure                   
 !%
 !%==========================================================================
@@ -1716,57 +1520,6 @@ module geometry_lowlevel
 !%
 !%==========================================================================
 !% PERIMETER FROM DEPTH -- CLOSED CONDUITS
-!%==========================================================================
-!%
-    ! real(8) function llgeo_circular_perimeter_from_depth_singular  &
-    !         (indx, depth) result(outvalue)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Computes the circular conduit perimeter for the given depth on
-    !     !% the element idx
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer, intent(in) :: indx
-    !         real(8), intent(in) :: depth
-    !         real(8), pointer :: fulldepth, fullarea, fullperimeter
-    !         real(8) :: hydRadius, YoverYfull, area
-
-    !     !%------------------------------------------------------------------
-    !     !% Aliases
-    !         fulldepth     => elemR(indx,er_FullDepth)
-    !         fullarea      => elemR(indx,er_FullArea)
-    !         fullHydRadius => elemR(indx,er_FullHydRadius)
-    !         fullperimeter => elemR(indx,er_FullPerimeter)
-    !     !%------------------------------------------------------------------
-
-    !     !% --- find Y/Yfull
-    !     YoverYfull = depth / fulldepth
-
-    !     !% --- prevent overfull
-    !     YoverYfull = min(YoverYfull, oneR)
-
-    !     !% --- prevent underfull
-    !     YoverYfull = max(YoverYfull, setting%ZeroValue%Depth/fulldepth)
-
-    !     !% --- retrieve normalized A/Amax for this depth from lookup table
-    !     area = xsect_table_lookup_singular (YoverYfull, ACirc)
-
-    !     !% --- retrive the normalized R/Rmax for this depth from the lookup table
-    !     hydradius =  xsect_table_lookup_singular (YoverYfull, RCirc) 
-
-    !     !% --- unnormalize
-    !     hydRadius = hydradius * fullHydRadius
-    !     area      = area * fullArea
-
-    !     hydRadius = max(hydradius,setting%ZeroValue%Depth)
-
-    !     !% --- get the perimeter by dividing area by hydRadius
-    !     !%     limit by the full perimeter
-    !     outvalue = min(area / hydRadius, fullperimeter)
-
-    ! end function llgeo_circular_perimeter_from_depth_singular
-!%
-!%==========================================================================
 !%==========================================================================
 !%
     real(8) function llgeo_filled_circular_perimeter_from_depth_singular &
@@ -1874,8 +1627,7 @@ module geometry_lowlevel
 !%==========================================================================
 !%
     real(8) function llgeo_rectangular_closed_perimeter_from_depth_singular &
-            (indx, depth, ZeroValuePerimeter) result (outvalue)
-        !%  
+            (indx, depth, ZeroValuePerimeter) result (outvalue)  
         !%------------------------------------------------------------------
         !% Description:
         !% Computes wetted perimeter from known depth for a rectangular cross section of
@@ -1991,57 +1743,6 @@ module geometry_lowlevel
     end function llgeo_rectangular_triangular_perimeter_from_depth_singular
 !%    
 !%==========================================================================
-!%==========================================================================
-!%
-    ! real(8) function llgeo_semi_circular_perimeter_from_depth_singular &
-    !         (indx, depth) result(outvalue)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Computes the semi_circular conduit perimeter for the given depth on
-    !     !% the element idx
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer, intent(in) :: indx
-    !         real(8), intent(in) :: depth
-    !         real(8), pointer :: fulldepth, fullarea, fullperimeter
-    !         real(8) :: hydRadius, YoverYfull, AoverAfull, area, sf
-    !         real(8), parameter :: sfparam = 0.2946d0
-    !     !%------------------------------------------------------------------
-    !     !% Aliases
-    !         fulldepth     => elemR(indx,er_FullDepth)
-    !         fullarea      => elemR(indx,er_FullArea)
-    !         fullperimeter => elemR(indx,er_FullPerimeter)
-    !     !%------------------------------------------------------------------
-
-    !     !% --- set normalized depth   
-    !     YoverYfull = depth / fulldepth
-
-    !     !% --- prevent overfull
-    !     YoverYfull = min(YoverYfull, oneR)
-
-    !     !% --- prevent underfull
-    !     YoverYfull = max(YoverYfull, setting%ZeroValue%Depth/fulldepth)
-
-    !     !% --- retrieve normalized area for this depth from lookup table
-    !     AoverAfull = xsect_table_lookup_singular (YoverYfull, ASemiCircular)
-
-    !     !% --- retrieve normalized sectionfactor for this depth from lookup table
-    !     sf = xsect_table_lookup_singular (AoverAfull, SSemiCircular)
-
-    !     !% --- unnormalize
-    !     sf   = (fullArea * (sfparam * fullDepth) ** twoThirdR) * sf
-    !     area = AoverAfull * fullarea
-
-    !     !% retrieve hyrdaulic radius from section factor
-    !     hydRadius = (sF / area) ** threehalfR
-
-    !     !% --- get the perimeter by dividing area by hydRadius
-    !     outvalue = min(area / hydRadius, fullperimeter)
-
-    ! end function llgeo_semi_circular_perimeter_from_depth_singular
-!%    
-!%==========================================================================
-
 !% END MODULE
 !%==========================================================================
 end module geometry_lowlevel

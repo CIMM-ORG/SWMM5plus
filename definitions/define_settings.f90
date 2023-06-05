@@ -1,4 +1,28 @@
 module define_settings
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Defines types used in the setting%...%... structure
+    !%
+    !% Methods
+    !% Settings are stored in the setting object which is public.
+    !% Settings can be defined in three ways:
+    !%    1) via flags at command line
+    !%    2) via JSON file
+    !%    3) via default values
+    !% If the settings are not defined via JSON file, default values
+    !% should be defined in the declaration of the derived type
+    !% associated to the setting. Settings flags (e.g., verbose -v)
+    !% overwrite any value defined via default or JSON values.
+    !%
+    !% To understand the setting structure, programmers should first
+    !% familiarize themselves with the First Level Types at the bottom 
+    !% of this file
+    !%==========================================================================
 
     use json_module
     use define_keys
@@ -8,20 +32,6 @@ module define_settings
     implicit none
     public
 
-    !% -------------------------------------------------------------------------------
-    !% Notes:
-    !%    Settings are stored in the setting object which is public.
-    !%    Settings can be defined in three ways:
-    !%        1) via flags
-    !%        2) via JSON file
-    !%        3) via default values
-    !%
-    !%    If the settings are not defined via JSON file, default values
-    !%    should be defined in the declaration of the derived type
-    !%    associated to the setting. Settings flags (e.g., verbose -v)
-    !%    overwrite any value defined via default or JSON values.
-    !% -------------------------------------------------------------------------------
-!%
 !%==========================================================================
 !% PUBLIC TYPES
 !%==========================================================================
@@ -45,7 +55,6 @@ module define_settings
         integer :: Approach = vshape_surcharge_CC !% doesnotexist  !% options: doesnotexist !%vshape_all_CC  vshape_surcharge_CC, vshape_freesurface_CC
         real(8) :: Coef = 1.0d0
     end type AdjustHeadType
-
 
     !% setting%Output%CommandLine
     type CommandLineType
@@ -119,12 +128,13 @@ module define_settings
 
     !% setting%Limiter%Dt
     type LimiterDtType
+        logical :: FailOnMinYN = .true.
+        logical :: FailOnMaxYN = .false.
         logical :: UseLimitMinYN = .true.
         real(8) :: Minimum     = 1.0d-3
         logical :: UseLimitMaxYN = .true.
         real(8) :: Maximum     = 86400.0d0
     end type LimiterDtType
-
 
     !% setting%Limiter%InterpWeight
     type LimiterInterpWeightType
@@ -136,11 +146,12 @@ module define_settings
     type LimiterVelocityType
         logical :: UseLimitMaxYN = .true.
         real(8) :: Maximum = 10.0d0 ! m/s
+        logical :: ZeroMinimumVelocitiesYN = .true. 
+        real(8) :: Minimum = 1.0d-8 ! m/s below this set to zero
     end type LimiterVelocityType
 
     !% setting%Solver%ManningsN
     type ManningsNtype
-        logical :: useDynamicManningsN = .false. !% TRUE is not working
         real(8) :: alpha = 1.0d0
         real(8) :: beta  = 1.0d0
         real(8) :: FlowReversalFactor = 100.d0 !% multiplier for Manning's n on flow reversal or small velocity
@@ -313,10 +324,10 @@ module define_settings
     type AdjustType
         type(AdjustFlowrateType)   :: Flowrate
         type(AdjustHeadType)       :: Head
-        real(8), dimension(12)     :: Temperature   !% from SWMM input [ADJUSTMENTS] not used
-        real(8), dimension(12)     :: Evaporation   !% from SWMM input [ADJUSTMENTS] not used 
-        real(8), dimension(12)     :: Rainfall      !% from SWMM input [ADJUSTMENTS] not used 
-        real(8), dimension(12)     :: Conductivity  !% from SWMM input [ADJUSTMENTS] not used 
+        real(8), dimension(12)     :: Temperature   !% from SWMM input [ADJUSTMENTS] 
+        real(8), dimension(12)     :: Evaporation   !% from SWMM input [ADJUSTMENTS]
+        real(8), dimension(12)     :: Rainfall      !% from SWMM input [ADJUSTMENTS] 
+        real(8), dimension(12)     :: Conductivity  !% from SWMM input [ADJUSTMENTS] 
     end type AdjustType
 
     ! setting%BC
@@ -375,7 +386,6 @@ module define_settings
     end type CulvertType
 
     !% setting%Debug
-    
     type DebugType
         logical :: checkIsNanTF = .true.
         !% THESE debugFile WILL BE OBSOLETE
@@ -414,12 +424,6 @@ module define_settings
         !% small time (prevent division by zero)
         real(8) :: TimeStep = 1.0d-6
     end type EpsilonType
-
-    !rm 20220207brh
-    ! !% setting%FaceInterp
-    ! type FaceInterpType
-    !     integer :: DownJBFaceInterp = dynamic
-    ! end type FaceInterpType
 
     !% setting%File
     type FileType
@@ -698,11 +702,11 @@ module define_settings
     type VariableDTType
         logical :: ApplyYN = .true.
         logical :: limitByBC_YN = .true.  !% limits time step by BC step for inflows/head
-        real(8) :: CFL_hi_max = 0.6d0
+        real(8) :: CFL_hi = 0.6d0
         real(8) :: CFL_target = 0.5d0
-        real(8) :: CFL_lo_max = 0.4d0
+        real(8) :: CFL_lo = 0.4d0
         real(8) :: CFL_inflow_max = 0.4d0
-        !rm 20220209brh real(8) :: decreaseFactor = 0.8  
+        real(8) :: decreaseFactor = 0.8d0  
         real(8) :: increaseFactor = 1.2d0 
         real(8) :: InitialDt = 1.d0  !% recommend 1 second to reduce chance of initial instability (should be less than pump rampup time)
         integer :: NstepsForCheck = 10
@@ -729,7 +733,6 @@ module define_settings
     type settingType
         logical                  :: JSON_FoundFileYN = .false.
         logical                  :: JSON_CheckAllInputYN = .true.
-        !type(ACmethodType)       :: ACmethod
         type(AdjustType)         :: Adjust
         type(BCPropertiesType)   :: BC
         type(CaseNameType)       :: CaseName ! name of case
@@ -741,7 +744,6 @@ module define_settings
         type(DebugType)          :: Debug
         type(DiscretizationType) :: Discretization
         type(EpsilonType)        :: Eps ! epsilons used to provide bandwidth for comparisons
-        !rm 20220207brh type(FaceInterpType)     :: FaceInterp ! Temporary: setting for face interpolation in downstream JB
         type(FileType)           :: File
         type(JunctionType)       :: Junction
         type(LimiterType)        :: Limiter ! maximum and minimum limiters
@@ -780,7 +782,6 @@ contains
         !% are provided below
         !% -----------------------------------------------------------------
 
-    !setting%Time%Hydraulics%Dt = 1.0d0   !% CONTROLLED BY setting%VariableDt%InitialDt
     setting%Time%Hydrology%Dt = 600.0d0
 
     setting%Weir%Transverse%WeirExponent = 1.5d0
@@ -813,9 +814,9 @@ contains
     setting%Junction%Overflow%OrificeHeight     = 0.2d0 !% height of overflow orifice (m)
     setting%Junction%Overflow%WeirLengthFactor  = 1.d0  !% multiplier of the default overflow weir length that is derived from junction plan area
     setting%Junction%Overflow%CbroadCrestedWeir = 1.5d0 !% Brater and King, Table 5.1   (m^{1/2}/s)   
-    !% coef1 used in Q = CLH^{3/2} for broad crested weir where L = 2(pi A)^{1/2}
+    !% --- coef1 used in Q = CLH^{3/2} for broad crested weir where L = 2(pi A)^{1/2}
     setting%Junction%Overflow%coef1 = twoR * setting%Junction%Overflow%CbroadCrestedWeir * sqrt(setting%Constant%pi)
-    !% coef2 is for dQ/dH = (3/2) C L H^{1/2} = (3/2)(2 C * sqrt(pi)) * sqrt(A) * sqrt(H)
+    !% --- coef2 is for dQ/dH = (3/2) C L H^{1/2} = (3/2)(2 C * sqrt(pi)) * sqrt(A) * sqrt(H)
     setting%Junction%Overflow%coef2 = threehalfR * setting%Junction%Overflow%coef1 
     setting%Junction%Overflow%coef3 = twothirdR  * sqrt(twoR * setting%Constant%gravity)
     setting%Junction%Overflow%coef4 = sqrt(twoR * setting%Constant%gravity)
@@ -869,7 +870,7 @@ contains
             !% the file is found even if the variable is false!
             setting%JSON_FoundFileYN = .true.
         else
-            write(*,"(A)") "Error - json file - setting " // 'JSON_FoundFileYN not found'
+            write(*,"(A)") "USER CONFIGURATION ERROR - json file - setting " // 'JSON_FoundFileYN not found'
             write(*,"(A)") "...This should be first item in json file."
             write(*,"(A)") "...There may be a formatting problem inside the json file,"
             write(*,"(A)") "...itself (e.g., mismatched braces or missing comma) or"
@@ -1086,51 +1087,12 @@ contains
         
     !% Discretization. =====================================================================
 
-        ! !% -- stop on length adjustment
-        ! !%                      Discretization.StopOnLengthAdjustTF
-        ! call json%get('Discretization.StopOnLengthAdjustTF', logical_value, found)
-        ! if (found) setting%Discretization%StopOnLengthAdjustTF = logical_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.StopOnLengthAdjustTF not found'
-
         !% -- Channel overflow
         !%                      Discretization.AllowChannelOverflowTF
         call json%get('Discretization.AllowChannelOverflowTF', logical_value, found)
         if (found) setting%Discretization%AllowChannelOverflowTF = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AllowChannelOverflowTF not found'
       
-        !% -- Nominal element length adjustment
-        ! !%                      Discretization.AdjustLinkLengthForJunctionBranchYN
-        ! call json%get('Discretization.AdjustLinkLengthForJunctionBranchYN', logical_value, found)
-        ! if (found) setting%Discretization%AdjustLinkLengthForJunctionBranchYN = logical_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AdjustLinkLengthForJunctionBranchYN not found'
-
-
-        !%                      Discretization.JunctionBranchLengthFactor
-        ! call json%get('Discretization.JunctionBranchLengthFactor', real_value, found)
-        ! if (found) setting%Discretization%JunctionBranchLengthFactor = real_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.JunctionBranchLengthFactor not found'
-        
-        ! !%                       Discretization.MinElemLengthFactor
-        ! call json%get('Discretization.MinElemLengthFactor', real_value, found)
-        ! if (found) setting%Discretization%MinElemLengthFactor = real_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.MinElemLengthFactor not found'
-        
-        !%                       Discretization.MinElemLengthMethod
-        ! call json%get('Discretization.MinElemLengthMethod', c, found)
-        ! if (found) then 
-        !     call util_lower_case(c)
-        !     if (c == 'elemlengthadjust') then
-        !         setting%Discretization%MinElemLengthMethod = ElemLengthAdjust
-        !     elseif (c == 'rawelemlength') then
-        !         setting%Discretization%MinElemLengthMethod = RawElemLength
-        !     else
-        !         write(*,"(A)") 'Error - json file - setting.Discretization.MinElemLengthMethod of ',trim(c)
-        !         write(*,"(A)") '..is not in allowed options of:'
-        !         write(*,"(A)") '...elemlengthadjust,  rawelemlength'
-        !         stop 33986
-        !     end if
-        ! end if
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.MinElemLengthMethod not found'
   
         !%                       Discretization.NominalElemLength
         call json%get('Discretization.NominalElemLength', real_value, found)
@@ -1149,30 +1111,6 @@ contains
         if (found) setting%Eps%FroudeJump = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Eps.FroudeJump not found'
         
-        !rm 20220207brh
-        ! !%                       Eps.InflowDepthIncreaseFroudeLimit
-        ! call json%get('Eps.InflowDepthIncreaseFroudeLimit', real_value, found)
-        ! if (found) setting%Eps%InflowDepthIncreaseFroudeLimit = real_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Eps.InflowDepthIncreaseFroudeLimit not found'
-
-    !% FaceInterp. =====================================================================
-        !%                       FaceInterp.DownJBFaceInterp
-        !rm 20220207brh
-        ! call json%get('FaceInterp.DownJBFaceInterp', c, found)
-        ! if (found) then 
-        !     call util_lower_case(c)
-        !     if (c == 'static') then
-        !         setting%FaceInterp%DownJBFaceInterp = static
-        !     else if (c == 'dynamic') then
-        !         setting%FaceInterp%DownJBFaceInterp = dynamic
-        !     else
-        !         write(*,"(A)") 'Error - json file - setting.FaceInterp.DownJBFaceInterp of ',trim(c)
-        !         write(*,"(A)") '..is not in allowed options of:'
-        !         write(*,"(A)") '...static, dynamic'
-        !         stop 993895
-        !     end if
-        ! end if
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'FaceInterp.DownJBFaceInterp not found'
 
     !% File. =====================================================================
         !% --- (filenames and paths should not be read)
@@ -1323,49 +1261,7 @@ contains
 
 
     !% Limiter. =====================================================================
-        !rm 20220207brh
-        ! !%                       Limiter.ArraySize.TemporalInflows
-        ! call json%get('Limiter.ArraySize.TemporalInflows', integer_value, found)
-        ! if (found) setting%Limiter%ArraySize%TemporalInflows = integer_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.ArraySize.TemporalInflows not found'
-
-        ! !%                       Limiter.ArraySize.TotalInflows
-        ! call json%get('Limiter.ArraySize.TotalInflows', integer_value, found)
-        ! if (found) setting%Limiter%ArraySize%TotalInflows = integer_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.ArraySize.TotalInflows not found'
-
-        !rm 20220207brh
-        ! !%                       Limiter.BC.UseInflowLimiterYN
-        ! call json%get('Limiter.BC.UseInflowLimiterYN', logical_value, found)
-        ! if (found) setting%Limiter%BC%UseInflowLimiterYN = logical_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.BC.UseInflowLimiterYN not found'
-
-        !rm 20220207brh
-        !%                       Limiter.BC.Approach
-        ! call json%get('Limiter.BC.Approach', c, found)
-        ! if (found) then 
-        !     call util_lower_case(c)
-        !     if (c == 'froudenumber') then
-        !         setting%Limiter%BC%Approach = FroudeNumber
-        !     else
-        !         write(*,"(A)") 'Error - json file - setting.Limiter.BC.Approach of ',trim(c)
-        !         write(*,"(A)") '..is not in allowed options of:'
-        !         write(*,"(A)") '...froudenumber'
-        !         stop 837735
-        !     end if
-        ! end if
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.BC.Approach not found'
-        
-        !%                       Limiter.BC.FroudeInflowMaximum
-        ! call json%get('Limiter.BC.FroudeInflowMaximum', real_value, found)
-        ! if (found) setting%Limiter%BC%FroudeInflowMaximum = real_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.BC.FroudeInflowMaximum not found'
-        
-        ! !%                       Limiter.Channel.LargeDepthFactor
-        ! call json%get('Limiter.Channel.LargeDepthFactor', real_value, found)
-        ! if (found) setting%Limiter%Channel%LargeDepthFactor = real_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Channel.LargeDepthFactor not found'
-        
+    
         !%                       Limiter.Dt.Minimum
         call json%get('Limiter.Dt.Minimum', real_value, found)
         if (found) setting%Limiter%Dt%Minimum = real_value
@@ -1375,17 +1271,6 @@ contains
         call json%get('Limiter.Dt.UseLimitMinYN', logical_value, found)
         if (found) setting%Limiter%Dt%UseLimitMinYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Dt.UseLimitMinYN not found'
-
-        !rm 20220207brh
-        ! !%                       Limiter.Flowrate.FaceVolumeTransport
-        ! call json%get('Limiter.Flowrate.FaceVolumeTransport', real_value, found)
-        ! if (found) setting%Limiter%Flowrate%FaceVolumeTransport = real_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Flowrate.FaceVolumeTransport not found'
-        
-        ! !%                       Limiter.Flowrate.UseFaceVolumeTransportYN
-        ! call json%get('Limiter.Flowrate.UseFaceVolumeTransportYN', logical_value, found)
-        ! if (found) setting%Limiter%Flowrate%UseFaceVolumeTransportYN = logical_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Flowrate.UseFaceVolumeTransportYN not found'
 
         !%                       Limiter.InterpWeight.Maximum
         call json%get('Limiter.InterpWeight.Maximum', real_value, found)
@@ -1866,42 +1751,6 @@ contains
         end if
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.MomentumSourceMethod not found'     
 
-        !%                       Solver.SolverSelect
-        call json%get('Solver.SolverSelect', c, found)
-        call util_lower_case(c)
-        if (found) then 
-            if (c == 'etm') then
-                setting%Solver%SolverSelect = ETM
-            else if (c == 'etm_ac') then
-                setting%Solver%SolverSelect = ETM_AC
-            else if (c == 'ac') then
-                setting%Solver%SolverSelect = AC
-            else
-                write(*,"(A)") 'Error - json file - setting.Solver.SolverSelect of ',trim(c)
-                write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '... ETM, ETM_AC, AC'
-                stop 937546
-            end if
-        end if
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.SolverSelect not found'
-
-        ! !%                       Solver.ForceMainEquationType
-        ! call json%get('Solver.ForceMainEquationType', c, found)
-        ! call util_lower_case(c)
-        ! if (found) then 
-        !     if (c == 'hazenwilliams') then
-        !         setting%Solver%ForceMainEquationType = HazenWilliams
-        !     else if (c == 'darcyweisbach') then
-        !         setting%Solver%ForceMainEquationType = DarcyWeisbach
-        !     else
-        !         write(*,"(A)") 'Error - json file - setting.Solver.ForceMainEquationType of ',trim(c)
-        !         write(*,"(A)") '..is not in allowed options of:'
-        !         write(*,"(A)") '... HazenWilliams, DarcyWeisbach'
-        !         stop 9375466
-        !     end if
-        ! end if
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ForceMainEquationType not found'
-
         !%                       Solver.SwitchFractionDn
         call json%get('Solver.SwitchFractionDn', real_value, found)
         if (found)  setting%Solver%SwitchFractionDn = real_value
@@ -1916,21 +1765,6 @@ contains
 
         !% do not read          Solver.ReferenceHead
 
-    !% Solver.ManningsN =====================================================================
-        !%                       Solver.ManningsN.useDynamicManningsN
-        call json%get('Solver.ManningsN.useDynamicManningsN', logical_value, found)
-        if (found) setting%Solver%ManningsN%useDynamicManningsN = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ManningsN.useDynamicManningsN not found'
-       
-    !%                       Solver.ManningsN.alpha
-        call json%get('Solver.ManningsN.alpha', real_value, found)
-        if (found)  setting%Solver%ManningsN%alpha = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ManningsN.alpha not found'
-  
-    !%                       Solver.ManningsN.beta
-        call json%get('Solver.ManningsN.beta', real_value, found)
-        if (found)  setting%Solver%ManningsN%beta = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.ManningsN.beta not found'
       
     !% Solver.ForceMain =====================================================================
         !%                       Solver.ForceMain.AllowForceMainTF
@@ -2210,30 +2044,30 @@ contains
         if (found) setting%VariableDT%limitByBC_YN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.limitByBC_YN not found'
 
-        !%                       CFL_hi_max
-        call json%get('VariableDT.CFL_hi_max', real_value, found)
-        if (found) setting%VariableDT%CFL_hi_max = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.CFL_hi_max not found'
+        !%                       CFL_hi
+        call json%get('VariableDT.CFL_hi', real_value, found)
+        if (found) setting%VariableDT%CFL_hi = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.CFL_hi not found'
         
         !%                       CFL_target
         call json%get('VariableDT.CFL_target', real_value, found)
         if (found) setting%VariableDT%CFL_target = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.CFL_target not found'
         
-        !%                       CFL_lo_max
-        call json%get('VariableDT.CFL_lo_max', real_value, found)
-        if (found) setting%VariableDT%CFL_lo_max = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.CFL_lo_max not found'
+        !%                       CFL_lo
+        call json%get('VariableDT.CFL_lo', real_value, found)
+        if (found) setting%VariableDT%CFL_lo = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.CFL_lo not found'
         
          !%                       CFL_inflow_max
         call json%get('VariableDT.CFL_inflow_max', real_value, found)
-        if (found) setting%VariableDT%CFL_lo_max = real_value
+        if (found) setting%VariableDT%CFL_lo = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.CFL_inflow_max not found'
         
-        ! !%                       decreaseFactor
-        ! call json%get('VariableDT.decreaseFactor', real_value, found)
-        ! if (found) setting%VariableDT%decreaseFactor = real_value
-        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.decreaseFactor not found'
+        !%                       decreaseFactor
+        call json%get('VariableDT.decreaseFactor', real_value, found)
+        if (found) setting%VariableDT%decreaseFactor = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'VariableDT.decreaseFactor not found'
         
         !%                       increaseFactor
         call json%get('VariableDT.increaseFactor', real_value, found)

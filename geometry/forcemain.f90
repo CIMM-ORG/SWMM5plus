@@ -1,5 +1,14 @@
 module forcemain
-    
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Obtaining equivalent Manning's n for force main equations
+    !%
+    !%==========================================================================
     use define_settings, only: setting
     use define_globals
     use define_indexes
@@ -9,14 +18,6 @@ module forcemain
     use utility_crash, only: util_crashpoint
 
     implicit none
-
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !% Functions for force main computations
-    !%
-    !% METHOD:
-    !%
-    !%
 
     private
 
@@ -121,9 +122,6 @@ module forcemain
             print *, 'CODE ERROR: unexpected case default'
             call util_crashpoint(779834)
         end select
-
-        ! print *, 'in ',trim(subroutine_name)
-        ! print *, elemR(1:4,er_ManningsN)
 
     end subroutine fm_equivalent_manningsN  
 !%

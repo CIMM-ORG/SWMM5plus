@@ -1,5 +1,13 @@
 module triangular_channel
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Geometry for triangular open channel
+    !%==========================================================================
     use define_settings, only: setting
     use define_globals
     use define_indexes
@@ -8,25 +16,11 @@ module triangular_channel
 
     implicit none
 
-    !%----------------------------------------------------------------------------- 
-    !% Description:
-    !% triangular channel geometry
-    !%
-
     private
 
     public :: triangular_depth_from_volume
     public :: triangular_topwidth_from_depth
     public :: triangular_perimeter_from_depth
-
-    ! public :: triangular_area_from_depth_singular
-    ! public :: triangular_topwidth_from_depth_singular 
-    ! public :: triangular_perimeter_from_depth_singular
-    
-    !public :: triangular_hyddepth_from_depth
-    
-    !public :: triangular_hyddepth_from_depth_singular
-    !public :: triangular_hydradius_from_depth_singular
 
     contains
 
@@ -80,10 +74,10 @@ module triangular_channel
 !%==========================================================================
 !%
     subroutine triangular_topwidth_from_depth (thisP)
-        !%-----------------------------------------------------------------------------
+        !!%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a triangular channel
-        !%-----------------------------------------------------------------------------
+        !!%------------------------------------------------------------------
             integer, target, intent(in) :: thisP(:)
             real(8), pointer :: topwidth(:), depth(:)
             real(8), pointer :: volume(:), fullvolume(:)
@@ -93,7 +87,7 @@ module triangular_channel
             volume      => elemR(:,er_Volume)
             fullvolume  => elemR(:,er_FullVolume)
             depth       => elemR(:,er_Depth)
-        !%-----------------------------------------------------------------------------
+        !!%------------------------------------------------------------------
 
         if (setting%Discretization%AllowChannelOverflowTF) then 
             !% --- depth is already limited to full depth
@@ -106,8 +100,6 @@ module triangular_channel
                 topwidth(thisP) = llgeo_triangular_topwidth_from_depth_pure(thisP,depth(thisP))
             endwhere
         endif
-
-        !topwidth(thisP) = twoR * sideslope(thisP) * depth(thisP) 
 
     end subroutine triangular_topwidth_from_depth
 !%    
@@ -145,124 +137,6 @@ module triangular_channel
 
     end subroutine triangular_perimeter_from_depth
 !%    
-!%==========================================================================  
-!% SINGULAR
 !%==========================================================================
-!%
-!     pure real(8) function triangular_area_from_depth_singular &
-!         (indx,depth) result (outvalue)
-!         !%------------------------------------------------------------------
-!         !% Description:
-!         !% Computes area from known depth for triangular cross section of a single element
-!         !% The input indx is the row index in full data 2D array.
-!         !%------------------------------------------------------------------
-!             integer, intent(in) :: indx
-!             real(8), intent(in) :: depth
-!         !%------------------------------------------------------------------
-
-!         outvalue = elemSGR(indx,esgr_Triangular_Slope) * (depth ** 2)
-
-!     end function triangular_area_from_depth_singular
-! !%
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     pure real(8) function triangular_topwidth_from_depth_singular &
-!         (indx,depth) result (outvalue)
-!         !%------------------------------------------------------------------
-!         !% Description:
-!         !% Computes the topwidth for a triangular cross section of a single element
-!         !%------------------------------------------------------------------
-!             integer, intent(in) :: indx 
-!             real(8), intent(in) :: depth
-!         !%------------------------------------------------------------------
- 
-!         outvalue = twoR * elemSGR(indx,esgr_Triangular_Slope) * depth
-
-!     end function triangular_topwidth_from_depth_singular
-! !%
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     pure real(8) function triangular_perimeter_from_depth_singular &
-!         (indx,depth) result (outvalue)
-!         !%  
-!         !%-----------------------------------------------------------------
-!         !% Description:
-!         !% Computes wetted perimeter from known depth for a triangular cross section of
-!         !% a single element 
-!         !%------------------------------------------------------------------
-!             integer, intent(in) :: indx
-!             real(8), intent(in) :: depth
-!         !%------------------------------------------------------------------
-        
-!         outvalue = twoR * depth * sqrt(oneR + elemSGR(indx,esgr_Triangular_Slope) ** 2)
-
-!     end function triangular_perimeter_from_depth_singular
-! !%    
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     ! subroutine triangular_hyddepth_from_depth (elemPGx, Npack, thisCol)
-!     !     !%  
-!     !     !%-----------------------------------------------------------------------------
-!     !     !% Description:
-!     !     !% Computes the hydraulic (average) depth from a known depth in a triangular channel
-!     !     !%-----------------------------------------------------------------------------
-!     !     integer, target, intent(in) :: elemPGx(:,:)
-!     !     integer, intent(in) ::  Npack, thisCol
-!     !     integer, pointer :: thisP(:)
-!     !     real(8), pointer :: hyddepth(:), depth(:)
-!     !     !%-----------------------------------------------------------------------------
-!     !     thisP     => elemPGx(1:Npack,thisCol) 
-!     !     depth     => elemR(:,er_Depth)
-!     !     hyddepth  => elemR(:,er_HydDepth)
-!     !     !%-----------------------------------------------------------------------------
-
-!     !     hyddepth(thisP) = depth(thisP) / twoR
-
-!     ! end subroutine triangular_hyddepth_from_depth
-! !%    
-! !%==========================================================================  
-! !%==========================================================================
-! !%
-!     ! real(8) function triangular_hyddepth_from_depth_singular (indx,depth) result (outvalue)
-!     !     !%  
-!     !     !%-----------------------------------------------------------------------------
-!     !     !% Description:
-!     !     !% Computes hydraulic depth from known depth for triangular cross section of 
-!     !     !% a single element
-!     !     !%-----------------------------------------------------------------------------   
-!     !     integer, intent(in) :: indx     
-!     !     real(8), intent(in) :: depth
-!     !     !%-----------------------------------------------------------------------------  
-
-!     !     outvalue = depth / twoR
-
-!     ! end function triangular_hyddepth_from_depth_singular 
-! !%    
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     ! real(8) function triangular_hydradius_from_depth_singular (indx,depth) result (outvalue)
-!     !     !%  
-!     !     !%-----------------------------------------------------------------------------
-!     !     !% Description:
-!     !     !% Computes hydraulic radius from known depth for a triangular cross section of
-!     !     !% a single element 
-!     !     !%-----------------------------------------------------------------------------
-!     !     integer, intent(in) :: indx
-!     !     real(8), intent(in) :: depth
-!     !     real(8), pointer    :: breadth(:), sideslope(:)
-!     !     !%-----------------------------------------------------------------------------
-!     !     sideslope => elemSGR(:,esgr_Triangular_Slope)
-!     !     breadth   => elemSGR(:,esgr_Triangular_TopBreadth)
-!     !     !%-----------------------------------------------------------------------------
-        
-!     !     outvalue = (sideslope(indx) * depth) / (twoR * sqrt(oneR + sideslope(indx) ** twoR))
-
-!     ! end function triangular_hydradius_from_depth_singular
-    !%    
 !%==========================================================================
-
 end module triangular_channel

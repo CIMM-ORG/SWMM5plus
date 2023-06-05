@@ -1,4 +1,25 @@
 module roadway_weir_elements
+!%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Computes roadway weir flows for diagnostic elements
+    !%
+    !% Methods:
+    !% The discharge coefficients and submergence factors listed below were
+    !% derived from Figure 10 in "Bridge Waterways Analysis Model: Research
+    !% Report", U.S. Dept. of Transportation Federal Highway Administration
+    !% Report No. FHWA/RD-86/108, McLean, VA, July 1986. 
+
+    !% (these tables are copied from EPA-SWMM5-C and then modified for SI units.
+    !% The 2nd columns (discharge coefficients) of the tables were converted. 
+    !% The original unit of the discharge coefficients were is ft^(1/2)/sec. 
+    !% The discharge coefficients were multipiled by
+    !% 0.552 to convert them to m^(1/2)/sec.)
+    !%==========================================================================
 
     use define_globals
     use define_keys
@@ -6,22 +27,9 @@ module roadway_weir_elements
     use define_settings, only: setting
     use utility_crash, only: util_crashpoint
 
-
     implicit none
 
-    !% The discharge coefficients and submergence factors listed below were
-    !% derived from Figure 10 in "Bridge Waterways Analysis Model: Research
-    !% Report", U.S. Dept. of Transportation Federal Highway Administration
-    !% Report No. FHWA/RD-86/108, McLean, VA, July 1986. 
-
-    !% (these tables are copid over from SWMM5C and then moified.
-    !% In SWMM5C, all the roadway weir calculations are done in CFS units.
-    !% Since default units in SWMM5+ is SI, the 2nd colums (discharge coefficients) 
-    !% of the tables were converted. The original unit of the discharge coefficients 
-    !% were is ft^(1/2)/sec. Thus, the discharge coefficients were multipiled by
-    !% 0.552 to convert them to m^(1/2)/sec.)
-
-    !% Discharge Coefficients for (head / road width) <= 0.15
+    !% --- Discharge Coefficients for (head / road width) <= 0.15
     integer, parameter :: N_Cd_LowPaved = 4
     real(8), dimension(4,2) :: Cd_LowPaved = (/ 0.0, 0.2, 0.7, 4.0, &
                                                 1.57,1.63,1.67,1.68 &
@@ -33,7 +41,7 @@ module roadway_weir_elements
                                                  1.38,1.49,1.55,1.6, &
                                                  1.64,1.667,1.673,1.683 &
                                                /)
-    !% Discharge Coefficients for (head / road width) > 0.15
+    !% --- Discharge Coefficients for (head / road width) > 0.15
     integer, parameter :: N_Cd_HighPaved = 2
     real(8), dimension(2,2) :: Cd_HighPaved = (/ 0.15,0.25, &
                                                  1.68,1.71  &
@@ -43,8 +51,8 @@ module roadway_weir_elements
     real(8), dimension(2,2) :: Cd_HighGravel = (/ 0.15,0.30, &
                                                   1.63,1.71  &
                                                /)
-    !% Submergence Factors
-    !% (these are factor and unitless. Thus do not need correction)
+    !% --- Submergence Factors
+    !% (these are factor and unitless. Thus do not need correction for SI)
     integer, parameter :: N_Sf_Paved = 9
     real(8), dimension(9,2) :: Sf_Paved = (/ 0.8, 0.85,0.9, 0.93, &
                                              0.95,0.97,0.98,0.99, &
@@ -67,25 +75,25 @@ module roadway_weir_elements
     public :: roadway_weir_flow
 
     contains
-
 !%
 !%==========================================================================
 !% PUBLIC 
 !%==========================================================================    
 !% 
     subroutine roadway_weir_flow (eIdx)
-    !%-----------------------------------------------------------------------------
+    !%----------------------------------------------------------------------
     !% Description:
-    !% 
     !% Find flow in roadway weirs
-    !%-----------------------------------------------------------------------------
+    !%----------------------------------------------------------------------
+    !% Declarations
         integer, intent(in) :: eIdx
         real(8), pointer    :: RoadHeight, RoadWidth, Head, NominalDSmHead 
         real(8), pointer    :: RectangularBreadth, disCoeff, Flowrate, dQdH
         integer, pointer    :: FlowDirection, RoadSurf
         real(8) :: HeadUp, HeadDn, cD
         logical :: useVariableCoeff
-    !%-----------------------------------------------------------------------------
+    !%----------------------------------------------------------------------
+    !% Aliases
         dQdH                  => elemSR(eIdx,esr_Weir_dQdHe)
         Flowrate              => elemR (eIdx,er_Flowrate)
         Head                  => elemR (eIdx,er_Head)
@@ -96,7 +104,7 @@ module roadway_weir_elements
         RectangularBreadth    => elemSR(eIdx,esr_Weir_RectangularBreadth)
         FlowDirection         => elemSI(eIdx,esi_Weir_FlowDirection)
         RoadSurf              => elemSI(eIdx, esi_Weir_RoadSurface)
-    !%-----------------------------------------------------------------------------
+    !%----------------------------------------------------------------------
         !% check if variable discharge coefficient is needed
         useVariableCoeff = .false.
         if ((RoadWidth > zeroR) .and. (RoadSurf .ne. NoRoadSurface)) useVariableCoeff = .true. 
@@ -123,15 +131,14 @@ module roadway_weir_elements
 !% 
     real(8) function get_roadway_discharge_coeff &
         (HeadUp, HeadDn, RoadWidth, RoadSurface) result (disCoeff)
-        !%  
-        !%-----------------------------------------------------------------------------
+        !%----------------------------------------------------------------------
         !% Description:
-        !% 
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: RoadSurface
-        real(8), intent(in) :: HeadUp, HeadDn, RoadWidth
-        real(8) :: hOverL, subFactor, dnHoverL
-        !%-----------------------------------------------------------------------------
+        !% gets discharge coef from tables
+        !%----------------------------------------------------------------------
+            integer, intent(in) :: RoadSurface
+            real(8), intent(in) :: HeadUp, HeadDn, RoadWidth
+            real(8) :: hOverL, subFactor, dnHoverL
+        !%----------------------------------------------------------------------
         !% set the initial submergence factor to 1
         subFactor = oneR
         !% if upstream head is zero, discharge coeff is zero
@@ -176,15 +183,15 @@ module roadway_weir_elements
 !%==========================================================================    
 !% 
     real(8) function get_table_val(xVal, table, nRow) result (yVal)
-        !%  
         !%-----------------------------------------------------------------------------
         !% Description:
-        !%      This cide has been adapted from SWMM5C
+        !% Gets value from discharge coef table
+        !% This code has been adapted from EPA-SWMM5-C
         !%-----------------------------------------------------------------------------
-        integer, intent(in) ::  nRow
-        real(8), intent(in) :: xVal, table(:,:)
-        integer :: ii
-        real(8) :: x1, dx, y1, dy
+            integer, intent(in) ::  nRow
+            real(8), intent(in) :: xVal, table(:,:)
+            integer :: ii
+            real(8) :: x1, dx, y1, dy
         !%-----------------------------------------------------------------------------
         if (xVal .le. table(oneI,oneI)) then
             yVal = table(oneI,twoI)
@@ -203,7 +210,6 @@ module roadway_weir_elements
             end do
         end if
 
-    
     end function get_table_val
 !%
 !%==========================================================================

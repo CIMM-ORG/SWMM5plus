@@ -1,10 +1,14 @@
 module define_api_keys
-
-    implicit none
-
-    !% --------------------------------------------------------
-    !% Interface keys
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
     !%
+    !% Description:
+    !% Key numbers used in API between EPA-SWMM-C and SWMM5+
+    !%
+    !% Methods:
     !%   The following UPPERCASE variables must have the same values of
     !%   the variables in the EPA-SWMM source code. The especific
     !%   C file that is associated to each enumerator is
@@ -21,15 +25,10 @@ module define_api_keys
     !%   Variables written in caps are extracted from native
     !%   EPA-SWMM, whereas lower case vars are used in the
     !%   SWMM5+ fortran code
-    !% --------------------------------------------------------
+    !%==========================================================================
+    implicit none
 
     character(len=32), allocatable :: reverseKey_api(:)
-
-    ! !% SWMM Objects ($API_DIR/src/enums.h)
-    ! enum, bind(c)
-    !     enumerator :: API_NODE = 2
-    !     enumerator :: API_LINK
-    ! end enum
 
     !% SWMM Objects ($API_DIR/src/enums.h)
     enum, bind(c)
@@ -466,28 +465,12 @@ module define_api_keys
         enumerator :: API_PUMP4_CURVE               !% 10 flow v. depth for pump (continuous)
     end enum       
 
-    !% brh 20211208 commented this and replaced with completel list
-    ! !% SWMM Computed node quantities ($API_DIR/src/enums.h) -> MAX_NODE_RESULTS
-    ! !% HACK: These keys are used for SWMM5 outlet type as well
-    ! enum, bind(c)
-    !     enumerator :: API_NODE_DEPTH = 0
-    !     enumerator :: API_NODE_HEAD
-    ! end enum
-
     !% SWMM roadway weir road surface type
     enum, bind(c)
         enumerator :: API_NOSURFACE = 0
         enumerator :: API_PAVED
         enumerator :: API_GRAVEL
     end enum
-
-    !% brh20211208s -- this looks like obsolete code
-    !% API VARS
-    !enum, bind(c)
-    !    enumerator :: API_NODES_WITH_EXTINFLOW = 1000
-    !    enumerator :: API_NODES_WITH_DWFINFLOW
-    !end enum
-    !% brh20211208e
 
     !% API Node Attributes
     !% the "nodef" is used to prevent clashes with uppercase API_ constants
@@ -646,135 +629,135 @@ module define_api_keys
     integer, parameter :: api_nopattern = -1 
 
     contains   
-    !%==========================================================================
-    !%
-        subroutine define_apikeys_reverse ()
-            !%------------------------------------------------------------------
-            !% Description:
-            !% creates the reverseKey_api global that provide the string 
-            !% name for the keys defined in define_keys
-            !%------------------------------------------------------------------
-            !% Declarations
-            !%------------------------------------------------------------------
-            !% Preliminaries
-            !%------------------------------------------------------------------
-            !% allocate the global space for the reverse keys
-            allocate(reverseKey_api(api_keyslastplusone))
-    
-            !% define the reverse keys
-            reverseKey_api(api_nodef_start) = 'api_nodef_start'
-            reverseKey_api(api_nodef_ID) = 'api_nodef_ID'
-            reverseKey_api(api_nodef_type) = 'api_nodef_type'
-            reverseKey_api(api_nodef_outfall_type) = 'api_nodef_outfall_type'
-            reverseKey_api(api_nodef_invertElev) = 'api_nodef_invertElev'
-            reverseKey_api(api_nodef_initDepth) = 'api_nodef_initDepth'
-            reverseKey_api(api_nodef_StorageConstant) = 'api_nodef_StorageConstant'
-            reverseKey_api(api_nodef_StorageCoeff) = 'api_nodef_StorageCoeff'
-            reverseKey_api(api_nodef_StorageExponent) = 'api_nodef_StorageExponent'
-            reverseKey_api( api_nodef_StorageCurveID) = ' api_nodef_StorageCurveID'
-            reverseKey_api(api_nodef_extInflow_tSeries) = 'api_nodef_extInflow_tSeries'
-            reverseKey_api(api_nodef_extInflow_tSeries_x1) = 'api_nodef_extInflow_tSeries_x1'
-            reverseKey_api(api_nodef_extInflow_tSeries_x2) = 'api_nodef_extInflow_tSeries_x2'
-            reverseKey_api(api_nodef_extInflow_basePat_idx) = 'api_nodef_extInflow_basePat_idx'
-            reverseKey_api(api_nodef_extInflow_basePat_type) = 'api_nodef_extInflow_basePat_type'
-            reverseKey_api(api_nodef_extInflow_baseline) = 'api_nodef_extInflow_baseline'
-            reverseKey_api(api_nodef_extInflow_sFactor) = 'api_nodef_extInflow_sFactor'
-            reverseKey_api(api_nodef_has_extInflow) = 'api_nodef_has_extInflow'
-            reverseKey_api(api_nodef_dwfInflow_monthly_pattern) = 'api_nodef_dwfInflow_monthly_pattern'
-            reverseKey_api(api_nodef_dwfInflow_daily_pattern) = 'api_nodef_dwfInflow_daily_pattern'
-            reverseKey_api(api_nodef_dwfInflow_hourly_pattern) = 'api_nodef_dwfInflow_hourly_pattern'
-            reverseKey_api(api_nodef_dwfInflow_weekend_pattern) = 'api_nodef_dwfInflow_weekend_pattern'
-            reverseKey_api(api_nodef_dwfInflow_avgvalue) = 'api_nodef_dwfInflow_avgvalue'
-            reverseKey_api(api_nodef_has_dwfInflow) = 'api_nodef_has_dwfInflow'
-            reverseKey_api(api_nodef_newDepth) = 'api_nodef_newDepth'
-            reverseKey_api(api_nodef_fullDepth) = 'api_nodef_fullDepth'
-            reverseKey_api(api_nodef_surDepth)  = 'api_nodef_surDepth'
-            reverseKey_api(api_nodef_inflow) = 'api_nodef_inflow'
-            reverseKey_api(api_nodef_volume) = 'api_nodef_volume'
-            reverseKey_api(api_nodef_overflow) = 'api_nodef_overflow'
-            reverseKey_api(api_nodef_pondedarea) = 'api_nodef_pondedarea'
-            reverseKey_api(api_nodef_rptFlag) = 'api_nodef_rptFlag'
-            reverseKey_api(api_nodef_hasFlapGate) = 'api_nodef_hasFlapGate'
-            reverseKey_api(api_nodef_RouteTo)     = 'api_nodef_RouteTo'
-            reverseKey_api(api_nodef_head_tSeries) = 'api_nodef_head_tSeries'
-            reverseKey_api(api_nodef_head_tSeries_x1) = 'api_nodef_head_tSeries_x1'
-            reverseKey_api(api_nodef_head_tSeries_x2) = 'api_nodef_head_tSeries_x2'
-            reverseKey_api(api_nodef_has_extHead) = 'api_nodef_has_extHead'
-            reverseKey_api(api_nodef_end) = 'api_nodef_end'
-
-            reverseKey_api(api_linkf_start) = 'api_linkf_start'
-            reverseKey_api(api_linkf_ID) = 'api_linkf_ID'
-            reverseKey_api(api_linkf_subIndex) = 'api_linkf_subIndex'
-            reverseKey_api(api_linkf_direction) = 'api_linkf_direction'
-            reverseKey_api(api_linkf_node1) = 'api_linkf_node1'
-            reverseKey_api(api_linkf_node2) = 'api_linkf_node2'
-            reverseKey_api(api_linkf_offset1) = 'api_linkf_offset1'
-            reverseKey_api(api_linkf_offset2) = 'api_linkf_offset2'
-            reverseKey_api(api_linkf_q0) = 'api_linkf_q0'
-            reverseKey_api(api_linkf_qlimit) = 'api_linkf_qlimit'
-            reverseKey_api(api_linkf_flow) = 'api_linkf_flow'
-            reverseKey_api(api_linkf_depth) = 'api_linkf_depth'
-            reverseKey_api(api_linkf_volume) = 'api_linkf_volume'
-            reverseKey_api(api_linkf_froude) = 'api_linkf_froude'
-            reverseKey_api(api_linkf_setting) = 'api_linkf_setting'
-            reverseKey_api(api_linkf_targetsetting) = 'api_linkf_targetsetting'
-            reverseKey_api(api_linkf_timelastset) = 'api_linkf_timelastset'
-            reverseKey_api(api_linkf_left_slope) = 'api_linkf_left_slope'
-            reverseKey_api(api_linkf_right_slope) = 'api_linkf_right_slope'
-            reverseKey_api(api_linkf_weir_end_contractions) = 'api_linkf_weir_end_contractions'
-            reverseKey_api(api_linkf_weir_side_slope) = 'api_linkf_weir_side_slope'
-            reverseKey_api(api_linkf_weir_road_width) = 'api_linkf_weir_road_width'
-            reverseKey_api(api_linkf_weir_road_surface) = 'api_linkf_weir_road_surface'
-            reverseKey_api(api_linkf_curveid) = 'api_linkf_curveid'
-            reverseKey_api(api_linkf_discharge_coeff1) = 'api_linkf_discharge_coeff1'
-            reverseKey_api(api_linkf_discharge_coeff2) = 'api_linkf_discharge_coeff2'
-            reverseKey_api(api_linkf_initSetting) = 'api_linkf_initSetting'
-            reverseKey_api(api_linkf_yOn) = 'api_linkf_yOn'
-            reverseKey_api(api_linkf_yOff) = 'api_linkf_yOff'
-            reverseKey_api(api_linkf_conduit_roughness) = 'api_linkf_conduit_roughness'
-            reverseKey_api(api_linkf_conduit_length) = 'api_linkf_conduit_length'
-            reverseKey_api(api_linkf_conduit_barrels) = 'api_linkf_conduit_barrels'
-            reverseKey_api(api_linkf_culvertCode) = 'api_linkf_culvertCode'
-            reverseKey_api(api_linkf_rptFlag) = 'api_linkf_rptFlag'
-            reverseKey_api(api_linkf_hasFlapGate) = 'api_linkf_hasFlapGate'
-            reverseKey_api(api_linkf_cLossInlet) = 'api_linkf_cLossInlet'
-            reverseKey_api(api_linkf_cLossOutlet) = 'api_linkf_cLossOutlet'
-            reverseKey_api(api_linkf_cLossAvg) = 'api_linkf_cLossAvg'
-            reverseKey_api(api_linkf_seepRate) = 'api_linkf_seepRate'
-            reverseKey_api(api_linkf_commonBreak) = 'api_linkf_commonBreak'
-
-            reverseKey_api(api_linkf_type) = 'api_linkf_type'
-            reverseKey_api(api_linkf_sub_type ) = 'api_linkf_sub_type'
-            reverseKey_api(api_linkf_typeBreak ) = 'api_linkf_typeBreak'
-
-            reverseKey_api(api_linkf_xsect_type ) = 'api_linkf_xsect_type' 
-            reverseKey_api(api_linkf_geometry) = 'api_linkf_geometry'
-            reverseKey_api(api_linkf_xsect_wMax) = 'api_linkf_xsect_wMax'
-            reverseKey_api(api_linkf_xsect_yBot) = 'api_linkf_xsect_yBot'
-            reverseKey_api(api_linkf_xsect_yFull) = 'api_linkf_xsect_yFull'
-            reverseKey_api(api_linkf_xsect_aFull) = 'api_linkf_xsect_aFull'
-            reverseKey_api(api_linkf_xsect_rFull) = 'api_linkf_xsect_rFull'
-            reverseKey_api(api_linkf_xsect_rBot) = 'api_linkf_xsect_rBot'
-            reverseKey_api(api_linkf_transectidx) = 'api_linkf_transectidx'
-            reverseKey_api(api_linkf_forcemain_coef) = 'api_linkf_forcemain_coef'
-            reverseKey_api(api_linkf_end) = 'api_linkf_end'
-
-            reverseKey_api(api_transectf_start) = 'api_transectf_start'
-            reverseKey_api(api_transectf_ID) = "api_transectf_ID"
-            reverseKey_api(api_transectf_yFull) = "api_transectf_yFull"
-            reverseKey_api(api_transectf_aFull) = "api_transectf_aFull"
-            reverseKey_api(api_transectf_rFull) = "api_transectf_rFull"
-            reverseKey_api(api_transectf_wMax) = "api_transectf_wMax"
-            reverseKey_api(api_transectf_ywMax) = "api_transectf_ywMax"
-            reverseKey_api(api_transectf_sMax) = "api_transectf_sMax"
-            reverseKey_api(api_transectf_aMax) = "api_transectf_aMax"
-            reverseKey_api(api_transectf_lengthFactor) = "api_transectf_lengthFactor"
-            reverseKey_api(api_transectf_roughness) = "api_transectf_roughness"
-            reverseKey_api(api_transectf_end) = "api_transectf_end"
-            
-            reverseKey_api(api_keyslastplusone) = 'api_keyslastplusone'
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine define_apikeys_reverse ()
         !%------------------------------------------------------------------
-        !% Closing
+        !% Description:
+        !% cCeates the reverseKey_api global array that provide the string 
+        !% name for the keys defined in define_keys
+        !% This is useful for debugging when programmer needs to know the
+        !% runtime key.
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% allocate the global space for the reverse keys
+        allocate(reverseKey_api(api_keyslastplusone))
+
+        !% define the reverse keys
+        reverseKey_api(api_nodef_start) = 'api_nodef_start'
+        reverseKey_api(api_nodef_ID) = 'api_nodef_ID'
+        reverseKey_api(api_nodef_type) = 'api_nodef_type'
+        reverseKey_api(api_nodef_outfall_type) = 'api_nodef_outfall_type'
+        reverseKey_api(api_nodef_invertElev) = 'api_nodef_invertElev'
+        reverseKey_api(api_nodef_initDepth) = 'api_nodef_initDepth'
+        reverseKey_api(api_nodef_StorageConstant) = 'api_nodef_StorageConstant'
+        reverseKey_api(api_nodef_StorageCoeff) = 'api_nodef_StorageCoeff'
+        reverseKey_api(api_nodef_StorageExponent) = 'api_nodef_StorageExponent'
+        reverseKey_api( api_nodef_StorageCurveID) = ' api_nodef_StorageCurveID'
+        reverseKey_api(api_nodef_extInflow_tSeries) = 'api_nodef_extInflow_tSeries'
+        reverseKey_api(api_nodef_extInflow_tSeries_x1) = 'api_nodef_extInflow_tSeries_x1'
+        reverseKey_api(api_nodef_extInflow_tSeries_x2) = 'api_nodef_extInflow_tSeries_x2'
+        reverseKey_api(api_nodef_extInflow_basePat_idx) = 'api_nodef_extInflow_basePat_idx'
+        reverseKey_api(api_nodef_extInflow_basePat_type) = 'api_nodef_extInflow_basePat_type'
+        reverseKey_api(api_nodef_extInflow_baseline) = 'api_nodef_extInflow_baseline'
+        reverseKey_api(api_nodef_extInflow_sFactor) = 'api_nodef_extInflow_sFactor'
+        reverseKey_api(api_nodef_has_extInflow) = 'api_nodef_has_extInflow'
+        reverseKey_api(api_nodef_dwfInflow_monthly_pattern) = 'api_nodef_dwfInflow_monthly_pattern'
+        reverseKey_api(api_nodef_dwfInflow_daily_pattern) = 'api_nodef_dwfInflow_daily_pattern'
+        reverseKey_api(api_nodef_dwfInflow_hourly_pattern) = 'api_nodef_dwfInflow_hourly_pattern'
+        reverseKey_api(api_nodef_dwfInflow_weekend_pattern) = 'api_nodef_dwfInflow_weekend_pattern'
+        reverseKey_api(api_nodef_dwfInflow_avgvalue) = 'api_nodef_dwfInflow_avgvalue'
+        reverseKey_api(api_nodef_has_dwfInflow) = 'api_nodef_has_dwfInflow'
+        reverseKey_api(api_nodef_newDepth) = 'api_nodef_newDepth'
+        reverseKey_api(api_nodef_fullDepth) = 'api_nodef_fullDepth'
+        reverseKey_api(api_nodef_surDepth)  = 'api_nodef_surDepth'
+        reverseKey_api(api_nodef_inflow) = 'api_nodef_inflow'
+        reverseKey_api(api_nodef_volume) = 'api_nodef_volume'
+        reverseKey_api(api_nodef_overflow) = 'api_nodef_overflow'
+        reverseKey_api(api_nodef_pondedarea) = 'api_nodef_pondedarea'
+        reverseKey_api(api_nodef_rptFlag) = 'api_nodef_rptFlag'
+        reverseKey_api(api_nodef_hasFlapGate) = 'api_nodef_hasFlapGate'
+        reverseKey_api(api_nodef_RouteTo)     = 'api_nodef_RouteTo'
+        reverseKey_api(api_nodef_head_tSeries) = 'api_nodef_head_tSeries'
+        reverseKey_api(api_nodef_head_tSeries_x1) = 'api_nodef_head_tSeries_x1'
+        reverseKey_api(api_nodef_head_tSeries_x2) = 'api_nodef_head_tSeries_x2'
+        reverseKey_api(api_nodef_has_extHead) = 'api_nodef_has_extHead'
+        reverseKey_api(api_nodef_end) = 'api_nodef_end'
+
+        reverseKey_api(api_linkf_start) = 'api_linkf_start'
+        reverseKey_api(api_linkf_ID) = 'api_linkf_ID'
+        reverseKey_api(api_linkf_subIndex) = 'api_linkf_subIndex'
+        reverseKey_api(api_linkf_direction) = 'api_linkf_direction'
+        reverseKey_api(api_linkf_node1) = 'api_linkf_node1'
+        reverseKey_api(api_linkf_node2) = 'api_linkf_node2'
+        reverseKey_api(api_linkf_offset1) = 'api_linkf_offset1'
+        reverseKey_api(api_linkf_offset2) = 'api_linkf_offset2'
+        reverseKey_api(api_linkf_q0) = 'api_linkf_q0'
+        reverseKey_api(api_linkf_qlimit) = 'api_linkf_qlimit'
+        reverseKey_api(api_linkf_flow) = 'api_linkf_flow'
+        reverseKey_api(api_linkf_depth) = 'api_linkf_depth'
+        reverseKey_api(api_linkf_volume) = 'api_linkf_volume'
+        reverseKey_api(api_linkf_froude) = 'api_linkf_froude'
+        reverseKey_api(api_linkf_setting) = 'api_linkf_setting'
+        reverseKey_api(api_linkf_targetsetting) = 'api_linkf_targetsetting'
+        reverseKey_api(api_linkf_timelastset) = 'api_linkf_timelastset'
+        reverseKey_api(api_linkf_left_slope) = 'api_linkf_left_slope'
+        reverseKey_api(api_linkf_right_slope) = 'api_linkf_right_slope'
+        reverseKey_api(api_linkf_weir_end_contractions) = 'api_linkf_weir_end_contractions'
+        reverseKey_api(api_linkf_weir_side_slope) = 'api_linkf_weir_side_slope'
+        reverseKey_api(api_linkf_weir_road_width) = 'api_linkf_weir_road_width'
+        reverseKey_api(api_linkf_weir_road_surface) = 'api_linkf_weir_road_surface'
+        reverseKey_api(api_linkf_curveid) = 'api_linkf_curveid'
+        reverseKey_api(api_linkf_discharge_coeff1) = 'api_linkf_discharge_coeff1'
+        reverseKey_api(api_linkf_discharge_coeff2) = 'api_linkf_discharge_coeff2'
+        reverseKey_api(api_linkf_initSetting) = 'api_linkf_initSetting'
+        reverseKey_api(api_linkf_yOn) = 'api_linkf_yOn'
+        reverseKey_api(api_linkf_yOff) = 'api_linkf_yOff'
+        reverseKey_api(api_linkf_conduit_roughness) = 'api_linkf_conduit_roughness'
+        reverseKey_api(api_linkf_conduit_length) = 'api_linkf_conduit_length'
+        reverseKey_api(api_linkf_conduit_barrels) = 'api_linkf_conduit_barrels'
+        reverseKey_api(api_linkf_culvertCode) = 'api_linkf_culvertCode'
+        reverseKey_api(api_linkf_rptFlag) = 'api_linkf_rptFlag'
+        reverseKey_api(api_linkf_hasFlapGate) = 'api_linkf_hasFlapGate'
+        reverseKey_api(api_linkf_cLossInlet) = 'api_linkf_cLossInlet'
+        reverseKey_api(api_linkf_cLossOutlet) = 'api_linkf_cLossOutlet'
+        reverseKey_api(api_linkf_cLossAvg) = 'api_linkf_cLossAvg'
+        reverseKey_api(api_linkf_seepRate) = 'api_linkf_seepRate'
+        reverseKey_api(api_linkf_commonBreak) = 'api_linkf_commonBreak'
+
+        reverseKey_api(api_linkf_type) = 'api_linkf_type'
+        reverseKey_api(api_linkf_sub_type ) = 'api_linkf_sub_type'
+        reverseKey_api(api_linkf_typeBreak ) = 'api_linkf_typeBreak'
+
+        reverseKey_api(api_linkf_xsect_type ) = 'api_linkf_xsect_type' 
+        reverseKey_api(api_linkf_geometry) = 'api_linkf_geometry'
+        reverseKey_api(api_linkf_xsect_wMax) = 'api_linkf_xsect_wMax'
+        reverseKey_api(api_linkf_xsect_yBot) = 'api_linkf_xsect_yBot'
+        reverseKey_api(api_linkf_xsect_yFull) = 'api_linkf_xsect_yFull'
+        reverseKey_api(api_linkf_xsect_aFull) = 'api_linkf_xsect_aFull'
+        reverseKey_api(api_linkf_xsect_rFull) = 'api_linkf_xsect_rFull'
+        reverseKey_api(api_linkf_xsect_rBot) = 'api_linkf_xsect_rBot'
+        reverseKey_api(api_linkf_transectidx) = 'api_linkf_transectidx'
+        reverseKey_api(api_linkf_forcemain_coef) = 'api_linkf_forcemain_coef'
+        reverseKey_api(api_linkf_end) = 'api_linkf_end'
+
+        reverseKey_api(api_transectf_start) = 'api_transectf_start'
+        reverseKey_api(api_transectf_ID) = "api_transectf_ID"
+        reverseKey_api(api_transectf_yFull) = "api_transectf_yFull"
+        reverseKey_api(api_transectf_aFull) = "api_transectf_aFull"
+        reverseKey_api(api_transectf_rFull) = "api_transectf_rFull"
+        reverseKey_api(api_transectf_wMax) = "api_transectf_wMax"
+        reverseKey_api(api_transectf_ywMax) = "api_transectf_ywMax"
+        reverseKey_api(api_transectf_sMax) = "api_transectf_sMax"
+        reverseKey_api(api_transectf_aMax) = "api_transectf_aMax"
+        reverseKey_api(api_transectf_lengthFactor) = "api_transectf_lengthFactor"
+        reverseKey_api(api_transectf_roughness) = "api_transectf_roughness"
+        reverseKey_api(api_transectf_end) = "api_transectf_end"
+        
+        reverseKey_api(api_keyslastplusone) = 'api_keyslastplusone'
+
     end subroutine define_apikeys_reverse
 !%    
 !%==========================================================================

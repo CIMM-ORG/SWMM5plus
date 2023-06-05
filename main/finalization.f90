@@ -1,5 +1,14 @@
 module finalization
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Closes and finishes a SWMM5+ run
+    !%
+    !%==========================================================================
     use define_settings, only: setting
     use define_globals
     use define_indexes
@@ -8,17 +17,11 @@ module finalization
     use utility_datetime
     use utility_deallocate
     use utility_profiler
-    !use utility_prof_jobcount
     use output
     use utility_crash
     use utility_files, only: util_file_delete_duplicate_input
 
     implicit none
-
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !%
-    !%-----------------------------------------------------------------------------
 
 contains
 !%
@@ -46,7 +49,6 @@ contains
         !%-------------------------------------------------------------------
         !% Preliminaries
             if (setting%Debug%File%finalization) print *, '*** enter ', this_image(), subroutine_name
-            !if (setting%Output%Verbose) write(*,"(2A,i5,A)") 'finalize [Processor ', this_image(), "]"
         !--------------------------------------------------------------------
 
         !% --- finalize the profiler and print times
@@ -68,11 +70,10 @@ contains
                 (.not. setting%Output%Report%suppress_MultiLevel_Output)) then    
 
                 if (this_image() == 1) write(*,"(A,i5)") '... beginning final conversion of output (this can be slow)...'
-                !% write a final combined multi-level files
+                !% --- write a final combined multi-level files
                 call outputML_store_data (.true.)
 
-                !if (this_image() == 1)  write(*,*) 'starting write of control file'
-                !% write the control file for the stored mult-level files
+                !% --- write the control file for the stored mult-level files
                 call outputML_write_control_file ()
 
                 if(N_Out_static_TypeElem > 0) then 
@@ -80,17 +81,12 @@ contains
                 end if
                 sync all
  
-                
-
-
-                !if (this_image() == 1) write(*,*) 'starting convert elements'
                 call outputML_convert_elements_to_linknode_and_write ()
             end if
         end if  
         call util_crashstop(31903)
 
         !% --- shut down EPA SWMM-C and delete the API
-        ! if (this_image() == 1) print *, 'calling interface finalize'
         call interface_finalize()
 
         sync all
@@ -213,10 +209,8 @@ contains
 
 
         end if
-
         !% --- close all the allocated data 
         !%     this is located here because it is often a seg fault when creating new code
-        !print *, 'calling deallocate'
         call util_deallocate_network_data()
 
         if (setting%Output%Verbose) then

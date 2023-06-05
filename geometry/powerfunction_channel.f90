@@ -1,5 +1,16 @@
 module powerfunction_channel
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Geometry for power function open channel
+    !% NOTE: HACK not implemented as of 20230608
+    !% The calling functions are provided herein, but the low-level functions
+    !% do not exist
+    !%==========================================================================
     use define_settings, only: setting
     use define_globals
     use define_indexes
@@ -8,23 +19,13 @@ module powerfunction_channel
 
     implicit none
 
-    !%----------------------------------------------------------------------------- 
-    !% Description:
-    !% powerfunction channel geometry
-    !%
-
     private
 
     public :: powerfunction_depth_from_volume
     public :: powerfunction_topwidth_from_depth
     public :: powerfunction_perimeter_from_depth
 
-    ! public :: powerfunction_area_from_depth_singular
-    ! public :: powerfunction_topwidth_from_depth_singular 
-    ! public :: powerfunction_perimeter_from_depth_singular
-
     contains
-
 !%==========================================================================
 !% PUBLIC
 !%==========================================================================
@@ -135,67 +136,6 @@ module powerfunction_channel
         end if
 
     end subroutine powerfunction_perimeter_from_depth
-!%    
-!%==========================================================================
-!% SINGULAR
-!%==========================================================================
-!%    
-!     pure real(8) function powerfunction_area_from_depth_singular &
-!         (indx, depth) result (outvalue)
-!         !%------------------------------------------------------------------
-!         !% Description:
-!         !% Computes area from known depth for powerfunction cross section
-!         !% of a single element.
-!         !% The input indx is the row index in full data 2D array.
-!         !%------------------------------------------------------------------
-!         !% Declarations
-!             integer, intent(in) :: indx
-!             real(8), intent(in) :: depth
-!         !%------------------------------------------------------------------
-
-!         outvalue = nullvalueR !% STUB
-
-!     end function powerfunction_area_from_depth_singular 
-! !%    
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     pure real(8) function powerfunction_topwidth_from_depth_singular &
-!         (indx, depth) result (outvalue)
-!         !%------------------------------------------------------------------
-!         !% Description:
-!         !% Computes topwidth from known depth for powerfunction cross section
-!         !% of a single element.
-!         !% The input indx is the row index in full data 2D array.
-!         !%------------------------------------------------------------------
-!         !% Declarations
-!             integer, intent(in) :: indx
-!             real(8), intent(in) :: depth
-!      !%------------------------------------------------------------------
-
-!         outvalue = nullvalueR !% STUB
-
-!     end function powerfunction_topwidth_from_depth_singular 
-! !%    
-! !%==========================================================================
-! !%==========================================================================
-! !%        
-!     pure real(8) function powerfunction_perimeter_from_depth_singular &
-!         (indx, depth) result (outvalue)
-!         !%------------------------------------------------------------------
-!         !% Description:
-!         !% Computes perimeter from known depth for powerfunction cross section
-!         !% of a single element.
-!         !% The input indx is the row index in full data 2D array.
-!         !%------------------------------------------------------------------
-!         !% Declarations
-!             integer, intent(in) :: indx
-!             real(8), intent(in) :: depth
-!         !%------------------------------------------------------------------
-
-!         outvalue = nullvalueR !% STUB
-
-!     end function powerfunction_perimeter_from_depth_singular 
 !%
 !%==========================================================================
 !% END OF MODULE

@@ -1,5 +1,16 @@
 module pump_elements
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Computes pump flows
+    !%
+    !% Methods:
+    !% Following methods in EPA-SWMM-C
+    !%==========================================================================
     use define_globals
     use define_keys
     use define_indexes
@@ -9,14 +20,7 @@ module pump_elements
     use utility_interpolate
     use utility_crash, only: util_crashpoint
 
-
     implicit none
-
-    !%----------------------------------------------------------------------------- 
-    !% Description:
-    !% Computes diagnostic flow through orifice elements
-    !%
-
 
     private
 
@@ -32,9 +36,12 @@ module pump_elements
     subroutine pump_toplevel (eIdx,istep)
         !%------------------------------------------------------------------
         !% Description:
-        !% We need a subroutine to get the new full depth (esr_EffectiveFullDepth)
+        !% Calls the different pump cases
+        !% 
+        !% HACK We need a subroutine to get the new full depth (esr_EffectiveFullDepth)
         !% crown (esr_Zcrown) and crest (esr_Zcrest) elevation from control setting.
         !%------------------------------------------------------------------
+        !% Declarations
             integer, intent(in) :: eIdx  !% must be a single element ID
             integer, intent(in) :: istep
             integer, pointer :: PumpType
@@ -147,8 +154,6 @@ module pump_elements
         !% --- store the upstream element depth as the pump depth
         Depth = upDepth
 
-        ! print *, 'pump upstream depth ',Depth
-
         !% --- set the head of the pump to the upstream element head
         Head  = upHead
 
@@ -162,8 +167,6 @@ module pump_elements
             call pump_turn_onoff(eIdx, Depth)
         end if
 
-        ! print *, 'setting ',elemR(eIdx,er_Setting)
-
         !% --- exit if pump is off or depth is too small
         if ((elemR(eIdx,er_Setting) == zeroR) .or. &
             (upVolume .le. setting%ZeroValue%Volume)) then 
@@ -174,24 +177,12 @@ module pump_elements
             return 
         end if
 
-        ! print *, ' '
-        ! print *, 'in pump '
-        ! ! print *, 'CurveID ',CurveID
-        ! ! print *, 'element ',eIdx, curve(CurveID)%ElemIdx
-        ! print *, 'flowrate before ', Flowrate
-        ! print *, 'volume before   ', Volume
-
         !% --- use the curve without interpolation
         call util_curve_lookup_singular( &
             CurveID, er_Volume, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,0)
 
-         
-        ! print *, 'flowrate after ', Flowrate
-
         !% --- flow limitation
         Flowrate = min(Flowrate,maxFlowrate)
-
-        ! print *, 'time since ',elemSR(eIdx,esr_Pump_TimeSinceStartOrShutdown)
 
         !%  handle pump rampup
         if (elemSR(eIdx,esr_Pump_TimeSinceStartOrShutdown) < elemSR(eIdx,esr_Pump_Rampup_Time)) then 
@@ -200,8 +191,6 @@ module pump_elements
 
         !% --- dQ/dH is zero for type 1 pump
         dQdH = zeroR
-
-        ! print *, 'flowrate limit ', Flowrate
 
         !% --- reset pump depth and head to zero (no meaning)
         !%     need to be non-zero so that zero-checking isn't an issue
@@ -259,9 +248,6 @@ module pump_elements
             call pump_turn_onoff(eIdx, Depth)
         end if
 
-        ! print *, 'depth, head ',Depth, Head
-        ! print *, 'pump on/off ',elemR(eIdx,er_Setting)
-
         !% --- exit if pump is off or depth is too small
         if ((elemR(eIdx,er_Setting) == zeroR) .or. &
             (Depth .le. setting%ZeroValue%Depth)) then 
@@ -276,8 +262,6 @@ module pump_elements
         call util_curve_lookup_singular( &
             CurveID, er_Depth, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,interpType)
 
-        ! print *, 'Flowrate ',Flowrate, maxFlowrate
-
         !% --- flow limitation
         Flowrate = min(Flowrate,maxFlowrate)
 
@@ -286,10 +270,12 @@ module pump_elements
             Flowrate = Flowrate *  elemSR(eIdx,esr_Pump_TimeSinceStartOrShutdown) / elemSR(eIdx,esr_Pump_Rampup_Time)
         end if
 
+        !% --- compute the dQdH needed for junction
         if (interpType == 0) then
             dQdH = zeroR
         else
-            dH = 0.001
+            !% --- standard dH
+            dH = 0.001d0
             tempDepth = Depth + dH
             
             !% interpolate for new temp depth and temp flowrate
@@ -301,8 +287,8 @@ module pump_elements
 
         !% --- reset pump depth and head to zero 
         !%     need to be non-zero so that zero-checking isn't an issue
-        Depth = twoR * setting%ZeroValue%Depth !zeroR
-        Head  = elemR(eIdx,er_Zbottom) + Depth !zeroR
+        Depth = twoR * setting%ZeroValue%Depth 
+        Head  = elemR(eIdx,er_Zbottom) + Depth 
 
 
     end subroutine pump_type2or4
@@ -353,21 +339,17 @@ module pump_elements
         !% --- store the depth upstream as the pump element depth
         Depth = upDepth
 
-        ! print *, 'Delta head, depth ',Head, Depth
-
         !% --- turn pump on or off
         if (istep == 1) then
             call pump_turn_onoff(eIdx, Depth)
         end if
 
-        ! print *, 'setting ',elemR(eIdx,er_Setting)
-
         !% --- exit if pump is off or depth is too small
         if ((elemR(eIdx,er_Setting) == zeroR) .or. &
             (Depth .le. setting%ZeroValue%Depth)) then 
             Flowrate = zeroR
-            Depth = twoR * setting%ZeroValue%Depth !zeroR
-            Head  = elemR(eIdx,er_Zbottom) + Depth !zeroR
+            Depth    = twoR * setting%ZeroValue%Depth !zeroR
+            Head     = elemR(eIdx,er_Zbottom) + Depth !zeroR
             dQdH     = zeroR
             return 
         end if
@@ -376,15 +358,13 @@ module pump_elements
         call util_curve_lookup_singular( &
             CurveID, er_Head, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,1)
 
-        ! print *, 'flowrate ',flowrate
-
         !%  handle pump rampup
         if (elemSR(eIdx,esr_Pump_TimeSinceStartOrShutdown) < elemSR(eIdx,esr_Pump_Rampup_Time)) then 
             Flowrate = Flowrate *  elemSR(eIdx,esr_Pump_TimeSinceStartOrShutdown) / elemSR(eIdx,esr_Pump_Rampup_Time)
         end if
 
-        !% --- dQdh calculation
-        dH = 0.001
+        !% --- dQdh calculation for JB-adjacent pump
+        dH = 0.001d0
         tempDepth = Depth + dH
         
         !% interpolate for new temp depth and temp flowrate
@@ -393,80 +373,17 @@ module pump_elements
         
         dQdH = (tempFlowrate - Flowrate) / dH
 
-
         !% --- reset pump depth and head to zero 
         !%     need to be non-zero so that zero-checking isn't an issue
         Depth = twoR * setting%ZeroValue%Depth !zeroR
         Head  = elemR(eIdx,er_Zbottom) + Depth !zeroR
         
-
-
         !% --- flow limitation
         Flowrate = min(Flowrate,maxFlowrate)
 
     end subroutine pump_type3
 !%
-!%==========================================================================
-! !%========================================================================== 
-! !%  
-    !     subroutine pump_type4 (eIdx)
-    !         !%------------------------------------------------------------------
-    !         !% Description:
-    !         !% 
-    !         !%------------------------------------------------------------------
-    !         !% Declarations:
-    !             integer, intent(in) :: eIdx  !% pump index
-    !             integer, pointer :: iupf,  CurveID
-    !             real(8), pointer :: FlowRate, UpFaceHead
-    !             real(8), pointer :: Depth, Head, UpFaceZbottom
-    !         !%------------------------------------------------------------------
-    !         !% Aliases:
-    !             CurveID  => elemSI(eIdx,esi_Pump_CurveID)
-    !             Depth    => elemR(eIdx,er_Depth)
-    !             Flowrate => elemR(eIdx,er_Flowrate)
-    !             Head     => elemR(eIdx,er_Head)
-    !             !% face locations
-    !             iupf     => elemI(eIdx,ei_Mface_uL)
-    !             !% face data used
-    !             UpFaceHead    => faceR(iupf,fr_Head_d)
-    !             UpFaceZbottom => faceR(iupf,fr_Zbottom)     
-    !         !%------------------------------------------------------------------
-    !         !% -- get upstream data
-    !             call pump_upstream_data &
-    !             (type4_Pump, eIdx, Ci, Aidx, upDepth, upHead, upVolume, upFlowrate, maxFlowrate)
-
-    !         !% --- store the upstream element depth as the pump depth
-    !         Depth = upDepth
-
-    !         !% --- set the head of the pump to the upstream element head
-    !         Head  = upHead
-
-    !         !% --- turn pump on or off
-    !         call pump_turn_onoff(eIdx, Depth)
-
-    !         !% --- exit if pump is off or depth is too small
-    !         if ((elemR(eIdx,er_Setting) == zeroR) .or. &
-    !             (Depth .le. setting%ZeroValue%Depth)) then 
-    !             Flowrate = zeroR
-    !             return 
-    !         end if
-
-    !         !% --- use the curve for this pump to set the flowrate for this pump
-    !         !%     based on the inlet depth
-    !         !%     Note that CurveID stores the element index for the pump, and
-    !         !%     the lookup table stores the result in elemR(idx,er_Flowrate)
-    !         !%     for the idx of the pump.
-    !         call util_curve_lookup_singular ( &
-    !             CurveID, er_Depth, er_Flowrate, curve_pump_Xvar, curve_pump_flowrate,1)
-
-
-    !          !% --- set the head of the pump to the upstream face head
-    !         Head = UpFaceHead
-
-    !         !%------------------------------------------------------------------
-!     end subroutine pump_type4
-!%
-!%==========================================================================
+!%==========================================================================        
 !%==========================================================================    
 !%  
     subroutine pump_ideal (eIdx)
@@ -481,13 +398,14 @@ module pump_elements
         !% Declarations:
             integer, intent(in) :: eIdx  !% pump index
             integer             :: Ci, Aidx 
-            real(8), pointer    :: Flowrate, Head, Depth
+            real(8), pointer    :: Flowrate, Head, Depth, dQdH
             real(8)             :: upDepth, upHead, upVolume, upFlowrate, maxFlowrate
         !%------------------------------------------------------------------
         !% Aliases:
             Flowrate       => elemR(eIdx,er_Flowrate)
             Head           => elemR(eIdx,er_Head)
             Depth          => elemR(eIdx,er_Depth)
+            dQdH           => elemSR(eIdx,esr_Pump_dQdHp)
         !%------------------------------------------------------------------
        ! % Preliminaries
             upDepth=zeroR; upHead = zeroR; upVolume=zeroR; upFlowrate=zeroR
@@ -508,6 +426,9 @@ module pump_elements
 
         !% --- flow limitation
         Flowrate = min(Flowrate,maxFlowrate)
+
+        !% --- no change to this pump for JB adjacent
+        dQdH = zeroR
 
         !%------------------------------------------------------------------
         !% Closing:
@@ -536,8 +457,6 @@ module pump_elements
             Fidx     => elemI(eIdx,ei_Mface_uL) !% face upstream
         !%------------------------------------------------------------------
         !%  
-             !print *, 'eIdx, Fidx ',eIdx,Fidx
-
         !% --- identify the upstream adjacent element and its image
         if (elemYN(eIdx,eYN_isBoundary_up)) then 
             Ci   = faceI(Fidx,fi_Connected_image)
@@ -555,10 +474,6 @@ module pump_elements
             Aidx   = elemSI(Aidx,esi_JunctionBranch_Main_Index)[Ci]
             Volume =  elemR(Aidx,er_Volume)[Ci] 
         end if
-
-        ! print *, 'Aidx ',Aidx
-        ! print *, 'node number ',elemI(Aidx,ei_node_Gidx_BIPquick)
-        ! print *, 'node name   ',trim(node%Names(elemI(Aidx,ei_node_Gidx_BIPquick))%str)
 
         !% --- store the upstream element depth 
         Depth = elemR(Aidx,er_Depth)[Ci]
@@ -638,11 +553,6 @@ module pump_elements
             real(8), intent(in)    :: Depth
         !%------------------------------------------------------------------    
 
-        ! print *, 'eidx ',eIdx
-        ! print *, 'pump setting ', elemR(eIdx,er_Setting)
-        ! print *, 'is controlled ',elemSI(eIdx,esi_Pump_IsControlled)
-        ! print *, 'depth on      ',elemSR(eIdx,esr_Pump_yOn)
-
         !% --- check pump  off/on status and whether a change is required
         if (elemR(eIdx,er_Setting) == zeroR) then 
             !% --- pump is off
@@ -690,25 +600,8 @@ module pump_elements
                         + setting%Time%Hydraulics%Dt
             end if
         end if
-        ! print *, 'pump setting ', elemR(eIdx,er_Setting)
 
     end subroutine pump_turn_onoff
-!%
-!%========================================================================== 
-!%==========================================================================    
-!%    
-
-!%
-!%========================================================================== 
-!%==========================================================================    
-!%     
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% 
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-        !%  
 !%
 !%==========================================================================
 !% END OF MODULE

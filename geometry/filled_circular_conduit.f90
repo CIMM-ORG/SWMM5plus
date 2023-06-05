@@ -1,5 +1,14 @@
 module filled_circular_conduit
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Geometry for filled circular closed conduit
+    !%
+    !%==========================================================================
     use define_settings, only: setting
     use define_globals
     use define_indexes
@@ -10,31 +19,11 @@ module filled_circular_conduit
 
     implicit none
 
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !% filled_circular conduit geometry
-    !%
-
     private
 
     public :: filled_circular_depth_from_volume
     public :: filled_circular_topwidth_from_depth
-    public :: filled_circular_hydradius_and_perimeter_from_depth  
-
-
-    
-    
-!     public :: filled_circular_area_from_depth_singular
-    
-!     public :: filled_circular_topwidth_from_depth_singular
-!     public :: filled_circular_perimeter_from_depth
-!     public :: filled_circular_perimeter_from_depth_singular
-!     public :: filled_circular_perimeter_from_hydradius_singular
-!     public :: filled_circular_hyddepth_from_topwidth
-!    ! public :: filled_circular_hyddepth_from_topwidth_singular
-!     public :: filled_circular_hydradius_from_depth_singular
-
-
+    public :: filled_circular_hydradius_and_perimeter_from_depth
 
     contains
 !%
@@ -73,7 +62,7 @@ module filled_circular_conduit
             tempAfull  => elemR(:,er_Temp02)
         !%----------------------------------------------------------------------
 
-        !% calculate a temporary geometry by considering the whole cicrular cross-section
+        !% --- calculate a temporary geometry by considering the whole cicrular cross-section
         tempYfull(thisP) = fullDepth(thisP) + Ybottom(thisP)
         tempAfull(thisP) = fullArea(thisP)  + Abottom(thisP)
 
@@ -98,26 +87,24 @@ module filled_circular_conduit
         end if 
 
         if (Npack_lookup > zeroI) then        
-            !% retrive the normalized Y/Yfull from the lookup table
+            !% --- retrive the normalized Y/Yfull from the lookup table
             call xsect_table_lookup &
                 (YoverYfull, AoverAfull, YCirc, thisP_lookup) 
         end if
 
-        !% finally get the depth by multiplying the normalized depth with full depth
-        !% and substract the bottom depth
+        !% --- inally get the depth by multiplying the normalized depth with full depth
+        !%     and substract the bottom depth
         depth(thisP) = YoverYfull(thisP) * tempYfull(thisP) - Ybottom(thisP)
 
-        !% ensure the full depth is not exceeded
+        !% --- ensure the full depth is not exceeded
         depth(thisP) = min(depth(thisP),fulldepth(thisP))
         
-
     end subroutine filled_circular_depth_from_volume
 !%
 !%========================================================================== 
 !%==========================================================================
 !%
     subroutine filled_circular_topwidth_from_depth (thisP)
-        !%
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from a known depth in a filled_circular conduit
@@ -183,15 +170,14 @@ module filled_circular_conduit
             totalFullHydRadius => elemSGR(:,esgr_Filled_Circular_TotalPipeHydRadius)
             sedimentPerimeter  => elemSGR(:,esgr_Filled_Circular_bottomPerimeter)
             sedimentTopwidth     => elemSGR(:,esgr_Filled_Circular_bottomTopwidth)
-            YoverYfull         => elemR(:,er_YoverYfull)
-           
+            YoverYfull         => elemR(:,er_YoverYfull)  
         !%-----------------------------------------------------------------------------
 
         !% --- normalized depth based on entire circular cross-section
         YoverYfull(thisP) = (depth(thisP) + sedimentDepth(thisP)) &
                             / totalFullDepth(thisP)
 
-        !% prevent overfull
+        !% --- prevent overfull
         YoverYfull(thisP) = min(YoverYfull(thisP), oneR)
 
         !% --- prevent underfull (must be above sediment depth)
@@ -230,286 +216,9 @@ module filled_circular_conduit
         !% --- clear temporary
         tempArea(thisP) = nullvalueR
      
-
-    end subroutine filled_circular_hydradius_and_perimeter_from_depth  
+    end subroutine filled_circular_hydradius_and_perimeter_from_depth
 !%
-!%==========================================================================
-!%==========================================================================
-! !%
-!     subroutine filled_circular_perimeter_from_depth (elemPGx, Npack, thisCol)
-!         !%
-!         !%-----------------------------------------------------------------------------
-!         !% Description:
-!         !% Computes the perimeter from a known depth in a filled_circular conduit
-!         !%-----------------------------------------------------------------------------
-!         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-!         integer, pointer :: thisP(:)
-!         real(8), pointer :: depth(:), hydRadius(:), YoverYfull(:)
-!         real(8), pointer :: fullDepth(:), perimeter(:), area(:), fullperimeter(:)
-!         real(8), pointer :: Ybottom(:), Abottom(:), Pbottom(:), Tbottom(:), tempYfull(:)
-!         !%-----------------------------------------------------------------------------
-!         !!if (crashYN) return
-!         thisP      => elemPGx(1:Npack,thisCol)
-!         depth      => elemR(:,er_Depth)
-!         area       => elemR(:,er_Area)
-!         hydRadius  => elemR(:,er_HydRadius)
-!         perimeter  => elemR(:,er_Perimeter)
-!         fullDepth  => elemR(:,er_fullDepth)
-!         Ybottom    => elemR(:,er_SedimentDepth)
-!         Abottom    => elemSGR(:,esgr_Filled_Circular_bottomArea)
-!         Pbottom    => elemSGR(:,esgr_Filled_Circular_bottomPerimeter)
-!         Tbottom    => elemSGR(:,esgr_Filled_Circular_bottomTopwidth)
-!         YoverYfull => elemSGR(:,esgr_Filled_Circular_YoverYfull)
-!         fullperimeter => elemR(:,er_FullPerimeter)
-!         tempYfull  => elemR(:,er_Temp01)
-!         !%-----------------------------------------------------------------------------
-!         !% calculate a temporary geometry by considering the whole cicrular corss-section
-!         tempYfull(thisP) = fullDepth(thisP) + Ybottom(thisP)
-
-!         YoverYfull(thisP) = (depth(thisP) + Ybottom(thisP)) / tempYfull(thisP)
-
-!         !% retrive the normalized R/Rmax from the lookup table
-!         !% R/Rmax value is temporarily saved in the hydRadius column
-!         call xsect_table_lookup &
-!             (hydRadius, YoverYfull, RCirc,  thisP)  
-
-!         hydRadius(thisP) = onefourthR * tempYfull(thisP) * hydRadius(thisP)
-
-!         !% get the perimeter by dividing area by hydRadius
-!         perimeter(thisP) = (area(thisP) + Abottom(thisP)) / hydRadius(thisP)
-
-!         !% finally get the perimeter by removing the perimeter of the filled portion
-!         perimeter(thisP) = min(perimeter(thisP) - Pbottom(thisP) + Tbottom(thisP), fullperimeter(thisP))
-
-!     end subroutine filled_circular_perimeter_from_depth
-! !%
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     subroutine filled_circular_hyddepth_from_topwidth (elemPGx, Npack, thisCol)
-!         !%
-!         !%-----------------------------------------------------------------------------
-!         !% Description:
-!         !% Computes the hydraulic (average) depth from a known depth in a filled_circular conduit
-!         !%-----------------------------------------------------------------------------
-!         integer, target, intent(in) :: elemPGx(:,:)
-!         integer, intent(in) ::  Npack, thisCol
-!         integer, pointer    :: thisP(:)
-!         real(8), pointer    :: area(:), topwidth(:), fullHydDepth(:)
-!         real(8), pointer    :: depth(:), hyddepth(:)
-!         !%-----------------------------------------------------------------------------
-!         !!if (crashYN) return
-!         thisP        => elemPGx(1:Npack,thisCol)
-!         area         => elemR(:,er_Area)
-!         topwidth     => elemR(:,er_Topwidth)
-!         depth        => elemR(:,er_Depth)
-!         hyddepth     => elemR(:,er_HydDepth)
-!         fullHydDepth => elemR(:,er_FullHydDepth)
-!         !%--------------------------------------------------
-
-!         !% calculating hydraulic depth needs conditional since,
-!         !% topwidth can be zero in filled_circular cross section for both
-!         !% full and empty condition.
-
-!         !% when conduit is empty
-!         where (depth(thisP) <= setting%ZeroValue%Depth)
-!             hyddepth(thisP) = setting%ZeroValue%Depth
-
-!         !% when conduit is not empty
-!         elsewhere (depth(thisP) > setting%ZeroValue%Depth)
-!             !% limiter for when the conduit is full
-!             hyddepth(thisP) = min(area(thisP) / topwidth(thisP), fullHydDepth(thisP))
-!         endwhere
-
-!     end subroutine filled_circular_hyddepth_from_topwidth
-! !%
-! !%==========================================================================
-! !% SINGULAR
-
-! !%==========================================================================
-! !%
-
-! !%
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     real(8) function filled_circular_hydradius_from_depth_singular &
-!         (indx,depth) result (outvalue)
-!         !%
-!         !%-----------------------------------------------------------------------------
-!         !% Description:
-!         !% Computes hydraulic radius from known depth for a filled_circular cross section of
-!         !% a single element
-!         !%-----------------------------------------------------------------------------
-!         integer, intent(in) :: indx
-!         real(8), intent(in) :: depth
-!         real(8), pointer    :: YoverYfull(:), fullDepth(:), fullArea(:)
-!         real(8), pointer    :: Ybottom(:), Abottom(:), Pbottom(:), Tbottom(:)
-!         real(8) :: tempArea, tempYfull, tempAfull, tempPerimeter, tempRadius
-!         !%-----------------------------------------------------------------------------
-!         fullArea   => elemR(:,er_FullArea)
-!         fullDepth  => elemR(:,er_fullDepth)
-!         Ybottom    => elemR(:,er_SedimentDepth)
-!         Abottom    => elemSGR(:,esgr_Filled_Circular_bottomArea)
-!         Pbottom    => elemSGR(:,esgr_Filled_Circular_bottomPerimeter)
-!         Tbottom    => elemSGR(:,esgr_Filled_Circular_bottomTopwidth)
-!         YoverYfull => elemSGR(:,esgr_Filled_Circular_YoverYfull)
-!         !%-----------------------------------------------------------------------------
-!         tempYfull = fullDepth(indx) + Ybottom(indx)
-!         tempAfull = fullArea(indx)  + Abottom(indx)
-!         !% find Y/Yfull
-!         YoverYfull(indx) = (depth + Ybottom(indx)) / tempYfull
-
-!         tempArea = xsect_table_lookup_singular (YoverYfull(indx), ACirc)
-!         tempArea = tempArea * tempAfull - Abottom(indx)
-!         !% get hydRadius by first retriving R/Rmax from the lookup table using Y/Yfull
-!         !% and then myltiplying it with Rmax (fullDepth/4)
-!         tempRadius = onefourthR * tempYfull * xsect_table_lookup_singular (YoverYfull(indx), RCirc)
-!         tempPerimeter = tempArea / tempRadius 
-        
-!         outvalue = (tempArea - Abottom(indx)) / (tempPerimeter - Pbottom(indx) + Tbottom(indx))
-
-!     end function filled_circular_hydradius_from_depth_singular
-! !%
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     real(8) function filled_circular_perimeter_from_depth_singular &
-!         (idx, indepth) result(outvalue)
-!         !%------------------------------------------------------------------
-!         !% Description:
-!         !% Computes the filled_circular conduit perimeter for the given depth on
-!         !% the element idx
-!         !%------------------------------------------------------------------
-!         !% Declarations:
-!             integer, intent(in) :: idx
-!             real(8), intent(in) :: indepth
-!             real(8), pointer :: fullDepth, fullarea, fullperimeter
-!             real(8), pointer :: Abottom, Ybottom, Pbottom, Tbottom
-!             real(8) :: hydRadius, YoverYfull, area
-!             real(8) :: tempYfull, tempAfull
-!         !%------------------------------------------------------------------
-!         !% Aliases
-!             fullDepth     => elemR(idx,er_fullDepth)
-!             fullarea      => elemR(idx,er_FullArea)
-!             fullperimeter => elemR(idx,er_FullPerimeter)
-!             Ybottom       => elemR(idx,er_SedimentDepth)
-!             Abottom       => elemSGR(idx,esgr_Filled_Circular_bottomArea)
-!             Pbottom       => elemSGR(idx,esgr_Filled_Circular_bottomPerimeter)
-!             Tbottom       => elemSGR(idx,esgr_Filled_Circular_bottomTopwidth)
-!         !%------------------------------------------------------------------
-!         tempYfull  = fullDepth + Ybottom
-!         tempAfull  = fullarea  + Abottom
-
-!         YoverYfull = (indepth + Ybottom) / tempYfull
-
-!         !% 000 retrieve normalized A/Amax for this depth from lookup table
-!         area = xsect_table_lookup_singular (YoverYfull, ACirc)
-
-!         !% --- retrive the normalized R/Rmax for this depth from the lookup table
-!         hydradius =  xsect_table_lookup_singular (YoverYfull, RCirc)  !% 20220506 brh
-
-!         !% --- unnormalize
-!         hydRadius = onefourthR * tempYfull * hydRadius 
-!         area      = area * tempAfull
-
-!         !% --- get the perimeter by dividing area by hydRadius
-!         outvalue = min(area / hydRadius - Pbottom + Tbottom, fullperimeter)
-
-!     end function filled_circular_perimeter_from_depth_singular
-! !%
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     real(8) function filled_circular_perimeter_from_hydradius_singular &
-!          (indx,hydradius) result (outvalue)
-!         !%
-!         !%-----------------------------------------------------------------------------
-!         !% Description:
-!         !% Computes wetted perimeter from known depth for a filled_circular cross section of
-!         !% a single element
-!         !%-----------------------------------------------------------------------------
-!         !%-----------------------------------------------------------------------------
-!         integer, intent(in) :: indx
-!         real(8), intent(in) :: hydradius
-!         real(8), pointer ::  area(:), fullperimeter(:)
-!         !%-----------------------------------------------------------------------------
-!         area          => elemR(:,er_Area)
-!         fullperimeter => elemR(:,er_FullPerimeter)
-!         !%-----------------------------------------------------------------------------
-
-!         outvalue = min(area(indx) / hydRadius, fullperimeter(indx))
-
-!         !% HACK: perimeter correction is needed when the pipe is empty
-
-!     end function filled_circular_perimeter_from_hydradius_singular
-! !%
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     ! real(8) function filled_circular_hyddepth_from_depth_singular &
-!     !     (indx,depth) result (outvalue)
-!     !     !%
-!     !     !%-----------------------------------------------------------------------------
-!     !     !% Description:
-!     !     !% Computes hydraulic depth from known depth for filled_circular cross section of
-!     !     !% a single element
-!     !     !%-----------------------------------------------------------------------------
-!     !         integer, intent(in) :: indx
-!     !         real(8), intent(in) :: depth
-!     !         real(8), pointer    :: fullDepth, fullHydDepth
-!     !     !%-----------------------------------------------------------------------------
-!     !         fullDepth    => elemR(indx,er_FullDepth)
-!     !         fullHydDepth => elemR(indx,er_FullHydDepth)
-!     !     !%--------------------------------------------------
-
-!     !     topwidth = filled_circular_topwidth_from_depth_singular (indx,depth)
-!     !     area     = filled_circular_area_from_depth_singular (indx, depth)
-
-!     !     if (depth <= setting%ZeroValue%Depth) then
-!     !         !% --- empty
-!     !         outvalue = setting%ZeroValue%Depth
-!     !     elseif (depth >= fullHydDepth)
-!     !         !% --- full
-!     !         outvalue = fullHydDepth
-!     !     else
-!     !         !% --- otherwise
-!     !         outvalue = area / topwidth
-!     !     endif
-
-!     ! end function filled_circular_hyddepth_from_topwidth_singular
-! !%
-! !%==========================================================================
-! !%==========================================================================
-! !%
-!     real(8) function filled_circular_normaldepth_from_sectionfactor_singular &
-!          (SFidx, inSF) result (outvalue)
-!         !%------------------------------------------------------------------
-!         !% Description
-!         !% Computes the depth using the input section factor. This result is
-!         !% the normal depth of the flow. Note that the element MUST be in 
-!         !% the set of elements with tables stored in the uniformTableDataR
-!         !%------------------------------------------------------------------
-!         !% Declarations
-!             integer, intent(in) :: SFidx ! index in the section factor table
-!             real(8), intent(in) :: inSF
-!             integer, pointer    :: eIdx  !% element index
-!             real(8), pointer    :: thisTable(:)
-!             real(8)             :: normInput
-!         !%------------------------------------------------------------------
-!             thisTable => uniformTableDataR(SFidx,:,utd_SF_depth_nonuniform)
-!             eIdx      => uniformTableI(SFidx,uti_elem_idx)
-!         !%------------------------------------------------------------------
-!         !% --- normalize the input
-!         normInput = inSF / uniformTableR(SFidx,utr_SFmax)
-!         !% --- lookup the normalized depth
-!         outvalue = (xsect_table_lookup_singular(normInput,thisTable))
-!         !% --- unnormalize the depth for the output
-!         outvalue = outvalue * elemR(eIdx,er_fullDepth)
-
-!     end function filled_circular_normaldepth_from_sectionfactor_singular
-!%
-!%==========================================================================
+!%=========================================================================
 !% END OF MODULE
 !%=========================================================================
 end module filled_circular_conduit

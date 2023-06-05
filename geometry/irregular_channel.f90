@@ -1,5 +1,14 @@
 module irregular_channel
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Geometry for irregular open channel
+    !%
+    !%==========================================================================
     use define_settings, only: setting
     use define_globals
     use define_indexes
@@ -9,20 +18,11 @@ module irregular_channel
 
     implicit none
 
-    !%-----------------------------------------------------------------------
-    !% Description:
-    !% Irregular channel geometry
-    !%
-
     private
 
     public :: irregular_depth_from_volume
     public :: irregular_topwidth_from_depth
     public :: irregular_perimeter_and_hydradius_from_depth
-
-
-    ! public :: irregular_perimeter_from_hydradius_area
-    ! public :: irregular_hyddepth_from_topwidth_area
     public :: irregular_geometry_from_depth_singular
 
 contains
@@ -118,10 +118,6 @@ contains
         !% --- normalize the input
         normInput(thisP) = depth(thisP) / fulldepth(thisP)
 
-        ! print *, ' '
-        ! print *, 'in irregular_topwidth_from_depth'
-        ! print *, 'norm input ',normInput(iet)
-
         !% --- lookup the topwidth
         call xsect_table_lookup_array (topwidth, normInput, thisTable, thisP)
 
@@ -141,11 +137,6 @@ contains
                 topwidth(thisP) = llgeo_openchannel_depth_above_full_pure(thisP)
             endwhere
         end if
-
-        ! print *, ' '
-        ! print *, 'in irregular_topwidth_from_depth'
-        ! print *, topwidth(iet)
-        ! print *, ' '
 
         !%------------------------------------------------------------------
         !% Closing
@@ -233,55 +224,6 @@ contains
 !%    
 !%==========================================================================
 !%==========================================================================
-!%
-    ! subroutine irregular_perimeter_from_hydradius_area (elemPGx, Npack, thisCol)
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Computes the perimeter from hydraulic radius and area for
-        !% irregular channel
-        !% This does NOT require a lookup because we use lookups of the
-        !% perimeter and area before
-        !%------------------------------------------------------------------
-        !% Declarations:
-        !     integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-        !     integer, pointer :: thisP(:)
-        !     real(8), pointer :: perimeter(:), area(:), hydradius(:)
-        ! !%------------------------------------------------------------------
-        ! !% Aliases
-        !     thisP     => elemPGx(1:Npack,thisCol)
-        !     perimeter => elemR(:,er_Perimeter)
-        !     area      => elemR(:,er_area)
-        !     hydradius => elemR(:,er_HydRadius)
-        ! !%------------------------------------------------------------------
-        !     perimeter(thisP) = hydradius(thisP) / area(thisP)
-
-    ! end subroutine irregular_perimeter_from_hydradius_area
-!%    
-!%==========================================================================
-!%==========================================================================
-!%  
-    ! subroutine irregular_hyddepth_from_topwidth_area (elemPGx, Npack, thisCol)  
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Computes hydraulic depth as A/T
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !     integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-    !     integer, pointer :: thisP(:)
-    !     real(8), pointer :: topwidth(:), area(:), hyddepth(:)
-    !     !%------------------------------------------------------------------
-    !     !% Aliases
-    !         thisP     => elemPGx(1:Npack,thisCol)
-    !         topwidth  => elemR(:,er_TopWidth)
-    !         area      => elemR(:,er_area)
-    !         hyddepth  => elemR(:,er_HydDepth)
-    !     !%------------------------------------------------------------------
-    !         hyddepth(thisP) = area(thisP) / topwidth(thisP)
-
-    ! end subroutine irregular_hyddepth_from_topwidth_area
-!%    
-!%==========================================================================
-!%==========================================================================
 !%   
     real(8) function irregular_geometry_from_depth_singular &
                 (indx, table_idx, depth, maxvalue, ZeroValueGeometry) result (outvalue)
@@ -308,37 +250,15 @@ contains
         !% --- normalized depth
         depthnorm     = depth/fulldepth(indx)
 
-        ! print *, ' '
-        ! print *, 'depthnorm here ',depthnorm
-        ! print *, 'tableindex ',elemI(indx,ei_transect_idx), table_idx
-
         !% --- max is used because xsect quadratic interp for small values can produce zero
         outvalue = maxvalue * max( xsect_table_lookup_singular (depthnorm, thisTable(:)),ZeroValueGeometry)
-
-        ! print *, 'maxvalue ',maxvalue
-        ! print *, ' '
-        ! print *, 'TABLE '
-        ! print *, thisTable(:)
-        ! print *, ' '
 
         !% --- set minimum
         outvalue = max(outvalue,ZeroValueGeometry)
 
     end function irregular_geometry_from_depth_singular    
-!%    
-!%==========================================================================
-!%==========================================================================
-!%       
+!%          
 !%==========================================================================
 !% END MODULE
 !%==========================================================================
-!%
-!%  
-    !%----------------------------------------------------------------------
-    !% Description:
-    !% 
-    !%----------------------------------------------------------------------
-
-    !%----------------------------------------------------------------------
-    !%  
 end module irregular_channel

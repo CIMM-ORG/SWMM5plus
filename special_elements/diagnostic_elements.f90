@@ -1,5 +1,16 @@
 module diagnostic_elements
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Calls routines for diagnostic (not time-marching) elements
+    !%
+    !% Methods:
+    !% Varies depending on element type
+    !%==========================================================================
     use define_globals
     use define_keys
     use define_indexes
@@ -12,88 +23,17 @@ module diagnostic_elements
     use adjust
     use utility_profiler
     use utility_crash, only: util_crashpoint
-    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
-    !%-----------------------------------------------------------------------------
-    !% Description:
-    !% Computes diagnostic elements
-    !%
-    !% METHOD:
-    !%
-    !%
-
     private
 
-    !public :: diagnostic_toplevel
     public :: diagnostic_fix_JB_adjacent
     public :: diagnostic_by_type 
 
     contains
 !%==========================================================================
 !% PUBLIC
-!%==========================================================================
-!%
-    subroutine diagnostic_toplevel (elemPCol, facePCol, istep)
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% Performs a single hydrology step
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: elemPCol, facePCol, istep
-        integer, pointer    :: facePackCol
-        
-        character(64) :: subroutine_name = 'diagnostic_toplevel'
-        !%-----------------------------------------------------------------------------
-        !if (crashYN) return
-        if (setting%Debug%File%diagnostic_elements) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-        if (setting%Profile%useYN) call util_profiler_start (pfc_diagnostic_toplevel)
-        !%-----------------------------------------------------------------------------
-        !%
-
-        print *, 'obsolete '
-        stop 2098374
-        !thisCol => col_elemP(ep_Diag)
-        !Npack   => npack_elemP(elemPCol)
-
-        !% --- if (Npack > 0) was commented out by SS
-        !%     within this conditional face update has been called.
-        !%     the face update syncs all the images when running in parallel
-        !%     if daignostic elements are presents in a system, and if one/some
-        !%     does not include a diagnostic element, it will cause a race condition.
-        !%     because the images with the diagnostic elements will wait for syncs 
-        !%     inside the face update. however, images that do not include a diagnostic 
-        !%     element will never reach that condition.
-
-        ! if (Npack > 0) then
-
-            ! ! ! call util_utest_CLprint ('in diagnostic_toplevel  AAAA')
-
-        call diagnostic_by_type (elemPCol, istep)
-
-            ! call util_utest_CLprint ('in diagnostic_toplevel  BBB')
-
-        !% reset any face values affected
-        call face_interpolation (facePCol,.true.,.true.,.true.,.true.,.true.)
-
-            ! call util_utest_CLprint ('in diagnostic_toplevel  CCC')
-
-        !% --- reset the zero and small depth fluxes
-        call adjust_zero_and_small_depth_face (.false.)
-
-            ! call util_utest_CLprint ('in diagnostic_toplevel  DDD')
-
-        ! end if
-       
-        if (setting%Profile%useYN) call util_profiler_stop (pfc_diagnostic_toplevel)
-
-        if (setting%Debug%File%diagnostic_elements)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-    end subroutine diagnostic_toplevel
-!%
-!%==========================================================================
 !%==========================================================================
 !% 
     subroutine diagnostic_fix_JB_adjacent ()
@@ -123,7 +63,6 @@ module diagnostic_elements
             fJBdownstreamYN => faceYN(:,fYN_isDownstreamJBFace)
         !%------------------------------------------------------------------
 
-        !print *, 'in Fix JB adjacent '
         !% --- cycle through diagnostic elements adjacent to JB
         do mm=1,Npack
             eIdx = thisE(mm)
@@ -150,7 +89,6 @@ module diagnostic_elements
     end subroutine diagnostic_fix_JB_adjacent
 !%
 !%==========================================================================
-!% PRIVATE
 !%==========================================================================
 !%
     subroutine diagnostic_by_type (thisCol, istep)
@@ -171,10 +109,11 @@ module diagnostic_elements
             real(8)             :: FlowRateOld
             integer :: ii
         !%-----------------------------------------------------------------------------
+        !% Preliminaries:
             Npack => npack_elemP(thisCol)
             if (Npack < 1) return
         !%-----------------------------------------------------------------------------
-        !% Aliases
+        !% Aliases:
             FlowRate => elemR(:,er_Flowrate)    
             thisP    => elemP(1:Npack,thisCol)
         !%-----------------------------------------------------------------------------
@@ -185,16 +124,8 @@ module diagnostic_elements
             !% replace with do concurrent if every procedure called in this loop can be PURE
             thisType => elemI(thisP(ii),ei_elementType)
 
-            ! print *, ' '
-            ! print *, 'in diagnostic by type ',ii, thisP(ii)
-            ! print *, 'case ',reverseKey(thisType)
-            ! print *, ' '
-
             !% -- store the old flowrate for use in first step of an RK2
             FlowRateOld = FlowRate(thisP(ii))
-            
-            ! print *, 'flowrate old ',FlowRateOld 
-            ! print *, ' '
 
             select case (thisType)
                 
@@ -217,9 +148,6 @@ module diagnostic_elements
                 !return
             end select
 
-            ! print *, ' '
-            ! print *, 'flowrate here  ',Flowrate(thisP(ii))
-
             !% --- prevent an RK2 first step from setting the flowrate to zero
             !%     Otherwise the conservative flux is identically zero for the
             !%     entire time step
@@ -227,36 +155,9 @@ module diagnostic_elements
                 FlowRate(thisP(ii)) = onehalfR * (FlowRate(thisP(ii)) + FlowRateOld)
             end if
 
-            ! print *, ' '
-            ! print *, 'flowrate end  ',Flowrate(thisP(ii))
         end do
 
     end subroutine diagnostic_by_type
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !%
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-        !%
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !%
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-        !%
 !%
 !%==========================================================================
 !% END OF MODULE

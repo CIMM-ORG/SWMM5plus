@@ -77,24 +77,7 @@ contains
         !%-------------------------------------------------------------------
         !% Aliases
             whichSolver => setting%Solver%SolverSelect
-            select case (whichSolver)
-            case (ETM)
-                whichTM = ETM
-            case (AC)
-                whichTM = AC
-                print *, 'CONFIGURATION ERROR: AC solver is not functional'
-                print *, 'use setting.Solver.Select = ETM'
-                call util_crashpoint(7298744)
-            case (ETM_AC)
-                print *, 'CONFIGURATION ERROR: AC solver is not functional'
-                print *, 'use setting.Solver.Select = ETM'
-                call util_crashpoint(7298744)
-            case default
-                print *, 'CODE ERROR: solver type unknown for # ', whichSolver
-                print *, 'which has key ',trim(reverseKey(whichSolver))
-                call util_crashpoint(478383)
-                !return
-            end select      
+            whichTM = ETM
         !%-------------------------------------------------------------------    
         !% --- default the TimeLastSet to 0.0 (elapsed) for all elements
         elemR(:,er_TimeLastSet) = zeroR
@@ -932,7 +915,6 @@ contains
             elemR(:,er_Kconduit_MinorLoss) = link%R(thisLink,lr_Kconduit_MinorLoss) / (real(lastelem - firstelem + oneI,8))
             elemR(:,er_FlowrateLimit)      = link%R(thisLink,lr_FlowrateLimit)
             elemR(:,er_SeepRate)           = link%R(thisLink,lr_SeepRate)
-            elemR(:,er_ManningsN_Dynamic)  = elemR(:,er_ManningsN)   
         endwhere
 
         !% --- assign minor losses
@@ -3966,7 +3948,6 @@ contains
                     !% --- reference the Zcrown to the local bottom
                     elemR(JBidx,er_Zcrown)              = (elemR(Aidx,er_Zcrown)[Ci] - elemR(Aidx,er_Zbottom)[Ci]) + elemR(JBidx,er_Zbottom)         
                     elemR(JBidx,er_ManningsN)           = elemR(Aidx,er_ManningsN)[Ci]
-                    elemR(JBidx,er_ManningsN_Dynamic)   = elemR(Aidx,er_ManningsN)[Ci]
                     elemI(JBidx,ei_link_transect_idx)   = elemI(Aidx,ei_link_transect_idx)[Ci]
                     !% --- copy the entire row of the elemSGR array
                     elemSGR(JBidx,:)                    = elemSGR(Aidx,:)[Ci]
@@ -4510,27 +4491,12 @@ contains
             if (setting%Debug%File%initial_condition) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
-        select case (whichSolver)
-            case (ETM)
-                where ( (elemI(:,ei_HeqType) == time_march) .or. &
-                        (elemI(:,ei_QeqType) == time_march) )
-                    elemI(:,ei_tmType) = ETM
-                endwhere
-            case (AC)
-                print*, 'In, ', subroutine_name
-                print*, 'AC solver is not handeled at this moment'
-                call util_crashpoint(83974)
-            case (ETM_AC)
-                print*, 'In, ', subroutine_name
-                print*, 'ETM-AC solver is not handeled at this moment'
-                call util_crashpoint(2975)
-            case default
-                print *, 'In, ', subroutine_name
-                print *, 'CODE ERROR: unknown solver, ', whichSolver
-                print *, 'which has key ',trim(reverseKey(whichSolver))
-                call util_crashpoint(81878)
-        end select
 
+        where ( (elemI(:,ei_HeqType) == time_march) .or. &
+                (elemI(:,ei_QeqType) == time_march) )
+            elemI(:,ei_tmType) = ETM
+        endwhere
+        
         !%------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%initial_condition) &

@@ -1,24 +1,25 @@
 module preissmann_slot
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Procedures for dynamic Preissmann Slot following paper by
+    !% Sharior, Hodges, and Vasconcelos (2023)
+    !%==========================================================================
     use define_globals
     use define_indexes
     use define_keys
     use define_settings, only: setting
     use utility_crash
-    ! use utility_unit_testing, only: util_utest_CLprint
-
 
     implicit none
 
-!%-----------------------------------------------------------------------------
-!% Description:
-!% Preissmann Slot computations for explicit time-marching of surcharged pipe
-!%
-
     private
-    ! public :: slot_toplevel 
-    public :: slot_CC_ETM
-    public :: slot_JM_ETM
+    public :: slot_CC
+    public :: slot_JM
     public :: slot_initialize
     public :: slot_JM_head_PSadd
     public :: slot_JM_head_PSremove
@@ -32,63 +33,6 @@ module preissmann_slot
 !% PUBLIC
 !%==========================================================================
 !%
-    ! subroutine slot_toplevel (colP_CC_PS, colP_JM_PS)
-    !     !% THIS MAY BE OBSOLETE WITH IMPLICIT JUNCTION
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Stores the slot volumes etc. and handles ponding/overflow
-    !     !% associated with JM that are above maximum depth for Preissman Slot
-    !     !% NOTE: need to ensure that "whichTM" is consistent with the packed
-    !     !% columns of colP_CC_PS and colP_JM_PS
-    !     !% input: thisSolver is the solver used for this set of elements
-    !     !% whcih should be ETM or ALLtm.
-    !     !% Pcol_CC_PS is the packed column of CC (closed only) elements
-    !     !% where the Preissmann Slot is used
-    !     !% Pcol_JM_PS is the packed column for JM elements where Preissmann
-    !     !% slot is used.
-    !     !%------------------------------------------------------------------
-    !     !% Declarations
-    !         integer, intent(in) :: colP_CC_PS, colP_JM_PS
-    !         integer, pointer    :: thisPackCol, Npack, thisP(:)
-    !         character(64)       :: subroutine_name = 'slot_toplevel'
-    !     !%------------------------------------------------------------------
-    !     !% Preliminaries
-    !         !% --- exit if not using PS
-    !         if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
-    !         !% --- compute Preissmann slot for conduits only if ETM solver is used
-    !         !if (.not. ((whichTM .eq. ETM) .or. (whichTM .eq. ALLtm))) return
-    !     !%------------------------------------------------------------------
-
-    !         ! ! call util_utest_CLprint ('======== at start of Slot_toplevel')
-    !     !%    
-    !     !% --- Handle Preissmann Slot for closed CC elements
-    !     !%     with this time march type.
-    !     thisPackCol => col_elemP(colP_CC_PS)
-    !     Npack       => npack_elemP(thisPackCol)
-    !     if (Npack > 0) then
-    !         thisP => elemP(1:Npack,thisPackCOl)
-    !         call slot_CC_ETM (thisP)
-    !     end if
-
-    !         ! ! call util_utest_CLprint ('======== after slot_CC_ETM')
-
-    !     !% --- Handle Preissmann Slot for all JM elements
-    !     !%    (although OverflowDepth=0 is effectively open)
-    !     thisPackCol => col_elemP(colP_JM_PS)
-    !     Npack => npack_elemP(thisPackCol)
-    !     if (Npack > 0) then
-    !         call slot_JM_ETM (thisPackCol, Npack)
-    !     end if
-
-    !         ! ! call util_utest_CLprint ('======== after slot_JM_ETM')
-
-    !     !stop 66823
-  
-    ! end subroutine slot_toplevel
-!%
-!%==========================================================================
-!%==========================================================================
-!% 
     subroutine slot_initialize (thisP)
         !%------------------------------------------------------------------
         !% Description:
@@ -125,9 +69,8 @@ module preissmann_slot
         !% Declarations:
             integer, intent(in) :: thisColP_JM
             integer, pointer :: Npack, thisP(:)
-            real(8), pointer :: PondedArea(:), PondedVolume(:), PondedHead(:)
+            !real(8), pointer :: PondedArea(:), PondedVolume(:), PondedHead(:)
             real(8), pointer :: Head(:), SlotDepth(:)
-
         !%------------------------------------------------------------------
         !% Preliminaries:
             !% --- exit if not using PS
@@ -138,20 +81,15 @@ module preissmann_slot
         !%------------------------------------------------------------------
         !% Aliases
             thisP        => elemP(1:Npack,thisColP_JM)
-            PondedArea   => elemSR(:,esr_JunctionMain_PondedArea)
-            PondedVolume =>  elemR(:,er_VolumePonded)
-            PondedHead   =>  elemR(:,er_Temp01)
+            !PondedArea   => elemSR(:,esr_JunctionMain_PondedArea)
+            !PondedVolume =>  elemR(:,er_VolumePonded)
+            !PondedHead   =>  elemR(:,er_Temp01)
             Head         =>  elemR(:,er_Head)
             SlotDepth    =>  elemR(:,er_SlotDepth)
 
         !%------------------------------------------------------------------
-        ! PondedHead = zeroR
-        ! if (setting%SWMMinput%AllowPonding) then 
-        !     PondedHead(thisP) = PondedVolume(thisP) / PondedArea(thisP)
-        !     Head(thisP) = Head(thisP) + max(SlotDepth(thisP), PondedHead(thisP))
-        ! else
-            Head(thisP) = Head(thisP) + SlotDepth(thisP)
-        ! end if
+
+        Head(thisP) = Head(thisP) + SlotDepth(thisP)
 
     end subroutine slot_JM_head_PSadd
 !%   
@@ -166,7 +104,7 @@ module preissmann_slot
         !% Declarations:
             integer, intent(in) :: thisColP_JM
             integer, pointer :: Npack, thisP(:)
-            real(8), pointer :: PondedArea(:), PondedVolume(:), PondedHead(:)
+            !real(8), pointer :: PondedArea(:), PondedVolume(:), PondedHead(:)
             real(8), pointer :: Head(:), SlotDepth(:)
         !%------------------------------------------------------------------
         !% Preliminaries:
@@ -177,18 +115,15 @@ module preissmann_slot
         !%------------------------------------------------------------------
         !% Aliases:
             thisP        => elemP(1:Npack,thisColP_JM)
-            PondedArea   => elemSR(:,esr_JunctionMain_PondedArea)
-            PondedVolume => elemR (:,er_VolumePonded)
-            PondedHead   => elemR (:,er_Temp01)
+            !PondedArea   => elemSR(:,esr_JunctionMain_PondedArea)
+            !PondedVolume => elemR (:,er_VolumePonded)
+            !PondedHead   => elemR (:,er_Temp01)
             Head         => elemR (:,er_Head)
             SlotDepth    => elemR (:,er_SlotDepth)
         !%------------------------------------------------------------------
-        ! if (setting%SWMMinput%AllowPonding) then 
-        !     PondedHead(thisP) = PondedVolume(thisP) / PondedArea(thisP)
-        !     Head(thisP)       = Head(thisP) - SlotDepth(thisP) - PondedHead(thisP)
-        ! else
-            Head(thisP) = Head(thisP) - SlotDepth(thisP)
-        ! end if
+
+        Head(thisP) = Head(thisP) - SlotDepth(thisP)
+ 
 
     end subroutine slot_JM_head_PSremove
 !%
@@ -196,10 +131,10 @@ module preissmann_slot
 !%==========================================================================
 !%
     subroutine slot_CC_adjustments (thisP)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% This subroutine adds back the slot geometry in all the closed elements
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer, intent(in) :: thisP(:)
         integer, pointer    :: SlotMethod
         real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), dSlotDepth(:)
@@ -210,7 +145,6 @@ module preissmann_slot
         logical, pointer    :: isSlot(:)
 
         character(64) :: subroutine_name = 'geo_CC_slot_adjustments'
-        !%-----------------------------------------------------------------------------
         !%------------------------------------------------------------------
         !% Preliminaries
             !% --- exit if not using PS
@@ -223,13 +157,10 @@ module preissmann_slot
             area       => elemR(:,er_Area)
             depth      => elemR(:,er_Depth)
             dSlotDepth => elemR(:,er_dSlotDepth)
-            !ell        => elemR(:,er_EllDepth)
-            !ellMax     => elemR(:,er_FullEllDepth)
             fullDepth  => elemR(:,er_FullDepth)
             fullvolume => elemR(:,er_FullVolume)
             fullArea   => elemR(:,er_FullArea)
             head       => elemR(:,er_Head)
-            !pressurehead  => elemR(:,er_Pressure_Head)
             SlotWidth  => elemR(:,er_SlotWidth)
             SlotVolume => elemR(:,er_SlotVolume)
             SlotDepth  => elemR(:,er_SlotDepth)
@@ -249,33 +180,27 @@ module preissmann_slot
             case (StaticSlot)
                 where (isSlot(thisP)) 
                     volume(thisP)    = volume(thisP)  + SlotVolume(thisP)
-                    ! area(thisP)   = area(thisP)    + SlotArea(thisP) !% KEEP AREA BASED ON CONDUIT
-                    ! depth(thisP)     = depth(thisP)     + SlotDepth(thisP)
                     head(thisP)      = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
-                    !pressurehead(thisP) = pressurehead(thisP) + SlotDepth(thisP)
                 end where 
 
             case (DynamicSlot)
                 where (isSlot(thisP)) 
                     volume(thisP)    = volume(thisP)  + SlotVolume(thisP)
-                    ! area(thisP)      = area(thisP)    + SlotArea(thisP)  !% KEEP AREA BASED ON CONDUIT
                     SlotDepth(thisP) = max(SlotDepth_N0(thisP) + dSlotDepth(thisP), zeroR) 
-                    ! depth(thisP)     = depth(thisP)     + SlotDepth(thisP)
-                    ! head(thisP)      = max(head(thisP)  + SlotDepth(thisP), zbottom(thisP))
                     head(thisP)      = max(zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP), zbottom(thisP))
-                    !pressurehead(thisP) = pressurehead(thisP) + SlotDepth(thisP)
                 elsewhere
                     SlotDepth(thisP)  = zeroR
-                    ! SlotVolume(thisP) = zeroR
                 end where 
             case default 
                 print *, 'CODE ERROR: unexpected case default'
                 call util_crashpoint(6552981)
         end select
 
-
-        if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%geometry) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+                
     end subroutine slot_CC_adjustments
 !%
 !%==========================================================================
@@ -292,8 +217,6 @@ module preissmann_slot
             integer, pointer    :: thisP(:), SlotMethod
             real(8), pointer    :: volume(:), depth(:),  head(:), ellDepth(:)
             real(8), pointer    :: fullDepth(:), zbottom(:)
-            !real(8), pointer    :: , ellMax(:)
-            !real(8), pointer    :: pressurehead(:)
             real(8), pointer    :: SlotVolume(:), SlotDepth(:), SlotDepth_N0(:)
             real(8), pointer    :: dSlotDepth(:)
             logical, pointer    :: isSlot(:)
@@ -324,52 +247,36 @@ module preissmann_slot
             SlotMethod => setting%Solver%PreissmannSlot%Method
         !%------------------------------------------------------------------
 
-        ! call slot_JM_head_PSadd (thisCol)
-
-        ! depth(thisP)    = depth(thisP)  + SlotDepth(thisP)
-        ! ellDepth(thisP) = depth(thisP)
-
-        ! print *, ' '
-        ! print *, 'in slot JM Adjustment ', isSlot(51)
-        ! print *, SlotDepth_N0(51), dSlotDepth(51)
-        ! print *, ' '
-
         select case (SlotMethod)
             case (StaticSlot)
                 where (isSlot(thisP)) 
                     volume(thisP)    = volume(thisP)  + SlotVolume(thisP)
-                    ! area(thisP)   = area(thisP)    + SlotArea(thisP) !% KEEP AREA BASED ON CONDUIT
-                    ! depth(thisP)     = depth(thisP)     + SlotDepth(thisP)
                     head(thisP)      = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
-                    !pressurehead(thisP) = pressurehead(thisP) + SlotDepth(thisP)
                 end where 
 
             case (DynamicSlot)
                 where (isSlot(thisP)) 
-                    ! not needed for JM, volume not changed: volume(thisP)    = volume(thisP)  + SlotVolume(thisP)
-                    ! area(thisP)      = area(thisP)    + SlotArea(thisP)  !% KEEP AREA BASED ON CONDUIT
                     SlotDepth(thisP) = max(SlotDepth_N0(thisP) + dSlotDepth(thisP), zeroR) 
-                    ! depth(thisP)     = depth(thisP)     + SlotDepth(thisP)
-                    ! head(thisP)      = max(head(thisP)  + SlotDepth(thisP), zbottom(thisP))
                     head(thisP)      = max(zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP), zbottom(thisP))
-                    !pressurehead(thisP) = pressurehead(thisP) + SlotDepth(thisP)
                 elsewhere
                     SlotDepth(thisP)  = zeroR
-                    ! SlotVolume(thisP) = zeroR
                 end where 
             case default 
                 print *, 'CODE ERROR: unexpected case default'
                 call util_crashpoint(655298)
         end select
 
-        if (setting%Debug%File%geometry) &
-        write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%geometry) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
     end subroutine slot_JM_adjustments
 !%
 !%==========================================================================    
 !%==========================================================================
 !%
- subroutine slot_JB_computation (thisColP_JM)
+    subroutine slot_JB_computation (thisColP_JM)
         !%------------------------------------------------------------------
         !% Description:
         !% Slot computation for Junction Branches
@@ -384,7 +291,6 @@ module preissmann_slot
             real(8), pointer :: area(:), depth(:), head(:), length(:), volume(:), zcrown(:), zbottom(:)
             real(8), pointer :: fullDepth(:), fullArea(:), fPNumber(:), PNumber(:), PCelerity(:), ellDepth(:)
             real(8), pointer :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)!, ellMax(:)
-            !real(8), pointer :: pressurehead(:)
             real(8), pointer :: overflow(:), grav, TargetPCelerity, Alpha
             logical, pointer :: isSlot(:) , fSlot(:), isSurcharge(:), canSurcharge(:)
             integer, pointer :: SlotMethod, fUp(:), fDn(:)
@@ -409,12 +315,10 @@ module preissmann_slot
             fullArea      => elemR(:,er_FullArea)
             fullDepth     => elemR(:,er_FullDepth)
             overflow      => elemR(:,er_VolumeOverFlow)
-            !pressurehead     => elemR(:,er_Pressure_Head)
             volume        => elemR(:,er_Volume)
             zcrown        => elemR(:,er_Zcrown)
             zbottom       => elemR(:,er_Zbottom)
             ellDepth      => elemR(:,er_EllDepth)
-            !ellMax        => elemR(:,er_FullEllDepth)
             fUp           => elemI(:,ei_Mface_uL)
             fDn           => elemI(:,ei_Mface_dL)
             BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
@@ -435,16 +339,16 @@ module preissmann_slot
             TargetPCelerity => setting%Solver%PreissmannSlot%TargetCelerity
             Alpha           => setting%Solver%PreissmannSlot%Alpha
         !%------------------------------------------------------------------
-        !% JB slot adjustment
-        !% cycle through the all the main junctions and each of its branches
+        !% --- JB slot adjustment
+        !%     cycle through the all the main junctions and each of its branches
         do ii=1,Npack
             tM => thisP(ii) !% junction main ID
-            ! handle the upstream branches
+            ! --- handle the upstream branches
             do kk=1,max_branch_per_node,2
                 tB = tM + kk  !% JB branch ID
                 
                 if (BranchExists(tB)==1) then
-                    !% initialize slot
+                    !% --- initialize slot
                     isSlot(tB)     = .false.
                     isSurcharge(tB)= .false.
                     SlotDepth(tB)  = zeroR
@@ -453,11 +357,11 @@ module preissmann_slot
                     SlotVolume(tB) = zeroR
                     PCelerity(tB)  = zeroR
 
-                    !% HACK -- may want to define explicitly each JB
-                    !% as either closed/open  20220915 brh
+                    !% --- HACK -- may want to define explicitly each JB
+                    !%     as either closed/open  20220915 brh
 
-                    !% assuming a slot if the head is above the crown
-                    !% or the upstream CC is in a slot
+                    !% --- assuming a slot if the head is above the crown
+                    !%     or the upstream CC is in a slot
                     if ((head(tB) .gt. zcrown(tB)) .and. (canSurcharge(tB))) then
                         isSlot(tB)     = .true.
                         fSlot(fUp(tB)) = .true.
@@ -469,11 +373,8 @@ module preissmann_slot
                                             fullArea(tB)) / (TargetPCelerity ** twoR)
                         SlotVolume(tB) = SlotArea(tB) * length(tB)
                         
-                        !% add the slot geometry back to previously solved geometry
+                        !% --- add the slot geometry back to previously solved geometry
                         volume(tB) = volume(tB)  + SlotVolume(tB)
-                        ! area(tB)   = area(tB)    + SlotArea(tB) !% 20220915 brh CONSISTENCY WITH CC adjustment
-                        !depth(tB)  = depth(tB)   + SlotDepth(tB)
-                        !pressurehead(tB) = pressurehead(tB) + SlotDepth(tB)
                         Overflow(tB) = zeroR  !% defined as zero (no oveflow from JB)
                     else 
                         !% --- excess head at JB in an open channel represents
@@ -482,11 +383,11 @@ module preissmann_slot
                     end if  
                 end if
             end do
-            !% handle the downstream branches
+            !% --- handle the downstream branches
             do kk=2,max_branch_per_node,2
                 tB = tM + kk
                 if (BranchExists(tB)==1) then
-                    !% initialize slot
+                    !% --- initialize slot
                     isSlot(tB)     = .false.
                     isSurcharge(tB)= .false.
                     SlotDepth(tB)  = zeroR
@@ -495,8 +396,8 @@ module preissmann_slot
                     SlotVolume(tB) = zeroR
                     PCelerity(tB)  = zeroR
 
-                    !% assuming a slot if the head is above the crown
-                    !% or the downstream CC is in a slot
+                    !% --- assuming a slot if the head is above the crown
+                    !%     or the downstream CC is in a slot
                     if ((head(tB) .gt. zcrown(tB)) .and. (canSurcharge(tB))) then
                         isSlot(tB)     = .true.
                         isSurcharge(tB)= .true.
@@ -510,11 +411,8 @@ module preissmann_slot
                                             fullArea(tB)) / (TargetPCelerity ** twoR)
                         SlotVolume(tB) = SlotArea(tB) * length(tB)
 
-                        !% add the slot geometry back to previously solved geometry
+                        !% --- add the slot geometry back to previously solved geometry
                         volume(tB) = volume(tB)  + SlotVolume(tB)
-                        ! area(tB)   = area(tB)    + SlotArea(tB) !% 20220915 brh CONSISTENCY WITH CC adjustment
-                        !depth(tB)  = depth(tB)   + SlotDepth(tB)
-                        !pressurehead(tB) = pressurehead(tB) + SlotDepth(tB)
                         Overflow(tB) = zeroR !% defined as zero (no overflow from JB)
                     else 
                         !% --- excess head at JB in an open channel represents
@@ -527,7 +425,7 @@ module preissmann_slot
                   
         !%------------------------------------------------------------------
         !% Closing
-        if (setting%Debug%File%geometry) &
+            if (setting%Debug%File%geometry) &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine slot_JB_computation
 !%
@@ -535,7 +433,7 @@ module preissmann_slot
 !% PRIVATE
 !%==========================================================================
 !%    
-    subroutine slot_CC_ETM (thisP)
+    subroutine slot_CC (thisP)
         !%------------------------------------------------------------------
         !% Description:
         !% Compute Preissmann slot for conduits in ETM methods
@@ -554,22 +452,20 @@ module preissmann_slot
             real(8), pointer    :: velocity(:), fPNumber(:), SurchargeTime(:), PnumberInitial(:)
             real(8), pointer    :: TargetPCelerity, grav, Dt, Alpha, cfl, DecayRate
             logical, pointer    :: isSlot(:), isfSlot(:), isSurcharge(:)
-            character(64) :: subroutine_name = "slot_CC_ETM"
+            character(64) :: subroutine_name = "slot_CC"
         !%------------------------------------------------------------------
         !% Preliminaries
             !% --- exit if not using PS
             if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
             !% --- exit if no closed CC elements
-           ! if (Npack < 1) return
+            ! if (Npack < 1) return
         !%------------------------------------------------------------------
         !% Aliases
         !% HACK -- many of these aliases are unused. Need to clean up 20220913 brh
-            !thisP      => elemP(1:Npack,thisCol)
             !% --- elemR data
             dSlotArea  => elemR(:,er_dSlotArea)
             dSlotDepth => elemR(:,er_dSlotDepth)
             dSlotVol   => elemR(:,er_dSlotVolume)
-            !ellMax     => elemR(:,er_FullEllDepth)
             fullArea   => elemR(:,er_FullArea)
             fullVolume => elemR(:,er_FullVolume)
             length     => elemR(:,er_Length)
@@ -604,7 +500,6 @@ module preissmann_slot
             Dt                  => setting%Time%Hydraulics%Dt
         !%------------------------------------------------------------------
         !% --- common initialization
-        ! SlotVolN0(thisP)    = SlotVolume(thisP)
         SlotVolume(thisP)   = zeroR
         SlotArea(thisP)     = zeroR
         PCelerity(thisP)    = zeroR
@@ -617,9 +512,6 @@ module preissmann_slot
         select case (SlotMethod)
             !% --- for a static slot, the preissmann number will always be one.
             case (StaticSlot)
-                ! print *, ' '
-                ! print *, 'in static slot'
-                ! print *, ' '
                 !% --- initialize static slot
                 PNumber(thisP)    = oneR  !% static slot requirement
                 SlotWidth(thisP)  = zeroR
@@ -634,10 +526,8 @@ module preissmann_slot
                     isSlot(thisP)       = .true.
                     isSurcharge(thisP)  = .true.
                     PCelerity(thisP)  = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
-                    ! 20230116brh - HACK testing fixed slot width
-                    ! SlotWidth(thisP)  = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
-                    SlotWidth(thisP) = elemR(thisP,er_BreadthMax) * 0.1d0
-                    ! 20230116brh
+                    SlotWidth(thisP)  = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
+                    !%TEST VALUE: SlotWidth(thisP) = elemR(thisP,er_BreadthMax) * 0.1d0
 
                     SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
                 end where
@@ -652,30 +542,26 @@ module preissmann_slot
 
                 !% ---find out the slot volume/ area/ and the faces that are surcharged
                 where (volume(thisP) > fullVolume(thisP))
-                    !% find slot properties
+                    !% --- find slot properties
                     SlotVolume(thisP) = max(volume(thisP) - fullVolume(thisP), zeroR)
                     SlotArea(thisP)   = SlotVolume(thisP) / length(thisP)  
-                    !% logicals
+                    !% --- logicals
                     isfSlot(fUp(thisP)) = .true.
                     isfSlot(fDn(thisP)) = .true.
                     isSlot(thisP)       = .true.
                     isSurcharge(thisP)  = .true.
-                    !% smooth out the preissmann number before celerity calculation
+                    !% --- smooth out the preissmann number before celerity calculation
                     PNumber(thisP) = max(onehalfR * (fPNumber(fUP(thisP)) + fPNumber(fDn(thisP))), oneR)
-                    !% find the preissmann celerity from the preissmann number
+                    !% --- find the preissmann celerity from the preissmann number
                     PCelerity(thisP) = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
-                    !% find the change in slot volume
+                    !% --- find the change in slot volume
                     dSlotVol(thisP)   = SlotVolume(thisP) - SlotVolN0(thisP)
-                    !% find the change in slot area
+                    !% --- find the change in slot area
                     dSlotArea(thisP)  = dSlotVol(thisP) / length(thisP)
 
-                    !% find the change in slot depth
+                    !% --- find the change in slot depth
                     dSlotDepth(thisP) = (dSlotArea(thisP)  * (PCelerity(thisP) ** twoI)) / (grav * (fullArea(thisP)))
                 end where
-
-                ! print *, 'volumes in PS ',volume(50),fullVolume(50)
-                ! print *, 'PN in PS      ',PNumber(50), Pcelerity(50)
-                !print *, 'target cel    ',TargetPCelerity
 
                 !% --- reset isfSlot to find ventilated positions
                 where (.not. isSlot(thisP))
@@ -683,8 +569,8 @@ module preissmann_slot
                     isfSlot(fDn(thisP)) = .false.
                 end where
 
-                !% Test code: set any diagnostic face as venting point
-                !% thus not changing preissmann number here
+                !% --- set any diagnostic face as venting point
+                !%     thus not changing preissmann number here
                 where (faceYN(fUP(thisP),fYN_isDiag_adjacent_interior))
                     isfSlot(fUp(thisP)) = .false.
                 end where
@@ -701,10 +587,8 @@ module preissmann_slot
                     SurchargeTime(thisP) = zeroR
                 end where
 
-                !% find the new preissmann number for all the closed elements
+                !% --- find the new preissmann number for all the closed elements
                 PNumber(thisP) = (PnumberInitial(thisP) - oneR) * exp((- SurchargeTime(thisP) * tenR)/ DecayRate) + oneR
-
-                ! write(*,"(A, 5f11.3)") 'PNumber ',PNumberInitial(50), Pnumber(50), SurchargeTime(50)
 
             case default
                 !% --- should not reach this stage
@@ -715,12 +599,12 @@ module preissmann_slot
 
         end select
 
-    end subroutine slot_CC_ETM
+    end subroutine slot_CC
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine slot_JM_ETM (thisCol, Npack)
+    subroutine slot_JM (thisCol, Npack)
         !%------------------------------------------------------------------
         !% Description:
         !% Compute Preissmann slot for closed JM's in ETM methods
@@ -745,13 +629,13 @@ module preissmann_slot
             integer ::  kk, mm, JMidx, bcount 
             real(8) :: PNadd
 
-            character(64) :: subroutine_name = 'slot_JM_ETM'
+            character(64) :: subroutine_name = 'slot_JM'
         !%-----------------------------------------------------------------
         !% Preliminaries
             if (Npack < 1) return
         !%-----------------------------------------------------------------
         !% Aliases
-        !% HACK -- many of these aliases are unused. Need to clean up 20220913 brh
+        !%   HACK -- many of these aliases are unused. Need to clean up
             !% --- pointer packed element indexes
             thisP => elemP(1:Npack,thisCol)
             
@@ -801,11 +685,7 @@ module preissmann_slot
         isSlot(thisP)         = .false.
         isSurcharge(thisP)    = .false.
 
-        ! print *, ' '
-        ! print *, 'at start of JM slot'
-        ! print *, elemR(51,er_SlotVolume_N0), elemR(51,er_SlotDepth_N0)
-
-        !% initialize static slot
+        !% --- initialize static slot
         select case (setting%Solver%PreissmannSlot%Method)
         case (StaticSlot)
             PNumber(thisP)        = oneR  !% required for static slot
@@ -833,40 +713,34 @@ module preissmann_slot
             do mm=1,Npack
                 JMidx = thisP(mm)
 
-                ! print *, 'JM in Preissmann ',JMidx
-
                 if (volume(JMidx) > fullVolume(JMidx)) then
                     SlotVolume(JMidx) = max(volume(JMidx) - fullVolume(JMidx), zeroR)
 
-                    !, SLOT VOL ',JMidx,SlotVolume(JMidx)
-
                     SlotArea(JMidx)   = SlotVolume(JMidx) / length(JMidx)  
-                    !% logicals
+                    !% --- logicals
                     isSlot(JMidx)       = .true.
                     isSurcharge(JMidx)  = .true.
-                    !% smooth out the preissmann number before celerity calculation
-                    !% with adjacent branches
+                    !% --- smooth out the preissmann number before celerity calculation
+                    !%     with adjacent branches
                     bcount = zeroI
                     PNadd  = zeroR
                     do kk=1,max_branch_per_node
                         if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) .ne. oneI) cycle 
-                            ! print *, 'isSurcharge ',JMidx+kk,isSurcharge(JMidx+kk), PNumber(JMidx+kk)
                         if (isSurcharge(JMidx+kk)) then
                             PNadd = PNadd + PNumber(JMidx+kk)
                             bcount = bcount + oneI
                         end if
                     end do
 
-                        ! print *, 'pnadd ',PNadd, bcount
                     PNumber(JMidx) = max(PNadd/real(bcount,8), oneR)
                     PCelerity(JMidx) = min(TargetPCelerity / PNumber(JMidx), TargetPCelerity)
 
-                    !% find the change in slot volume
+                    !% --- find the change in slot volume
                     dSlotVol(JMidx)   = SlotVolume(JMidx) - SlotVolN0(JMidx)
-                    !% find the change in slot area
+                    !% --- find the change in slot area
                     dSlotArea(JMidx)  = dSlotVol(JMidx) / length(JMidx)
 
-                    !% find the change in slot depth
+                    !% --- find the change in slot depth
                     dSlotDepth(JMidx) = (dSlotArea(JMidx) * (PCelerity(JMidx) ** twoI)) &
                                          / (grav * (fullArea(JMidx)))
 
@@ -881,25 +755,17 @@ module preissmann_slot
 
                     !% -- update the plan area for surcharging at this level
                     pAreaSurcharge(JMidx) = dSlotVol(JMidx) / dSlotDepth(JMidx)
-
-                    !print *, 'dSlotDepth ',dSlotDepth(JMidx)         
-                    !print *, 'in Preissmann'
-                    !print *, dSlotVol(51), dSlotDepth(51), pAreaSurcharge(51)            
-
+       
                     !% --- surcharge time 
                     if (bcount > zeroI) then 
                         SurchargeTime(JMidx) = SurchargeTime(JMidx) + Dt / twoR   
                     else 
                         SurchargeTime(JMidx) = zeroR
                     end if               
-                    
-                   ! print *, 'surcharget time ',SurchargeTime(JMidx)
+
 
                     PNumber(JMidx) = (PnumberInitial(JMidx) - oneR) &
                          * exp((- SurchargeTime(JMidx) * tenR)/ DecayRate) + oneR
-   
-                    ! print *, 'in SLOT ', dSlotVol(JMidx),dSlotDepth(JMidx)
-                    ! print *, 'OLD     ',elemR(JMidx,er_SlotVolume), elemR(JMidx,er_SlotDepth)
 
                 else 
                     !% --- not surcharged 
@@ -908,119 +774,13 @@ module preissmann_slot
                 end if
             end do
 
-            ! print *,' '
-            ! print *, elemR(51,er_SlotVolume), elemR(51,er_dSlotDepth)
-            ! print *,'done with slot etm'
-            ! print *, ' '
-
         case default 
             print *, 'CODE ERROR: unexpected case default'
             call util_crashpoint(720984)
         end select
 
-        !% --- find the slot volume/ area/ and the faces that are surcharged
-
-
-      
-
-
-            ! !% --- initialize extra volume to zero so that non-surcharged JM will
-            ! !%     not be affected. 
-            ! !%     Note that a positive value is extra volume that would be in the 
-            ! !%     slot but is lost to ponding/overflow. A negative value is the ability
-            ! !%     take take in extra volume into the slot due to ponding (only). 
-            ! VolumeExtra(thisP) = zeroR
-
-            ! !% --- compute baseline slot properties 
-            ! !%     allows SlotDepth greater than maximum allowed
-            ! where ((volume(thisP) >= fullVolume(thisP)) .and. canSurcharge(thisP))
-            !     isSlot(thisP)         = .true.
-            !     isSurcharge(thisP)    = .true.
-            !     SlotVolume(thisP)     = max(volume(thisP) - fullVolume(thisP), zeroR)
-            !     PCelerity(thisP)      = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
-            !     SlotWidth(thisP)      = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
-            !     pAreaSurcharge(thisP) = SlotWidth(thisP) * elemR(thisP,er_Length) 
-            !     SlotDepth(thisP)      = SlotVolume(thisP) / pAreaSurcharge(thisP)
-            !     !% --- difference between SlotDepth and maximum is the "extra" volume
-            !     !%     If negative, this is volume that could be filled by ponding
-            !     !%     If positive, this is volume that is added to ponding or lost 
-            !     !%     in overflow
-            !     VolumeExtra(thisP) =  (SlotDepth(thisP) - maxSlotDepth(thisP)) &
-            !                             * pAreaSurcharge(thisP)
-            ! end where
-
-            !% HACK saz 20230504: skipping volume overflow for now
-            !% --- if ponding is not allowed, there is no possibility of ponding inflow
-            !%     so VolumeExtra must be positive or zero
-            ! if (.not. setting%SWMMinput%AllowPonding) then
-            !     VolumeExtra(thisP) = max(VolumeExtra(thisP), zeroR)
-            ! end if
-
-
-            ! !% --- limit inflow volumes from ponding
-            ! if (setting%SWMMinput%AllowPonding) then  
-            !     where (VolumeExtra(thisP) < zeroR)
-            !         !% --- inflow from ponding is the smaller volume of the extra available 
-            !         !%     in the slot and the amount in the ponded volume (negative values, 
-            !         !%     so use max). If there is no ponded volume, this returns 0 for extra
-            !         !%     volume
-            !         VolumeExtra(thisP) = max(VolumeExtra(thisP), -VolumePonded(thisp) )
-            !     endwhere
-            ! end if
-
-            ! where (VolumeExtra(thisP) .ne. zeroR) 
-            !     !% --- adjust slot for ponding inflow/outflow or overflow
-            !     !%     Note that non-surcharged will have VolumeExtra == zeroR
-            !     !%     so they are not affected. A negative volume extra is
-            !     !%     adding water to the slot.
-            !     SlotVolume(thisP) = SlotVolume(thisP) - VolumeExtra(thisP)
-            !     !% --- prevent truncation error values from causing a negative
-            !     !%     slot volume.
-            !     SlotVolume(thisP)     = max(SlotVolume(thisP),zeroR)
-            !     PCelerity(thisP)      = min(TargetPCelerity / PNumber(thisP), TargetPCelerity)
-            !     SlotWidth(thisP)      = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
-            !     pAreaSurcharge(thisP) = SlotWidth(thisP) * SlotWidth(thisP)
-            !     SlotDepth(thisP)      = SlotVolume(thisP) / pAreaSurcharge(thisP) 
-            !     volume(thisP)         = volume(thisP) - VolumeExtra(thisP)
-            ! end where
-
-
-            ! !% HACK saz 20230504: do not reset volume overflow for now
-            ! !% --- note, nBarrels not needed because JM always has 1 barrel
-            ! if (setting%SWMMinput%AllowPonding) then 
-            !     VolumePonded(thisP)   = VolumePonded(thisP)   + VolumeExtra(thisP)
-            ! else
-            !     !% --- note that VolumeExtra >= 0 is guaranteed if ponding isnot used
-            !     VolumeOverflow(thisP) = VolumeExtra(thisP)
-            ! end if
-
-            ! print *, 'in slot', VolumeOverFlow
-            ! print *, SlotVolume(21), SlotDepth(21), VolumeExtra(21)
-
-    end subroutine slot_JM_ETM
+    end subroutine slot_JM
 !%
-!%==========================================================================
-!%==========================================================================
-!%
-!%
-!%==========================================================================
-!%==========================================================================
-!%
-        !%------------------------------------------------------------------
-        !% Description:
-        !%
-        !%------------------------------------------------------------------
-        !% Declarations:
-        !%------------------------------------------------------------------
-        !% Preliminaries:
-        !%------------------------------------------------------------------
-        !% Aliases:
-        !%------------------------------------------------------------------
-    
-    
-        !%------------------------------------------------------------------
-        !% Closing:
-
 !%==========================================================================
 !% END OF MODULE
 !%==========================================================================

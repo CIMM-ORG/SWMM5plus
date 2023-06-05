@@ -1,5 +1,13 @@
 module storage_geometry
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Storage geometry computations
+    !%==========================================================================
     use define_settings, only: setting
     use define_globals
     use define_indexes
@@ -10,25 +18,21 @@ module storage_geometry
 
     implicit none
 
-    !%----------------------------------------------------------------------------- 
-    !% Description:
-    !% Trapezoidal channel geometry
-    !%
-
     private
 
     public :: storage_functional_depth_from_volume
     public :: storage_tabular_depth_from_volume
     public :: storage_implied_depth_from_volume
+    public :: storage_plan_area_from_volume
     public :: storage_create_integrated_volume_curve
     public :: storage_interpolate_volume_from_depth_singular
     public :: storage_create_curve_from_function
     public :: storage_volume_from_depth_singular
-    public :: storage_implied_volume_from_depth_singular
-    public :: storage_functional_volume_from_depth_singular
-    public :: storage_tabular_volume_from_depth_singular
-    public :: storage_plan_area_from_volume
-    !public :: storage_implied_length
+    !public :: storage_implied_volume_from_depth_singular
+    !public :: storage_functional_volume_from_depth_singular
+    !public :: storage_tabular_volume_from_depth_singular
+
+
 
     contains
 !%
@@ -37,19 +41,20 @@ module storage_geometry
 !%==========================================================================    
 !%
     subroutine storage_functional_depth_from_volume (thisP, Npack)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% Only applies on JM that has storage by functional depth
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: thisP(:), Npack
-        integer, pointer :: curveID
-        real(8), pointer :: depth, fulldepth, volume
-        real(8), pointer :: aConst, aCoeff, aExpon, bb, vv
-        real(8) :: aa
-        integer :: ii
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, target, intent(in) :: thisP(:), Npack
+            integer, pointer :: curveID
+            real(8), pointer :: depth, fulldepth, volume
+            real(8), pointer :: aConst, aCoeff, aExpon, bb, vv
+            real(8) :: aa
+            integer :: ii
+        !%------------------------------------------------------------------
 
-        !% HACK: Find out a way to code this without do loop
+        !% --- HACK: Find out a way to code this without do loop
         do ii = 1,Npack
             depth     => elemR(thisP(ii),er_Depth)
             fulldepth => elemR(thisP(ii),er_FullDepth)
@@ -58,10 +63,6 @@ module storage_geometry
             aCoeff    => elemSR(thisP(ii),esr_Storage_Coefficient)
             aExpon    => elemSR(thisP(ii),esr_Storage_Exponent)
             curveID   => elemSI(thisP(ii),esi_JunctionMain_Curve_ID)
-
-
-        ! print *, 'in storage functional depth from volume'
-        ! print *, volum
 
             if (aExpon == zeroR) then
                 !% ---- if aExpon =  0, an explicit depth vs volume relation can be retrived
@@ -91,8 +92,6 @@ module storage_geometry
                 end if
             endif
 
-            !print *, thisP, volume, depth
-
             !% --- limit depth to the full depth of the element
             depth = min(depth,fulldepth)
 
@@ -104,29 +103,26 @@ module storage_geometry
 !%==========================================================================
 !%
     subroutine storage_tabular_depth_from_volume (thisP, Npack)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% Only applies on JM that has tabular storage (or non-surcharged trapezoidal conduits)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Declarations:
             integer, target, intent(in) :: thisP(:), Npack
             integer, pointer :: curveID
             real(8), pointer :: depth, fulldepth, volume
             real(8), pointer :: aConst, aCoeff, aExpon
             integer :: ii
-        !%-----------------------------------------------------------------------------
-
-        ! print *, ' '
-        ! print *, 'in storage tabular depth from volume'
-        ! print *, ' '
+        !%------------------------------------------------------------------
         
-        !% HACK: Find out a way to code this without do loop
+        !% --- HACK: Find out a way to code this without do loop
         do ii = 1, Npack
             depth     => elemR(thisP(ii),er_Depth)
             fulldepth => elemR(thisP(ii),er_FullDepth)
             volume    => elemR(thisP(ii),er_Volume)
             curveID   => elemSI(thisP(ii),esi_JunctionMain_Curve_ID)
 
-            !% interpolate from the curve
+            !% --- interpolate from the curve
             call util_curve_lookup_singular(curveID, er_Volume, er_Depth, curve_storage_volume, &
                 curve_storage_depth,1)
 
@@ -169,16 +165,6 @@ module storage_geometry
 
         !% --- limit depth to the full depth of the element
         depth(thisP) = min(depth(thisP),fulldepth(thisP))
-
-        ! !% --- Preissmann Slot
-        ! where (depth(thisP) > fulldepth(thisP))
-        !     slotVolume(thisP) = volume(thisP) - fullvolume(thisP)
-        !     depth(thisP)      = fulldepth(thisP)
-        !     slotDepth(thisP)  = slotVolume(thisP) / slotArea(thisP)
-        !     isSlot(thisP)     = .true.
-        ! endwhere
-
-        !print *, 'INSTORAGE ',volume(thisP)
        
         !%-------------------------------------------------------------------
     end subroutine storage_implied_depth_from_volume
@@ -187,15 +173,16 @@ module storage_geometry
 !%==========================================================================
 !%
     subroutine storage_plan_area_from_volume (thisP, Npack)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% Only applies on JM that has storage by functional depth
-        !%-----------------------------------------------------------------------------
-        integer, target, intent(in) :: thisP(:), Npack
-        integer, pointer :: curveID
-        real(8), pointer :: planArea, tempPArea, volume
-        integer :: ii
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, target, intent(in) :: thisP(:), Npack
+            integer, pointer :: curveID
+            real(8), pointer :: planArea, tempPArea, volume
+            integer :: ii
+        !%------------------------------------------------------------------
         do ii = 1, Npack
             tempPArea => elemR(thisP(ii),er_Temp01)
             volume    => elemR(thisP(ii),er_Volume)
@@ -222,37 +209,32 @@ module storage_geometry
 !%==========================================================================
 !%
     subroutine storage_create_integrated_volume_curve (CurveID)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% Integrate the SWMM5 area vs depth curve into volume vs depth curve
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: CurveID
-        real(8), pointer    :: depth(:), area(:), integrated_volume(:)
-        integer :: ii
-        !%-----------------------------------------------------------------------------
-        
-        !% pointers allocation
-        depth => curve(curveID)%ValueArray(:,curve_storage_depth)
-        area  => curve(curveID)%ValueArray(:,curve_storage_area)
-        integrated_volume => curve(curveID)%ValueArray(:,curve_storage_volume)
-        integrated_volume = nullvalueR
-
-        ! print *, 'Curve'
-        ! print *, 'depth ',curve(curveID)%ValueArray(:,curve_storage_depth)
-        ! print *, ' '
-        ! print *, 'area ',curve(curveID)%ValueArray(:,curve_storage_area)
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: CurveID
+            real(8), pointer    :: depth(:), area(:), integrated_volume(:)
+            integer :: ii
+        !%------------------------------------------------------------------
+        !% Aliases
+            depth => curve(curveID)%ValueArray(:,curve_storage_depth)
+            area  => curve(curveID)%ValueArray(:,curve_storage_area)
+            integrated_volume => curve(curveID)%ValueArray(:,curve_storage_volume)
+            integrated_volume = nullvalueR
+        !%------------------------------------------------------------------
 
         do ii = 1,size(curve(curveID)%ValueArray,1)
-            !print *, 'ii=',ii, depth(ii), area(ii)
+
             if (ii == 1) then
                 integrated_volume(ii) = onehalfR * depth(ii) * area(ii)
             else
                 integrated_volume(ii) = integrated_volume(ii-oneI) &
                          + onehalfR * (depth(ii) - depth(ii-1)) * (area(ii) + area(ii-1))
             end if
-            !print *, 'integrated volume ',integrated_volume(ii)
-        end do 
 
+        end do 
 
     end subroutine storage_create_integrated_volume_curve
 !%  
@@ -260,18 +242,19 @@ module storage_geometry
 !%==========================================================================
 !%
     subroutine storage_interpolate_volume_from_depth_singular (StorageIdx)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% interpolate from the storage curve to get volume (stored in elemR)
         !% from the depth (stored in elemR)
-        !%-----------------------------------------------------------------------------
-        integer, intent(in)  :: StorageIdx
-
-        integer, pointer :: curveID
-
-        character(64) :: subroutine_name = 'storage_interpolate_from_curve'
-        !%-----------------------------------------------------------------------------
-        curveID  => elemSI(StorageIdx,esi_JunctionMain_Curve_ID)
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in)  :: StorageIdx
+            integer, pointer     :: curveID
+            character(64) :: subroutine_name = 'storage_interpolate_from_curve'
+        !%------------------------------------------------------------------
+        !% Aliases
+            curveID  => elemSI(StorageIdx,esi_JunctionMain_Curve_ID)
+        !%------------------------------------------------------------------
 
         call util_curve_lookup_singular(curveID, er_Depth, er_Volume, curve_storage_depth, &
             curve_storage_volume, 1)
@@ -282,28 +265,28 @@ module storage_geometry
 !%==========================================================================
 !%
     subroutine storage_create_curve_from_function (StorageIdx)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% create an artificial storage curve for the functional storage
-        !%-----------------------------------------------------------------------------
-        integer, intent(in)  :: StorageIdx
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in)  :: StorageIdx
+            real(8), pointer     :: fullDepth, aConst, aCoeff, aExpon
+            integer, pointer     :: CurveID, nRow
+            character(64) :: subroutine_name = 'storage_create_curve_from_function'
+        !%------------------------------------------------------------------
+        !% Aliases
+            fullDepth => elemR(StorageIdx,er_FullDepth)
+            CurveID   => elemSI(StorageIdx,esi_JunctionMain_Curve_ID)
+            aConst    => elemSR(StorageIdx,esr_Storage_Constant)
+            aCoeff    => elemSR(StorageIdx,esr_Storage_Coefficient)  
+            aExpon    => elemSR(StorageIdx,esr_Storage_Exponent)
+        !%------------------------------------------------------------------
 
-        real(8), pointer :: fullDepth, aConst, aCoeff, aExpon
-        integer, pointer :: CurveID, nRow
-
-        character(64) :: subroutine_name = 'storage_create_curve_from_function'
-        !%-----------------------------------------------------------------------------
-        !% pointer allocation
-        fullDepth => elemR(StorageIdx,er_FullDepth)
-        CurveID   => elemSI(StorageIdx,esi_JunctionMain_Curve_ID)
-        aConst    => elemSR(StorageIdx,esr_Storage_Constant)
-        aCoeff    => elemSR(StorageIdx,esr_Storage_Coefficient)  
-        aExpon    => elemSR(StorageIdx,esr_Storage_Exponent)
-        
-        !% num of rows (HACK: read from a setting file)
+        !% --- num of rows (HACK: read from a setting file)
         nRow =>  setting%Junction%FunStorageN
 
-        !% add a new curveID
+        !% --- add a new curveID
         N_FunctionalStorage = N_FunctionalStorage + oneI
         CurveID  = setting%SWMMinput%N_curve + N_FunctionalStorage
       
@@ -312,7 +295,7 @@ module storage_geometry
         curve(CurveID)%NumRows  = nRow 
         curve(CurveID)%ElemIdx  = StorageIdx
 
-        !% allocate the valueArray for the new curve
+        !% --- allocate the valueArray for the new curve
         call util_allocate_curve_entries (CurveID, nRow)
 
         Curve(CurveID)%ValueArray(:,curve_storage_depth)  = util_linspace(zeroR,fullDepth,nRow)
@@ -333,23 +316,24 @@ module storage_geometry
         !% computes the volume from the depth in a junction
         !%------------------------------------------------------------------
         !% Declarations
-        integer, intent(in) :: idx
-        real(8), intent(in) :: indepth
+            integer, intent(in) :: idx
+            real(8), intent(in) :: indepth
         !%------------------------------------------------------------------
 
         select case(elemSI(idx,esi_JunctionMain_Type))
             case (NoStorage)
-                !% no storage is assigned
+                !% --- no storage is assigned
                 outvalue = zeroR   
+
             case (ImpliedStorage)
                 outvalue = storage_implied_volume_from_depth_singular(idx, indepth)
-            ! print *, 'implied storage ',outvalue
+
             case (TabularStorage)
                 outvalue = storage_tabular_volume_from_depth_singular(idx, indepth)
-            ! print *, 'tabular storage ',outvalue
+
             case (FunctionalStorage)
                 outvalue = storage_functional_volume_from_depth_singular(idx, indepth)
-            ! print *, 'functional storage ',outvalue
+
             case default
                 print *, 'CODE ERROR: unexpected case default for storage '
                 print *, 'problem in (elemSI(idx,esi_JunctionMain_Type) '
@@ -445,75 +429,4 @@ module storage_geometry
 !%    
 !%==========================================================================
 !%==========================================================================
-!%
-    ! subroutine storage_implied_length (elemPGx, Npack, thisCol)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Computes an implied length scale of the storage element
-    !     !% for tabular or functional storage elements
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
-    !         integer, pointer :: thisP(:)
-    !         real(8), pointer :: depth(:), volume(:), length(:)
-    !     !%-----------------------------------------------------------------------------
-    !     !% Aliases
-    !         if (Npack < 1) return
-    !         thisP   => elemPGx(1:Npack,thisCol) 
-    !         depth   => elemR(:,er_Depth)
-    !         volume  => elemR(:,er_Volume)
-    !         length  => elemR(:,er_Length)
-    !     !%------------------------------------------------------------------
-        
-    !     length(thisP) = sqrt(volume(thisP) / depth(thisP))    
-        
-    ! end subroutine storage_implied_length
-!%  
-!%==========================================================================
-!%==========================================================================
-!%
-!%
-!     real(8) function trapezoidal_area_from_depth_singular (indx) result (outvalue)
-!         !%-----------------------------------------------------------------------------
-!         !% Description:
-!         !% Computes area from known depth for trapezoidal cross section of a single element
-!         !% The input indx is the row index in full data 2D array.
-!         !%-----------------------------------------------------------------------------
-!         integer, intent(in) :: indx
-!         real(8), pointer :: depth(:), breadth(:), lslope(:), rslope(:)
-!         !%-----------------------------------------------------------------------------
-!         depth   => elemR(:,er_Depth)
-!         breadth => elemSGR(:,esgr_Trapezoidal_Breadth)
-!         lslope  => elemSGR(:,esgr_Trapezoidal_LeftSlope)
-!         rslope  => elemSGR(:,esgr_Trapezoidal_RightSlope)
-!         !%-----------------------------------------------------------------------------
-!         outvalue = (breadth(indx) + onehalfR * (lslope(indx) + rslope(indx)) * depth(indx)) * depth(indx)
-
-!     end function trapezoidal_area_from_depth_singular
-
-!%    
-!%==========================================================================
-!%==========================================================================
-!%
-        !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% 
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-        !%  
-!%
-!%    
-!%==========================================================================
-!%==========================================================================
-!%
-    !%  
-        !%-----------------------------------------------------------------------------
-        !% Description:
-        !% 
-        !%-----------------------------------------------------------------------------
-
-        !%-----------------------------------------------------------------------------
-        !%  
 end module storage_geometry

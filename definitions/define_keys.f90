@@ -1,25 +1,39 @@
-! module define_keys
-!
-! Provides relationship between integers and keys used for different
-! data types.
-!
-! For example, the elem2I(:,:) array has column ei_elem_type that provides
-! the index to the element type for each element. The possible values are
-! provided below as eChannel, ePipe, etc.
-!
-!==========================================================================
  module define_keys
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !%  Provides relationship between integers and keys used for different
+    !% data types.
+    !%
+    !% Methods:
+    !% For example, the elem2I(:,:) array has column ei_elem_type that provides
+    !% the index to the element type for each element. The possible values are
+    !% provided below as eChannel, ePipe, etc. 
+    !% Important difference with EPA-SWMM-C is that keys herein are unique.
+    !% that is, the integer value of 4 is guaranteed to only be assigned to a
+    !% single key. In contrast, the same value can be different keys in EPA-SWMM
+    !% as long as they refer to different classes of data. The reason for this
+    !% change is so that if a programmer mistakenly uses a key in the wrong
+    !% data class, in SWMM5+ they will get an "unexpected case default" as the
+    !% key is not one that is handled.
+    !%
+    !% NOTE: a "reverseKey()" array is provided for programmers to
+    !% be able to check the name associated with a key number at run time.
+    !% the define_keys_print... can be used for command-line printout of keys
+    !%==========================================================================
 
     use define_globals, only: reverseKey
     implicit none
     public
 
-    !% Make sure that subroutine define_keys_reverse() is updated when a
-    !% new key is added
+    !% --- Make sure that subroutine define_keys_reverse() is updated when a
+    !%     new key is added
     enum, bind(c)
-        !rm brh20211211 enumerator :: hydrology = 1         !% indicates hydrology loop
-        !rm brh20211211 enumerator :: hydraulics            !% indicates hydraulics loop
-        enumerator :: ALLtm = 1                 !% indicates elements using any time marching type
+        enumerator :: ALLtm = 1              !% indicates elements using any time marching type
         enumerator :: ETM                   !% Explicit time march elements or solver
         enumerator :: ETM_AC                !% Explicit time march and AC solver
         enumerator :: AC                    !% AC elements or solver
@@ -27,7 +41,8 @@
         enumerator :: CCDiag                !% CC and Diag elements
         enumerator :: JBDiag                !% JB and Diag elements
         enumerator :: ALL                   !% all elements
-        !% different link and their geometry types (HACK: probably could be consolidated to element types)
+
+        !% --- different link and their geometry types (HACK: probably could be consolidated to element types)
         enumerator :: lChannel              !% channel link
         enumerator :: lPipe                 !% pipe link
         enumerator :: lWeir                 !% weir link
@@ -48,14 +63,16 @@
         enumerator :: lOutlet               !% outlet link
         enumerator :: lNodeDepth            !% outlet having functional\curve flow vs depth relationship  
         enumerator :: lNodeHead             !% outlet having functional\curve flow vs head relationship 
-        !% open channel cross-sectional geometry types
+
+        !% --- open channel cross-sectional geometry types
         enumerator :: lParabolic             !% parabolic open channel
         enumerator :: lPower_function        !% power function open channel
         enumerator :: lRectangular           !% rectangular open channel
         enumerator :: lTrapezoidal           !% trapezoidal open channel
         enumerator :: lTriangular            !% triangular open channel
         enumerator :: lIrregular             !% irregular open channel
-        !% closed conduit cross-sectional geometry types
+
+        !% --- closed conduit cross-sectional geometry types
         enumerator :: lArch                  !% arch closed conduit
         enumerator :: lBasket_handle         !% basket handle closed conduit
         enumerator :: lCatenary              !% catenary closed conduit
@@ -74,18 +91,16 @@
         enumerator :: lVert_ellipse          !% vertical ellipse closed conduit    
         enumerator :: lCustom                !% custom closed conduit
         enumerator :: lForce_main            !% force main closed conduit
-        !!% different link roughness types (OBSOLETE)
-        !enumerator :: lManningsN            !% ManningsN roughness type
-        !enumerator :: lCD                   !% drag coefficient roughness type
-        !% different node types 
+
+        !% --- different node types 
         enumerator :: nJ1                   !% a node without an inflow connecting to only 1 link    
         enumerator :: nJ2                   !% junction node with 2 links
         enumerator :: nJm                   !% junction node with multiple links
         enumerator :: nStorage              !% storage node
         enumerator :: nBCdn                 !% downstream BC node
         enumerator :: nBCup                 !% upstream BC node
-        !enumerator :: nBClat                !% lateral BC node
-        !% SWMM5+ elements types
+
+        !% --- SWMM5+ elements types
         enumerator :: CC                    !% conduit or channel element
         enumerator :: weir                  !% weir element
         enumerator :: orifice               !% orifice element
@@ -93,22 +108,24 @@
         enumerator :: outlet                !% outlet element
         enumerator :: JM                    !% junction main element
         enumerator :: JB                    !% junction branch element
+        enumerator :: Diag                  !% Diagnostic element (not an element type)
         enumerator :: NoStorage             !% junction that has zero storage
         enumerator :: ImpliedStorage        !% junction main storage is artificially created
         enumerator :: FunctionalStorage     !% junction main storage is cauculated from a user provided function
         enumerator :: TabularStorage        !% junction main storage is cauculated from a user provided table
-        !enumerator :: storage               !% storage element NOT USED AS OF 20220626
         enumerator :: manhole               !% manhole elemen (HACK: not sure if we need this)
         enumerator :: dummy                 !% dummy element type
-        !% SWMM5+ CC geometry types
-        !% open channel cross-sectional geometry types
+
+        !% --- SWMM5+ CC geometry types
+        !% --- open channel cross-sectional geometry types
         enumerator :: parabolic             !% parabolic open channel
         enumerator :: power_function        !% power function open channel
         enumerator :: rectangular           !% rectangular open channel
         enumerator :: trapezoidal           !% trapezoidal open channel
         enumerator :: triangular            !% triangular open channel
         enumerator :: irregular             !% irregular open channel
-        !% closed conduit cross-sectional geometry types
+
+        !% --- closed conduit cross-sectional geometry types
         enumerator :: arch                  !% arch closed conduit
         enumerator :: basket_handle         !% basket handle closed conduit
         enumerator :: catenary              !% catenary closed conduit
@@ -127,14 +144,13 @@
         enumerator :: vert_ellipse          !% vertical ellipse closed conduit   
         enumerator :: custom                !% custom closed conduit
         enumerator :: force_main            !% force main closed conduit !% NOT A GEOMETRY TYPE IN SWMM5+
-        !% SWMM5+ CC roughness type
-        !enumerator :: ManningsN             !% ID for mannings n for roughness_type
-        !enumerator :: CD                    !% ID for using drag coefficient for roughness_type
-        !% SWMM5+ element types based on time marching
+
+        !% --- SWMM5+ element types based on time marching
         enumerator :: diagnostic            !% diagnostic element
         enumerator :: time_march            !% indicates a time marched
         enumerator :: notused               !% where no Q method is used (junctions)
-        !% SWMM5+ special element types
+
+        !% --- SWMM5+ special element types
         enumerator :: transverse_weir       !% transverse weir type
         enumerator :: side_flow             !% sideflow weir type
         enumerator :: roadway_weir          !% roadway weir type
@@ -151,52 +167,58 @@
         enumerator :: func_head_outlet      !% outlet having functional head relationship 
         enumerator :: tabl_depth_outlet     !% outlet having curve relationship to depth
         enumerator :: tabl_head_outlet      !% outlet having curve relationship to head
-        !% BC types
+
+        !% --- BC types
         enumerator :: BCFlow
         enumerator :: BCHead
-        !% BC category
+
+        !% --- BC category
         enumerator :: BCdn                  !% downstream BC
         enumerator :: BCup                  !% upstream BC
         enumerator :: BClat                 !% lateral BC
         enumerator :: BCnone                !% end face without a BC
-        !% BC subcategory (Q - flowrate)
+
+        !% --- BC subcategory (Q - flowrate)
         enumerator :: BCQ_fixed
         enumerator :: BCQ_tseries
-        !% BC subcategory (H - head)
+
+        !% --- BC subcategory (H - head)
         enumerator :: BCH_free             !% minimum of critical flow depth an normal flow depth
         enumerator :: BCH_normal           !% outfall stage based on normal flow depth in connecting conduit
         enumerator :: BCH_fixed            !% outfall stage set to a fixed value
         enumerator :: BCH_tidal            !% outfall stage given by a table of tide elevation versus time of day
         enumerator :: BCH_tseries          !% outfall stage supplied from a time series of elevations
-        !% Culvert in/out types
+
+        !% --- Culvert in/out types
         enumerator :: Culvert_Inlet        !% inlet-only element of multi-element culvert
         enumerator :: Culvert_Outlet       !% outlet-only element of multi-element culvert
         enumerator :: Culvert_InOut        !% single element culvert
         enumerator :: Culvert_Barrel       !% interior elements of multi-element culvert
-        !% face jump types
+
+        !% --- face jump types
         enumerator :: jump_none             !% type of hydraulic jump
         enumerator :: jump_from_upstream    !% type of hydraulic jump
         enumerator :: jump_from_downstream  !% type of hydraulic jump
-        !% type of momentum source
+
+        !% --- type of momentum source
         enumerator :: T00                   !% type of momentum source
         enumerator :: T10                   !% type of momentum source
         enumerator :: T20                   !% type of momentum source
         enumerator :: T10s2                 !% type of momentum source
         enumerator :: TA1                   !% type of momentum source
         enumerator :: TA2                   !% type of momentum source
-        !% type of face interpolation for downstream JB
+
+        !% --- type of face interpolation for downstream JB
         enumerator :: static
         enumerator :: dynamic
-        !% setting%Junction%Method
-        enumerator :: Explicit1
-        enumerator :: Explicit2 
-        enumerator :: Implicit0
+
         !% type of junction overflow
         enumerator :: NoOverflow
         enumerator :: PondedWeir
         enumerator :: PondedOrifice 
         enumerator :: OverflowWeir
         enumerator :: OverflowOrifice
+
         !% MISC keys
         enumerator :: doesnotexist          !% used in various places to indicate something doesn't exist
         enumerator :: vshape                !% type of adjustment
@@ -204,6 +226,7 @@
         enumerator :: vshape_freesurface_CC !% only freesurface elements adjusted
         enumerator :: vshape_surcharge_CC   !% type of adjustment
         enumerator :: FroudeNumber          !% data types for limiter BC approachs
+
         ! data types for Partitioing Algorithm type (setting%Partitioning%PartitioningMethod)
         enumerator :: Default
         enumerator :: BQuick
@@ -211,21 +234,25 @@
         enumerator :: BLink
         enumerator :: StaticSlot
         enumerator :: DynamicSlot
+
         !% keys for report time processing
         enumerator :: InSeconds
         enumerator :: InMinutes
         enumerator :: InHours  
         enumerator :: InDays    
+
         !% keys for output link processing
         enumerator :: AverageElements
         enumerator :: SumElements
         enumerator :: MaximumValue
         enumerator :: SingleValue
+
         !% keys for output FeatureType
         enumerator :: LinkOut
         enumerator :: NodeOut
         enumerator :: NodeElemOut
         enumerator :: NodeFaceOut
+
         !% keys for curve types
         enumerator :: StorageCurve             !% surf. area v. depth for storage node
         enumerator :: DiversionCurve           !% diverted flow v. inflow for divider node
@@ -238,18 +265,21 @@
         enumerator :: Pump2Curve               !% flow v. depth for pump (discrete)
         enumerator :: Pump3Curve               !% flow v. head for pump (continuous)
         enumerator :: Pump4Curve               !% flow v. depth for pump (continuous)
+
         !% keys for minimum element size adjustment
-        !enumerator :: ElemLengthAdjust         !% only adjust the element length and set it to user defined min
         enumerator :: RawElemLength            !% keep the raw data and do not adjust
+
         !% data types used for ZeroValues
         enumerator :: DepthValue
         enumerator :: VolumeValue
         enumerator :: AreaValue
+
         !% keys for initial depth distribution
         enumerator :: LinearlyVaryingDepth
         enumerator :: UniformDepth
         enumerator :: ExponentialDepth
         enumerator :: FixedHead
+
         !% Keys for uniformTable data types
         enumerator :: DepthData
         enumerator :: AreaData
@@ -257,75 +287,27 @@
         enumerator :: VolumeData
         enumerator :: SectionFactorData
         enumerator :: QcriticalData
+
         !% Keys for Force Main
         enumerator :: NotForceMain
         enumerator :: HazenWilliams
         enumerator :: DarcyWeisbach
+
         !% Keys for roadway weir
         enumerator :: Paved
         enumerator :: Gravel
         enumerator :: NoRoadSurface
-        ! !% Keys for Culvert
-        !% brh 20220927 -- at this point, the culvert codes are not stored
-        !% as standard keys, but are numbers 1-57 providing the index
-        !% into the culvertValue
-        ! enumerator :: CircularConcrete_01
-        ! enumerator :: CircularConcrete_02
-        ! enumerator :: CircularConcrete_03
-        ! enumerator :: CircularCorrugatedMetalPipe_04
-        ! enumerator :: CircularCorrugatedMetalPipe_05
-        ! enumerator :: CircularCorrugatedMetalPipe_06
-        ! enumerator :: CircularPipeBeveledRingEntrance_07
-        ! enumerator :: CircularPipeBeveledRingEntrance_08
-        ! enumerator :: RectangularBoxFlaredWingwalls_09
-        ! enumerator :: RectangularBoxFlaredWingwalls_10
-        ! enumerator :: RectangularBoxFlaredWingwalls_11
-        ! enumerator :: RectangularBoxFlaredWingwalls_12
-        ! enumerator :: RectangularBoxFlaredWingwalls_13
-        ! enumerator :: RectangularBox90degHeadwall_14
-        ! enumerator :: RectangularBox90degHeadwall_15
-        ! enumerator :: RectangularBox90degHeadwall_16
-        ! enumerator :: RectangularBoxSkewedHeadwall_17
-        ! enumerator :: RectangularBoxSkewedHeadwall_18
-        ! enumerator :: RectangularBoxSkewedHeadwall_19
-        ! enumerator :: RectangularBoxSkewedHeadwall_20
-        ! enumerator :: RectangularBoxNonOffsetFlaredWingwalls_21
-        ! enumerator :: RectangularBoxNonOffsetFlaredWingwalls_22
-        ! enumerator :: RectangularBoxNonOffsetFlaredWingwalls_23
-        ! enumerator :: RectangularBoxNonOffsetFlaredWingwalls_24
-        ! enumerator :: RectangularBoxNonOffsetFlaredWingwalls_25
-        ! enumerator :: RectangularBoxNonOffsetFlaredWingwalls_26
-        ! enumerator :: CorrugatedMetalBox_27
-        ! enumerator :: CorrugatedMetalBox_28
-        ! enumerator :: CorrugatedMetalBox_29
-        ! enumerator :: HorizontalEllipseConcrete_30
-        ! enumerator :: HorizontalEllipseConcrete_31
-        ! enumerator :: HorizontalEllipseConcrete_32
-        ! enumerator :: VerticalEllipseConcrete_33
-        ! enumerator :: VerticalEllipseConcrete_34
-        ! enumerator :: VerticalEllipseConcrete_35
-        ! enumerator :: PipeArch18inCornerRadius_36
-        ! enumerator :: PipeArch18inCornerRadius_37
-        ! enumerator :: PipeArch18inCornerRadius_38
-        ! enumerator :: PipeArch18inCornerRadius_39
-        ! enumerator :: PipeArch18inCornerRadius_40
-        ! enumerator :: PipeArch18inCornerRadius_41
-        ! enumerator :: PipeArch31inCornerRadius_42
-        ! enumerator :: PipeArch31inCornerRadius_43
-        ! enumerator :: PipeArch31inCornerRadius_44
-        ! enumerator :: ArchCorrugatedMetal_45
-        ! enumerator :: ArchCorrugatedMetal_46
-        ! enumerator :: ArchCorrugatedMetal_47
-        ! enumerator :: CircularCulvert_48
-        ! enumerator :: CircularCulvert_49
-        ! enumerator :: EllipticalInletFace_50
-        ! enumerator :: EllipticalInletFace_51
-        ! enumerator :: EllipticalInletFace_52
-        ! enumerator :: Rectangular_53
-        ! enumerator :: RectangularConcrete_54
-        ! enumerator :: RectangularConcrete_55
-        ! enumerator :: RectangularConcrete_56
-        ! enumerator :: RectangularConcrete_57
+
+        !% --- for link adjustment
+        enumerator :: NoAdjust         !% no link length adjustment has done
+        enumerator :: OneSideAdjust    !% one sided link length adjustment has done
+        enumerator :: BothSideAdjust   !% both sided link length adjustment has done
+        enumerator :: DiagAdjust       !% if the connected link is an diagnostic element
+
+        ! --- default for edge and non-edge node
+        enumerator :: nonEdgeNode      ! Upstream BC nodes are assigned to 1 element
+        enumerator :: EdgeNode         ! Edge node of a partition
+ 
         !% last items for bookkeeping
         enumerator :: SWMM_FlowUnits_CFS
         enumerator :: SWMM_FlowUnits_GPM
@@ -365,10 +347,6 @@
         !% Description:
         !% creates the reverseKey global that provide the string 
         !% name for the keys defined in define_keys
-        !%------------------------------------------------------------------
-        !% Declarations
-        !%------------------------------------------------------------------
-        !% Preliminaries
         !%------------------------------------------------------------------
         !% allocate the global space for the reverse keys
         allocate(reverseKey(keys_lastplusone))
@@ -426,15 +404,12 @@
         reverseKey(lSemi_circular) = 'lSemi_circular'
         reverseKey(lCustom) = 'lCustom'
         reverseKey(lForce_main) = 'lForce_main'
-        !reverseKey(lManningsN) = 'lManningsN'
-        !reverseKey(lCD) = 'lCD'
         reverseKey(nJ1) = 'nJ1'
         reverseKey(nJ2) = 'nJ2'
         reverseKey(nJm) = 'nJm'
         reverseKey(nStorage) = 'nStorage'
         reverseKey(nBCdn) = 'nBCdn'
         reverseKey(nBCup) = 'nBCup'
-        !reverseKey(nBClat) = 'nBClat'
         reverseKey(CC) = 'CC'
         reverseKey(weir) = 'weir'
         reverseKey(orifice) = 'orifice'
@@ -446,7 +421,6 @@
         reverseKey(ImpliedStorage) = 'ImpliedStorage'
         reverseKey(FunctionalStorage) = 'FunctionalStorage'
         reverseKey(TabularStorage) = 'TabularStorage'
-        !reverseKey(storage) = 'storage'
         reverseKey(manhole) = 'manhole'
         reverseKey(dummy) = 'dummy'
         reverseKey(rectangular) = 'rectangular'
@@ -473,8 +447,6 @@
         reverseKey(semi_circular) = 'semi_circular'
         reverseKey(custom) = 'custom'
         reverseKey(force_main) = 'force_main'
-        !reverseKey(ManningsN) = 'ManningsN'
-        !reverseKey(CD) = 'CD'
         reverseKey(diagnostic) = 'diagnostic'
         reverseKey(time_march) = 'time_march'
         reverseKey(notused) = 'notused'
@@ -522,9 +494,6 @@
         reverseKey(TA2) = 'TA2'
         reverseKey(static) = 'static'
         reverseKey(dynamic) = 'dynamic'
-        reverseKey(Explicit1) = 'Explicit1'
-        reverseKey(Explicit2) = 'Explicit2'
-        reverseKey(Implicit0)  = 'Implicit0'
         reverseKey(NoOverflow) = 'NoOverflow'
         reverseKey(PondedWeir) = 'PondedWeir'
         reverseKey(PondedOrifice) = 'PondedOrifice'
@@ -564,7 +533,6 @@
         reverseKey(Pump2Curve) = 'Pump2Curve'
         reverseKey(Pump3Curve) = 'Pump3Curve'
         reverseKey(Pump4Curve) = 'Pump4Curve'
-        !reverseKey(ElemLengthAdjust) = 'ElemLengthAdjust'
         reverseKey(RawElemLength) = 'RawElemLength'
         reverseKey(DepthValue)  = 'DepthValue'
         reverseKey(VolumeValue) = 'VolumeValue'
@@ -648,10 +616,6 @@
         !% Description:
         !% prints all the keys from define_keys in alphabetical order (for debugging)
         !%------------------------------------------------------------------
-        !% Declarations
-        !%------------------------------------------------------------------
-        !% Preliminaries
-        !%------------------------------------------------------------------
 
         write(*,'(A," = ",i4)') trim(reverseKey(AC)) , AC
         write(*,'(A," = ",i4)') trim(reverseKey(ALL)) , ALL
@@ -681,7 +645,6 @@
         write(*,'(A," = ",i4)') trim(reverseKey(CCJM)) , CCJM
         write(*,'(A," = ",i4)') trim(reverseKey(CCDiag)) , CCDiag
         write(*,'(A," = ",i4)') trim(reverseKey(JBDiag)), JBDiag
-        !write(*,'(A," = ",i4)') trim(reverseKey(CD)) , CD
         write(*,'(A," = ",i4)') trim(reverseKey(circular)) , circular
         write(*,'(A," = ",i4)') trim(reverseKey(ControlCurve)) , ControlCurve
         write(*,'(A," = ",i4)') trim(reverseKey(custom)) , custom
@@ -694,11 +657,8 @@
         write(*,'(A," = ",i4)') trim(reverseKey(dummy)) , dummy
         write(*,'(A," = ",i4)') trim(reverseKey(dynamic)) , dynamic
         write(*,'(A," = ",i4)') trim(reverseKey(eggshaped)) , eggshaped
-        !write(*,'(A," = ",i4)') trim(reverseKey(ElemLengthAdjust)) , ElemLengthAdjust
         write(*,'(A," = ",i4)') trim(reverseKey(ETM)) , ETM
         write(*,'(A," = ",i4)') trim(reverseKey(ETM_AC)) , ETM_AC
-        write(*,'(A," = ",i4)') trim(reverseKey(Explicit1)),Explicit1 
-        write(*,'(A," = ",i4)') trim(reverseKey(Explicit2)),Explicit2
         write(*,'(A," = ",i4)') trim(reverseKey(filled_circular)) , filled_circular
         write(*,'(A," = ",i4)') trim(reverseKey(force_main)) , force_main
         write(*,'(A," = ",i4)') trim(reverseKey(FroudeNumber)) , FroudeNumber
@@ -710,7 +670,6 @@
         write(*,'(A," = ",i4)') trim(reverseKey(HazenWilliams)), HazenWilliams
         write(*,'(A," = ",i4)') trim(reverseKey(horseshoe)) , horseshoe
         write(*,'(A," = ",i4)') trim(reverseKey(horiz_ellipse)) , horiz_ellipse
-        write(*,'(A," = ",i4)') trim(reverseKey(Implicit0)), Implicit0
         write(*,'(A," = ",i4)') trim(reverseKey(ImpliedStorage)) , ImpliedStorage
         write(*,'(A," = ",i4)') trim(reverseKey(InDays)) , InDays
         write(*,'(A," = ",i4)') trim(reverseKey(InHours)) , InHours
@@ -727,7 +686,6 @@
         write(*,'(A," = ",i4)') trim(reverseKey(lBasket_handle)) , lBasket_handle
         write(*,'(A," = ",i4)') trim(reverseKey(lBottomOrifice)) , lBottomOrifice
         write(*,'(A," = ",i4)') trim(reverseKey(lCatenary)) , lCatenary
-        !write(*,'(A," = ",i4)') trim(reverseKey(lCD)) , lCD
         write(*,'(A," = ",i4)') trim(reverseKey(lCircular)) , lCircular
         write(*,'(A," = ",i4)') trim(reverseKey(lChannel)) , lChannel
         write(*,'(A," = ",i4)') trim(reverseKey(lEggshaped)) , lEggshaped
@@ -737,7 +695,6 @@
         write(*,'(A," = ",i4)') trim(reverseKey(lHoriz_ellipse)) , lHoriz_ellipse
         write(*,'(A," = ",i4)') trim(reverseKey(lHorseshoe)) , lHorseshoe
         write(*,'(A," = ",i4)') trim(reverseKey(lIrregular)) , lIrregular
-        !write(*,'(A," = ",i4)') trim(reverseKey(lManningsN)) , lManningsN
         write(*,'(A," = ",i4)') trim(reverseKey(lMod_basket)) , lMod_basket
         write(*,'(A," = ",i4)') trim(reverseKey(lNodeDepth)) , lNodeDepth
         write(*,'(A," = ",i4)') trim(reverseKey(lNodeHead)) , lNodeHead
@@ -770,11 +727,9 @@
         write(*,'(A," = ",i4)') trim(reverseKey(lWeir)) , lWeir
         write(*,'(A," = ",i4)') trim(reverseKey(LinkOut)) , LinkOut
         write(*,'(A," = ",i4)') trim(reverseKey(manhole)) , manhole
-        !write(*,'(A," = ",i4)') trim(reverseKey(ManningsN)) , ManningsN
         write(*,'(A," = ",i4)') trim(reverseKey(MaximumValue)) , MaximumValue
         write(*,'(A," = ",i4)') trim(reverseKey(mod_basket)) , mod_basket
         write(*,'(A," = ",i4)') trim(reverseKey(nBCdn)) , nBCdn
-       !write(*,'(A," = ",i4)') trim(reverseKey(nBClat)) , nBClat
         write(*,'(A," = ",i4)') trim(reverseKey(nBCup)) , nBCup
         write(*,'(A," = ",i4)') trim(reverseKey(nJ1)) , nJ1
         write(*,'(A," = ",i4)') trim(reverseKey(nJ2)) , nJ2
@@ -816,7 +771,6 @@
         write(*,'(A," = ",i4)') trim(reverseKey(SingleValue)) , SingleValue
         write(*,'(A," = ",i4)') trim(reverseKey(static)) , static
         write(*,'(A," = ",i4)') trim(reverseKey(StaticSlot)) , StaticSlot
-        !write(*,'(A," = ",i4)') trim(reverseKey(storage)) , storage
         write(*,'(A," = ",i4)') trim(reverseKey(StorageCurve)) , StorageCurve
         write(*,'(A," = ",i4)') trim(reverseKey(SumElements)) , SumElements
         write(*,'(A," = ",i4)') trim(reverseKey(T00)) , T00

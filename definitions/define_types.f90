@@ -1,17 +1,23 @@
-! module define_types
-!
-! These are derived type definitions that are used in globals, setting, and
-! elsewhere.
-!
-! Note that each of these is intended to be dependent only on derived
-! types within this module.
-!
-! Types that are defined outside of here or setting_definition should
-! be confined to the module in which they are defined.
-!
-!==========================================================================
 module define_types
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Defines types used globally in SWMM5+
+    !%
+    !% Methods
+    !% These are derived type definitions that are used in globals, setting, and
+    !% elsewhere.
+    !
+    !% Note that each of these is intended to be dependent only on derived
+    !% types within this module.
+    !
+    !% Types that are defined outside of here or setting_definition should
+    !% be confined to the module in which they are defined.
+    !%==========================================================================
     implicit none
 
     type string
@@ -77,7 +83,6 @@ module define_types
     end type NodeArray
 
     type LinkArray
-      !  integer,      allocatable :: SWMMlinkI(:,:)[:]  !% integer data for original SWMM link system
         integer,      allocatable :: I(:,:)[:]   !% integer data for links
         real(8),      allocatable :: R(:,:)[:]   !% real data for links
         logical,      allocatable :: YN(:,:)[:]  !% logical data for links
@@ -96,7 +101,7 @@ module define_types
     end type BoundaryElemArray
 
     type BCPack
-        !% We initialze the pack array for BC interpolation use later
+        !% --- initialization of the the pack array for BC interpolation is later
         integer, allocatable :: BCup(:)
         integer, allocatable :: BClat(:)
         integer, allocatable :: BCdn(:)
@@ -107,8 +112,6 @@ module define_types
         real(8),     allocatable :: flowR(:,:)
         logical,     allocatable :: flowYN(:,:)             !% logical data for inflow BCs
         real(8),     allocatable :: flowTimeseries(:,:,:) !% time series data for inflow BC
-        !integer,     allocatable :: flow_idx(:)              !% indexes of current entry in flowR_timeseries
-        !real(8),     allocatable :: flow_value(:)          !% values of interpolated inflows at current time
         integer,     allocatable :: headI(:,:)              !% integer data for elevation BCs
         real(8),     allocatable :: headR(:,:)
         logical,     allocatable :: headYN(:,:)             !% logical data for head BCs
@@ -135,6 +138,5 @@ module define_types
        integer :: max_num_jobs = 0
        integer :: num_jobs = 0
     end type wall_clk
-
-    
+ 
 end module define_types

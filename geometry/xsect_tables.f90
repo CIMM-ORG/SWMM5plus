@@ -5,7 +5,15 @@
 !
 !==========================================================================
 module xsect_tables
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Tables for transect cross-section geometry
+    !%==========================================================================
     use define_indexes
     use define_globals
     use define_settings
@@ -45,6 +53,7 @@ contains
         !% NOTE: this is not efficient and generally should only be used
         !% in the initialization
         !%------------------------------------------------------------------
+        !% Declarations:
             real(8), intent(in) :: yValue
             real(8), intent(in) :: table(:)
 
@@ -62,18 +71,6 @@ contains
         nItems = size(table)
         delta  = oneR / real(nItems-oneI,8)
 
-        ! print *, 'yValue in ',yValue
-        ! print *, 'delta     ',delta
-        ! print *, 'nItems    ',nItems
-        ! print *, 'eps       ',yEps
-        ! print *, ' '
-
-        ! print *, 'This Table, i, x, y'
-        ! do ii = 1,nItems
-        !     print *, ii, real(ii-1)*delta, table(ii)
-        ! end do
-        ! print *, ' '
-
         if (yValue > table(nItems)) then 
             print *, 'CODE OR CONFIGURATION ERROR:'
             print *, 'yValue input into xsect_find_x_matching_y is larger than'
@@ -88,27 +85,19 @@ contains
         do ii=2,nItems
             !% --- iterate through to find where the yValue lies in the table
 
-            ! write(*,"(A,3f12.8)") 'yvalue ', table(ii-oneI), yValue, table(ii)
-
             if ((yValue .ge. (table(ii-oneI) - yEps)) .and. (yValue .le. (table(ii-oneI) + yEps))) then 
                 !% --- exact match found for a table entery
-                    ! print *, 'exact match'
                 outvalue = delta * real(ii-twoI,8)
                 isfinished = .true.
                 exit  ! leave the loop
             elseif ((table(ii-oneI) < yValue) .and. (yValue < table(ii))) then
                 !% --- apply linear interpolation and check if that is the solution
-                !%   yvalue between the limits of these table entries
-                !%   use linear interpolation for the output value
-                    ! print *, 'between ii ',ii-1, ii
+                !%     yvalue between the limits of these table entries
+                !%     use linear interpolation for the output value
                 dy = table(ii) - table(ii-oneI)
-                    ! print *, 'dy         ',dy
                 yfrac = yValue - table(ii-oneI)
-                    ! print *, 'yfrac      ',yfrac
                 xGuess = delta * real(ii-twoI,8) + delta * yfrac /dy
-                    ! print *, 'xGuess   ',xGuess
                 yGuess = xsect_table_lookup_singular(xGuess,table)
-                    ! print *, 'YGuess   ',yGuess
                 if ((yGuess .ge. yValue - yEps) &
                     .and. &
                     (yGuess .le. yValue + yEps)) then
@@ -121,11 +110,8 @@ contains
                     !%     level of yEps
                     dx = delta / 10.d0 
                     yErr   = yGuess - yValue
-                        ! print *, 'starting '
-                        ! print *, xGuess, yGuess, yErr
                     nCycle = 0
                     do while (abs(yErr) > yEps)
-                            ! print *, '  new cycle'
                         nCycle = nCycle + oneI
                         if (yGuess < yValue ) then
                             !% -- guess is smaller than value
@@ -139,12 +125,10 @@ contains
                                 isfinished = .true.
                                 outvalue = xGuess+dx
                             elseif (yValue < yAdj) then
-                                    ! print *, 'bracketed from down'
                                 !% --- bracketed 
                                 xGuess = xGuess + (yValue - yGuess) * dx / (yAdj - yGuess)
                                 dx = dx / twoR
                             else
-                                    ! print *, 'guess smaller'
                                 !% --- guess is still smaller than value
                                 xGuess = xGuess + dx
                             end if
@@ -160,12 +144,10 @@ contains
                                 isfinished = .true.
                                 outvalue = xGuess-dx
                             elseif (yValue > yAdj) then
-                                    ! print *, 'bracketed from up'
                                 !% --- bracketed 
                                 xGuess = xGuess - (yGuess - yValue) * dx / (yGuess - yAdj)
                                 dx = dx / twoR
                             else
-                                    ! print *, 'guess is larger'
                                 !% --- guess is still larger than value
                                 xGuess = xGuess - dx
                             end if
@@ -179,9 +161,6 @@ contains
                             outvalue = xGuess 
                         end if
 
-                            ! print *, 'at end '
-                            ! print *, xGuess, yGuess, yErr
-
                         if (nCycle .ge. maxCycle) exit
                     end do
                 end if
@@ -190,21 +169,11 @@ contains
             end if
         end do
 
-        ! print *, ' '
-        ! print *, 'at end '
-        ! print *, 'outvalue ',outvalue 
-        ! print *, 'y from x ', xsect_table_lookup_singular(outvalue,table)
-        ! print *, 'yValue in', yValue
-        ! print *, ' '
-
         if (.not. isfinished) then 
             print *, 'CODE ERROR:'
             print *, 'failed to find interpolated value from table'
             call util_crashpoint(3395872)
         end if
-
-        !stop 666987
-   
 
     end function xsect_find_x_matching_y
 !%
@@ -214,7 +183,7 @@ contains
 !%
     pure subroutine xsect_table_lookup &
         (inoutArray, normalizedInput, table, thisP)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% interpolates the normalized value from the lookup table.
         !% this subroutine is vectorized array operation when all the values in
@@ -224,21 +193,17 @@ contains
         !% for every interval. This allows the normalized input to be divded by
         !% the delta to return the position in the array.
         !%
-        !%-----------------------------------------------------------------------------
-        real(8), intent(inout)           :: inoutArray(:)
-        real(8), intent(in)              :: normalizedInput(:), table(:)
-        integer, intent(in)              :: thisP(:)
-        integer, dimension(size(thisP))  :: position
-        integer                          :: nItems, ii
-        real(8)                          :: delta
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), intent(inout)           :: inoutArray(:)
+            real(8), intent(in)              :: normalizedInput(:), table(:)
+            integer, intent(in)              :: thisP(:)
+            integer, dimension(size(thisP))  :: position
+            integer                          :: nItems, ii
+            real(8)                          :: delta
+        !%------------------------------------------------------------------
 
         nItems = size(table)
-
-        !% pointer towards the position in the lookup table
-        !% this is pointed towards temporary column
-        !% 20221011 brh -- removed temporary space to make this subroutine pure
-        !position => elemI(:,ei_Temp01) 
 
         delta = oneR / (real(nItems,8) - oneR)
 
@@ -252,14 +217,14 @@ contains
              position = nItems
         endwhere
 
-        !% find the normalized output from the lookup table
+        !% --- find the normalized output from the lookup table
         where (position .LT. oneI)
             inoutArray(thisP) = zeroR
 
         elsewhere ( (position .GE. oneI  ) .and. &
                     (position .LT. nItems) )
 
-            !%  Y = Y_a + (Y_b-Y_a)*(X_0-X_a)/(X_b-X_a)
+            !%  --- Y = Y_a + (Y_b-Y_a)*(X_0-X_a)/(X_b-X_a)
             inoutArray(thisP) = table(position) &
                                 + (normalizedInput(thisP) - real((position - oneI),8) * delta) &
                                  *(table(position + oneI) - table(position)) / delta
@@ -268,7 +233,7 @@ contains
             inoutArray(thisP) = table(nItems)
         endwhere
 
-        !% quadratic interpolation for low value of normalizedInput
+        !% --- quadratic interpolation for low value of normalizedInput
         where (position .LE. twoI)
             inoutArray(thisP) = max(zeroR,                                                   &
                     inoutArray(thisP)                                                        & 
@@ -287,7 +252,7 @@ contains
 !%
     subroutine xsect_table_lookup_array &
         (inoutArray, normalizedInput, table, thisP)   
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% interpolates the normalized value from the lookup table.
         !% This subroutine handles the case where each element in thisP must
@@ -301,16 +266,16 @@ contains
         !% truncted to the table max or min values to be consistent with the
         !% lookup interpolation.
         !%
-        !%-----------------------------------------------------------------------------
-        real(8), intent(inout)    :: inoutArray(:)
-        real(8), intent(inout)    :: normalizedInput(:)
-        real(8), intent(in)       :: table(:,:)
-        integer, intent(in)       :: thisP(:)
-        integer, pointer          :: position(:), tidx(:)
-        integer                   :: nItems, ii, kk
-        real(8)                   :: delta
-        !%-----------------------------------------------------------------------------
-        !if (crashYN) return
+        !%------------------------------------------------------------------
+        !% Declarations:
+            real(8), intent(inout)    :: inoutArray(:)
+            real(8), intent(inout)    :: normalizedInput(:)
+            real(8), intent(in)       :: table(:,:)
+            integer, intent(in)       :: thisP(:)
+            integer, pointer          :: position(:), tidx(:)
+            integer                   :: nItems, ii, kk
+            real(8)                   :: delta
+        !%------------------------------------------------------------------
 
         nItems = size(table,2)
 
@@ -361,22 +326,7 @@ contains
             end if
         end do
 
-        ! !% quadratic interpolation for low value of normalizedInput
-        ! where (position(thisP) .LE. twoI)
-        !     inoutArray(thisP) = max(zeroR,                                                   &
-        !             inoutArray(thisP)                                                        & 
-        !             + (  (normalizedInput(thisP) - real((position(thisP) - oneI),8) * delta) &
-        !                 *(normalizedInput(thisP) - real((position(thisP)       ),8) * delta) &
-        !                  / (delta*delta) )                                                   &
-        !              *(   onehalfR * table(tidx(thisP),position(thisP)     )                             &
-        !                 -            table(tidx(thisP),position(thisP)+oneI)                             &
-        !                 + onehalfR * table(tidx(thisP),position(thisP)+twoI) ) )
-        !             !%(inoutArray(thisP) + (inoutArray(thisP) - delta) * &
-        !             !%(inoutArray(thisP) - twoI * delta) / (delta*delta) *         &
-        !             !%(table(oneI)/twoR - table(twoI)  +  table(threeI) / twoR)) )
-        ! endwhere
-
-        !% reset the temporary values to nullvalue
+        !% --- reset the temporary values to nullvalue
         position(thisP) = nullvalueI
 
     end subroutine xsect_table_lookup_array
@@ -386,7 +336,7 @@ contains
 !%
     real(8) function xsect_table_lookup_singular &
         (normalizedInput, table) result (outvalue)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% interpolatesfrom the lookup table. 
         !% 
@@ -395,37 +345,31 @@ contains
         !% Output is NOT separately normalized, but the table output value (which might
         !% be normalized or not).
         !% this function is singular operation.
-        !%-----------------------------------------------------------------------------
-        real(8), intent(in)       :: normalizedInput, table(:)
-        integer                   :: nItems
-        integer                   :: position
-        integer                   :: ii
-        real(8)                   :: delta
-        !%----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Declarations:
+            real(8), intent(in)       :: normalizedInput, table(:)
+            integer                   :: nItems
+            integer                   :: position
+            integer                   :: ii
+            real(8)                   :: delta
+        !%------------------------------------------------------------------
 
         nItems = size(table)
 
         delta = oneR / (real(nItems,8) - oneR)
 
-        ! do ii=1,nItems 
-        !     print *, ii, table(ii)
-        ! end do
-
         !% --- Compute the floor (integer not exceeding normalized/delta)
         !%     that is the lower index position in the lookup table
         position = int(normalizedInput / delta) + oneI
 
-        ! print *, 'position ',position
-        ! print *,  'norm input, delta ', normalizedInput, delta
-
-        !% find the normalized output from the lookup table
+        !% --- find the normalized output from the lookup table
         if (position .LT. oneI) then
             outvalue = zeroR
 
         else if ( (position .GE. oneI   ) .and. &
                   (position .LT. nItems ) ) then
 
-            !%  Y = Y_a + (Y_b-Y_a)*(X_0-X_a)/(X_b-X_a)
+            !% --- Y = Y_a + (Y_b-Y_a)*(X_0-X_a)/(X_b-X_a)
             outvalue = table(position) &
                                 + (normalizedInput - real((position - oneI),8) * delta) &
                                  *(table(position+oneI) - table(position)) / delta
@@ -433,25 +377,18 @@ contains
         else if (position .GE. nItems) then
             outvalue = table(nItems)
         end if
-        
-        !print *, 'output 1', outvalue
 
-        !% quadratic interpolation for low value of normalizedInput
+        !% --- quadratic interpolation for low value of normalizedInput
         if (position .LE. twoI) then
-            outvalue = max(zeroR,                                             &
-                    outvalue                                                 &
+            outvalue = max(zeroR,                                           &
+                    outvalue                                                &
                     + ( (normalizedInput - real((position - oneI),8)*delta) &
                        *(normalizedInput - real((position       ),8)*delta) &
                        / (delta * delta)  )                                 &
                      *(   onehalfR * table(position)                        &
                         -            table(position + oneI)                 &
                         + onehalfR * table(position + twoI) ) )
-                    ! (normalizedOutput + (normalizedOutput - delta) * &
-                    ! (normalizedOutput - twoI * delta) / (delta*delta) *         &
-                    ! (table(oneI)/twoR - table(twoI)  +  table(threeI) / twoR)) )
         end if
-
-        !print *, 'output 2', outvalue
 
     end function xsect_table_lookup_singular
 !%
@@ -476,8 +413,6 @@ contains
             logical, intent(in)  :: isFirstCall
             integer :: nItems, ii, kk
             character(64) :: subroutine_name = 'xsect_nonuniform_lookup_singular'
-        !%-----------------------------------------------------------------
-        !% Aliases
         !%-----------------------------------------------------------------
         !% Preliminaries
             !% --- error checking the first time called
@@ -530,107 +465,7 @@ contains
 
     end function xsect_nonuniform_lookup_singular
 !%
+!==========================================================================
+!% END OF MODULE xsect_tables
 !%==========================================================================
-!%==========================================================================
-       ! pure function table_lookup &
-    !     (normalizedInput, table, nItems) result(normalizedOutput)
-        !
-        ! table lookup function. This function is single operation
-        !
-        ! real(8),      intent(in)      :: table(:)
-        ! real(8),      intent(in)      :: normalizedInput
-        ! integer,   intent(in)      :: nItems
-
-        ! real(8)     :: normalizedOutput, normalizedOutput2
-        ! real(8)     :: delta, startPos, endPos
-        ! integer  :: ii
-
-        ! !--------------------------------------------------------------------------
-        ! !% find which segment of table contains x
-        ! delta = oneR / (nItems - oneR)
-
-        ! ii = int(normalizedInput / delta)
-
-        ! if     ( ii .GE. (nItems - oneI) ) then
-
-        !     normalizedOutput = table(nItems)
-
-        ! elseif ( ii .LE. zeroI) then
-
-        !     normalizedOutput = zeroR
-
-        ! else
-
-        !     startPos = ii * delta
-        !     endPos   = (ii + oneI) * delta
-
-        !     normalizedOutput = table(ii) + (normalizedInput - startPos) * &
-        !         (table(ii + oneI) - table(ii)) / delta
-
-        !     if (ii == oneI) then
-        !         ! use quadratic interpolation for low x value
-        !         normalizedOutput2 = normalizedOutput + (normalizedInput - startPos) &
-        !             * (normalizedInput - endPos) / (delta*delta) * (table(ii)/2.0 - table(ii+1) &
-        !             + table(ii+2)/2.0)
-
-        !         if ( normalizedOutput2 > 0.0 ) then
-        !             normalizedOutput = normalizedOutput2
-        !         endif
-
-        !     endif
-
-        ! endif
-
-    ! end function table_lookup
-!
-!==========================================================================
-!==========================================================================
-!
-    ! pure function get_theta_of_alpha &
-    !     (alpha) result(theta)
-        !
-        ! get the angle theta for small value of A/Afull (alpha) for circular geometry
-        !
-        ! real(8),      intent(in)      :: alpha
-
-
-        ! real(8)     :: theta
-        ! real(8)     :: theta1, d, ap
-
-        ! integer  :: ii
-
-        ! !--------------------------------------------------------------------------
-        ! !% this code is adapted from SWMM 5.1 source code
-        ! if     (alpha .GE. 1.0) then
-        !     theta = 1.0
-        ! elseif (alpha .LE. 0.0) then
-        !     theta = 0.0
-        ! elseif (alpha .LE. 1.0e-5) then
-        !     theta = 37.6911 / 16.0 * alpha ** (onethirdR)
-        ! else
-        !     theta = 0.031715 - 12.79384 * alpha + 8.28479 * sqrt(alpha)
-        !     theta1 = theta
-        !     ap = twoR * pi *alpha
-        !     do ii = 1,40
-        !         d = - (ap - theta + sin(theta)) / (1.0 - cos(theta))
-        !         if (d > 1.0) then
-        !             d = sign(oneR,d)
-        !         endif
-        !         theta = theta - d
-        !         if ( abs(d) .LE. 0.0001 ) then
-        !             return
-        !         endif
-        !     enddo
-        !     theta = theta1
-        !     return
-        ! endif
-
-    ! end function get_theta_of_alpha
-!
-!==========================================================================
-!==========================================================================
-!
-! END OF MODULE xsect_tables
-!%==========================================================================
-!%
 end module xsect_tables

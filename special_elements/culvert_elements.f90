@@ -1,4 +1,16 @@
 module culvert_elements
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Calls routines for culvert elements
+    !%
+    !% Methods:
+    !% AS OF 20230608 -- these are not fully implemented in the code
+    !%==========================================================================
 
     use define_globals
     use define_keys
@@ -8,11 +20,6 @@ module culvert_elements
     use geometry_lowlevel
     use xsect_tables
     use utility_crash, only: util_crashpoint
-
-!%----------------------------------------------------------------------------- 
-!% Description:
-!% Computes culverts
-!%----------------------------------------------------------------------------- 
 
     implicit none
 
@@ -24,7 +31,6 @@ module culvert_elements
     public :: culvert_parameter_values
     public :: culvert_toplevel
     
-
     contains
 !%==========================================================================
 !% PUBLIC
@@ -36,8 +42,6 @@ module culvert_elements
         !% Stores the culvert parameter values from EPA-SWMM culvert.c
         !% These are (in order) FORM, K, M, C, Y, SCF
         !% NOTE SCF is slope correction factor, added to table for SWMM5+
-        !%------------------------------------------------------------------
-        !%------------------------------------------------------------------
         !%------------------------------------------------------------------
 
         !% Circular concrete
@@ -164,10 +168,8 @@ module culvert_elements
             logical :: isTransition    = .false.
             logical :: isInconsistentFlow = .false.
             real(8) :: QIC, Dinlet, PsiOut, H1s, H1u
-
         !%------------------------------------------------------------------
         !% Aliases
-        
             thisCol  => col_elemP(ep_Culvert_Inlet)
             npack    => npack_elemP(ep_Culvert_Inlet)
             if (npack < 1) return
@@ -180,17 +182,13 @@ module culvert_elements
             Flowrate => elemR(:,er_Flowrate)
             Zbtm     => elemR(:,er_Zbottom)
             
-
             Atable => ACirc !% Dummy to prevent unallocated pointer
             Ttable => TCirc !% Dummy to prevent unallocated pointer
 
         !%------------------------------------------------------------------
-
-        !print *, 'starting culvert_toplevel'
-
         !% --- cycle through the culverts
         do ii=1,npack
-            !print *, 'ii ',ii, npack
+
             !% --- inlet and outlet
             eIn    => thisE(ii)
             fInlet => elemI(thisE(ii),ei_Mface_uL)
@@ -202,11 +200,9 @@ module culvert_elements
             !% --- geometry type
             geoType => elemI(eIn,ei_geometryType)
 
-            !print *, 'calling culvert table pointers'
             !% --- get the correct table pointers for the geometry types
             call culvert_table_pointers(geoType, isTabular, Atable, Ttable)
-            
-            !print *, 'calling culvert_isReversedFlow'
+
             !% --- check for flow reversal (upstream flow) and reset eIn=eOut if 
             !%     reversed flow occurs.
             isReversedFlow = culvert_isReversedFlow(eIn, eOut, fInlet, isInconsistentFlow)
@@ -215,31 +211,22 @@ module culvert_elements
             !%     both ends, do not use culvert flow limitation
             if (isInconsistentFlow) cycle
                 
-            !print *, 'calling culvert_inlet_depth'
             !% --- effective inlet flow depth
             Dinlet = culvert_inlet_depth(eIn,isReversedFlow)
-
-            !print *, 'Dinlet , dculvert ',Dinlet, elemR(eIn,er_Depth)
 
             !% --- if negative inlet depth then there is no QIC
             if (Dinlet .le. zeroR) cycle
 
-            !print *, 'calling culvert_isSubmerged'
             !% --- check for submerged culvert and store H1s
             call culvert_isSubmerged (eIn, isReversedFlow, isSubmerged, H1s)
             
             !% --- if submerged, then get QIC directly
             if (isSubmerged) then
-                !print *, 'isSubmerged ',isSubmerged
                 QIC =  culvert_QIC_submerged_eq (eIn, Dinlet, isReversedFlow)
             else
-                !print *, 'calling culvert_istransition'
                 !% --- check for transition status (between submerged and unsubmerged)
                 !%     and store H1u
                 call culvert_isTransition (eIn,Dinlet,isTransition,H1u)
-
-                !if (isTransition) print *, 'isTransition ',isTransition
-                !print *, 'EqForm       ',EqForm
 
                 !% --- compute Psi = D_c/D_full (only for unsumberged form 1)
                 if (EqForm == 1) then      
@@ -257,7 +244,6 @@ module culvert_elements
                         (isTabular,isReversedFlow, EqForm, eIn, geoType, PsiOut, Dinlet, &
                          Atable, TTable)
          
-                !print *, 'out of culvert QIC_unsubmerged'
                 !% ---  handle transition
                 if (isTransition) then 
                     !print *, 'calling culvert_QIC_tranistion'
@@ -266,8 +252,6 @@ module culvert_elements
                 end if
 
             endif
-
-            ! print *, 'QIC, flowrate: ',QIC, elemR(eIn,er_Flowrate)
 
             !% --- reset the flowrate on element and upstrem face
             !%     if inlet control is less than time-advance flowrate
@@ -278,7 +262,6 @@ module culvert_elements
             
         end do
 
-
     end subroutine culvert_toplevel
 !%
 !%==========================================================================  
@@ -286,10 +269,10 @@ module culvert_elements
 !%
     subroutine culvert_table_pointers (geoType, isTabular, Atable, Ttable)    
         !%------------------------------------------------------------------
-        !% Description
+        !% Description:
         !% provides pointers to the correct tables for the geometry type
         !%------------------------------------------------------------------
-        !% Declarations
+        !% Declarations:
             integer, intent(in)    :: geoType
             logical, intent(inout) :: isTabular
             real(8), pointer, intent(inout) :: Atable(:), Ttable(:)
@@ -297,94 +280,94 @@ module culvert_elements
 
         select case (geoType)
 
-        case (arch, basket_handle, catenary, circular, custom, eggshaped, gothic, &
-            horiz_ellipse, horseshoe, semi_circular, semi_elliptical, vert_ellipse)
-            !% --- set the table for tabular geometry
-            isTabular = .true.
-            select case (geoType)
-            case (arch)
-                Atable => AArch 
-                Ttable => TArch
+            case (arch, basket_handle, catenary, circular, custom, eggshaped, gothic, &
+                horiz_ellipse, horseshoe, semi_circular, semi_elliptical, vert_ellipse)
+                !% --- set the table for tabular geometry
+                isTabular = .true.
+                select case (geoType)
+                case (arch)
+                    Atable => AArch 
+                    Ttable => TArch
 
-            case (basket_handle)
-                Atable => ABasketHandle
-                Ttable => TBasketHandle
+                case (basket_handle)
+                    Atable => ABasketHandle
+                    Ttable => TBasketHandle
 
-            case (catenary)
-                Atable => ACatenary
-                Ttable => TCatenary
+                case (catenary)
+                    Atable => ACatenary
+                    Ttable => TCatenary
 
-            case (circular)
+                case (circular)
+                    Atable => ACirc
+                    Ttable => TCirc
+
+                case (custom)
+                    !Atable => A
+                    !Ttable => T
+                    print *, 'CODE ERROR: Custom conduit cross sections not completed'
+                    call util_crashpoint(6229873)
+
+                case (eggshaped)
+                    Atable => AEgg
+                    Ttable => TEgg
+
+                case (gothic)
+                    Atable => AGothic
+                    Ttable => TGothic
+
+                case (horiz_ellipse)
+                    Atable => AHorizEllip
+                    Ttable => THorizEllip
+
+                case (horseshoe)
+                    Atable => AHorseShoe
+                    Ttable => THorseShoe
+
+                case (semi_circular)
+                    Atable => ASemiCircular
+                    Ttable => TSemiCircular
+
+                case (semi_elliptical)
+                    Atable => ASemiEllip
+                    Ttable => TSemiEllip
+
+                case (vert_ellipse)
+                    Atable => AVertEllip
+                    Ttable => TVertEllip
+
+                case default
+                    print *, 'CODE ERROR: unexpected case default'
+                    call util_crashpoint(7298733)
+                end select
+
+            case (filled_circular)
+                isTabular = .false.
                 Atable => ACirc
                 Ttable => TCirc
 
-            case (custom)
-                !Atable => A
-                !Ttable => T
-                print *, 'CODE ERROR: Custom conduit cross sections not completed'
-                call util_crashpoint(6229873)
+            case (mod_basket)
+                isTabular = .false.
+                Atable => ACirc  !% Dummy to prevent unallocated pointer
+                Ttable => TCirc  !% Dummy to prevent unallcoated pointer
 
-            case (eggshaped)
-                Atable => AEgg
-                Ttable => TEgg
+            case (rectangular_closed)
+                isTabular = .false.
+                Atable => ACirc  !% Dummy to prevent unallocated pointer
+                Ttable => TCirc  !% Dummy to prevent unallcoated pointer
 
-            case (gothic)
-                Atable => AGothic
-                Ttable => TGothic
+            case (rect_round)
+                isTabular = .false.
+                Atable => ACirc  !% Dummy to prevent unallocated pointer
+                Ttable => TCirc  !% Dummy to prevent unallcoated pointer
 
-            case (horiz_ellipse)
-                Atable => AHorizEllip
-                Ttable => THorizEllip
-
-            case (horseshoe)
-                Atable => AHorseShoe
-                Ttable => THorseShoe
-
-            case (semi_circular)
-                Atable => ASemiCircular
-                Ttable => TSemiCircular
-
-            case (semi_elliptical)
-                Atable => ASemiEllip
-                Ttable => TSemiEllip
-
-            case (vert_ellipse)
-                Atable => AVertEllip
-                Ttable => TVertEllip
+            case (rect_triang)
+                isTabular = .false.
+                Atable => ACirc  !% Dummy to prevent unallocated pointer
+                Ttable => TCirc  !% Dummy to prevent unallcoated pointer
 
             case default
                 print *, 'CODE ERROR: unexpected case default'
-                call util_crashpoint(7298733)
-            end select
-
-        case (filled_circular)
-            isTabular = .false.
-            Atable => ACirc
-            Ttable => TCirc
-
-        case (mod_basket)
-            isTabular = .false.
-            Atable => ACirc  !% Dummy to prevent unallocated pointer
-            Ttable => TCirc  !% Dummy to prevent unallcoated pointer
-
-        case (rectangular_closed)
-            isTabular = .false.
-            Atable => ACirc  !% Dummy to prevent unallocated pointer
-            Ttable => TCirc  !% Dummy to prevent unallcoated pointer
-
-        case (rect_round)
-            isTabular = .false.
-            Atable => ACirc  !% Dummy to prevent unallocated pointer
-            Ttable => TCirc  !% Dummy to prevent unallcoated pointer
-
-        case (rect_triang)
-            isTabular = .false.
-            Atable => ACirc  !% Dummy to prevent unallocated pointer
-            Ttable => TCirc  !% Dummy to prevent unallcoated pointer
-
-        case default
-            print *, 'CODE ERROR: unexpected case default'
-            call util_crashpoint(6098723)
+                call util_crashpoint(6098723)
 
         end select
 
@@ -457,7 +440,6 @@ module culvert_elements
             outvalue = faceR(fup,fr_Head_d) - elemR(eIn,er_Zbottom)   
         endif
         
-    
     end function culvert_inlet_depth
 !%
 !%==========================================================================  
@@ -631,13 +613,6 @@ module culvert_elements
         Khat = culvert_Khat (eIn, Bhat)
         Dhat = culvert_Dhat (eIn, Dinlet, isReversedFlow)
 
-        ! print *, ' '
-        ! print *, 'halfM ',halfM
-        ! print *, 'Bhat  ',Bhat 
-        ! print *, 'Khat  ',Khat 
-        ! print *, 'Dhat  ',Dhat
-        !print *, 'smalldepth ',smalldepth
-
         !% --- STEP 2: initial values
         !%     Psi is the nondimensionalized depth (solution variable)
         Psi(1) = smalldepth
@@ -649,10 +624,6 @@ module culvert_elements
             return
         end if
 
-        ! print *, 'Dinlet FullDepth ',Dinlet, elemR(eIn,er_FullDepth)
-
-        ! print *, 'Psi(1:2) ', Psi(1), Psi(2)
-
         if (geoType == filled_circular) then 
             !% --- Psi must be based on total pipe diameter, not full depth
             !%     This is needed for later table lookups
@@ -661,22 +632,14 @@ module culvert_elements
         end if
         Psi(3) = onehalfR * (Psi(1) + Psi(2))
 
-        ! print *, 'Psi(3) ',Psi(3)
-
         !% --- STEP 3: define Delta
         Delta = abs(Psi(1)-Psi(2))
-
-        ! print *, 'Delta ',Delta
 
         !% --- STEPS 4, 5, 6: define gamma, phi, omega, and residual
         do ii=1,2
             Omega(ii) = culvert_omega (isTabular, geoType, eIn, Psi(ii), Atable, Ttable)
             resid(ii) = culvert_residual_form1 (Psi(ii), Omega(ii), halfM, Dhat, Khat, Bhat)
         end do
-
-        ! print *, 'resid(1:2) ',resid(1), resid(2)
-        ! print *, 'Omega(:)   ',Omega(1), Omega(2)
-
 
         !% --- STEP 7: check to see if we're done
         if ( abs(resid(1)) < epsConverged ) then
@@ -695,7 +658,6 @@ module culvert_elements
             print *, resid(1), resid(2)
             print *, 'CODE ERROR: failure of residual constraint in culvert_Psi_unsubmerged_form1 '
             call util_crashpoint(62987662)
-            !return
         end if
 
         isConverged = .false.
@@ -704,8 +666,6 @@ module culvert_elements
             !% --- STEPS 4, 5, and 6: Update for Psi(3)
             Omega(3) = culvert_omega (isTabular, geoType, eIn, Psi(3), Atable, Ttable)
             resid(3) = culvert_residual_form1 (Psi(3), Omega(3), halfM, Dhat, Khat, Bhat)
-
-            !print *, 'iteration Step 6 resid(3) ', resid(3)
 
             !% --- STEP 7: check for solution
             if ( abs(resid(3)) < epsConverged ) then 
@@ -718,8 +678,6 @@ module culvert_elements
             Psi(4) = Psi(3)                                                     &
                 + (resid(3) * (Psi(3) - Psi(1)) * sign(oneR,resid(1)-resid(2))) &
                 / sqrt( (resid(3)**2) - resid(1) * resid(2)  )
-
-            !print *, 'Psi(4) ',Psi(4)   
 
             !% --- STEP 10: check for solution
             if (abs(Psi(4)-Psi(3)) .le. epsConverged) then 
@@ -739,9 +697,6 @@ module culvert_elements
                 return
             end if
 
-            ! print *, 'step 12, 13',Omega(4), resid(4)
-            ! print *, 'resid(3),resid(4)', resid(3), resid(4)
-
             !% --- STEPS 14,15,16,17,18
             if (resid(3) * resid(4) < zeroR) then 
                 Psi(1)   = Psi(3)
@@ -759,7 +714,6 @@ module culvert_elements
                 outvalue = nullvalueR ! 
                 print *, 'CODE ERROR: diverging solution in culvert'
                 call util_crashpoint(598734)
-                !return
             end if
 
             !% --- STEP 19: update Psi(3)
@@ -775,14 +729,10 @@ module culvert_elements
                 outvalue = nullvalueR
                 print *, 'CODE ERROR: Diverging solution in culvert'
                 call util_crashpoint(7798743)
-                !return
             else 
                 Delta = abs(Psi(1) - Psi(2))
                 !% continue do loop
             end if
-
-            !% TESTING TO PREVENT INFINITE LOOP
-            !isConverged = .true.
 
         end do
         
@@ -814,58 +764,58 @@ module culvert_elements
             sedimentArea =>  elemSGR(eIn,esgr_Filled_Circular_bottomArea)
         !%------------------------------------------------------------------
         select case (EqnForm)
-        case (1)
-            if (isTabular) then
-                !% --- QIC based on normalized value lookups for unsumberged EqForm=1
-                !%     where Psi has been computed
-                outvalue = sqrt(                                                       &
-                                ( grav * (Afull**3)                                    &
-                                * (xsect_table_lookup_singular(Psi,Atable)**3)         &
-                                )                                                      &
-                                / ( Tmax * xsect_table_lookup_singular(Psi,Ttable) )   &
-                                )
-            else 
-                select case (geoType)
-                !% --- QIC based on computations for physical values    
-                case(filled_circular)
-                    !% --- requires Psi to be based on total pipe diameter
-                    Tvalue = Tmax  * xsect_table_lookup_singular(Psi,Ttable)
-                    Avalue = Afull * xsect_table_lookup_singular(Psi,Atable) - sedimentArea
-                    outvalue = sqrt(grav * (Avalue**3) / Tvalue)
+            case (1)
+                if (isTabular) then
+                    !% --- QIC based on normalized value lookups for unsumberged EqForm=1
+                    !%     where Psi has been computed
+                    outvalue = sqrt(                                                       &
+                                    ( grav * (Afull**3)                                    &
+                                    * (xsect_table_lookup_singular(Psi,Atable)**3)         &
+                                    )                                                      &
+                                    / ( Tmax * xsect_table_lookup_singular(Psi,Ttable) )   &
+                                    )
+                else 
+                    select case (geoType)
+                    !% --- QIC based on computations for physical values    
+                    case(filled_circular)
+                        !% --- requires Psi to be based on total pipe diameter
+                        Tvalue = Tmax  * xsect_table_lookup_singular(Psi,Ttable)
+                        Avalue = Afull * xsect_table_lookup_singular(Psi,Atable) - sedimentArea
+                        outvalue = sqrt(grav * (Avalue**3) / Tvalue)
 
-                case (mod_basket)
-                    Tvalue = llgeo_mod_basket_topwidth_from_depth_singular (eIn, Psi*Dfull, setting%ZeroValue%Topwidth)
-                    Avalue = llgeo_mod_basket_area_from_depth_singular     (eIn, Psi*Dfull, setting%ZeroValue%Area)
-                    outvalue = sqrt( grav * (Avalue**3) / Tvalue )
+                    case (mod_basket)
+                        Tvalue = llgeo_mod_basket_topwidth_from_depth_singular (eIn, Psi*Dfull, setting%ZeroValue%Topwidth)
+                        Avalue = llgeo_mod_basket_area_from_depth_singular     (eIn, Psi*Dfull, setting%ZeroValue%Area)
+                        outvalue = sqrt( grav * (Avalue**3) / Tvalue )
 
-                case (rectangular_closed)
-                    outvalue = sqrt( grav * ((Psi*Dfull*Tmax)**3) / Tmax )
+                    case (rectangular_closed)
+                        outvalue = sqrt( grav * ((Psi*Dfull*Tmax)**3) / Tmax )
 
-                case (rect_round)
-                    !% --- using physical values
-                    Tvalue = llgeo_rect_round_topwidth_from_depth_singular (eIn, Psi*Dfull, setting%ZeroValue%Topwidth)
-                    Avalue = llgeo_rect_round_area_from_depth_singular     (eIn, Psi*Dfull, setting%ZeroValue%Area)
-                    outvalue = sqrt( grav * (Avalue**3) / Tvalue )
+                    case (rect_round)
+                        !% --- using physical values
+                        Tvalue = llgeo_rect_round_topwidth_from_depth_singular (eIn, Psi*Dfull, setting%ZeroValue%Topwidth)
+                        Avalue = llgeo_rect_round_area_from_depth_singular     (eIn, Psi*Dfull, setting%ZeroValue%Area)
+                        outvalue = sqrt( grav * (Avalue**3) / Tvalue )
 
-                case (rect_triang)
-                    !% --- using physical values
-                    Tvalue = llgeo_rectangular_triangular_topwidth_from_depth_singular (eIn, Psi*Dfull, setting%ZeroValue%Topwidth)
-                    Avalue = llgeo_rectangular_triangular_area_from_depth_singular     (eIn, Psi*Dfull, setting%ZeroValue%Area)
-                    outvalue = sqrt( grav * (Avalue**3) / Tvalue )
+                    case (rect_triang)
+                        !% --- using physical values
+                        Tvalue = llgeo_rectangular_triangular_topwidth_from_depth_singular (eIn, Psi*Dfull, setting%ZeroValue%Topwidth)
+                        Avalue = llgeo_rectangular_triangular_area_from_depth_singular     (eIn, Psi*Dfull, setting%ZeroValue%Area)
+                        outvalue = sqrt( grav * (Avalue**3) / Tvalue )
 
-                case default
-                    print *, 'CODE ERROR: unexpected case default'
-                    call util_crashpoint(5098723)
-                end select
-            end if
+                    case default
+                        print *, 'CODE ERROR: unexpected case default'
+                        call util_crashpoint(5098723)
+                    end select
+                end if
 
-        case (2)
-            !% --- simpler form 2 equation:
-            outvalue = culvert_QIC_unsubmerged_form2 (eIn, Dinlet)
+            case (2)
+                !% --- simpler form 2 equation:
+                outvalue = culvert_QIC_unsubmerged_form2 (eIn, Dinlet)
 
-        case default     
-            print *, 'CODE ERROR: unexpected default case'  
-            call util_crashpoint(598723) 
+            case default     
+                print *, 'CODE ERROR: unexpected default case'  
+                call util_crashpoint(598723) 
         end select
 
         !% --- provide negative flowrate for reversed flow
@@ -946,43 +896,43 @@ end function culvert_QIC_transition
                   / xsect_table_lookup_singular(Psi,Ttable)
         else 
             select case (geoType)
-            case (filled_circular)
-                !% --- table lookups for circular pipe are with sediment removed
-                !%     but the area must be renormalized to flow area (fulldepth)
-                Omega  = ( (                                                          &
-                            (totalPipeArea * xsect_table_lookup_singular(Psi,Atable)) &
-                            - sedimentDepth                                           &
-                           ) / FullDepth                                              &
-                         ) / (xsect_table_lookup_singular(Psi,Ttable))
+                case (filled_circular)
+                    !% --- table lookups for circular pipe are with sediment removed
+                    !%     but the area must be renormalized to flow area (fulldepth)
+                    Omega  = ( (                                                          &
+                                (totalPipeArea * xsect_table_lookup_singular(Psi,Atable)) &
+                                - sedimentDepth                                           &
+                            ) / FullDepth                                              &
+                            ) / (xsect_table_lookup_singular(Psi,Ttable))
 
-            case (mod_basket)
-                Atemp = (llgeo_mod_basket_area_from_depth_singular (eIn, Psi*FullDepth, setting%ZeroValue%Area)) &
-                        / FullDepth
-                Ttemp = (llgeo_mod_basket_topwidth_from_depth_singular(eIn, Psi*FullDepth, setting%ZeroValue%Topwidth)) &
-                        / MaxTopwidth
-                Omega = Atemp / Ttemp
+                case (mod_basket)
+                    Atemp = (llgeo_mod_basket_area_from_depth_singular (eIn, Psi*FullDepth, setting%ZeroValue%Area)) &
+                            / FullDepth
+                    Ttemp = (llgeo_mod_basket_topwidth_from_depth_singular(eIn, Psi*FullDepth, setting%ZeroValue%Topwidth)) &
+                            / MaxTopwidth
+                    Omega = Atemp / Ttemp
 
-            case (rectangular_closed)
-                !% --- rectangular case devolves to omega = psi
-                Omega = Psi
+                case (rectangular_closed)
+                    !% --- rectangular case devolves to omega = psi
+                    Omega = Psi
 
-            case (rect_round)
-                Atemp = (llgeo_rect_round_area_from_depth_singular (eIn, Psi*FullDepth, setting%ZeroValue%Area)) &
-                        / FullDepth
-                Ttemp = (llgeo_rect_round_topwidth_from_depth_singular(eIn, Psi*FullDepth, setting%ZeroValue%Topwidth)) &
-                        / MaxTopwidth
-                Omega = Atemp / Ttemp
+                case (rect_round)
+                    Atemp = (llgeo_rect_round_area_from_depth_singular (eIn, Psi*FullDepth, setting%ZeroValue%Area)) &
+                            / FullDepth
+                    Ttemp = (llgeo_rect_round_topwidth_from_depth_singular(eIn, Psi*FullDepth, setting%ZeroValue%Topwidth)) &
+                            / MaxTopwidth
+                    Omega = Atemp / Ttemp
 
-            case (rect_triang)
-                Atemp = (llgeo_rectangular_triangular_area_from_depth_singular (eIn,Psi*FullDepth, setting%ZeroValue%Area)) &
-                        / FullDepth
-                Ttemp = (llgeo_rectangular_triangular_topwidth_from_depth_singular(eIn,Psi*FullDepth, setting%ZeroValue%Topwidth)) &
-                        / MaxTopwidth
-                Omega = Atemp / Ttemp
+                case (rect_triang)
+                    Atemp = (llgeo_rectangular_triangular_area_from_depth_singular (eIn,Psi*FullDepth, setting%ZeroValue%Area)) &
+                            / FullDepth
+                    Ttemp = (llgeo_rectangular_triangular_topwidth_from_depth_singular(eIn,Psi*FullDepth, setting%ZeroValue%Topwidth)) &
+                            / MaxTopwidth
+                    Omega = Atemp / Ttemp
 
-            case default
-                print *, 'CODE ERROR: Unexpected case default'
-                call util_crashpoint(55098723)
+                case default
+                    print *, 'CODE ERROR: Unexpected case default'
+                    call util_crashpoint(55098723)
             end select
         end if
 
@@ -999,7 +949,6 @@ end function culvert_QIC_transition
         !%------------------------------------------------------------------
         !% Declarations
             real(8), intent(in) :: Dhat, Khat, Omega, halfM, Bhat, Psi
-        !%------------------------------------------------------------------
         !%------------------------------------------------------------------
         
         outvalue = Dhat - Khat * (Omega**halfM) - Bhat * Omega - Psi
@@ -1032,7 +981,6 @@ end function culvert_QIC_transition
         !% Descriptions:
         !% computes the \hat{K} constant defined in the SWMM5+ documentation
         !% for equation form 1 culverts
-        !%
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: eIn
@@ -1063,7 +1011,6 @@ end function culvert_QIC_transition
             real(8), intent(in) :: Dinlet
             logical, intent(in) :: isreversed
         !%------------------------------------------------------------------
-        !%------------------------------------------------------------------
 
         if (.not. isreversed) then 
             outvalue = (Dinlet / elemR(eIn,er_FullDepth) )  &
@@ -1090,7 +1037,6 @@ end function culvert_QIC_transition
             integer, intent(in) :: eIn  
             real(8), intent(in) :: Dinlet
             real(8), pointer    :: Afull, Dfull, Kcoef, Mcoef
-        !%------------------------------------------------------------------
         !%------------------------------------------------------------------
         !% Aliases
             Afull  =>  elemR(eIn,er_FullArea)
