@@ -5825,7 +5825,7 @@ contains
 
         INTEGER     ::   rank = 2 !% only have 2D arrays so rank is always 2                    
         INTEGER     ::   HD_error !% For HDF5 errors
-        INTEGER     ::   ii, jj , N_node_elem
+        INTEGER     ::   ii, jj , N_node_elem, sum_elements
         
 
         character(len=99)   :: emsg
@@ -6051,7 +6051,10 @@ contains
 
         !%stores the size of the data that is going to be written  
         if(isFV .eq. .true. .and. FeatureType .eq. LinkOut) then
-            updated_size_data(1:2) = (/N_Out_static_TypeElem+1,link%I(thisIndex,li_N_element)/)
+            sum_elements = sum(link%I(:,li_N_element),MASK=link%I(:,li_parent_link) .eq. thisIndex)  
+            print *, "test sum_elements ::", sum_elements
+            updated_size_data(1:2) = (/N_Out_static_TypeElem+1,sum_elements/)
+            !updated_size_data(1:2) = (/N_Out_static_TypeElem+1,link%I(thisIndex,li_N_element)/)
             header_dims(1:2) = (/N_Out_static_TypeElem+1,3/)
         
         else if(isFV .eq. .true. .and. FeatureType .eq. NodeElemOut ) then
@@ -6358,9 +6361,12 @@ contains
         INTEGER(HID_T) :: dset_id       !% Dataset identifier
         INTEGER(HSIZE_T), DIMENSION(1:2)  :: updated_size_data !% Dimensions of the data to be written to the dataset
         REAL, DIMENSION(:,:), allocatable :: dset_data         !% Array to hold the output of the data to be written to the dataset
-                   
+        INTEGER, DIMENSION(:), allocatable :: phantom_link_lengths      
+        
         INTEGER     ::   HD_error !% For HDF5 errors
-        INTEGER     ::   ii,jj, N_output, N_node_elem, first_elem_idx
+        INTEGER     ::   ii,jj, N_output, N_node_elem, first_elem_idx, sum_elements, num_of_phantom_links
+        INTEGER     ::   dset_location_ii, dset_location_jj, phantom_length, phantom_link_counter
+        LOGICAL     ::   is_phantom_link   = .false.
         LOGICAL     ::   first_elem_detect = .false.
         
 
@@ -6376,17 +6382,73 @@ contains
         !% Dataset_data is allocated and filled with correct data, updated_size_data is stored with the inverted size of the array
         !% This is because of the need to transpose the data before writing to hdf5 dataspace because of the difference between column and array bases in fortran vs hdf5 
         if(isFv .and. FeatureType .eq. LinkOut) then  
-            allocate(dset_data(link%I(idx1,li_N_element),N_Out_static_TypeElem+1), errmsg=emsg)  
-            updated_size_data(1:2) = (/N_Out_static_TypeElem+1,link%I(idx1,li_N_element)/)
-            N_output = size(output_static_elem(:,1))
+            
+            !count the number of related phantom links
+            num_of_phantom_links = count(link%I(:,li_parent_link) .eq. idx1)
+            
+            !count total elements being output
+            sum_elements = sum(link%I(:,li_N_element),MASK=link%I(:,li_parent_link) .eq. idx1)  
+            
+            !allocate array to store phantom link_lengths
+            allocate(phantom_link_lengths(num_of_phantom_links),errmsg=emsg)
+            phantom_link_lengths = pack(link%I(:,li_N_element),link%I(:,li_parent_link) .eq. idx1)
+            
 
-            do ii = 1, N_output
-                if(output_static_elem(ii,1) .EQ. idx1 .and. output_static_elem(ii,2) .EQ. 1.0 ) then 
-                    dset_data(:,:) = output_static_elem(ii:ii+link%I(idx1,li_N_element)-1,3:N_Out_static_TypeElem+1)
-                    exit
+            !allocate the data set for the element static output
+            allocate(dset_data(sum_elements,N_Out_static_TypeElem+1), errmsg=emsg)  
+            updated_size_data(1:2) = (/N_Out_static_TypeElem+1,sum_elements/)
+
+            !size of static output array to loop through 
+            N_output = size(output_static_elem(:,1))
+            
+            !location index for data set 
+            dset_location_ii = 1
+
+            !counts the number of phantom links to get the proper spacing in the dset array
+            phantom_link_counter = 1
+            is_phantom_link = .false.
+
+            
+            ii = 1
+            !loop through output_static_elem and fill the dset_data array with the correct elements that relate to the link
+            do while ( ii .lt. N_output)
+
+                !first if statement is for the initial link or if a link is not split into a phantom
+                if(output_static_elem(ii,1) .EQ. idx1 .and. output_static_elem(ii,2) .EQ. 1.0 .and. is_phantom_link .EQ. .false.) then
+
+                    !FILL dset_data
+                    dset_data(dset_location_ii:dset_location_ii+link%I(idx1,li_N_element),:) &
+                    = output_static_elem(ii:ii+link%I(idx1,li_N_element),3:N_Out_static_TypeElem+1)
+
+                    !exit if not phantom link
+                    if(sum_elements .EQ. link%I(idx1,li_N_element) ) then
+                        exit
+                    end if 
+
+                    !set new indexs and look for phantoms related to link
+                    ii = ii+link%I(idx1,li_N_element)
+                    dset_location_ii = link%I(idx1,li_N_element)+1
+                    is_phantom_link = .true.                
+                
+
+                else if(output_static_elem(ii,1) .EQ. idx1 .and. output_static_elem(ii,2) .EQ. 1.0 .and. is_phantom_link .EQ. .true.) then
+
+                    !increase phantom link counter
+                    phantom_link_counter = phantom_link_counter+1
+
+                    !fill dset_data
+                    dset_data(dset_location_ii:dset_location_ii+phantom_link_lengths(phantom_link_counter)-1,:) &
+                    = output_static_elem(ii:ii+phantom_link_lengths(phantom_link_counter)-1,3:N_Out_static_TypeElem+1)
+
+                    !update indexes for next phantom link
+                    dset_location_ii = dset_location_ii + phantom_link_lengths(phantom_link_counter)+1
+                    ii = ii+phantom_link_lengths(phantom_link_counter)
+                
                 end if
+                ii = ii+1 
             end do
 
+        
         else if(isFV .and. FeatureType .eq. NodeElemOut) then
             N_node_elem = 0
             first_elem_detect = .false.
@@ -6428,7 +6490,10 @@ contains
             dset_data(1,:) = link%R(idx1,output_static_types_Link(:))
         end if
 
+
         dset_data = transpose(dset_data)
+
+       
 
         !% the dataset is opened 
         CALL h5dopen_f(file_id, trim(h5_dset_name), dset_id, HD_error)
@@ -6443,7 +6508,9 @@ contains
         !% deallocation of dset_data
         if(allocated(dset_data)) then 
             deallocate(dset_data)
+            
         end if
+        deallocate(phantom_link_lengths)
         
     end subroutine outputML_HD5F_write_static_file
 
@@ -6554,7 +6621,7 @@ contains
         !% such that all images can write to image one without overlapping data or race conditions. 
         sync all 
         if(this_image() .NE. 1) then 
-            local_index = sum(N_outelem(1:this_image()-1))
+            local_index = sum(N_outelem(1:this_image()-1))+1
         else 
             local_index = 1
         end if
@@ -6564,7 +6631,7 @@ contains
         !print *, "(Npack+local_index)-1",(Npack+local_index)-1
         !% Filling output_static_elem's third column with the Global elem Index 
         output_static_elem(local_index:(Npack+local_index)-1,3)[1] = elemI(thisP,ei_Gidx)
-        
+
         !% Filling the rest of output_static_elem's columns with the selected types choosen in the json file 
         output_static_elem(local_index:(Npack+local_index)-1,4:)[1] = elemR(thisP,thisType)
  
@@ -6582,6 +6649,8 @@ contains
             end if
         end do
 
+        !print *, "output_static_elem(:,3)[1], this_image() ::", this_Image() 
+        !print *, output_static_elem(:,3)[1]
         !print *, "output_static_elem(:,1)::", output_static_elem(:,1)
         !print *, "output_static_elem(:,2)::", output_static_elem(:,2)
 
