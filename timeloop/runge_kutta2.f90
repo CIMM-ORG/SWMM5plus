@@ -23,7 +23,7 @@ module runge_kutta2
     use geometry_lowlevel, only: llgeo_head_from_depth_pure
     use forcemain, only: forcemain_ManningsN
     use junction_elements
-    use lowlevel_rk2
+    use rk2_lowlevel
     use culvert_elements, only: culvert_toplevel
     use pack_mask_arrays
     use preissmann_slot

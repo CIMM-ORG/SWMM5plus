@@ -22,17 +22,17 @@ module initial_condition
     use forcemain, only : forcemain_ManningsN
     use diagnostic_elements
     use geometry 
-    use arch_conduit
+    ! use arch_conduit
     use circular_conduit
-    use basket_handle_conduit
-    use catenary_conduit
-    use egg_shaped_conduit
-    use gothic_conduit
-    use horiz_ellipse_conduit
-    use vert_ellipse_conduit
-    use horse_shoe_conduit
-    use semi_elliptical_conduit
-    use semi_circular_conduit
+    ! use basket_handle_conduit
+    ! use catenary_conduit
+    ! use egg_shaped_conduit
+    ! use gothic_conduit
+    ! use horiz_ellipse_conduit
+    ! use vert_ellipse_conduit
+    ! use horse_shoe_conduit
+    ! use semi_elliptical_conduit
+    ! use semi_circular_conduit
     use filled_circular_conduit
     use geometry_lowlevel
     use irregular_channel, only: irregular_geometry_from_depth_singular

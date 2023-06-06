@@ -20,12 +20,12 @@ module junction_elements
     use diagnostic_elements, only: diagnostic_by_type
     use face
     use geometry
-    use lowerlevel_junction
+    ! use lowerlevel_junction
+    use junction_lowlevel
     use geometry_lowlevel, only: llgeo_head_from_depth_pure
     use pack_mask_arrays
     use preissmann_slot
     use update
-    use lowerlevel_junction
     use utility_crash, only: util_crashpoint
 
     use utility_unit_testing, only: util_utest_CLprint

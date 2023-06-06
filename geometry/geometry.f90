@@ -25,21 +25,21 @@ module geometry
     use rectangular_conduit
     use trapezoidal_channel
     use triangular_channel
-    use arch_conduit
-    use basket_handle_conduit
-    use catenary_conduit
+    ! use arch_conduit
+    ! use basket_handle_conduit
+    ! use catenary_conduit
     use circular_conduit
-    use egg_shaped_conduit
+    ! use egg_shaped_conduit
     use filled_circular_conduit
-    use gothic_conduit
-    use horiz_ellipse_conduit
-    use horse_shoe_conduit
+    ! use gothic_conduit
+    ! use horiz_ellipse_conduit
+    ! use horse_shoe_conduit
     use mod_basket_conduit
     use rectangular_round_conduit
     use rectangular_triangular_conduit
-    use semi_circular_conduit
-    use semi_elliptical_conduit
-    use vert_ellipse_conduit
+    ! use semi_circular_conduit
+    ! use semi_elliptical_conduit
+    ! use vert_ellipse_conduit
     use storage_geometry
    
     use xsect_tables
