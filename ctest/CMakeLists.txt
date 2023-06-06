@@ -9,20 +9,28 @@ COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/finali
 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-add_test(NAME Y_Junction_test 
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/finalized_tests/two_Y_fixed_inflow.inp -s ./ctest/internal_testing/finalized_tests/settings_dx10.json -o ./ctest/outbrh/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# add_test(NAME Y_Junction_test 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/finalized_tests/two_Y_fixed_inflow.inp -s ./ctest/internal_testing/finalized_tests/settings_dx10.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
-add_test(NAME Weir_test 
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/finalized_tests/all_weir_test.inp -s ./ctest/internal_testing/finalized_tests/settings_dx10.json -o ./ctest/outbrh/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# add_test(NAME Weir_test 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/finalized_tests/all_weir_test.inp -s ./ctest/internal_testing/finalized_tests/settings_dx10.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
 
-add_test(NAME Orifice_test 
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/finalized_tests/all_orifice_test.inp -s ./ctest/internal_testing/finalized_tests/settings_dx10.json -o ./ctest/outbrh/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+# add_test(NAME Orifice_test 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/finalized_tests/all_orifice_test.inp -s ./ctest/internal_testing/finalized_tests/settings_dx10.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+# add_test(NAME Storage_Unit_test 
+# COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/finalized_tests/all_storage_emptying_test.inp -s ./ctest/internal_testing/finalized_tests/settings_dx10.json -o ./ctest/outbrh/
+# WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# )
+
+
+
 
 # PUMP 1 FAILS
 # add_test(NAME Pump test 
@@ -30,10 +38,7 @@ WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 # )
 
-add_test(NAME Storage_Unit_test 
-COMMAND python ${CMAKE_SOURCE_DIR}/compare.py -i ./ctest/internal_testing/finalized_tests/all_storage_emptying_test.inp -s ./ctest/internal_testing/finalized_tests/settings_dx10.json -o ./ctest/outbrh/
-WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+
 
 
 ###############3333

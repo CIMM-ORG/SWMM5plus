@@ -2549,7 +2549,7 @@ contains
                                             setting%Time%StartEpoch, &
                                             pOutElem_Gidx(OutLink_pOutElemIdx(kk,1:OutLink_N_elem_in_link(kk))), &
                                             tlinkname, setting%Time%DateTimeStamp, LinkOut, .true. )
-!   
+
                                         call outputML_HD5F_write_static_file(fn_linkFV_static_h5,H5_file_id, &
                                             SWMMlink, .true., LinkOut)
                                     end if
@@ -2561,17 +2561,19 @@ contains
                                             pOutElem_Gidx(OutLink_pOutElemIdx(kk,1:OutLink_N_elem_in_link(kk))), &
                                             tlinkname, setting%Time%DateTimeStamp, LinkOut, .false. )
 
+                                            print *, 'here AAA 02'
+
                                         call outputML_HD5F_write_static_file(fn_link_static_h5,H5_file_id, &
                                             SWMMlink, .false., LinkOut)
                                     end if 
 
-                                        call outputML_HD5F_create_dset(fn_link_h5,H5_file_id, &
-                                            nTypeElem, nLevel, dummyI, &
-                                            OutLink_pSWMMidx(kk), &
-                                            startdate, setting%Time%StartEpoch, &
-                                            output_typeNames_withTime_elemR, output_typeUnits_withTime_elemR, &
-                                            dummyarrayI,    &
-                                            tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .false.)
+                                    call outputML_HD5F_create_dset(fn_link_h5,H5_file_id, &
+                                        nTypeElem, nLevel, dummyI, &
+                                        OutLink_pSWMMidx(kk), &
+                                        startdate, setting%Time%StartEpoch, &
+                                        output_typeNames_withTime_elemR, output_typeUnits_withTime_elemR, &
+                                        dummyarrayI,    &
+                                        tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .false.)
                                 
                                     call outputML_HD5F_write_file(fn_link_h5,H5_file_id, &
                                         kk, nTypeElemWtime, dummyI, nLevel,  &
@@ -2810,6 +2812,7 @@ contains
                                             setting%Time%StartEpoch, &
                                             pOutElem_Gidx(OutNodeElem_pOutElemIdx(kk,1:OutNodeElem_N_elem_in_node(kk))), &
                                             tnodename, setting%Time%DateTimeStamp, NodeOut, .false.)
+
 !                                       !% write the static data to the HDF5 file 
                                         call outputML_HD5F_write_static_file(fn_node_static_h5,H5_file_id, &
                                             SWMMnode, .false.,NodeOut)
@@ -2825,6 +2828,7 @@ contains
                                                 setting%Time%StartEpoch, &
                                                 pOutElem_Gidx(OutNodeElem_pOutElemIdx(kk,1:OutNodeElem_N_elem_in_node(kk))), &
                                                 tnodename, setting%Time%DateTimeStamp, NodeElemOut, .true.)
+
                                         !% write the static data to the HDF5 file
                                         call outputML_HD5F_write_static_file(fn_nodeFV_static_h5,H5_file_id, &
                                              SWMMnode, .true., NodeElemOut)
@@ -4549,7 +4553,7 @@ contains
         !%stores the size of the data that is going to be written  
         if(isFV .eq. .true. .and. FeatureType .eq. LinkOut) then
             sum_elements = sum(link%I(:,li_N_element),MASK=link%I(:,li_parent_link) .eq. thisIndex)  
-            print *, "test sum_elements ::", sum_elements
+            !print *, "test sum_elements ::", sum_elements
             updated_size_data(1:2) = (/N_Out_static_TypeElem+1,sum_elements/)
             !updated_size_data(1:2) = (/N_Out_static_TypeElem+1,link%I(thisIndex,li_N_element)/)
             header_dims(1:2) = (/N_Out_static_TypeElem+1,3/)
@@ -4665,6 +4669,8 @@ contains
         if( allocated(output_profile_ids)) then
             deallocate(profile_data)
         end if
+
+        !print *, 'end of outputML_HD5F_create_static_dset'
 
     end subroutine outputML_HD5F_create_static_dset
 !%

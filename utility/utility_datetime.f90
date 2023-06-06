@@ -17,7 +17,7 @@ module utility_datetime
     use define_settings, only: setting
     use define_api_keys
     use define_globals, only: datedelta, secsperday, dayspermonth, nullvalueR, &
-        sixtyR, twentyfourR
+        sixtyR, ninetyR, twentyfourR, fourtyeightR, sevenR, oneR, oneI
     use utility_crash, only: util_crashpoint
 
     implicit none

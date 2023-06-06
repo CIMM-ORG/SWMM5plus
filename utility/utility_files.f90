@@ -396,7 +396,6 @@ contains
             !% --- reset the name of the input file for each image
             call util_file_input_copies (.false.,this_image())
         end if
-        call util_crashpoint(139872)
         
     end subroutine util_file_duplicate_input
 !%
