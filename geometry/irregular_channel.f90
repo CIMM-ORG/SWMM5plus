@@ -91,7 +91,7 @@ contains
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the topwidth from depth for irregular channel
-        !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+        !% Input elemPGx is pointer (already assigned) for  elemPGetm 
         !% Assumes that volume > 0 is previousy enforced in volume computations.
         !%------------------------------------------------------------------
         !% Declarations:
@@ -153,7 +153,7 @@ contains
         !%------------------------------------------------------------------
         !% Description:
         !% Computes the hydraulic radius from depth for irregular channel
-        !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+        !% Input elemPGx is pointer (already assigned) for elemPGetm
         !% Assumes that volume > 0 is previuosly enforced in volume computations.
         !%------------------------------------------------------------------
         !% Declarations:

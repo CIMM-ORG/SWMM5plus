@@ -213,7 +213,7 @@ contains
         if (setting%Simulation%useHydraulics) then
             call tl_smallestBC_timeInterval ()
             call tl_update_hydraulics_timestep(inSpinUpYN)
-            call util_crashstop(229873)
+            
         else
             !% ---- HACK - WORKING WITHOUT SWMM5+ HYDRAULICS IS NOT SUPPORTED 
             !%      the following are stub routines for future design
@@ -224,8 +224,9 @@ contains
             print *, 'CODE ERROR: SWMM5+ does not operate without hydraulics'
             print *, 'Ensure that setting.Simulation.useHydraulics = .true.'
             call util_crashpoint(268743)
-            call util_crashstop(2687431)
         end if
+
+        call util_crashstop(229873)
 
         !% --- set the next control rule evaluation time
         nextControlRuleTime = lastControlRuleTime + real(setting%SWMMinput%ControlRuleStep,8)
@@ -856,10 +857,11 @@ contains
         !% --- get the timestep and the next time for hydraulics
         if (doHydraulicsStepYN) then
             call tl_update_hydraulics_timestep(inSpinUpYN)
-            call util_crashstop(449873)
         else
             nextHydraulicsTime = setting%Time%End + tenR*DtTol
-        end if    
+        end if   
+        
+        call util_crashstop(449873)
 
         !% --- The NextHydrologyTime is updated in EPA SWMM-C, here we just need to
         !%     provide a large number if hydrology isn't used

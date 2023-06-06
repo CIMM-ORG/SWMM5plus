@@ -263,13 +263,13 @@ contains
         deallocate(elemPGetm, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'elemPGetm')
 
-        !print *, 'elemPGac'
-        deallocate(elemPGac, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'elemPGac')
+        ! !print *, 'elemPGac'
+        ! deallocate(elemPGac, stat=deallocation_status, errmsg=emsg)
+        ! call util_deallocate_check(deallocation_status, emsg, 'elemPGac')
 
         !print *, 'elemPGalltm'
-        deallocate(elemPGalltm, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'elemPGalltm')
+        ! deallocate(elemPGalltm, stat=deallocation_status, errmsg=emsg)
+        ! call util_deallocate_check(deallocation_status, emsg, 'elemPGalltm')
 
         !print *, 'elemSI'
         deallocate(elemSI, stat=deallocation_status, errmsg=emsg)
@@ -462,17 +462,17 @@ contains
         deallocate(col_elemP, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'col_elemP')
         !==== col_elemPG====
-        deallocate(npack_elemPGalltm, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'npack_elemPGalltm')
+        ! deallocate(npack_elemPGalltm, stat=deallocation_status, errmsg=emsg)
+        ! call util_deallocate_check(deallocation_status, emsg, 'npack_elemPGalltm')
 
-        deallocate(col_elemPGalltm, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'col_elemPGalltm')
+        ! deallocate(col_elemPGalltm, stat=deallocation_status, errmsg=emsg)
+        ! call util_deallocate_check(deallocation_status, emsg, 'col_elemPGalltm')
 
-        deallocate(npack_elemPGac, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'npack_elemPGac')
+        ! deallocate(npack_elemPGac, stat=deallocation_status, errmsg=emsg)
+        ! call util_deallocate_check(deallocation_status, emsg, 'npack_elemPGac')
 
-        deallocate(col_elemPGac, stat=deallocation_status, errmsg=emsg)
-        call util_deallocate_check(deallocation_status, emsg, 'col_elemPGac')
+        ! deallocate(col_elemPGac, stat=deallocation_status, errmsg=emsg)
+        ! call util_deallocate_check(deallocation_status, emsg, 'col_elemPGac')
 
         deallocate(npack_elemPGetm, stat=deallocation_status, errmsg=emsg)
         call util_deallocate_check(deallocation_status, emsg, 'npack_elemPGetm')

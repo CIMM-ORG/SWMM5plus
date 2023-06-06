@@ -1,31 +1,39 @@
 module utility_crash
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Utility routines for code crash control. These are preferred instead of
+    !% a Fortran STOP command because the stop only operates on a single image
+    !% which means a parallel simulation will hang at the nex SYNC command.
+    !%
+    !% Note that these cannot depend on anything except for define_globals 
+    !% define_indexes, define_keys, and define_settings so that it 
+    !% can be called by any module except these.
+    !%
+    !% Methods:
+    !% USE: inside a conditional when a stop is needed use...
+    !%   call util_crashpoint(1093874) !% 1093874 is a unique index number for crash point
+    !%   This sets a "crash" condition where a single-processor code will immediately stop 
+    !%   with the index number displayed at the command line (e.g., stop 1093874).
+    !%   However, for multiprocessor the crashpoint sets crashI=1 on the local processor,
+    !%   which ensures that at the next call to util_crashstop() that all processors
+    !%   will be stopped.
+    !%
+    !% USE: outside of conditionals a stop is called with...
+    !%   call util_crashtop(93872) !% 93872 is a unique index number for the crash point.
+    !%   This will check to see if crashI==1 on ANY processor, and if so it will stop
+    !%   all the processors.
+    !%==========================================================================
     use define_globals
     use define_indexes
     use define_keys
     use define_settings, only: setting
 
     implicit none
-
-!%-----------------------------------------------------------------------------
-!% Description:
-!% Utility routines for code crash control
-!% note that these cannot depend on anything except for define_globals so that it
-!% can be called by any module except for defin_globals.f90
-!%
-!% USE: inside a conditional when a stop is needed use...
-!%   call util_crashpoint(1093874) !% 1093874 is a unique index number for crash point
-!%   This sets a "crash" condition where a single-processor code will immediately stop 
-!%   with the index number displayed at the command line (e.g., stop 1093874).
-!%   However, for multiprocessor the crashpoint sets crashI=1 on the local processor,
-!%   which ensures that at the next call to util_crashstop() that all processors
-!%   will be stopped.
-!%
-!% USE: outside of conditionals a stop is called with...
-!%   call util_crashtop(93872) !% 93872 is a unique index number for the crash point.
-!%   This will check to see if crashI==1 on ANY processor, and if so it will stop
-!%   all the processors.
-!%-----------------------------------------------------------------------------
 
     private
 
@@ -99,13 +107,12 @@ module utility_crash
             print *, 'are at velocity near ',setting%Limiter%Velocity
         end if
 
-        !% assign crashpoint
+        !% --- assign crashpoint
         if (iscrash) call util_crashpoint (indexnumber)
 
-        !% set the crashI
+        !% --- set the crashI
         if (iscrash) crashI = 1
         
-
         !%------------------------------------------------------------------
     end subroutine util_crashcheck
  
@@ -129,9 +136,9 @@ module utility_crash
             print *, 'crash stop originating at', indexnumber,' on image ',this_image()
         end if
 
-        ! sync all
+        sync all
         !% broadcast to all images and stop all
-        ! call co_max(crashI)
+        call co_max(crashI)
         if (crashI==1) then
             print *, 'stopping image ',this_image()
             stop indexnumber

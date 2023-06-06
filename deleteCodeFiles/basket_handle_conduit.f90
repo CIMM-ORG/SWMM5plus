@@ -43,7 +43,7 @@ module basket_handle_conduit
     !     !%------------------------------------------------------------------
     !     !% Description:
     !     !% Only applies on conduits
-    !     !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+    !     !% Input elemPGx is pointer (already assigned) 
     !     !% Assumes that volume > 0 is enforced in volume computations.
     !     !%-------------------------------------------------------------------
     !         integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol

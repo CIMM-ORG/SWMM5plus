@@ -106,8 +106,8 @@ module define_globals
     !%  --- columns of element and face arrays
     integer, allocatable, target :: col_elemI(:)[:]                                !% columns of elemI array
     integer, allocatable, target :: col_elemP(:)[:],       npack_elemP(:)[:]       !% columns and number of packs for elemP array
-    integer, allocatable, target :: col_elemPGalltm(:)[:], npack_elemPGalltm(:)[:] !% columns and number of packs for elemPG array for all tm
-    integer, allocatable, target :: col_elemPGac(:)[:],    npack_elemPGac(:)[:]    !% columns and number of packs for elemPG array for ac tm
+    !integer, allocatable, target :: col_elemPGalltm(:)[:], npack_elemPGalltm(:)[:] !% columns and number of packs for elemPG array for all tm
+    !integer, allocatable, target :: col_elemPGac(:)[:],    npack_elemPGac(:)[:]    !% columns and number of packs for elemPG array for ac tm
     integer, allocatable, target :: col_elemPGetm(:)[:],   npack_elemPGetm(:)[:]   !% columns and number of packs for elemPG array for etm
     integer, allocatable, target :: col_elemR(:)[:]                                !% columns of elemR array
     integer, allocatable, target :: col_elemSI(:)[:]                               !% columns of elemSI array
@@ -149,8 +149,6 @@ module define_globals
     integer, allocatable, target :: elemP(:,:)[:]       !% coarray for element pack array
     real(8), allocatable, target :: elemOutR(:,:,:)[:]  !% coarray for packed, multi-level output storage (index,type,level)
 
-    integer, allocatable, target :: elemPGalltm(:,:)[:] !% coarray for element pack geometry array
-    integer, allocatable, target :: elemPGac(:,:)[:]    !% coarray for element pack geometry array
     integer, allocatable, target :: elemPGetm(:,:)[:]   !% coarray for element pack geometry array
     integer, allocatable, target :: elemSI(:,:)[:]      !% coarray for special element Integer
     real(8), allocatable, target :: elemSR(:,:)[:]      !% coarray for special elemen Real
@@ -317,6 +315,7 @@ module define_globals
     real(8), parameter :: fourR = 4.d0
     real(8), parameter :: fiveR = 5.d0
     real(8), parameter :: sixR = 6.d0
+    real(8), parameter :: sevenR = 7.d0
     real(8), parameter :: eightR = 8.d0
     real(8), parameter :: nineR = 9.d0
     real(8), parameter :: tenR = 10.d0
@@ -324,6 +323,8 @@ module define_globals
     real(8), parameter :: twentyR = 20.d0
     real(8), parameter :: twentyfourR = 24.d0
     real(8), parameter :: sixtyR = 60.d0
+    real(8), parameter :: fourtyeightR = 48.d0
+    real(8), parameter :: ninetyR = 90.d0
     real(8), parameter :: onehundredR = 100.d0
     real(8), parameter :: fivehundredR = 500.d0
     real(8), parameter :: onethousandR = 1000.d0
@@ -426,7 +427,8 @@ module define_globals
     real(8) :: cfl_max
 
     !% --- datetime related variables
-    integer, parameter :: datedelta = 693594
+    !%     generally use an "epoch time" starting from 01/01/1900
+    integer, parameter :: datedelta = 693594 !% --- days from 01/01/0000 to 01/01/1900
     integer, parameter :: secsperday = 86400
     integer :: dayspermonth(12,2) = &
         reshape((/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, & ! normal years

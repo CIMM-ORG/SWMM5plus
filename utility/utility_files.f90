@@ -2,7 +2,7 @@ module utility_files
 
     use define_settings
     use ifport
-    use utility_crash
+    use utility_crash, only: util_crashpoint
 
     implicit none
 
@@ -396,7 +396,7 @@ contains
             !% --- reset the name of the input file for each image
             call util_file_input_copies (.false.,this_image())
         end if
-        call util_crashstop(139872)
+        call util_crashpoint(139872)
         
     end subroutine util_file_duplicate_input
 !%

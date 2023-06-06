@@ -43,7 +43,7 @@ module vert_ellipse_conduit
     !     !%-----------------------------------------------------------------------------
     !     !% Description:
     !     !% Only applies on conduits (or non-surcharged vert_ellipse conduits)
-    !     !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+    !     !% Input elemPGx is pointer (already assigned) for 
     !     !% Assumes that volume > 0 is enforced in volume computations.
     !     !% NOTE: this does NOT limit the depth by surcharge height at this point
     !     !% This will be done after the head is computed.

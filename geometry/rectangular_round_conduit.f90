@@ -34,7 +34,7 @@ module rectangular_round_conduit
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on closed conduit of rect_round cross section
-        !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+        !% Input elemPGx is pointer (already assigned) for elemPGetm 
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
         !% Declarations

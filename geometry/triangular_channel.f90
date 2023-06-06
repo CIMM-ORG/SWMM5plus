@@ -32,7 +32,7 @@ module triangular_channel
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on open channels 
-        !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+        !% Input elemPGx is pointer (already assigned) for elemPGetm 
         !% Assumes that volume > 0 is previuosly enforced in volume computations.
         !%------------------------------------------------------------------
         !% Declarations

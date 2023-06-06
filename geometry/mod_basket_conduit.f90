@@ -34,7 +34,7 @@ module mod_basket_conduit
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on open channels 
-        !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+        !% Input elemPGx is pointer (already assigned) for elemPGetm
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
         !% Declarations

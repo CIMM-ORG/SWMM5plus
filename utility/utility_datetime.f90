@@ -1,11 +1,21 @@
 module utility_datetime
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Provides date and time functions
+    !%
+    !% Methods
+    !% Note that "datedelta" is set in define_globals and is the
+    !% days from 01/01/0000 to 01/01/1900
+    !% The EPA-SWMM-C epoch time are decimal days starting 01/01/1900
+    !%==========================================================================
 
     use define_settings, only: setting
     use define_api_keys
-    ! , only: api_daily, &
-    !                            api_hourly, &
-    !                            api_weekend, &
-    !                            api_monthly
     use define_globals, only: datedelta, secsperday, dayspermonth, nullvalueR, &
         sixtyR, twentyfourR
     use utility_crash, only: util_crashpoint
@@ -26,22 +36,26 @@ module utility_datetime
     contains
 !%
 !%==========================================================================
-! PUBLIC
+!% PUBLIC
 !%==========================================================================
 !%
     function util_datetime_get_next_time(secsTime, resolution_type) result(nextSecsTime)
         !%------------------------------------------------------------------
         !% Descriptions:
-        !% gets the 
+        !% gets the next time for pattern resolution in EPA-SWMM-C boundary
+        !% conditions
         !%------------------------------------------------------------------
-        real(8), intent(in) :: secsTime
-        integer, intent(in) :: resolution_type
-        real(8)             :: epochTime
-        real(8)             :: nextSecsTime
-        character(64)       :: subroutine_name = "util_datetime_get_next_time"
-
-        if (setting%Debug%File%utility_datetime) &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !% Declarations:
+            real(8), intent(in) :: secsTime
+            integer, intent(in) :: resolution_type
+            real(8)             :: epochTime
+            real(8)             :: nextSecsTime
+            character(64)       :: subroutine_name = "util_datetime_get_next_time"
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Debug%File%utility_datetime) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
 
         epochTime = util_datetime_secs_to_epoch(secsTime)
         if (resolution_type == api_daily) then
@@ -58,7 +72,6 @@ module utility_datetime
             nextSecsTime = util_datetime_epoch_to_secs(nextSecsTime)
         else if (resolution_type == api_nopattern) then
             nextSecsTime = nullvalueR
-            !print *, 'in util_datetime', nextSecsTime
         else
             nextSecsTime = nullvalueR
             print *, 'USER CONFIGURATION ERROR'
@@ -69,17 +82,27 @@ module utility_datetime
             call util_crashpoint(329873)
         end if
 
-        if (setting%Debug%File%utility_datetime) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%utility_datetime) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
     end function util_datetime_get_next_time
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     function util_datetime_epoch_to_secs(epochTime) result(secsTime)
-        real(8), intent(in) :: epochTime
-        real(8) :: secsTime
-        secsTime = (epochTime - setting%Time%StartEpoch) * real(secsperday)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Converts a datetime in SWMM epoch days to seconds
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), intent(in) :: epochTime
+            real(8) :: secsTime
+        !%------------------------------------------------------------------
+
+        secsTime = (epochTime - setting%Time%StartEpoch) * real(secsperday,8)
 
     end function util_datetime_epoch_to_secs
 !%
@@ -87,26 +110,34 @@ module utility_datetime
 !%==========================================================================
 !%
     function util_datetime_secs_to_epoch(secsTime) result(epochTime)
-        real(8), intent(in) :: secsTime
-        real(8) :: epochTime
-        epochTime = secsTime/real(secsperday) + setting%Time%StartEpoch
+        !%------------------------------------------------------------------
+        !% Description
+        !% Converts seconds of time to SWMM epoch days
+        !%------------------------------------------------------------------
+            real(8), intent(in) :: secsTime
+            real(8) :: epochTime
+        !%------------------------------------------------------------------
+
+        epochTime = secsTime/real(secsperday,8) + setting%Time%StartEpoch
+
     end function util_datetime_secs_to_epoch
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     subroutine util_datetime_decodedate(epochTime, year, month, day)
-        !-----------------------------------------------------------------------------
-        ! Description:
-        !
-        !
-        ! Method:
-        !
-        !-----------------------------------------------------------------------------
-        real(8), intent(in) :: epochTime
-        integer, intent(inout) :: year, month, day
-        integer :: d1, d4, d100, d400
-        integer :: y, m, d, i, k, t
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Converts an epoch time (days) to separate year, month and 
+        !% decimal days
+        !% HACK -- needs to be rewritten to remove single-letter variables
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), intent(in) :: epochTime
+            integer, intent(inout) :: year, month, day
+            integer :: d1, d4, d100, d400
+            integer :: y, m, d, i, k, t!
+        !%------------------------------------------------------------------
 
         d1 = 365
         d4 = d1 * 4 + 1
@@ -151,30 +182,31 @@ module utility_datetime
             month = m
             day = d + 1
         end if
+
     end subroutine util_datetime_decodedate
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     subroutine util_datetime_decodetime(epochTime, h, m, s)
-        !-----------------------------------------------------------------------------
-        ! Description:
-        !
-        !
-        ! Method:
-        !
-        !-----------------------------------------------------------------------------
-        real(8), intent(in) :: epochTime
-        integer, intent(inout) :: h, m, s
-        integer :: secs, mins
-        real(8) :: fracday
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Converts an epoch time (days) to hours, minutes, seconds
+        !% (loses days)
+        !%------------------------------------------------------------------
+            real(8), intent(in) :: epochTime
+            integer, intent(inout) :: h, m, s
+            integer :: secs, mins
+            real(8) :: fracday
+        !%------------------------------------------------------------------
 
-        fracday = (epochTime - floor(epochTime)) * real(secsperday)
+        fracday = (epochTime - floor(epochTime)) * real(secsperday,8)
         secs = int(floor(fracday + 0.5))
-        if (secs >= real(secsperday)) secs = 86399
+        if (secs >= real(secsperday,8)) secs = 86399
         call util_datetime_divmod(secs, 60, mins, s)
         call util_datetime_divmod(mins, 60, h, m)
         if (h > 23) h = 0
+
     end subroutine util_datetime_decodetime
 !%
 !%==========================================================================
@@ -190,16 +222,16 @@ module utility_datetime
             real(8), intent(inout)       :: thistime  !% must be time in seconds
             character(*), intent(inout)  :: outunits
         !%-------------------------------------------------------------------
-        if (thistime <= 90.0) then
+        if (thistime <= ninetyR) then
             outunits = 'seconds'
-            !% thistime is unchanged
+            !% --- thistime is unchanged
         else
             thistime = thistime / sixtyR
             outunits = 'minutes'
-            if (thistime > 90.0) then 
+            if (thistime > ninetyR) then 
                 thistime = thistime / sixtyR
                 outunits = 'hours'
-                if (thistime > 48.0) then
+                if (thistime > fourtyeightR) then
                     thistime = thistime / twentyfourR
                     outunits = 'days'
                 end if
@@ -230,22 +262,35 @@ module utility_datetime
 !%==========================================================================
 !%
     function util_datetime_isleapyear(year)
-        integer, intent(in) :: year
-        integer :: util_datetime_isleapyear
+        !%------------------------------------------------------------------
+        !% Description
+        !% returns 2 is is a leap year, 1 if not
+        !%------------------------------------------------------------------
+            integer, intent(in) :: year
+            integer :: util_datetime_isleapyear
+        !%------------------------------------------------------------------
+
         if ((mod(year,4) == 0) .and. ((mod(year,100) .ne. 0) .or. (mod(year,400) == 0))) then
             util_datetime_isleapyear = 2
         else
             util_datetime_isleapyear = 1
         end if
+
     end function util_datetime_isleapyear
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     function util_datetime_encodedate(year, month, day)
-        integer, intent(in) :: year, month, day
-        integer :: i, j, dday
-        real(8) :: util_datetime_encodedate
+        !%------------------------------------------------------------------
+        !% Description
+        !% converts year month day to day of the year
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: year, month, day
+            integer :: i, j, dday
+            real(8) :: util_datetime_encodedate
+        !%------------------------------------------------------------------
 
         i = util_datetime_isleapyear(year)
         dday = day
@@ -258,86 +303,127 @@ module utility_datetime
             util_datetime_encodedate = i*365 + i/4 - i/100 + i/400 + dday - datedelta
             return
         end if
-        util_datetime_encodedate = -datedelta
+        util_datetime_encodedate = -datedelta !% --- error condition
+
     end function util_datetime_encodedate
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     function util_datetime_encodetime(hour, minute, second)
-        integer, intent(in) :: hour, minute, second
-        real(8) :: util_datetime_encodetime, s
+        !%------------------------------------------------------------------
+        !% Description
+        !% converts hours, minutes seconds into decimal day
+        !%------------------------------------------------------------------
+            integer, intent(in) :: hour, minute, second
+            real(8) :: util_datetime_encodetime, s
+        !%------------------------------------------------------------------
+
         if ((hour >= 0) .and. (minute >= 0) .and. (second >= 0)) then
-            s = (hour * 3600 + minute * 60 + second)
+            s = real((hour * 3600 + minute * 60 + second),8)
             util_datetime_encodetime = s/real(secsperday)
             return
         end if
-        util_datetime_encodetime = 0
+        util_datetime_encodetime = 0  !% --- error condition
+
     end function util_datetime_encodetime
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     function util_datetime_dayofweek(epochTime)
-        real(8), intent(in) :: epochTime
-        integer :: t, util_datetime_dayofweek
+        !%------------------------------------------------------------------
+        !% Description
+        !% Takes EpochTime and determines day of week as 1-7 with
+        !% 1 being Sunday
+        !%------------------------------------------------------------------
+            real(8), intent(in) :: epochTime
+            integer :: t, util_datetime_dayofweek
+        !%------------------------------------------------------------------
+
         t = floor(epochTime) + datedelta
         util_datetime_dayofweek = mod(t, 7)+1
+
     end function
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     function util_datetime_get_next_month(epochTime)
-        real(8), intent(in) :: epochTime
-        real(8) :: util_datetime_get_next_month
-        real(8) :: elapsed_days, days_til_next_month
-        integer :: yy, mm, dd, i
+        !%------------------------------------------------------------------
+        !% Description
+        !% Gets the next month from the epochTime (decimal days)
+        !%------------------------------------------------------------------
+            real(8), intent(in) :: epochTime
+            real(8) :: util_datetime_get_next_month
+            real(8) :: elapsed_days, days_til_next_month
+            integer :: yy, mm, dd, i
+        !%------------------------------------------------------------------
 
         call util_datetime_decodedate(epochTime, yy, mm, dd)
         i = util_datetime_isleapyear(yy)
-        elapsed_days = real(epochTime - int(epochTime))
-        days_til_next_month = real(dayspermonth(mm,i)) - real(dd)
+        elapsed_days = real(epochTime - int(epochTime),8)
+        days_til_next_month = real(dayspermonth(mm,i),8) - real(dd,8)
         util_datetime_get_next_month = epochTime + days_til_next_month + 1 - elapsed_days
+
     end function util_datetime_get_next_month
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     function util_datetime_get_next_day(epochTime)
-        real(8), intent(in) :: epochTime
-        real(8) :: util_datetime_get_next_day
+        !%------------------------------------------------------------------
+        !% Description
+        !% Gets the next day from the epochTime
+        !%------------------------------------------------------------------
+        !% Declarations:
+            real(8), intent(in) :: epochTime
+            real(8) :: util_datetime_get_next_day
+        !%------------------------------------------------------------------
+
         if (epochTime - int(epochTime) > 0) then
-            util_datetime_get_next_day = real(ceiling(epochTime))
+            util_datetime_get_next_day = real(ceiling(epochTime),8)
         else
-            util_datetime_get_next_day = epochTime + real(1.0)
+            util_datetime_get_next_day = epochTime + oneR
         end if
+
     end function util_datetime_get_next_day
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     function util_datetime_get_next_hour(epochTime)
-        real(8), intent(in) :: epochTime
-        real(8) :: util_datetime_get_next_hour
-        real(8) :: n24 = 24.0
-        real(8) :: n1 = 1.0
-        util_datetime_get_next_hour = (int(epochTime*n24) + n1) / n24
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Gets the next hour from the epoch Time
+        !%------------------------------------------------------------------
+        !% Declarations:
+            real(8), intent(in) :: epochTime
+            real(8) :: util_datetime_get_next_hour
+        !%------------------------------------------------------------------
+
+        util_datetime_get_next_hour = real(int(epochTime * twentyfourR) + oneI,8) / twentyfourR
+
     end function util_datetime_get_next_hour
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     recursive function util_datetime_get_next_weekendday_hour(epochTime) result(next)
+        !%------------------------------------------------------------------
+        !% Description
+        !% 
+        !%------------------------------------------------------------------
         ! sun = 1, ..., sat = 7
-        real(8), intent(in) :: epochTime
-        real(8) :: next
-        real(8) :: days_til_weekendday
-        integer :: dayofweek, h, m, s
+            real(8), intent(in) :: epochTime
+            real(8) :: next
+            real(8) :: days_til_weekendday
+            integer :: dayofweek, h, m, s
+        !%------------------------------------------------------------------
 
         dayofweek = util_datetime_dayofweek(epochTime)
         if ((dayofweek > 1) .and. (dayofweek < 7)) then
-            days_til_weekendday = real(7) - real(dayofweek) - real(epochTime - floor(epochTime))
+            days_til_weekendday = sevenR - real(dayofweek,8) - (epochTime - real(floor(epochTime),8))
             next = epochTime + days_til_weekendday
         else
             next = util_datetime_get_next_hour(epochTime)
@@ -348,21 +434,21 @@ module utility_datetime
                 next = util_datetime_get_next_weekendday_hour(next)
             end if
         end if
+
     end function util_datetime_get_next_weekendday_hour
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     subroutine util_datetime_divmod(n, d, result, remainder)
-        !-----------------------------------------------------------------------------
-	    ! Description:
-	    !
-        !
-        ! Method:
-        !
-        !-----------------------------------------------------------------------------
-        integer, intent(in) :: n, d
-        integer, intent(inout) :: result, remainder
+        !%------------------------------------------------------------------
+	    !% Description:
+        !% Divides n by d and provides remainder
+        !% if d=0 then result and remainder are 0
+	    !%------------------------------------------------------------------
+            integer, intent(in) :: n, d
+            integer, intent(inout) :: result, remainder
+        !%------------------------------------------------------------------
 
         if (d == 0) then
             result = 0
@@ -371,6 +457,7 @@ module utility_datetime
             result = n/d
             remainder = n - d*result
         end if
+
     end subroutine util_datetime_divmod
 !%
 !%==========================================================================

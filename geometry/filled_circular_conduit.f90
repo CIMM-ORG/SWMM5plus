@@ -35,7 +35,7 @@ module filled_circular_conduit
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on conduits 
-        !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+        !% Input elemPGx is pointer (already assigned) for elemPGetm 
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
         !% Declarations

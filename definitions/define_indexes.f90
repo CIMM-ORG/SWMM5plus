@@ -505,8 +505,7 @@ module define_indexes
 !%==========================================================================
 !%      
     !%-------------------------------------------------------------------------
-    !% Define the column indexes for elemPGalltm(:,:), elemPGetm(:,:),
-    !% and elemPGac(:,:) arrays
+    !% Define the column indexes for elemPGetm(:,:) arrays
     !% These are the packed arrays of geometry
     !% Note the same columns are used in the three different arrays
     !%-------------------------------------------------------------------------
@@ -544,9 +543,9 @@ module define_indexes
         enumerator :: epg_JM_noStorage                !% JM with no storage
         enumerator :: epg_lastplusone !% must be last enum item
     end enum
-    integer, target :: Ncol_elemPGalltm =  epg_lastplusone-1
+    !integer, target :: Ncol_elemPGalltm =  epg_lastplusone-1
     integer, target :: Ncol_elemPGetm   =  epg_lastplusone-1
-    integer, target :: Ncol_elemPGac    =  epg_lastplusone-1
+    !integer, target :: Ncol_elemPGac    =  epg_lastplusone-1
 
 !%
 !%==========================================================================

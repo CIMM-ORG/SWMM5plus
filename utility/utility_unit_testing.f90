@@ -5849,57 +5849,57 @@ contains
       !% checking elemPGac(:,epg_CCJM_rectangular_nonsurcharged) indexes
 
 
-      min_val = minval(elemPGac(:,epg_CC_rectangular)) - 1
-      max_val = maxval(elemPGac(:,epg_CC_rectangular))
-      ii = 0
+      ! min_val = minval(elemPGac(:,epg_CC_rectangular)) - 1
+      ! max_val = maxval(elemPGac(:,epg_CC_rectangular))
+      ! ii = 0
 
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(elemPGac(:,epg_CC_rectangular),&
-              mask=elemPGac(:,epg_CC_rectangular)>min_val)
-      end do
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(elemPGac(:,epg_CC_rectangular),&
+      !         mask=elemPGac(:,epg_CC_rectangular)>min_val)
+      ! end do
 
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
-
-
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemPGac(:,epg_CC_rectangular) is only filled with nullvalueI. This_image ::", this_image()
-
-      else if (ii /= npack_elemPGac(epg_CC_rectangular)) then
-         print *, "ERROR:::: elemPGac(:,epg_CC_rectangular) is not unique. This_image ::", this_image()
-
-      else
-         print *, "elemPGac(:,epg_CC_rectangular) is unique. This_image ::", this_image()
-      end if
-
-      !% checking elemPGac(:,epg_CC_trapezoidal) indexes
-
-      min_val = minval(elemPGac(:,epg_CC_trapezoidal)) - 1
-      max_val = maxval(elemPGac(:,epg_CC_trapezoidal))
-      ii = 0
-
-      do while(min_val<max_val)
-         ii = ii + 1
-         min_val = minval(elemPGac(:,epg_CC_trapezoidal), &
-              mask=elemPGac(:,epg_CC_trapezoidal)>min_val)
-      end do
-
-      if (min_val == nullvalueI) then
-         ii = ii - 1
-      end if
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
 
 
-      if (ii == 0 .and. min_val == nullvalueI) then
-         print *, "elemPGac(:,epg_CC_trapezoidal) is only filled with nullvalueI. This_image ::", this_image()
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "elemPGac(:,epg_CC_rectangular) is only filled with nullvalueI. This_image ::", this_image()
 
-      else if (ii /= npack_elemPGac(epg_CC_trapezoidal)) then
-         print *, "ERROR:::: elemPGac(:,epg_CC_trapezoidal) is not unique. This_image ::", this_image()
+      ! else if (ii /= npack_elemPGac(epg_CC_rectangular)) then
+      !    print *, "ERROR:::: elemPGac(:,epg_CC_rectangular) is not unique. This_image ::", this_image()
 
-      else
-         print *, "elemPGac(:,epg_CC_trapezoidal) is unique. This_image ::", this_image()
-      end if
+      ! else
+      !    print *, "elemPGac(:,epg_CC_rectangular) is unique. This_image ::", this_image()
+      ! end if
+
+      ! !% checking elemPGac(:,epg_CC_trapezoidal) indexes
+
+      ! min_val = minval(elemPGac(:,epg_CC_trapezoidal)) - 1
+      ! max_val = maxval(elemPGac(:,epg_CC_trapezoidal))
+      ! ii = 0
+
+      ! do while(min_val<max_val)
+      !    ii = ii + 1
+      !    min_val = minval(elemPGac(:,epg_CC_trapezoidal), &
+      !         mask=elemPGac(:,epg_CC_trapezoidal)>min_val)
+      ! end do
+
+      ! if (min_val == nullvalueI) then
+      !    ii = ii - 1
+      ! end if
+
+
+      ! if (ii == 0 .and. min_val == nullvalueI) then
+      !    print *, "elemPGac(:,epg_CC_trapezoidal) is only filled with nullvalueI. This_image ::", this_image()
+
+      ! else if (ii /= npack_elemPGac(epg_CC_trapezoidal)) then
+      !    print *, "ERROR:::: elemPGac(:,epg_CC_trapezoidal) is not unique. This_image ::", this_image()
+
+      ! else
+      !    print *, "elemPGac(:,epg_CC_trapezoidal) is unique. This_image ::", this_image()
+      ! end if
 
 
       !% checking elemPGac(:,epg_JB_rectangular) indexes

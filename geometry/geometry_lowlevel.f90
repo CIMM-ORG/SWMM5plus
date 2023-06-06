@@ -251,7 +251,7 @@ module geometry_lowlevel
         !% Description:
         !% Only applies on tabular look-ups (typically conduits) that have
         !% depth as a function of volume.
-        !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+        !% Input elemPGx is pointer (already assigned) for elemPGetm 
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
@@ -297,7 +297,7 @@ module geometry_lowlevel
         !%------------------------------------------------------------------
         !% Description:
         !% Only applies on tabular look-ups 
-        !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+        !% Input elemPGx is pointer (already assigned) for  elemPGetm 
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
             integer, target, intent(in)   :: elemPGx(:,:)
@@ -349,7 +349,7 @@ module geometry_lowlevel
         !% Description:
         !% Only applies on tabular look-ups (typically conduits) that have
         !% topwidth as a function of depth
-        !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+        !% Input elemPGx is pointer (already assigned) for elemPGetm
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
             integer, target, intent(in) :: elemPGx(:,:), Npack, thisCol
@@ -395,7 +395,7 @@ module geometry_lowlevel
         !% Description:
         !% Only applies on tabular look-ups (typically conduits) that have
         !% hydraulic radius as a function of depth
-        !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+        !% Input elemPGx is pointer (already assigned) for elemPGetm
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
             integer, target, intent(in) :: thisP(:)
@@ -436,7 +436,7 @@ module geometry_lowlevel
         !% Description:
         !% Only applies on tabular look-ups (typically conduits) that have
         !% hydraulic radius as a function of depth
-        !% Input elemPGx is pointer (already assigned) for elemPGalltm, elemPGetm or elemPGac
+        !% Input elemPGx is pointer (already assigned) for elemPGetm 
         !% Assumes that volume > 0 is enforced in volume computations.
         !%-------------------------------------------------------------------
             integer, target, intent(in) :: thisP(:)
