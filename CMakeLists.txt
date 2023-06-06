@@ -25,16 +25,6 @@ else()
 endif()
 endfunction()
 
-
-
-
-
-
-# if(NOT _swmmtoolbox_status)
-#     set(PY_${module_upper} ${_swmmtoolbox_location} CACHE STRING 
-#         "Location of Python module ${module}")
-# endif(NOT _swmmtoolbox_status)
-
 if (NOT CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
     message(FATAL_ERROR "Intel Fortran compiler not found. Found ${CMAKE_Fortran_COMPILER_ID} instead. Run:
     \n$ source path/to/intel/oneapi/setvars.sh
@@ -83,8 +73,6 @@ if (DEFINED ENV{HDF5_DIR})
 endif()
 
 
-
-
 FetchContent_Declare(
     epaswmm5
     URL https://github.com/USEPA/Stormwater-Management-Model/archive/v5.1.13.tar.gz
@@ -108,49 +96,23 @@ if(NOT json_fortran_POPULATED)
   FetchContent_Populate(json_fortran)
 endif()
 
-if (EXISTS ${BUILD_HDF5}/lib 
-    AND EXISTS ${BUILD_HDF5}/include
-    AND EXISTS ${BUILD_HDF5}/lib/libhdf5hl_fortran.a
-    AND EXISTS ${BUILD_HDF5}/lib/libhdf5_hl.a
-    AND EXISTS ${BUILD_HDF5}/lib/libhdf5_fortran.a
-    AND EXISTS ${BUILD_HDF5}/lib/libhdf5.a
-)
-
-    ExternalProject_Add(hdf5
-    SOURCE_DIR ${BUILD_HDF5}
-    CONFIGURE_COMMAND ""
-    BINARY_DIR ${BUILD_HDF5}
-    BUILD_COMMAND ""
-    INSTALL_COMMAND "")
-    set(HDF5_LIB_DIR ${BUILD_HDF5}/lib)
-    set(HDF5_INCLUDE_DIR ${BUILD_HDF5}/include)
-    set(HDF5_LIBRARIES ${BUILD_HDF5}/lib/libhdf5hl_fortran.a ${BUILD_HDF5}/lib/libhdf5_hl.a 
-    ${BUILD_HDF5}/lib/libhdf5_fortran.a ${BUILD_HDF5}/lib/libhdf5.a)
-    set(HDF5_FOUND ON)
-endif()
-
-if (HDF5_FOUND)
-    message(WARNING "HDF5 found in ${BUILD_HDF5}")
-else ()
-    message(WARNING "HDF5 not found, will download and build with required options.\n If HDF5 is already installed, point to its root directory by running:\n
+message(WARNING "HDF5 not found, will download and build with required options.\n If HDF5 is already installed, point to its root directory by running:\n
 $ export HDF5_DIR=path/to/hdf5/")
-    FetchContent_Populate(hdf5)
-    ExternalProject_Add(hdf5
-    SOURCE_DIR ${hdf5_SOURCE_DIR}
-    CONFIGURE_COMMAND FC=ifort ${hdf5_SOURCE_DIR}/configure --enable-fortran --without-zlib
-    BINARY_DIR ${hdf5_BINARY_DIR}
-    BUILD_COMMAND ${MAKE}
-    COMMAND make install)
-    
+FetchContent_Populate(hdf5)
+ExternalProject_Add(hdf5
+SOURCE_DIR ${hdf5_SOURCE_DIR}
+CONFIGURE_COMMAND FC=ifort ${hdf5_SOURCE_DIR}/configure --enable-fortran --without-zlib
+BINARY_DIR ${hdf5_BINARY_DIR}
+BUILD_COMMAND ${MAKE}
+COMMAND make install)
 
-    set(HDF5_LIB_DIR ${hdf5_BINARY_DIR}/hdf5/lib/)
-    set(HDF5_INCLUDE_DIR ${hdf5_BINARY_DIR}/hdf5/include/)
-    set(HDF5_LIBRARIES ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5hl_fortran.a ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5_hl.a 
-    ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5_fortran.a ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5.a)
+set(HDF5_LIB_DIR ${hdf5_BINARY_DIR}/hdf5/lib/)
+set(HDF5_INCLUDE_DIR ${hdf5_BINARY_DIR}/hdf5/include/)
+set(HDF5_LIBRARIES ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5hl_fortran.a ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5_hl.a 
+${hdf5_BINARY_DIR}/hdf5/lib/libhdf5_fortran.a ${hdf5_BINARY_DIR}/hdf5/lib/libhdf5.a)
 
-    set(BUILD_HDF5 ${hdf5_BINARY_DIR})
-    set(HDF5_FOUND ON)
-endif()
+set(BUILD_HDF5 ${hdf5_BINARY_DIR})
+set(HDF5_FOUND ON)
 
 #Following sh script
 file(COPY ${epaswmm5_SOURCE_DIR}/src/ DESTINATION ${CMAKE_SOURCE_DIR}/interface/src)
@@ -180,12 +142,10 @@ if (build_configuration STREQUAL "dwflow")
     message(STATUS "Commented out lines [248-252] from 'interface/src/dwflow.c'")
 endif()
 
-
 file(GLOB
     SWMM_SOURCES
         ${CMAKE_SOURCE_DIR}/interface/src/*.c 
         ${CMAKE_SOURCE_DIR}/interface/src/*.h
-        # ${CMAKE_SOURCE_DIR}/*.h
 )
 file(GLOB
     SWMM5X_SOURCES
@@ -197,8 +157,8 @@ file(GLOB
         ${json_fortran_SOURCE_DIR}/src/json_module.F90
 
         ${CMAKE_SOURCE_DIR}/utility/*.f90 
+        ${CMAKE_SOURCE_DIR}/special_elements/*.f90 
         ${CMAKE_SOURCE_DIR}/definitions/*.f90
-        # ${CMAKE_SOURCE_DIR}/interface/*.f90
         ${CMAKE_SOURCE_DIR}/interface/c_library.f90
         ${CMAKE_SOURCE_DIR}/interface/interface.f90
         ${CMAKE_SOURCE_DIR}/initialization/*.f90
@@ -231,11 +191,6 @@ target_link_libraries(SWMM PUBLIC
     ${HDF5_LIBRARIES}
 )
 add_dependencies(SWMM hdf5)
-
-# if (DEFINED ENV{FOR_COARRAY_NUM_IMAGES})
-#     message(WARNING "Environment variable FOR_COARRAY_NUM_IMAGES is set. Compiler will ignore CMake settings for -coarray-num-images. If unsure, run the following before using CMake \n$ unset FOR_COARRAY_NUM_IMAGES")
-# endif()
-
 
 #Testing
 check_python_dependencies(tornado)
