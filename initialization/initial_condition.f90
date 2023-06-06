@@ -4706,9 +4706,7 @@ contains
                 print *, 'Small Volume depth cutoff ',MomentumDepthCutoff
                 print *, 'is larger or equal to radius of the smallest pipe '
                 print *, 'Small Volume depth cutoff must be smaller than the radius.'
-                !stop 
                 call util_crashpoint(398705)
-                !return
             end if
         !%------------------------------------------------------------------
 

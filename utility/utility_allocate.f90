@@ -8,6 +8,8 @@ module utility_allocate
     !% Description:
     !% Allocation of run-time arrays. 
     !% The only other allocations should be in boundary_conditions.f90
+    !% Presently there are some allocations in Output that need to be
+    !% reorganized
     !%
     !% Methods:
     !% For memory control ALL runtime arrays should be allocated at the start
