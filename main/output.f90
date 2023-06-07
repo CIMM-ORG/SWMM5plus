@@ -5001,7 +5001,9 @@ contains
             deallocate(dset_data)
             
         end if
-        deallocate(phantom_link_lengths)
+        if(allocated(phantom_link_lengths)) then
+            deallocate(phantom_link_lengths)
+        end if 
         
     end subroutine outputML_HD5F_write_static_file
 !%
