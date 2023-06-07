@@ -64,7 +64,7 @@ endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -lm -lpthread -shared -fcommon")
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -coarray=distributed -ldl")
 
-set(FETCHCONTENT_QUIET "ON")
+set(FETCHCONTENT_QUIET OFF)
 
 set(BUILD_COARRAY_NUM_IMAGES 1 CACHE STRING "Set up the number of processors to use for parallel SWMM5+.")
 set(BUILD_HDF5 "/hdf5/hdf5-1.12.1/hdf5")
@@ -82,11 +82,13 @@ FetchContent_Declare(
     json_fortran
     GIT_REPOSITORY https://github.com/jacobwilliams/json-fortran.git
     GIT_TAG 3ab8f98209871875325c6985dd0e50085d1c82c2 #Release 8.3.0
+    GIT_PROGRESS ON
 )
 FetchContent_Declare(
     hdf5
     GIT_REPOSITORY https://github.com/HDFGroup/hdf5.git
     GIT_TAG 3e847e003632bdd5fdc189ccbffe25ad2661e16f #Release 1.12.2
+    GIT_PROGRESS ON
 )
 Fetchcontent_MakeAvailable(epaswmm5)
 FetchContent_GetProperties(json_fortran hdf5)
@@ -96,8 +98,6 @@ if(NOT json_fortran_POPULATED)
   FetchContent_Populate(json_fortran)
 endif()
 
-message(WARNING "HDF5 not found, will download and build with required options.\n If HDF5 is already installed, point to its root directory by running:\n
-$ export HDF5_DIR=path/to/hdf5/")
 FetchContent_Populate(hdf5)
 ExternalProject_Add(hdf5
 SOURCE_DIR ${hdf5_SOURCE_DIR}
