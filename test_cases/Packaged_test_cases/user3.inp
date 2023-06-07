@@ -17,7 +17,7 @@ START_TIME           01:00:00
 REPORT_START_DATE    01/01/1999
 REPORT_START_TIME    01:00:00
 END_DATE             01/01/1999
-END_TIME             07:00:00
+END_TIME             02:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
