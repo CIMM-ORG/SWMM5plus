@@ -1,3 +1,13 @@
+// FILE api_error.c
+//==========================================================================
+// SWMM5+ release, version 1.0.0
+// 20230608
+// Hydraulics engine that links with EPA SWMM-C
+// June 8, 2023
+//
+// Description:
+// error reporting for the SWMM5+/EPA-SWMM API
+//==========================================================================
 #define _CRT_SECURE_NO_DEPRECATE
 
 #include <string.h>
@@ -29,18 +39,21 @@ int APIErrCodes[] =
 char  APIErrString[256];
 int APIErrCode = 0;
 
+//=============================================================================
 char* api_error_getMsg(int i)
 {
     if ( i >= 0 && i < api_max_err_msg ) return APIErrMsgs[i-API_FIRST_ERROR_CODE];
     else return APIErrMsgs[0];
 };
 
+//=============================================================================
 int  api_error_getCode(int i)
 {
     if ( i >= 0 && i < api_max_err_msg ) return APIErrCodes[i-API_FIRST_ERROR_CODE];
     else return 0;
 }
 
+//=============================================================================
 int  api_error_setInpError(int api_errcode, char* s)
 {
     strcpy(APIErrString, s);
@@ -51,18 +64,21 @@ int  api_error_setInpError(int api_errcode, char* s)
 //      ERROR REPORTING
 //=============================================================================
 
+//=============================================================================
 void DLLEXPORT api_display_ErrorMsg(int code, char* s)
 {
     if (( code >= api_err_not_developed ) && ( code < api_max_err_msg ))
         printf(APIErrString, api_error_getMsg(code), s);
 }
 
+//=============================================================================
 void DLLEXPORT api_display_ErrorCode(int code, char* s)
 {
     if (( code >= api_err_not_developed ) && ( code < api_max_err_msg ))
         printf("%s", error_getMsg(code));
 }
 
+//=============================================================================
 void api_report_writeErrorMsg(int code, char* s)
 //
 //  Input:   code = error code
@@ -85,6 +101,7 @@ void api_report_writeErrorMsg(int code, char* s)
     }
 }
 
+//=============================================================================
 void api_report_writeErrorCode()
 //
 //  Input:   none
@@ -99,3 +116,6 @@ void api_report_writeErrorCode()
             fprintf(Frpt.file, "%s", error_getMsg(APIErrCode));
     }
 }
+//=============================================================================
+// END api_error.c
+//=============================================================================

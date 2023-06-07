@@ -2453,8 +2453,7 @@ contains
     !         setting%Debug%File%utility = .true.
     !     end if
     ! end subroutine define_settings_update_debug
-!%
 !%==========================================================================
+!% End of module
 !%==========================================================================
-!%
 end module define_settings

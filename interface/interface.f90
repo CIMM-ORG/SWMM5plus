@@ -1,5 +1,15 @@
 module interface_
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Application Programming Interface (API) for SWMM5+ to call functions
+    !% in api.c
+    !%
+    !%==========================================================================
     use iso_c_binding
     use c_library
     use utility
@@ -30,10 +40,9 @@ module interface_
     public :: interface_controls_execute
     public :: interface_controls_get_action_results
 
-    !% Public subroutines/functions
+    !% --- Public subroutines/functions
     public :: interface_init
     public :: interface_finalize
-    ! public :: interface_run_step
     public :: interface_get_nodef_attribute
     public :: interface_get_linkf_attribute
 
@@ -72,25 +81,24 @@ module interface_
     public :: interface_get_RDII_inflow
     public :: interface_get_groundwater_inflow
     public :: interface_get_LID_inflow
-
-
-
+!%
 !%==========================================================================
+!% INTERFACE
 !%==========================================================================
-
-    ! Interface with SWMM shared library
+!%
+    ! --- Interface with SWMM shared library
     interface
-        !% -------------------------------------------------------------------------------
+        !% -----------------------------------------------------------------
         !% dummy for testing
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_teststuff() &
             BIND(C, name='api_teststuff')
             use, intrinsic :: iso_c_binding
             implicit none
         end function api_teststuff
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Controls and monitoring
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_controls_count(nRules, nPremise, nThenAction, nElseAction) &
             BIND(C, name="api_controls_count")
             use, intrinsic :: iso_c_binding
@@ -100,7 +108,7 @@ module interface_
             integer(c_int), intent(inout) :: nThenAction
             integer(c_int), intent(inout) :: nElseAction
         end function api_controls_count
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_controls_get_premise_data( &
                 locationL,        locationR,                   &
                 linknodesimTypeL, linknodesimTypeR,            &
@@ -115,7 +123,7 @@ module interface_
             integer(c_int), intent(inout) :: thisPremiseLevel
             integer(c_int), value, intent(in)    :: rIdx
         end function api_controls_get_premise_data
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer (c_int) function api_controls_get_action_data(              &
                 location, attribute, thisActionLevel, rIdx, isThen)         &
             BIND(C, name="api_controls_get_action_data")
@@ -124,7 +132,7 @@ module interface_
             integer(c_int), intent(inout) :: location, attribute, thisActionLevel
             integer(c_int), value, intent(in) :: rIdx, isThen
         end function api_controls_get_action_data
-       !% -------------------------------------------------------------------------------
+       !%------------------------------------------------------------------
         integer(c_int) function api_controls_transfer_monitor_data ( &
                 Depth, Head, Volume, Inflow, Flow, StatusSetting,    &
                 TimeLastSet, LinkNodeIdx, linknodesimType)                    &
@@ -135,7 +143,7 @@ module interface_
             real(c_double), value, intent(in) :: StatusSetting, TimeLastSet
             integer(c_int), value, intent(in) :: LinkNodeIdx, linknodesimType
         end function api_controls_transfer_monitor_data
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer (c_int) function api_controls_execute( &
                 currentTimeEpoch, ElapsedDays, dtDays) &
             BIND(C, name="api_controls_execute")
@@ -143,12 +151,11 @@ module interface_
             implicit none
             real(c_double), value, intent(in) :: currentTimeEpoch, ElapsedDays, dtDays
         end function api_controls_execute
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
 
-
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Simulation
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_initialize(inp_file, report_file, out_file, run_routing) &
             BIND(C, name="api_initialize")
             use, intrinsic :: iso_c_binding
@@ -158,23 +165,22 @@ module interface_
             character(kind=c_char), intent(in) :: out_file
             integer(c_int),  value, intent(in) :: run_routing
         end function api_initialize
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_finalize() &
             BIND(C, name="api_finalize")
             use, intrinsic :: iso_c_binding
             implicit none
         end function api_finalize
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         real(c_double) function api_run_step() &
             BIND(C, name="api_run_step")
             use, intrinsic :: iso_c_binding
             implicit none
         end function api_run_step
 
-
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         ! --- Property-extraction
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% * During Simulation
         integer(c_double) function api_get_node_results(node_name, inflow, overflow, depth, volume) &
             BIND(C, name="api_get_node_results")
@@ -186,7 +192,7 @@ module interface_
             real(c_float),          intent(inout) :: depth
             real(c_float),          intent(inout) :: volume
         end function api_get_node_results
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_double) function api_get_link_results(link_name, flow, depth, volume) &
             BIND(C, name="api_get_link_results")
             use, intrinsic :: iso_c_binding
@@ -196,20 +202,20 @@ module interface_
             real(c_float),          intent(inout) :: depth
             real(c_float),          intent(inout) :: volume
         end function api_get_link_results
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% * After Initialization
         real(c_double) function api_get_start_datetime() &
             BIND(C, name="api_get_start_datetime")
             use, intrinsic :: iso_c_binding
             implicit none
         end function api_get_start_datetime
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         real(c_double) function api_get_end_datetime() &
             BIND(C, name="api_get_end_datetime")
             use, intrinsic :: iso_c_binding
             implicit none
         end function api_get_end_datetime
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_flowBC(node_idx, current_datetime, flowBC) &
             BIND(C, name="api_get_flowBC")
             use, intrinsic :: iso_c_binding
@@ -218,7 +224,7 @@ module interface_
             real(c_double), value, intent(in   ) :: current_datetime
             real(c_double),        intent(inout) :: flowBC
         end function api_get_flowBC
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_headBC(node_idx, current_datetime, headBC) &
             BIND(C, name="api_get_headBC")
             use, intrinsic :: iso_c_binding
@@ -227,14 +233,14 @@ module interface_
             real(c_double), value, intent(in   ) :: current_datetime
             real(c_double),        intent(inout) :: headBC
         end function api_get_headBC
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_count_subobjects(N_groundwater) &
             BIND(C, name="api_count_subobjects")
             use, intrinsic :: iso_c_binding
             implicit none 
             integer(c_int),       intent(inout) :: N_groundwater
         end function api_count_subobjects
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_SWMM_setup( &
             flow_units, &
             infiltration_model_type, &
@@ -296,7 +302,7 @@ module interface_
             integer(c_int), intent(inout) :: control_rule_step
             integer(c_int), intent(inout) :: surcharge_method
         end function api_get_SWMM_setup
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_SWMM_times &
             (starttime_epoch, endtime_epoch, report_start_datetime, report_step, &
              hydrology_wet_step, hydrology_dry_step, sweep_start_dayofyear, &
@@ -316,13 +322,13 @@ module interface_
             real(c_double), intent(inout) :: hydraulic_step
             real(c_double), intent(inout) :: total_duration
         end function api_get_SWMM_times
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         real(c_double) function api_get_NewRunoffTime() &
             BIND(C, name="api_get_NewRunoffTime")
             use, intrinsic :: iso_c_binding
             implicit none 
         end function api_get_NewRunoffTime
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_nodef_attribute(node_idx, attr, value) &
             BIND(C, name="api_get_nodef_attribute")
             use, intrinsic :: iso_c_binding
@@ -331,7 +337,7 @@ module interface_
             integer(c_int), value, intent(in   ) :: attr
             real(c_double),        intent(inout) :: value
         end function api_get_nodef_attribute
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_linkf_attribute(link_idx, attr, value) &
             BIND(C, name="api_get_linkf_attribute")
             use, intrinsic :: iso_c_binding
@@ -340,7 +346,7 @@ module interface_
             integer(c_int), value, intent(in   ) :: attr
             real(c_double),        intent(inout) :: value
         end function api_get_linkf_attribute
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_transectf_attribute(transect_idx, attr, value) &
             BIND(C, name="api_get_transectf_attribute")
             use, intrinsic :: iso_c_binding
@@ -349,7 +355,7 @@ module interface_
             integer(c_int), value, intent(in   ) :: attr
             real(c_double),        intent(inout) :: value
         end function api_get_transectf_attribute
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer (c_int) function api_get_adjustments &
         (adj_len, adjTemperature, adjEvaporation, adjRainfall, adjConductivity) &
             BIND(C, name="api_get_adjustments")
@@ -361,13 +367,13 @@ module interface_
             real(c_double),        intent(inout) :: adjRainfall(adj_len)
             real(c_double),        intent(inout) :: adjConductivity(adj_len)
         end function api_get_adjustments
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer (c_int) function api_get_N_TRANSECT_TBL() &
             BIND(C, name="api_get_N_TRANSECT_TBL")
             use, intrinsic :: iso_c_binding
             implicit none
         end function api_get_N_TRANSECT_TBL
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer (c_int) function api_get_transect_table &
             (transect_idx, table_len, tarea, twidth, thydradius) &
             BIND(C, name="api_get_transect_table")
@@ -379,14 +385,14 @@ module interface_
             real(c_double),        intent(inout) :: twidth(table_len)
             real(c_double),        intent(inout) :: thydradius(table_len)
         end function api_get_transect_table
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_num_objects(obj_type) &
             BIND(C, name="api_get_num_objects")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), value, intent(in) :: obj_type
         end function api_get_num_objects
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_object_name_len(object_idx, object_type, len_value) &
             BIND(C, name="api_get_object_name_len")
             use, intrinsic :: iso_c_binding
@@ -395,7 +401,7 @@ module interface_
             integer(c_int), value, intent(in   ) :: object_type
             integer(c_int),        intent(inout) :: len_value
         end function api_get_object_name_len
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_object_name(object_idx, object_name, object_type) &
             BIND(C, name="api_get_object_name")
             use, intrinsic :: iso_c_binding
@@ -404,7 +410,7 @@ module interface_
             character(kind=c_char), intent(inout) :: object_name
             integer(c_int), value,  intent(in   ) :: object_type
         end function api_get_object_name
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_num_table_entries(table_idx, table_type, num_entries) &
             BIND(C, name="api_get_num_table_entries")
             use, intrinsic :: iso_c_binding
@@ -413,7 +419,7 @@ module interface_
             integer(c_int), value, intent(in   ) :: table_type
             integer(c_int),        intent(inout) :: num_entries
         end function api_get_num_table_entries
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_table_attribute(table_idx, attr, value) &
             BIND(C, name="api_get_table_attribute")
             use, intrinsic :: iso_c_binding
@@ -422,7 +428,7 @@ module interface_
             integer(c_int), value, intent(in   ) :: attr
             real(c_double),        intent(inout) :: value
         end function api_get_table_attribute
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_first_entry_table(table_idx, table_type, x, y) &
             BIND(C, name="api_get_first_entry_table")
             use, intrinsic :: iso_c_binding
@@ -432,7 +438,7 @@ module interface_
             real(c_double),        intent(inout) :: x
             real(c_double),        intent(inout) :: y
         end function api_get_first_entry_table
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_next_entry_table(table_idx, table_type, x, y) &
             BIND(C, name="api_get_next_entry_table")
             use, intrinsic :: iso_c_binding
@@ -442,7 +448,7 @@ module interface_
             real(c_double),        intent(inout) :: x
             real(c_double),        intent(inout) :: y
         end function api_get_next_entry_table
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_next_entry_tseries(tseries_idx, timemax) &
             BIND(C, name="api_get_next_entry_tseries")
             use, intrinsic :: iso_c_binding
@@ -450,23 +456,23 @@ module interface_
             integer(c_int), value, intent(in   ) :: tseries_idx
             real(c_double), value, intent(in   ) :: timemax
         end function api_get_next_entry_tseries
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_reset_timeseries_to_start(tseries_idx) &
             BIND(C, name="reset_timeseries_to_start")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), value, intent(in   ) :: tseries_idx
         end function api_reset_timeseries_to_start
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         ! --- Output Writing (Post Processing)
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_write_output_line(t) &
             BIND(C, name="api_write_output_line")
             use, intrinsic :: iso_c_binding
             implicit none
             real(c_double), value, intent(in) :: t
         end function api_write_output_line
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_update_nodeResult(node_idx, resultType, newNodeResult) &
             BIND(C, name="api_update_nodeResult")
             use, intrinsic :: iso_c_binding
@@ -475,7 +481,7 @@ module interface_
             integer(c_int), value, intent(in) :: resultType
             real(c_double), value, intent(in) :: newNodeResult
         end function api_update_nodeResult
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_update_linkResult(link_idx, resultType, newLinkResult) &
             BIND(C, name="api_update_linkResult")
             use, intrinsic :: iso_c_binding
@@ -484,32 +490,32 @@ module interface_
             integer(c_int), value, intent(in) :: resultType
             real(c_double), value, intent(in) :: newLinkResult
         end function api_update_linkResult
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         ! --- Print-out
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_export_linknode_properties(units) &
             BIND(C, name="api_export_linknode_properties")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), value, intent(in) :: units
         end function api_export_linknode_properties
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_export_link_results(link_idx) &
             BIND(C, name="api_export_link_results")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), value, intent(in) :: link_idx
         end function api_export_link_results
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_export_node_results(node_idx) &
             BIND(C, name="api_export_node_results")
             use, intrinsic :: iso_c_binding
             implicit none
             integer(c_int), value, intent(in) :: node_idx
         end function api_export_node_results
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         ! --- Hydrology
-        !% -------------------------------------------------------------------------------   
+        !%------------------------------------------------------------------   
         integer(c_int) function api_export_runon_volume(outfall_idx,flowrate) &
             BIND(C, name='api_export_runon_volume')
             use, intrinsic :: iso_c_binding
@@ -517,13 +523,13 @@ module interface_
             integer(c_int), value, intent(in) :: outfall_idx
             real(c_double), value, intent(in) :: flowrate
         end function api_export_runon_volume
-        !% -------------------------------------------------------------------------------   
+        !%------------------------------------------------------------------   
         integer(c_int) function api_call_runoff_execute() &
             BIND(C, name='api_call_runoff_execute')
             use, intrinsic :: iso_c_binding
             implicit none 
         end function api_call_runoff_execute
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_subcatch_runoff(sc_idx,runoff) &
             BIND(C, name="api_get_subcatch_runoff")
             use, intrinsic :: iso_c_binding
@@ -531,7 +537,7 @@ module interface_
             integer(c_int), value, intent(in)    :: sc_idx
             real(c_double),        intent(inout) :: runoff
         end function api_get_subcatch_runoff
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_subcatch_runoff_nodeIdx(sc_idx, node_idx) &
             BIND(C, name="api_get_subcatch_runoff_nodeIdx")
             use, intrinsic :: iso_c_binding
@@ -539,7 +545,7 @@ module interface_
             integer(c_int), value, intent(in)    :: sc_idx
             integer(c_int),        intent(inout) :: node_idx
         end function api_get_subcatch_runoff_nodeIdx
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_getNumRdiiFlows(thisDateTime, nRDII) &
             BIND(C, name="api_getNumRdiiFlows")
             use, intrinsic :: iso_c_binding
@@ -547,7 +553,7 @@ module interface_
             real(c_double), value, intent(in)    :: thisDateTime
             integer(c_int),        intent(inout) :: nRDII
         end function api_getNumRdiiFlows
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_getRdiiFlow(rdiiIdx, nodeIdx, flowrate) &
             BIND(C, name="api_getRdiiFlow")
             use, intrinsic :: iso_c_binding
@@ -556,7 +562,7 @@ module interface_
             integer(c_int),        intent(inout) :: nodeIdx
             real(c_double),        intent(inout) :: flowrate
         end function api_getRdiiFlow
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer (c_int) function api_get_groundwaterFlow( &
             thisTime, LastRunoffTime, NextRunoffTime, sIdx, nodeIdx, flowrate) &
             BIND(C, name="api_get_groundwaterFlow")
@@ -569,7 +575,7 @@ module interface_
             integer(c_int),        intent(inout) :: nodeIdx
             real(c_double),        intent(inout) :: flowrate
         end function api_get_groundwaterFlow
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer (c_int) function api_get_LID_DrainFlow( &
             thisTime, LastRunoffTime, NextRunoffTime, sIdx, nIdx, flowrate) &
             BIND(C, name="api_get_LID_DrainFlow")
@@ -582,23 +588,23 @@ module interface_
             integer(c_int),        intent(inout) :: nIdx
             real(c_double),        intent(inout) :: flowrate
         end function api_get_LID_DrainFlow
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_call_climate_setState(thisDate) &
             BIND(C, name='api_call_climate_setState')
             use, intrinsic :: iso_c_binding
             implicit none
             real(c_double), value, intent(in) :: thisDate
         end function api_call_climate_setState
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_get_evaporation_rate(evapRate) &
             BIND(C, name='api_get_evaporation_rate')
             use, intrinsic :: iso_c_binding
             implicit none 
             real(c_double),  intent(inout) :: evapRate
         end function api_get_evaporation_rate
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         ! --- Utils
-        !% -------------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer(c_int) function api_find_object(object_type, object_name) &
             BIND(C, name="api_find_object")
             use, intrinsic :: iso_c_binding
@@ -613,7 +619,6 @@ module interface_
 !% Procedures
 !%==========================================================================
 !%
-
     procedure(api_teststuff),                  pointer :: ptr_api_teststuff
     procedure(api_controls_count),             pointer :: ptr_api_controls_count
     procedure(api_controls_get_premise_data),  pointer :: ptr_api_controls_get_premise_data
@@ -731,11 +736,7 @@ contains
         !%---------------------------------------------------------------------
         !%---------------------------------------------------------------------
 
-        !print *, 'in ',trim(subroutine_name)
-
         call load_api_procedure("api_controls_get_premise_data")
-
-        !print *, 'api load called  thisPremiseLevel = ',thisPremiseLevel
 
         success = ptr_api_controls_get_premise_data(    &
                     locationL,        locationR,        &
@@ -754,9 +755,6 @@ contains
         !% --- increment the location by 1 since EPA-SWMM starts at 0 with indexes
         if (locationL .ne. nullvalueI) locationL = locationL + 1
         if (locationR .ne. nullvalueI) locationR = locationR + 1
-
-
-        !print *, 'after api thisPremiseLevel = ',thisPremiseLevel
 
     end subroutine interface_controls_get_premise_data
 !%    
@@ -780,18 +778,12 @@ contains
         !%---------------------------------------------------------------------
         !%---------------------------------------------------------------------
 
-        !print *, 'in ',trim(subroutine_name)
-
         call load_api_procedure("api_controls_get_action_data")
-
-        !print *, 'api load called  thisActionLevel = ',thisActionLevel
 
         success = ptr_api_controls_get_action_data( &
                     location,                       &
                     attribute,                      & 
                     thisActionLevel, rIdx, isThen)
-
-        !print *, 'after api thisActionLevel = ',thisActionLevel
 
         !% output data of -1 is not valid, so return nullvalue
         if (location  == -1 ) location  = nullValueI  
@@ -857,19 +849,11 @@ contains
         !% --- compute time step in days
         dtDays = setting%Time%Hydraulics%Dt / seconds_per_day
 
-        ! print *, ' '
-        ! print *, 'in interface_controls_execute'
-        ! print *, 'currentTimeEpoch ',currentTimeEpoch
-        ! print *, 'ElapsedDays      ',ElapsedDays
-        ! print *, 'dtDays           ',dtDays
-
         !% --- load the procedure
         call load_api_procedure("api_controls_execute")
 
         !% --- execute controls
         number_of_actions = ptr_api_controls_execute (currentTimeEpoch, ElapsedDays, dtDays )
-
-       ! print *, 'number of actions taken ',number_of_actions
 
     end subroutine interface_controls_execute
 !%    
@@ -924,14 +908,11 @@ contains
         !% Preliminaries:
             if (setting%Debug%File%interface)  &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         setting%File%inp_file = trim(setting%File%inp_file) // c_null_char
         setting%File%rpt_file = trim(setting%File%rpt_file) // c_null_char
         setting%File%out_file = trim(setting%File%out_file) // c_null_char
         c_lib%filename = trim(setting%File%library_folder) // "/libswmm5.so"
-
-        ! write(*,"(A)") 'input file ',trim(setting%File%inp_file)
-        ! stop 39874
 
         !% --- initialize the api between SWMM-C and SWMM5+
         !%     This returns and stores the SWMM-C input and output filenames
@@ -944,20 +925,6 @@ contains
         call print_api_error(error, subroutine_name)
         api_is_initialized = .true.
         print *, ' ' !% needed because there is no \n after the EPA-SWMM printout of "Retrieving project data"
-
-        ! !% --- Get number of objects in SWMM-C
-        ! setting%SWMMinput%N_link = get_num_objects(API_LINK)
-        ! N_link = setting%SWMMinput%N_link
-
-        ! setting%SWMMinput%N_node = get_num_objects(API_NODE)
-        ! N_node = setting%SWMMinput%N_node
-
-        ! setting%SWMMinput%N_curve = get_num_objects(API_CURVE)
-        ! N_curve = setting%SWMMinput%N_curve
-
-        ! setting%SWMMinput%N_subcatch = get_num_objects(API_SUBCATCH)     
-
-        ! setting%SWMMinput%N_transect = get_num_objects(API_TRANSECT)
 
         !% --- get the time start, end, and interval data from SWMM-C input file
         call interface_get_SWMM_times()
@@ -991,13 +958,11 @@ contains
             print *, '* system with exactly 200 nodes and exactly 200 links.             *'
             print *, '********************************************************************'
             print *, ''
-            !stop 
             call util_crashpoint( 309786)
-            !return
             !% HACK -- developer's note:
             !% Unfortunately, the parse error returns a code of 200 in the get_num_objects()
-            !% function, which is appears as setting%SWMMinput%N_link=200 and setting%SWMMinput%N_node=200. As it is
-            !% relatively unlikely that a system will have exactly 200 of each, we are 
+            !% function, which is appears as setting%SWMMinput%N_link=200 and setting%SWMMinput%N_node=200.
+            !% As it is relatively unlikely that a system will have exactly 200 of each, we are 
             !% simply calling the error condition when this happens.  We need to fix the
             !% API so that the error condition is correctly represented.
         end if
@@ -1016,6 +981,7 @@ contains
                 print *, "setting%time%end", setting%Time%End
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             end if
+
     end subroutine interface_init
 !%
 !%=============================================================================
@@ -1046,52 +1012,19 @@ contains
     end subroutine interface_finalize
 !%
 !%=============================================================================
-!%=============================================================================
-!%
-    ! subroutine interface_run_step()
-    ! !%-----------------------------------------------------------------------------
-    ! !% Description:
-    ! !%    runs steps of EPA-SWMM model. If setting%Simulation% was defined
-    ! !%    true, steps include routing model. If false, steps are for hydrology only
-    ! !%-----------------------------------------------------------------------------
-    !     real(8), pointer :: timeNow
-    !     character(64)    :: subroutine_name = 'interface_run_step'
-    ! !%-----------------------------------------------------------------------------
-
-    !     if (setting%Debug%File%interface)  &
-    !     write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-    !     timeNow => setting%Time%Now
-
-    !     c_lib%procname = "api_run_step"
-    !     call c_lib_load(c_lib, errstat, errmsg)
-    !     if (errstat /= 0) then
-    !         print *, "ERROR: " // trim(errmsg)
-    !         stop 
-    !         call util_crashpoint(298703)
-    !     end if
-    !     call c_f_procpointer(c_lib%procaddr, ptr_api_run_step)
-
-    !     timeNow = ptr_api_run_step(api)
-    !     if (setting%Debug%File%interface)  &
-    !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-    ! end subroutine interface_run_step
-!%
-!%=============================================================================
 !%   Property-extraction functions (only run after initialization)
 !%=============================================================================
 !%
     subroutine interface_update_linknode_names()
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%    Updates the link%Names and node%Names arrays which should've been
         !%    allocated by the time the subroutine is executed. Names are copied
         !%    from EPA-SWMM
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
             integer :: ii
             character(64) :: subroutine_name = "interface_update_linknode_names"
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1146,10 +1079,10 @@ contains
         !%    Updates the transectID arrays which should've been
         !%    allocated by the time the subroutine is executed. Names are copied
         !%    from EPA-SWMM
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         integer :: ii
         character(64) :: subroutine_name = "interface_update_transectID_names"
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
 
         do ii = 1, setting%SWMMinput%N_transect
 
@@ -1173,18 +1106,18 @@ contains
 !%=============================================================================
 !%
     integer(c_int) function interface_get_obj_name_len(obj_idx, obj_type) result(len_value)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%    Returns the length of the name string associated to the EPA-SWMM object.
         !%    This function is necessary to allocate the entries of the link%Names and
         !%    node%Names arraysr. The function is currently compatible with NODE and
         !%    LINK types.
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
             integer, intent(in) :: obj_idx  ! index of the EPA-SWMM object
             integer, intent(in) :: obj_type ! type of EPA-SWMM object (API_NODE, API_LINK)
             integer                :: error
             character(64)          :: subroutine_name = "interface_get_obj_name_len"
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
         write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -1205,7 +1138,7 @@ contains
 !%=============================================================================
 !%
     function interface_get_nodef_attribute(node_idx, attr) result(node_value)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%    Retrieves node attributes from EPA-SWMM. API node attributes are
         !%    defined in define_api_keys.f08.
@@ -1213,14 +1146,11 @@ contains
         !%    Fortran indexes are translated to C indexes and viceversa when
         !%    necessary. Fortran indexes always start from 1, whereas C indexes
         !%    start from 0.
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
             integer :: node_idx, attr, error
             real(c_double), target :: node_value
             character(64) :: subroutine_name = 'interface_get_nodef_attribute'
-        !%-----------------------------------------------------------------------------
-
-        ! write(*,*) '--- in interface_get_nodef_attribute, attr # =', attr
-        ! if (attr < (api_keyslastplusone-1)) print *, 'attribute name=',reverseKey_api(attr)
+        !%------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
@@ -1229,24 +1159,19 @@ contains
         if ((attr .ge. api_nodef_end) .or. (attr .le. api_nodef_start)) then
             print *, "error: unexpected node attribute value", attr
             print *, trim(reverseKey_api(attr))
-            !stop 
             call util_crashpoint( 948705)
-            !return
         end if
 
         if ((node_idx > N_node) .or. (node_idx < 1)) then
             print *, "error: unexpected node index value", node_idx
             print *, trim(reverseKey_api(attr))
-            !stop 
             call util_crashpoint( 397904)
-            !return
         end if
         
         !% --- Subtract 1 from every Fortran index (it becomes a C index)
         call load_api_procedure("api_get_nodef_attribute")
         !% --- get the node value
         error = ptr_api_get_nodef_attribute(node_idx-1, attr, node_value)
-        !print *, '   node value ',node_value
         call print_api_error(error, subroutine_name)
 
         !% Adds 1 to every C index extracted from EPA-SWMM (it becomes a Fortran index)
@@ -1258,11 +1183,10 @@ contains
             if (node_value /= -1) node_value = node_value + 1
         end if
 
-
-        !write(*,*) '.................'
-        if (setting%Debug%File%interface) &
-            write(*,"(3(A,i5),A)") '*** leave ' // trim(subroutine_name) // &
-            "(node_idx=", node_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
+            if (setting%Debug%File%interface) &
+                write(*,"(3(A,i5),A)") '*** leave ' // trim(subroutine_name) // &
+                "(node_idx=", node_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
             
     end function interface_get_nodef_attribute
 !%
@@ -1289,34 +1213,17 @@ contains
             character(64) :: subroutine_name = 'interface_get_linkf_attribute'
         !%----------------------------------------------------------------------
         !% Preliminaries
-            !% --- error checking
-            ! print *, '--- in interface_get_linkf_attribute'
-            ! print *, 'linkf_attribute = ', attr, trim(reverseKey_api(attr))
-            ! print *, 'api_linkf_start ',api_linkf_start
-            ! print *, 'api_linkf_commonbreak', api_linkf_commonbreak
-            ! print *, 'api_linkf_typeBreak', api_linkf_typeBreak
 
             if (setting%Debug%File%interface) &
                 write(*,"(3(A,i5),A)") '*** enter ' // trim(subroutine_name) // &
                 "(link_idx=", link_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
-                !print *, 'API_CONDUIT', API_CONDUIT,',link_value',link_value
         
             if ((link_idx > setting%SWMMinput%N_link) .or. (link_idx < 1)) then
                 print *, "error: unexpected link index value", link_idx
                 print *, trim(reverseKey_api(attr))
                 call util_crashpoint(9987355)
-                !return
             end if
         !%----------------------------------------------------------------------
-
-            ! print *, ' '
-            ! print *, 'in ',trim(subroutine_name), ' at TOP ------------------------------'
-            ! print *, attr, trim(reverseKey_api(attr))
-            ! print *, 'api_linkf_start       ',api_linkf_start
-            ! print *, 'api_linkf_commonbreak ',api_linkf_commonbreak
-            ! print *, 'api_linkf_typeBreak   ',api_linkf_typeBreak
-            ! print *, '=============== end of top stuff '
-
         !% --- parse the link section
         if     (  attr .le. api_linkf_start) then    
             !% --- link attr number too small
@@ -1340,7 +1247,6 @@ contains
             print *, "error: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(27287422)
-            !return
 
         elseif ( (attr >  api_linkf_commonbreak) .and. (attr < api_linkf_typeBreak) ) then
             !% --- for input link attributes in the range for for special elements   
@@ -1349,26 +1255,13 @@ contains
             !% --- The "attr" input is one of the special element attributes, e.g., type, sub_type
             !%     First we use the api_linkf_type to get the overarching link type for this
             !%     link. This allows us to properly categorize the sub_type values to read         
-    
-            ! print *, '****** CALLING api_get_linkf_attribute with linkf_type' 
-            ! print *, api_linkf_type, trim(reverseKey_api(api_linkf_type))
             
             call load_api_procedure("api_get_linkf_attribute")
             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_type, link_value)
             thisposition = trim(subroutine_name)//'_B02'
             call print_api_error(error, thisposition)
 
-            ! print *, 'here 5098734'
-            ! print *, 'link value ',link_value
-
             ilink_value = int(link_value) !% the linkf_type is always an integer
-
-            ! print *, 'ilink_value', ilink_value
-            ! print *, 'options: ',API_CONDUIT, API_PUMP, API_ORIFICE, API_WEIR, API_OUTLET
-
-            ! print *, 'attr               ',attr, trim(reverseKey_api(attr))
-            ! print *, 'api_linkf_type     ',api_linkf_type
-            ! print *, 'api_linkf_sub_type ',api_linkf_sub_type
 
             !% --- handle the different linkf_type
             select case (ilink_value)
@@ -1579,30 +1472,18 @@ contains
             end select
       
         elseif (  attr == api_linkf_typeBreak  ) then
-            !% this should never be called
-            print *, "error: unexpected link attribute value", attr
+            !% --- this should never be called
+            print *, "CODE ERROR: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(98273)        
-            !return
 
         elseif ( (attr > api_linkf_typeBreak)    .and. (attr < api_linkf_end) ) then
 
-            ! print *, '********* calling linkf_attribute with xsect_type '
-            ! print *, api_linkf_xsect_type, trim(reverseKey_api(api_linkf_xsect_type))
-
             !% --- load the cross-section type no matter what the input attr is.
-            ! print *, ' '
-            ! print *, 'call GGG calling get_linkf_attribute for xsect_type'
             call load_api_procedure("api_get_linkf_attribute")
             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_type, link_value)
             thisposition = trim(subroutine_name)//'_E05'
             call print_api_error(error, thisposition)
-
-            ! print *, ' '
-            ! print *, 'attr ',attr, trim(reverseKey_api(attr))
-            ! print *, 'link_value ',link_value, API_FORCE_MAIN
-            ! !print *, 'error ',error
-            ! print *, 'API_FORCE_MAIN  = ',API_FORCE_MAIN
 
             ilink_value = int(link_value) !% these attributes should be integers
             select case (ilink_value)
@@ -1612,25 +1493,21 @@ contains
                         case (api_linkf_geometry)
                             link_value = lCircular
                         case (api_linkf_xsect_wMax)
-                            !print *, 'call HHH'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
                             thisposition = trim(subroutine_name)//'_Q16'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_R17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                           !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
@@ -1655,25 +1532,21 @@ contains
                         case (api_linkf_geometry)
                             link_value = lFilled_circular
                         case (api_linkf_xsect_wMax)
-                            !print *, 'call HHH'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
                             thisposition = trim(subroutine_name)//'_Q16'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_R16'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S16'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T16'
@@ -1684,7 +1557,7 @@ contains
                             thisposition = trim(subroutine_name)//'_T19'
                             call print_api_error(error, thisposition)
                         case default
-                            !% filled circular geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- filled circular geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -1697,31 +1570,27 @@ contains
                         case (api_linkf_geometry)
                             link_value = lRectangular_closed
                         case (api_linkf_xsect_wMax)
-                            !print *, 'calling JJJ'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
                             thisposition = trim(subroutine_name)//'_F06'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
-                            !print *, 'calling KKK'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_G07'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_H06'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_I06'
                             call print_api_error(error, thisposition)
                         case default
-                            !% rectangular geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- rectangular geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -1734,31 +1603,27 @@ contains
                         case (api_linkf_geometry)
                             link_value = lRectangular
                         case (api_linkf_xsect_wMax)
-                            !print *, 'calling LLL'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
                             thisposition = trim(subroutine_name)//'_H08'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
-                            !print *, 'calling MMM'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_I09'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_J09'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_K09'
                             call print_api_error(error, thisposition)
                         case default
-                            !% rectangular geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- rectangular geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -1771,31 +1636,27 @@ contains
                         case (api_linkf_geometry)
                             link_value = lTrapezoidal
                         case (api_linkf_xsect_wMax)
-                            !print *, 'calling NNN'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yBot, link_value)
                             thisposition = trim(subroutine_name)//'_J10'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
-                            !print *, 'calling OOO'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_K11'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_L11'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_M11'
                             call print_api_error(error, thisposition)
                         case default
-                            !% trapezoidal geometry does not have certain geometric features (i.e. top-width) 
+                            !% --- trapezoidal geometry does not have certain geometric features (i.e. top-width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -1808,31 +1669,27 @@ contains
                         case (api_linkf_geometry)
                             link_value = lTriangular
                         case (api_linkf_xsect_wMax)
-                            !print *, 'calling PPP'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
                             thisposition = trim(subroutine_name)//'_M12'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
-                            !print *, 'calling QQQ'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_N13'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_O13'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_P13'
                             call print_api_error(error, thisposition)
                         case default
-                            !% triangular geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- triangular geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -1845,31 +1702,27 @@ contains
                         case (api_linkf_geometry)
                             link_value = lParabolic
                         case (api_linkf_xsect_wMax)
-                            !print *, 'calling RRR'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
                             thisposition = trim(subroutine_name)//'_O14'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
-                            !print *, 'calling SSS'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
                             thisposition = trim(subroutine_name)//'_P15'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_Q15'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_R15'
                             call print_api_error(error, thisposition)
                         case default
-                            !% parabolic geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- parabolic geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -1902,13 +1755,11 @@ contains
                             thisposition = trim(subroutine_name)//'_T19'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_U19'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_V19'
@@ -1919,8 +1770,8 @@ contains
                             thisposition = trim(subroutine_name)//'_W19'
                             call print_api_error(error, thisposition)
                         case default
-                            !% rectangular triangular geometry does not have certain geometric features (i.e. bottom width) 
-                            !% thus, set that link%R column to nullvalueR
+                            !% --- rectangular triangular geometry does not have certain geometric features (i.e. bottom width) 
+                            !%     thus, set that link%R column to nullvalueR
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -1948,13 +1799,11 @@ contains
                             thisposition = trim(subroutine_name)//'_T19'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
@@ -1965,8 +1814,8 @@ contains
                             thisposition = trim(subroutine_name)//'_T19'
                             call print_api_error(error, thisposition)
                         case default
-                            !% Mod_basket geometry does not have certain geometric features (i.e. bottom width) 
-                            !% thus, set that link%R column to nullvalueR
+                            !% --- Mod_basket geometry does not have certain geometric features (i.e. bottom width) 
+                            !%     thus, set that link%R column to nullvalueR
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -1994,20 +1843,18 @@ contains
                             thisposition = trim(subroutine_name)//'_T19'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
-                            !% Mod_basket geometry does not have certain geometric features (i.e. bottom width) 
-                            !% thus, set that link%R column to nullvalueR
+                            !% --- Mod_basket geometry does not have certain geometric features (i.e. bottom width) 
+                            !%     thus, set that link%R column to nullvalueR
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -2030,19 +1877,17 @@ contains
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
-                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- basket handle geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -2065,19 +1910,17 @@ contains
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
-                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- basket handle geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -2100,19 +1943,17 @@ contains
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
-                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- basket handle geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -2135,26 +1976,23 @@ contains
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
-                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- basket handle geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
                                 link_value = nullvalueR
                             end if
                     end select
-
 
                 case (API_HORSESHOE)
                     select case (attr)
@@ -2171,19 +2009,17 @@ contains
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
-                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- basket handle geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -2206,19 +2042,17 @@ contains
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
-                            !% gothic geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- gothic geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -2241,19 +2075,17 @@ contains
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
-                            !% catenary geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- catenary geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -2276,19 +2108,17 @@ contains
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
-                            !% catenary geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- catenary geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -2311,19 +2141,17 @@ contains
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
-                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- basket handle geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -2346,19 +2174,17 @@ contains
                             thisposition = trim(subroutine_name)//'_V17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                             thisposition = trim(subroutine_name)//'_S17'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                            !print *, 'call III'
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                             thisposition = trim(subroutine_name)//'_T17'
                             call print_api_error(error, thisposition)
                         case default
-                            !% basket handle geometry does not have certain geometric features (i.e. bottom width) 
+                            !% --- basket handle geometry does not have certain geometric features (i.e. bottom width) 
                             if (isInt) then
                                 link_value = nullvalueI
                             else
@@ -2372,22 +2198,20 @@ contains
                         link_value = lIrregular
                     case (api_linkf_transectidx)
                         !% --- load the transect ID
-                       ! print *, 'calling TTT'
                         call load_api_procedure("api_get_linkf_attribute")
                         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_transectidx, link_value)
                         thisposition = trim(subroutine_name)//'_Q16'
                         call print_api_error(error, thisposition)
-                        !% increment by 1 because C indexes start at 0
-                        link_value = link_value + 1
-                        !print *, 'in irregular, link_value = ',link_value
+                        !% --- increment by 1 because C indexes start at 0
                     case default
-                        !% irregular geometry does not have certain geometric features (i.e. bottom width) 
+                        !% --- irregular geometry does not have certain geometric features (i.e. bottom width) 
                         if (isInt) then
                             link_value = nullvalueI
                         else
                             link_value = nullvalueR
                         end if
                     end select
+
                 case (API_CUSTOM)
                     print *, 'CODE ERROR: API_CUSTOM geometry not handled yet'
                     call util_crashpoint(298733)
@@ -2399,31 +2223,25 @@ contains
                     end select
 
                 case (API_FORCE_MAIN)
-                    ! print *, ' '
-                    ! print *, 'in FORCE MAIN ', reverseKey_api(attr)
                     select case (attr)
                         case (api_linkf_geometry)
                             link_value = lForce_main
                         case (api_linkf_xsect_wMax)
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_wMax, link_value)
-                                ! print *, 'in ',trim(subroutine_name), ' at S26',link_value
                             thisposition = trim(subroutine_name)//'_S26'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_yFull)
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_yFull, link_value)
-                                ! print *, 'in ',trim(subroutine_name), ' at T27',link_value
                             thisposition = trim(subroutine_name)//'_T27'
                             call print_api_error(error, thisposition)
                         case (api_linkf_xsect_aFull)
-                            !print *, 'call III'
                              call load_api_procedure("api_get_linkf_attribute")
                              error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_aFull, link_value)
                              thisposition = trim(subroutine_name)//'_T28'
                              call print_api_error(error, thisposition)
                         case (api_linkf_xsect_rFull)
-                             !print *, 'call III'
                              call load_api_procedure("api_get_linkf_attribute")
                              error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_xsect_rFull, link_value)
                              thisposition = trim(subroutine_name)//'_T29'
@@ -2441,35 +2259,33 @@ contains
                         case (api_linkf_forcemain_coef)
                             call load_api_procedure("api_get_linkf_attribute")
                             error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_forcemain_coef, link_value)
-                                 ! print *, 'in ',trim(subroutine_name), ' at U28',link_value
                             thisposition = trim(subroutine_name)//'_U28'  
                             call print_api_error(error, thisposition)
 
                         case default
                             print *, 'case default for API_FORCE_MAIN ',trim(reverseKey_api(attr)),' (could be error): ',attr,trim(reverseKey_api(attr))
                     end select
-                    ! print *, 'DONE FORCE MAIN '
-                    ! print *, ' '
+
                 case default
-                    !print *, 'in else ',link_value
-                        !% some links like pumps or outlets does not have any geometric features
-                        !% thus, link%R geometry columns (i.e. fulldepth, width) will be set to nullvalueR
+                        !% --- some links like pumps or outlets does not have any geometric features
+                        !%     thus, link%R geometry columns (i.e. fulldepth, width) will be set to nullvalueR
                         link_value = nullvalueR
-                       ! print *, 'after ',link_value
             end select
           
         else
-            !% this should never be reached
-            print *, "error: unexpected link attribute value", attr
+            !% t--- his should never be reached
+            print *, "CODE ERROR: unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(878293)    
-            !return         
+        
         end if
 
-        if (setting%Debug%File%interface)  then
-            write(*,"(3(A,i5),A)") '*** leave ' // trim(subroutine_name) // &
-            "(link_idx=", link_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
-        end if
+        !%---------------------------------------------------------------------
+            if (setting%Debug%File%interface)  then
+                write(*,"(3(A,i5),A)") '*** leave ' // trim(subroutine_name) // &
+                "(link_idx=", link_idx, ", attr=", attr, ")" // " [Processor ", this_image(), "]"
+            end if
+
     end function interface_get_linkf_attribute
 !%
 !%=============================================================================    
@@ -2485,8 +2301,6 @@ contains
         !%---------------------------------------------------------------------
 
         call load_api_procedure("api_get_adjustments")
-
-        !print *, 'in interface_get_adjustments'
 
         !% --- set default values
         setting%Adjust%Temperature  = zeroR
@@ -2516,63 +2330,33 @@ contains
             real(c_double), target :: transect_value
             character(64) :: thisposition
             character(64) :: subroutine_name = 'interface_get_transectf_attribute'
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
 
         if ((transect_idx > setting%SWMMinput%N_transect) .or. (transect_idx < 1)) then
             print *, "error: unexpected tranect index value", transect_idx
             print *, trim(reverseKey_api(attr))
             call util_crashpoint(992255)
-            !return
         end if
 
         if     (  attr .le. api_transectf_start) then
             print *, "error: unexpected transectf attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(2333235)
-            !return
 
         elseif (  attr == api_transectf_ID) then
-            !% skip this -- handled elsewhere
+            !% --- skip this -- handled elsewhere
             return
 
         elseif ( (attr   >  api_transectf_ID) .and. (attr < api_transectf_end) ) then
 
             call load_api_procedure("api_get_transectf_attribute")
-            ! transect index-1 because Fortran index starts in 1, whereas in C starts in 0
+            !% --- transect index-1 because Fortran index starts in 1, whereas in C starts in 0
             error = ptr_api_get_transectf_attribute(transect_idx-1, attr, transect_value)
             thisposition = trim(subroutine_name)//'_A01'
             call print_api_error(error, thisposition)
 
             !% --- return with transect_value for output
             return
-
-            ! select case (attr)
-            !     case (api_transectf_yFull)
-            !         transectR(transect_idx,tr_depthFull) = transect_value
-            !     case (api_transectf_aFull)
-            !         link%transectR(transect_idx,tr_areaFull) = transect_value
-            !     case (api_transectf_rFull)
-            !         link%transectR(transect_idx,tr_hydRadiusFull) = transect_value
-            !     case (api_transectf_wMax)
-            !         link%transectR(transect_idx,tr_widthMax) = transect_value
-            !     case (api_transectf_ywMax)
-            !         link%transectR(transect_idx,tr_depthAtBreadthMax) = transect_value
-            !     case (api_transectf_sMax)
-            !         link%transectR(transect_idx,tr_sectionFactor) = transect_value
-            !     case (api_transectf_aMax)
-            !         link%transectR(transect_idx,tr_areaAtMaxFlow) = transect_value
-            !     case (api_transectf_lengthFactor)
-            !         link%transectR(transect_idx,tr_lengthFactor) = transect_value
-            !     case (api_transectf_roughness)
-            !         link%transectR(transect_idx,tr_ManningsN) = transect_value
-            !     case default
-            !         write(*,*)
-            !         write(*,*) '****** Unexpected case default '
-            !         write(*,*) '   attr = ',attr
-            !         write(*,*) '   ',trim(reverseKey_api(attr))
-            !         write(*,*) '******'
-            !         call util_crashpoint(667832)
-            ! end select
 
         elseif (  attr .ge. api_transectf_end ) then
             print *, "error: unexpected transectf attribute value", attr
@@ -2615,8 +2399,6 @@ contains
         !%---------------------------------------------------------------------
 
         call load_api_procedure("api_get_transect_table")
-
-        !print *, 'in interface_get_transect_table'
         
         do ii=1,setting%SWMMinput%N_transect
 
@@ -2625,14 +2407,6 @@ contains
                 link%transectTableDepthR(ii,:,tt_area),  &
                 link%transectTableDepthR(ii,:,tt_width),  &
                 link%transectTableDepthR(ii,:,tt_hydradius))
-
-            ! if (ii==1) then
-            !     print *, ii,'==================='
-
-            !     do jj=1,size(transectTableDepthR,2)
-            !         print *, jj, transectTableDepthR(ii,jj,tt_hydradius)
-            !     end do
-            ! end if
 
         end do
 
@@ -2643,7 +2417,7 @@ contains
 !%=============================================================================
 !%
     function interface_get_table_attribute(table_idx, attr)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%    Retrieves table attributes from EPA-SWMM. API table attributes are
         !%    defined in define_api_keys.f08.
@@ -2651,34 +2425,30 @@ contains
         !%    Fortran indexes are translated to C indexes and viceversa when
         !%    necessary. Fortran indexes always start from 1, whereas C indexes
         !%    start from 0.
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
             integer :: table_idx, attr, error
             real(8) :: interface_get_table_attribute
 
             real(c_double), target :: table_value
             character(64) :: thisposition
             character(64) :: subroutine_name = 'interface_get_table_attribute'
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if ((attr .ge. api_table_end) .or. (attr < 1) ) then
             print *, "error: unexpected table attribute value", attr
-            !stop 
             call util_crashpoint( 28704)
-            !return
         end if
 
         if ((table_idx > setting%SWMMinput%N_curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
             print *, trim(reverseKey_api(attr))
-            !stop 
             call util_crashpoint( 498734)
-            !return
         end if
 
-        !% Substracts 1 to every Fortran index (it becomes a C index)
+        !% --- Subtracts 1 from every Fortran index (it becomes a C index)
         if (attr == api_table_type) then
             call load_api_procedure("api_get_table_attribute")
             error = ptr_api_get_table_attribute(table_idx-1, attr, table_value)
@@ -2725,7 +2495,7 @@ contains
 !%=============================================================================
 !%
     function interface_get_num_table_entries(table_idx)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%    Retrieves table attributes from EPA-SWMM. API table attributes are
         !%    defined in define_api_keys.f08.
@@ -2733,29 +2503,30 @@ contains
         !%    Fortran indexes are translated to C indexes and viceversa when
         !%    necessary. Fortran indexes always start from 1, whereas C indexes
         !%    start from 0.
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
             integer :: table_idx, table_type, error
             integer :: interface_get_num_table_entries
             integer(c_int), target :: table_entries
             character(64) :: thisposition
             character(64) :: subroutine_name = 'interface_get_num_table_entries'
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if ((table_idx > setting%SWMMinput%N_curve) .or. (table_idx < 1)) then
-            print *, "error: unexpected table index value", table_idx
-            !stop 
+            print *, "CODE ERROR: unexpected table index value", table_idx
             call util_crashpoint( 835551)
-            !return
         end if
 
-        !% Substracts 1 to every Fortran index (it becomes a C index)
+        !% --- Subtracts 1 from every Fortran index (it becomes a C index)
         call load_api_procedure("api_get_num_table_entries")
         error = ptr_api_get_num_table_entries(table_idx-1, API_CURVE, table_entries)
         call print_api_error(error, subroutine_name)
         interface_get_num_table_entries = table_entries
+
+
+        !%---------------------------------------------------------------------
         if (setting%Debug%File%interface)  then
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
             print *, "table", table_entries
@@ -2767,7 +2538,7 @@ contains
 !%=============================================================================
 !%
     function interface_get_first_entry_table(table_idx)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%    Retrieves first table entries from EPA-SWMM. API table attributes are
         !%    defined in define_api_keys.f08.
@@ -2775,25 +2546,23 @@ contains
         !%    Fortran indexes are translated to C indexes and viceversa when
         !%    necessary. Fortran indexes always start from 1, whereas C indexes
         !%    start from 0.
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
             integer :: table_idx, error, success
             real(8) :: interface_get_first_entry_table(2)
 
             real(c_double), target :: x_entry, y_entry
             character(64) :: subroutine_name = 'interface_get_first_entry_table'
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if ((table_idx > setting%SWMMinput%N_curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
-            !stop 
             call util_crashpoint( 837014)
-            !return
         end if
 
-        !% Substracts 1 to every Fortran index (it becomes a C index)
+        !% --- Subtracts 1 from every Fortran index (it becomes a C index)
         call load_api_procedure("api_get_first_entry_table")
         success = ptr_api_get_first_entry_table(table_idx-1, API_CURVE, x_entry, y_entry)
 
@@ -2807,6 +2576,7 @@ contains
         interface_get_first_entry_table(1) = x_entry
         interface_get_first_entry_table(2) = y_entry
 
+        !%---------------------------------------------------------------------
         if (setting%Debug%File%interface)  then
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         end if
@@ -2816,7 +2586,7 @@ contains
 !%=============================================================================
 !%
     function interface_get_next_entry_table(table_idx, table_type)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%    Retrieves next table entries from EPA-SWMM. API table attributes are
         !%    defined in define_api_keys.f08.
@@ -2824,16 +2594,17 @@ contains
         !%    Fortran indexes are translated to C indexes and viceversa when
         !%    necessary. Fortran indexes always start from 1, whereas C indexes
         !%    start from 0.
-        !%-----------------------------------------------------------------------------
-        integer :: table_idx, table_type, error, success
-        real(8) :: interface_get_next_entry_table(2)
+        !%------------------------------------------------------------------
+            integer :: table_idx, table_type, error, success
+            real(8) :: interface_get_next_entry_table(2)
 
-        real(c_double), target :: x_entry, y_entry
-        character(64) :: subroutine_name
-        !%-----------------------------------------------------------------------------
-        subroutine_name = 'interface_get_next_entry_table'
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            real(c_double), target :: x_entry, y_entry
+            character(64) :: subroutine_name
+        !%------------------------------------------------------------------
+            subroutine_name = 'interface_get_next_entry_table'
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
 
         if ((table_idx > setting%SWMMinput%N_curve) .or. (table_idx < 1)) then
             print *, "error: unexpected table index value", table_idx
@@ -2842,7 +2613,7 @@ contains
             !return
         end if
 
-        !% Substracts 1 to every Fortran index (it becomes a C index)
+        !% Subtracts 1 from every Fortran index (it becomes a C index)
         call load_api_procedure("api_get_next_entry_table")
         success = ptr_api_get_next_entry_table(table_idx-1, table_type, x_entry, y_entry)
 
@@ -2856,9 +2627,11 @@ contains
         interface_get_next_entry_table(1) = x_entry
         interface_get_next_entry_table(2) = y_entry
 
-        if (setting%Debug%File%interface)  then
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-        end if
+        !%---------------------------------------------------------------------
+            if (setting%Debug%File%interface)  then
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            end if
+
     end function interface_get_next_entry_table
 !%
 !%=============================================================================
@@ -2866,7 +2639,7 @@ contains
 !%=============================================================================
 !%
     function interface_get_BC_resolution(node_idx) result(resolution)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%    Computes the finest pattern resolution associated with a node's BC.
         !%    The resulting pattern type is stored in node%I(:,ni_pattern_resolution)
@@ -2877,31 +2650,27 @@ contains
         !%      to preserve the order of api_monthly, api_weekend, api_daily, and
         !%      api_hourly in define_api_index.f08 for the function to work.
         !%    * The function is called during the intialization of the node%I table
-        !%-----------------------------------------------------------------------------
-        integer, intent(in) :: node_idx
-        integer             :: p0, p1, p2, p3, p4
-        integer             :: resolution
-        real(8)             :: baseline
-        character(64)       :: subroutine_name
-        !%-----------------------------------------------------------------------------
-        subroutine_name = 'interface_get_BC_resolution'
-        if (setting%Debug%File%interface)  &
-        write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name)  //  &
-            " [Processor ", this_image(), "]"
-
+        !%------------------------------------------------------------------
+            integer, intent(in) :: node_idx
+            integer             :: p0, p1, p2, p3, p4
+            integer             :: resolution
+            real(8)             :: baseline
+            character(64)       :: subroutine_name
+        !%------------------------------------------------------------------
+            subroutine_name = 'interface_get_BC_resolution'
+            if (setting%Debug%File%interface)  &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name)  //  &
+                " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
         resolution = nullvalueI
 
         if (node%YN(node_idx, nYN_has_inflow)) then ! Upstream/Lateral BC
 
-            !resolution = 0
             resolution = api_nopattern
 
             if (node%YN(node_idx, nYN_has_extInflow)) then
 
-                !write(*,*) 'api_nodef_extInflow_basePat_type',api_nodef_extInflow_basePat_type
                 p0 = interface_get_nodef_attribute(node_idx, api_nodef_extInflow_basePat_type)
-                !write(*,*), p0
-                !write(*,*), api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
 
                 select case (p0)
                 case (api_hourly_pattern)
@@ -2919,23 +2688,19 @@ contains
                 case (api_monthly_pattern)
                     print *, 'CODE NEEDS TESTING: extInflow monthly patterns not tested'
                     call util_crashpoint(2240874)
-                    !write(*,*) 'api_nodef_extInflow_baseline',api_nodef_extInflow_baseline
                     baseline = interface_get_nodef_attribute(node_idx, api_nodef_extInflow_baseline)
                     if (baseline > 0) resolution = api_monthly
                 case (api_nopattern)
                     !% --- no pattern invoked
                 case default
-                    !write(*,*) '--- no external inflow timeseries pattern for node ',node_idx
                     write(*,*) 'CODE ERROR unexpected case in ',trim(subroutine_name)
                     write(*,*), '  pattern resolution is ',p0
                     write(*,*), '  allowed are ',api_hourly, api_weekend, api_daily, api_monthly, api_nopattern
                     write(*,*), ' see define_api_keys.f90 for api_monthly, etc.'
                     call util_crashpoint(552873)
-                    !write(*,*), '   skipping error condition!'
-                    !write(*,*) '******'  
                 end select
             else
-                !write(*,*) '--- no external inflows to node ',node_idx
+                !% ---no external inflows to this node
             end if
 
             if (node%YN(node_idx, nYN_has_dwfInflow)) then
@@ -2978,20 +2743,13 @@ contains
                     write(*,*), '   dwf resolution  read are ',p1, p2, p3, p4
                     write(*,*), '   allowed are ',api_hourly_pattern, api_weekend_pattern, api_daily_pattern, api_monthly_pattern
                     write(*,*), '   skipping error condition!'
-                    write(*,*) '******'
-                    !stop 
-                    !call util_crashpoint( 3987044)
-                !% brh20211207e    
+                    write(*,*) '******'  
                 end if
-            !% brh20211208s
             else
-                !write(*,*) '   no dwfInflow to this node'
-            !% brh20211208e
+                !% --- no dwfInflow to this node
             end if
-        !% brh20211208s
         else
-            !write(*,*) '   no dwf or ext inflows to this node'
-        !% brh20211208e
+            !% ---  no dwf or ext inflows to this node
         end if
 
     end function interface_get_BC_resolution
@@ -3005,10 +2763,11 @@ contains
         !% resets the current entry point for the time series associated with
         !% the bc_idx
         !%---------------------------------------------------------------------
-        integer, intent(in) :: bc_idx
-        real(8)             :: tstart
-        integer             :: tseries_idx, nidx, error
-        real(8)             :: tdata(2)
+            integer, intent(in) :: bc_idx
+            real(8)             :: tstart
+            integer             :: tseries_idx, nidx, error
+            real(8)             :: tdata(2)
+        !%---------------------------------------------------------------------
 
         !% --- get the node index
         nidx = BC%flowI(bc_idx, bi_node_idx)
@@ -3054,76 +2813,62 @@ contains
             !% --- get node pattern resolution
             nres => node%I(nidx, ni_pattern_resolution)
         !%---------------------------------------------------------------------
-        !% --- consistency checking
+        
+            !% --- consistency checking
         if (.not. node%YN(nidx, nYN_has_inflow)) then
             print *, "Error, node " // node%Names(nidx)%str // " does not have an inflow"
         end if
 
-        ! print *, ' '
-        ! print *, 'in ',trim(subroutine_name)
-        ! print *, 'Pattern resolution ',nres
-        ! print *, ' '
-        !if (nres >= 0) then !% 20220920 this seems irrelevant
+        !% --- get the next time for pattern resolution
+        !%     Note that nres=0 returns nullvalueR
+        tnextp = util_datetime_get_next_time(tnow, nres) 
 
-            !% --- get the next time for pattern resolution
-            !%     Note that nres=0 returns nullvalueR
-            tnextp = util_datetime_get_next_time(tnow, nres) 
+        if (node%YN(nidx, nYN_has_extInflow)) then
+            !% --- for external inflows (file), get the timeseries index
+            tseries_idx = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
 
-            if (node%YN(nidx, nYN_has_extInflow)) then
-                !% --- for external inflows (file), get the timeseries index
-                tseries_idx = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
+            if (tseries_idx >= 0) then
+                !% --- this gets the Tseries.x2 values
+                !% --- gets time in days at what is now the x2 pointer 
+                tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x2)
 
-               !print *, 'node_idx, tseries_idx',nidx,tseries_idx
-               !print *, 'tnow, tmaxeppoch ',tnow/3600.0, timemaxEpoch
+                tnext = util_datetime_epoch_to_secs(tnext)
 
-                if (tseries_idx >= 0) then
-                    !% --- this gets the Tseries.x2 values
-                    !% --- gets time in days at what is now the x2 pointer 
-                    tnext = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries_x2)
+                !% --- move the linked list to the next step (which sets up the next value for x2)
+                success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
 
-                    tnext = util_datetime_epoch_to_secs(tnext)
-
-                    !% move the linked list to the next step (which sets up the next value for x2)
-                    success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
-
-                    if (success .ne. oneI) then
-                        !% --- failure to read time later than tnow from file
-                        print *, ' '
-                        write(*,"(A)") 'INPUT FILE FAILURE'
-                        write(*,"(A,i8,A,A,A)") 'at node ',nidx, ' ',trim(node%Names(nidx)%str)
-                        write(*,"(A,f12.0,A)") 'Input file reader cannot find time past ',tnow /3600.d0, ' hours'
-                        tnext = util_datetime_secs_to_epoch(tnow)
-                        call util_datetime_decodedate(tnext, year, month, day)
-                        call util_datetime_decodetime(tnext, hours, minutes, seconds)
-                        write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
-                        tnext = util_datetime_epoch_to_secs(timemaxEpoch)
-                        write(*,"(A,f12.0,A)")  'Note that simulation end time is ',tnext/3600.d0,' hours'
-                        call util_datetime_decodedate(timemaxEpoch, year, month, day)
-                        call util_datetime_decodetime(timemaxEpoch, hours, minutes, seconds)
-                        write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
-                        write(*,"(A)") 'The input file must have a data up through the end of the simulation period.'
-                        print *, ' '
-                        
-                        call util_crashpoint(6698734)
-                    end if
-                else
-                    !% --- if no external file, use the end time
-                    !% HACK -- what are we doing here?
-                    tnext = setting%Time%End
+                if (success .ne. oneI) then
+                    !% --- failure to read time later than tnow from file
+                    print *, ' '
+                    write(*,"(A)") 'INPUT FILE FAILURE'
+                    write(*,"(A,i8,A,A,A)") 'at node ',nidx, ' ',trim(node%Names(nidx)%str)
+                    write(*,"(A,f12.0,A)") 'Input file reader cannot find time past ',tnow /3600.d0, ' hours'
+                    tnext = util_datetime_secs_to_epoch(tnow)
+                    call util_datetime_decodedate(tnext, year, month, day)
+                    call util_datetime_decodetime(tnext, hours, minutes, seconds)
+                    write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
+                    tnext = util_datetime_epoch_to_secs(timemaxEpoch)
+                    write(*,"(A,f12.0,A)")  'Note that simulation end time is ',tnext/3600.d0,' hours'
+                    call util_datetime_decodedate(timemaxEpoch, year, month, day)
+                    call util_datetime_decodetime(timemaxEpoch, hours, minutes, seconds)
+                    write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
+                    write(*,"(A)") 'The input file must have a data up through the end of the simulation period.'
+                    print *, ' '
+                    
+                    call util_crashpoint(6698734)
                 end if
             else
-                !% --- continue, no action if there isn't an external inflow    
+                !% --- if no external file, use the end time
+                !%     HACK -- what are we doing here?
+                tnext = setting%Time%End
             end if
-            !% --- the next time is the smaller of the value in the the timeseries or
-            !%     the time associated with the pattern.
-            !%     HACK -- NEED TO CHECK PATTERN OPERATION
-            tnext = min(tnext, tnextp)
-        ! else
-        !     !% --- HACK - if pattern resolution < 0 then set output tnext to the end time.
-        !     !% SHOULD THIS BE A FAILURE POINT?
-        !     tnext = setting%Time%End
-        !     call util_crashpoint(2390483)
-        ! end if
+        else
+            !% --- continue, no action if there isn't an external inflow    
+        end if
+        !% --- the next time is the smaller of the value in the the timeseries or
+        !%     the time associated with the pattern.
+        !%     HACK -- NEED TO CHECK PATTERN OPERATION
+        tnext = min(tnext, tnextp)
 
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -3135,7 +2880,7 @@ contains
     function interface_get_next_head_time(bc_idx, tnow, timemaxEpoch) result(tnext)
         !%---------------------------------------------------------------------
         !% Description
-         !% Gets the next  headtime. If the next time is less than the maximum
+        !% Gets the next  headtime. If the next time is less than the maximum
         !% time (timemax) then the Tseries.x1 and .y1 stored values will be changed
         !% to the new value.
         !% NOTE: timemax is the "Epoch" time used in EPA-SWMM, but the
@@ -3156,68 +2901,61 @@ contains
         !% Aliases
             nidx => BC%headI(bc_idx, bi_node_idx)
         !%---------------------------------------------------------------------
-        ! if (BC%headI(bc_idx, bi_subcategory) == BCH_fixed) then
-        !     tnext = setting%Time%End
-        ! else
-        !     print *, "Error, unsupported head boundary condition for node " // trim(node%Names(nidx)%str)
-        !     !stop 
-        !     call util_crashpoint(42987)
-        !     !return
-        ! end if
 
         select case (BC%headI(bc_idx, bi_subcategory))  
-        case (BCH_fixed, BCH_normal, BCH_free) 
-            !% --- these cases should not be here!
-            print *, 'CODE ERROR: unexpected boundary condition case'
-            call util_crashpoint(609874)
-            return
-        case (BCH_tseries)
-            !% --- get the timeseries index
-            tseries_idx = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries)
-            if (tseries_idx >= 0) then
-                !% --- this gets the Tseries.x2 values
-                !%     Note the Tseries.x1 values will be overwritten by the .x2 values
-                !%     only if the x2 value is less than timemax. This prepares for the
-                !%     the next step of storing for SWMM5+      
-                !% --- gets time in days at what is now the x2 pointer 
-                tnext = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries_x2)
-                tnext = util_datetime_epoch_to_secs(tnext)
-                success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
-                if (success .ne. oneI) then
-                    !% --- failure to read time later than tnow from file
-                    print *, ' '
-                    write(*,"(A)") 'INPUT FILE FAILURE'
-                    write(*,"(A,f12.0,A)") 'Input file reader cannot find time past ',tnow /3600.d0, ' hours'
-                    tnext = util_datetime_secs_to_epoch(tnow)
-                    call util_datetime_decodedate(tnext, year, month, day)
-                    call util_datetime_decodetime(tnext, hours, minutes, seconds)
-                    write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
-                    tnext = util_datetime_epoch_to_secs(timemaxEpoch)
-                    write(*,"(A,f12.0,A)")  'Note that simulation end time is ',tnext/3600.d0,' hours'
-                    call util_datetime_decodedate(timemaxEpoch, year, month, day)
-                    call util_datetime_decodetime(timemaxEpoch, hours, minutes, seconds)
-                    write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
-                    write(*,"(A)") 'The input file must have a data up through the end of the simulation period.'
-                    print *, ' '
-                    
-                    call util_crashpoint(609834)
+            case (BCH_fixed, BCH_normal, BCH_free) 
+                !% --- these cases should not be here!
+                print *, 'CODE ERROR: unexpected boundary condition case'
+                call util_crashpoint(609874)
+                return
+            case (BCH_tseries)
+                !% --- get the timeseries index
+                tseries_idx = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries)
+                if (tseries_idx >= 0) then
+                    !% --- this gets the Tseries.x2 values
+                    !%     Note the Tseries.x1 values will be overwritten by the .x2 values
+                    !%     only if the x2 value is less than timemax. This prepares for the
+                    !%     the next step of storing for SWMM5+      
+                    !% --- gets time in days at what is now the x2 pointer 
+                    tnext = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries_x2)
+                    tnext = util_datetime_epoch_to_secs(tnext)
+                    success = get_next_entry_tseries(tseries_idx, timemaxEpoch)
+                    if (success .ne. oneI) then
+                        !% --- failure to read time later than tnow from file
+                        print *, ' '
+                        write(*,"(A)") 'INPUT FILE FAILURE'
+                        write(*,"(A,f12.0,A)") 'Input file reader cannot find time past ',tnow /3600.d0, ' hours'
+                        tnext = util_datetime_secs_to_epoch(tnow)
+                        call util_datetime_decodedate(tnext, year, month, day)
+                        call util_datetime_decodetime(tnext, hours, minutes, seconds)
+                        write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
+                        tnext = util_datetime_epoch_to_secs(timemaxEpoch)
+                        write(*,"(A,f12.0,A)")  'Note that simulation end time is ',tnext/3600.d0,' hours'
+                        call util_datetime_decodedate(timemaxEpoch, year, month, day)
+                        call util_datetime_decodetime(timemaxEpoch, hours, minutes, seconds)
+                        write(*,"(A,i4,a,i2,a,i2,a,i2,a,i2)") 'or date ',year,'-',month,'-',day,' at ',hours,':',minutes
+                        write(*,"(A)") 'The input file must have a data up through the end of the simulation period.'
+                        print *, ' '
+                        
+                        call util_crashpoint(609834)
+                    end if
+                else
+                    !% --- if no external file, use the end time
+                    !% HACK -- what are we doing here? Should this be an error condition?
+                    tnext = setting%Time%End
                 end if
-            else
-                !% --- if no external file, use the end time
-                !% HACK -- what are we doing here? Should this be an error condition?
-                tnext = setting%Time%End
-            end if
-        case (BCH_tidal)
-            print *, 'CODE ERROR: tidal outfall not yet handled'
-            call util_crashpoint(446929)
-        case default
-            print *, BC%headI(bc_idx, bi_subcategory), trim(reverseKey(BC%headI(bc_idx, bi_subcategory)))
-            print *, 'CODE ERROR: unexpected case default'
-            call util_crashpoint(44822)
+            case (BCH_tidal)
+                print *, 'CODE ERROR: tidal outfall not yet handled'
+                call util_crashpoint(446929)
+            case default
+                print *, BC%headI(bc_idx, bi_subcategory), trim(reverseKey(BC%headI(bc_idx, bi_subcategory)))
+                print *, 'CODE ERROR: unexpected case default'
+                call util_crashpoint(44822)
         end select
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end function interface_get_next_head_time
 !%
@@ -3241,24 +2979,14 @@ contains
 
         nidx => BC%flowI(bc_idx, bi_node_idx)
 
-        !print *, ' '
-        !print *, '     in ',trim(subroutine_name)
-        !print *, '     nidx , node name',nidx, trim(node%Names(nidx)%str)
-
         epochNow = util_datetime_secs_to_epoch(tnow)
         call load_api_procedure("api_get_flowBC")
         error = ptr_api_get_flowBC(nidx-1, epochNow, bc_value)
         call print_api_error(error, subroutine_name)
 
-        !% TEMPORARY!
-        ! if (bc_value < zeroR) then
-        !     print *,'     negative value ',bc_value
-        !     stop 4487231
-        ! end if
-
-        !print *,'     ...leaving interface_get_flowBC================='
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end function interface_get_flowBC
 !%
@@ -3268,6 +2996,7 @@ contains
     function interface_get_headBC(bc_idx, tnow) result(bc_value)
         !%---------------------------------------------------------------------
         !% Description:
+        !% Gets the head boundary condition for time now
         !%---------------------------------------------------------------------
             integer, intent(in) :: bc_idx
             real(8), intent(in) :: tnow
@@ -3287,8 +3016,9 @@ contains
         error = ptr_api_get_headBC(nidx-1, epochNow, bc_value)
         call print_api_error(error, subroutine_name)
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end function interface_get_headBC
 
@@ -3299,21 +3029,25 @@ contains
     subroutine interface_export_link_results(link_idx)
         !%---------------------------------------------------------------------
         !% Description:
+        !% calls the api_export_link_results() function in api.c
         !%---------------------------------------------------------------------
-        integer, intent(in) :: link_idx
-        integer :: error
-        character(64) :: subroutine_name = 'interface_export_link_results'
+            integer, intent(in) :: link_idx
+            integer :: error
+            character(64) :: subroutine_name = 'interface_export_link_results'
         !%---------------------------------------------------------------------
-
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !% Preliminaries:
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%---------------------------------------------------------------------
 
         call load_api_procedure("api_export_link_results")
         error = ptr_api_export_link_results(link_idx-1)
         call print_api_error(error, subroutine_name)
 
+        !%---------------------------------------------------------------------
         if (setting%Debug%File%interface)  &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
     end subroutine interface_export_link_results
 !%
 !%=============================================================================
@@ -3322,25 +3056,27 @@ contains
     subroutine interface_update_nodeResult(node_idx, result_type, node_result)
         !%---------------------------------------------------------------------
         !% Description:
+        !% calls the update_nodeResult() function in api.c
+        !% OBSOLETE: Hold for future consideration
         !%---------------------------------------------------------------------
-               integer, intent(in) :: node_idx, result_type
-        real(8), intent(in) :: node_result
-        integer             :: error
-        character(64)       :: subroutine_name = "interface_update_nodeResult"
+            integer, intent(in) :: node_idx, result_type
+            real(8), intent(in) :: node_result
+            integer             :: error
+            character(64)       :: subroutine_name = "interface_update_nodeResult"
         !%----------------------------------------------------------------------
 
-        print *, 'error in the api_update_nodeResult -- needs fixing for unit conversion'
+        print *, 'OBSOLETE/WRONG CODE (needs unit conversion)'
         stop 209873
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        ! if (setting%Debug%File%interface)  &
+        !     write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        call load_api_procedure("api_update_nodeResult")
-        error = ptr_api_update_nodeResult(node_idx-1, result_type, node_result)
-        call print_api_error(error, subroutine_name)
+        ! call load_api_procedure("api_update_nodeResult")
+        ! error = ptr_api_update_nodeResult(node_idx-1, result_type, node_result)
+        ! call print_api_error(error, subroutine_name)
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        ! if (setting%Debug%File%interface)  &
+        !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine interface_update_nodeResult
 !%=============================================================================
 !%=============================================================================
@@ -3348,49 +3084,53 @@ contains
     subroutine interface_update_linkResult(link_idx, result_type, link_result)
         !%---------------------------------------------------------------------
         !% Description:
+        !% calls the update_linkResult() function in api.c
+        !% OBSOLETE: Hold for future consideration
         !%---------------------------------------------------------------------
-        integer, intent(in) :: link_idx, result_type
-        real(8), intent(in) :: link_result
-        integer             :: error
-        character(64)       :: subroutine_name = "interface_update_linkResult"
+            integer, intent(in) :: link_idx, result_type
+            real(8), intent(in) :: link_result
+            integer             :: error
+            character(64)       :: subroutine_name = "interface_update_linkResult"
         !%----------------------------------------------------------------------
 
-        print *, 'error in the api_update_linkResult -- needs fixing for unit conversion'
+        print *, 'OBSOLETE/WRONG CODE (needs unit conversion)'
         stop 20987322
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        ! if (setting%Debug%File%interface)  &
+        !     write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        call load_api_procedure("api_update_linkResult")
-        error = ptr_api_update_linkResult(link_idx-1, result_type, link_result)
-        call print_api_error(error, subroutine_name)
+        ! call load_api_procedure("api_update_linkResult")
+        ! error = ptr_api_update_linkResult(link_idx-1, result_type, link_result)
+        ! call print_api_error(error, subroutine_name)
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        ! if (setting%Debug%File%interface)  &
+        !     write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine interface_update_linkResult
 !%
 !%=============================================================================
 !%=============================================================================
 !%
     subroutine interface_write_output_line(reportTime)
-        !%--------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%    Writes .out file with SWMM5+ data
-        !%--------------------------------------------------------------------------
+        !%------------------------------------------------------------------
             real(c_double), intent(in) :: reportTime ! time in seconds
             integer                    :: error
             character(64)              :: subroutine_name = "interface_write_output_line"
-        !%--------------------------------------------------------------------------
-
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
 
         call load_api_procedure("api_write_output_line")
         error = ptr_api_write_output_line(reportTime)
         call print_api_error(error, subroutine_name)
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
     end subroutine interface_write_output_line
 !%
 !%=============================================================================
@@ -3498,8 +3238,7 @@ contains
         setting%SWMMinput%N_curve       = get_num_objects(API_CURVE)
         setting%SWMMinput%N_tseries     = get_num_objects(API_TSERIES)
         setting%SWMMinput%N_control     = get_num_objects(API_CONTROL)
-        !setting%SWMMinput%N_transect    = get_num_objects(API_TRANSECT)
-        setting%SWMMinput%N_transect = get_num_objects(API_TRANSECT)
+        setting%SWMMinput%N_transect    = get_num_objects(API_TRANSECT)
         setting%SWMMinput%N_aquifer     = get_num_objects(API_AQUIFER)
         setting%SWMMinput%N_unithyd     = get_num_objects(API_UNITHYD)
         setting%SWMMinput%N_snowmelt    = get_num_objects(API_SNOWMELT)
@@ -3785,7 +3524,7 @@ contains
             thisProblem(ii)  = 'input value is ignored in SWMM5+.'
         end if
 
-        !% --- courant factor for EPA SWMM variable time step
+        !% --- Courant factor for EPA SWMM variable time step
         ii=ii+1
         setting%SWMMinput%RoutingStep_CourantFactor  = routing_step_Courant_factor
         if (routing_step_Courant_factor .ne. zeroR) then
@@ -3848,14 +3587,7 @@ contains
         end select
 
         !% --- Minimum surface area for nodes from EPA SWMM is not used
-        !ii=ii+1
         setting%SWMMinput%SurfaceArea_Minimum = minimum_surface_area
-        ! if (minimum_surface_area .ne. zeroR) then
-        !     thisWarning(ii)  = .true.
-        !     thisFailure(ii)  = .false.
-        !     thisVariable(ii) = 'MIN_SURFAREA'
-        !     thisProblem(ii)  = 'input value is ignored in SWMM5+.'
-        ! end if
 
         !% --- Minimum slope is never used (default of 0.0 is ignored)
         ii=ii+1
@@ -3873,7 +3605,7 @@ contains
         thisVariable(ii) = 'MAX_TRIALS'
         thisProblem(ii)  = 'input value is ignored in SWMM5+.'
 
-        !% Head Tolerance is irrelevant 
+        !% --- Head Tolerance is irrelevant 
         ii=ii+1
         setting%SWMMinput%Head_ConvergenceTolerance = head_convergence_tolerance
         thisWarning(ii)  = .true.
@@ -3881,7 +3613,7 @@ contains
         thisVariable(ii) = 'HEAD_TOL'
         thisProblem(ii)  = 'input value is ignored in SWMM5+.'
 
-        !% The number of parallel threads cannot be set at runtime in SWMM5+ as of 20211223
+        !% --- The number of parallel threads cannot be set at runtime in SWMM5+ as of 20211223
         ii=ii+1
         setting%SWMMinput%NumberParallelThreads = number_parallel_threads
         select case (number_parallel_threads)
@@ -3905,10 +3637,10 @@ contains
             setting%SWMMinput%TempDirectory_Provided = .false.
         end if
 
-        !%--------------------------------------------------------------------------------
+        !%---------------------------------------------------------------------
         !% --- OTHER SWMM OPTIONS
 
-        !% Control Rule Step is always OK
+        !% --- Control Rule Step is always OK
         ii=ii+1
         thisWarning(ii) = .false.
         thisFailure(ii) = .false.
@@ -3919,19 +3651,19 @@ contains
         !%     from enum  SurchargeMethodType in enums.h
         ii=ii+1
         select case (surcharge_method)
-        case (0)
-            setting%SWMMinput%SurchargeMethod = SWMM_SurchargeMethod_Extran
-            thisWarning(ii) = .true.
-            thisVariable(ii) = 'SURCHARGE_METHOD'
-            thisProblem(ii)  = 'input value ignored. SWMM5+ uses Preissmann slot.'
-        case (1)
-            setting%SWMMinput%SurchargeMethod = SWMM_SurchargeMethod_Slot
-            !% Preissmann SLOT is specified
-        case default
-            thisWarning(ii)  = .true.
-            thisFailure(ii)  = .true.
-            thisVariable(ii) = 'SURCHARGE_METHOD'
-            thisProblem(ii)  = 'Unknown value for SWMM input. SWMM5+ overwrites (EXTRAN,SLOT).'
+            case (0)
+                setting%SWMMinput%SurchargeMethod = SWMM_SurchargeMethod_Extran
+                thisWarning(ii) = .true.
+                thisVariable(ii) = 'SURCHARGE_METHOD'
+                thisProblem(ii)  = 'input value ignored. SWMM5+ uses Preissmann slot.'
+            case (1)
+                setting%SWMMinput%SurchargeMethod = SWMM_SurchargeMethod_Slot
+                !% Preissmann SLOT is specified
+            case default
+                thisWarning(ii)  = .true.
+                thisFailure(ii)  = .true.
+                thisVariable(ii) = 'SURCHARGE_METHOD'
+                thisProblem(ii)  = 'Unknown value for SWMM input. SWMM5+ overwrites (EXTRAN,SLOT).'
         end select
 
         !% Pollutant transport in hydraulics not supported in SWMM5+ as of 20221103
@@ -3952,7 +3684,7 @@ contains
             thisProblem(ii)  = 'in SWMM input file are converted to junctions for dynamic wave.'
         end if
 
-        !% -----------------------------------------------------------------------------------
+        !%----------------------------------------------------------------------
         !% --- printouts
         !%
         if ((any(thisWarning)) .and. (this_image() == 1) ) then
@@ -3993,6 +3725,7 @@ contains
         !% closing
             if (setting%Debug%File%interface)  &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
     end subroutine interface_get_SWMM_setup    
 !%
 !%=============================================================================
@@ -4055,6 +3788,7 @@ contains
         !% closing
             if (setting%Debug%File%interface)  &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
     end subroutine interface_get_SWMM_times
 !%
 !%=============================================================================
@@ -4065,20 +3799,21 @@ contains
         !% Description:
         !% Returns the index of the object, or 0 if the object couldn't be found
         !%---------------------------------------------------------------------
-        character(*), intent(in) :: object_name
-        integer, intent(in) :: object_type
-        integer :: object_idx
-        character(64) :: subroutine_name = 'interface_find_object'
+            character(*), intent(in) :: object_name
+            integer, intent(in) :: object_type
+            integer :: object_idx
+            character(64) :: subroutine_name = 'interface_find_object'
         !%---------------------------------------------------------------------
-
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
 
         call load_api_procedure("api_find_object")
         object_idx = ptr_api_find_object(object_type, trim(object_name)//c_null_char) + 1
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end function interface_find_object
 !%
@@ -4126,19 +3861,17 @@ contains
             integer       :: error
             character(64) :: subroutine_name = 'interface_call_runoff_execute'     
         !%---------------------------------------------------------------------   
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
-        
-        ! print *, '...just before loading runoff_execute in interface_call_runoff_execute'
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // subroutine_name // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
 
         call load_api_procedure("api_call_runoff_execute")
         error = ptr_api_call_runoff_execute()   
         call print_api_error(error, subroutine_name)
-    
-        ! print *, "...finishing interface_call_runoff_execute"
-        
-        if (setting%Debug%File%interface)  &
-             write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
         
     end subroutine interface_call_runoff_execute
 !%
@@ -4196,8 +3929,9 @@ contains
         
         !%---------------------------------------------------------------------
         !% Closing
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // subroutine_name // " [Processor ", this_image(), "]"
+
     end function interface_get_subcatch_runoff_nodeIdx
 !%
 !%=============================================================================
@@ -4389,22 +4123,22 @@ contains
         !%---------------------------------------------------------------------
         !% Description:
         !%---------------------------------------------------------------------
-        character(kind=c_char, len=*) :: api_procedure_name
-        character(64) :: subroutine_name = 'load_api_procedure'
+            character(kind=c_char, len=*) :: api_procedure_name
+            character(64) :: subroutine_name = 'load_api_procedure'
         !%---------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name)  // " (" // api_procedure_name // ")" // &
+                    " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name)  // " (" // api_procedure_name // ")" // &
-                " [Processor ", this_image(), "]"
-
-        !% Open the shared library
+        !% --- Open the shared library
         call c_lib_open(c_lib, errstat, errmsg)
         if (crashI==1) return
         c_lib%procname = api_procedure_name
         call c_lib_load(c_lib, errstat, errmsg)
         if (crashI==1) return
 
-        !% Loads shared library funcitonalities
+        !% --- Loads shared library funcitonalities
         select case (api_procedure_name)
             case ("api_teststuff")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_teststuff)
@@ -4421,13 +4155,11 @@ contains
             case ("api_initialize")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_initialize)
             case ("api_finalize")
-                !print *, '9781053 calling api_finalize'
                 call c_f_procpointer(c_lib%procaddr, ptr_api_finalize)
             case ("api_get_nodef_attribute")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_nodef_attribute)
             case ("api_get_linkf_attribute")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_linkf_attribute)
-                !stop 298734
             case ("api_get_adjustments")
                 call c_f_procpointer(c_lib%procaddr, ptr_api_get_adjustments)
             case ("api_get_transectf_attribute")
@@ -4505,14 +4237,14 @@ contains
             case default
                 write(*,"(A,A)") "Error, procedure " // api_procedure_name // &
                  " has not been handled in load_api_procedure in interface.f90"
-                !stop 
                 call util_crashpoint(420987)
-                !return
         end select
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name)  // " (" // api_procedure_name // ")" // &
-                " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name)  // " (" // api_procedure_name // ")" // &
+                    " [Processor ", this_image(), "]"
+
     end subroutine load_api_procedure
 !%
 !%=============================================================================
@@ -4522,20 +4254,23 @@ contains
         !%---------------------------------------------------------------------
         !% Description:
         !%---------------------------------------------------------------------
-        integer, intent(in   ) :: tseries_idx
-        real(8), intent(in   ) :: timemax
-        integer                :: success
-        character(64)          :: subroutine_name
+            integer, intent(in   ) :: tseries_idx
+            real(8), intent(in   ) :: timemax
+            integer                :: success
+            character(64)          :: subroutine_name
         !%---------------------------------------------------------------------
-        subroutine_name = 'get_next_entry_tseries'
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            subroutine_name = 'get_next_entry_tseries'
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
 
         call load_api_procedure("api_get_next_entry_tseries")
         success = ptr_api_get_next_entry_tseries(tseries_idx-1,timemax) ! Fortran to C convention
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
     end function get_next_entry_tseries
 !%
 !%=============================================================================
@@ -4545,19 +4280,21 @@ contains
         !%---------------------------------------------------------------------
         !% Description:
         !%---------------------------------------------------------------------
-        integer :: obj_type
-        integer :: get_num_objects
-        character(64) :: subroutine_name
+            integer :: obj_type
+            integer :: get_num_objects
+            character(64) :: subroutine_name
         !%---------------------------------------------------------------------
-        subroutine_name = 'get_num_objects'
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            subroutine_name = 'get_num_objects'
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
 
         call load_api_procedure("api_get_num_objects")
         get_num_objects = ptr_api_get_num_objects(obj_type)
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end function get_num_objects
 !%
@@ -4568,18 +4305,21 @@ contains
         !%---------------------------------------------------------------------
         !% Description:
         !%---------------------------------------------------------------------
-        real(c_double) :: get_start_datetime
-        character(64) :: subroutine_name
+            real(c_double) :: get_start_datetime
+            character(64) :: subroutine_name
         !%---------------------------------------------------------------------
-        subroutine_name = 'get_start_datetime'
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            subroutine_name = 'get_start_datetime'
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
 
         call load_api_procedure("api_get_start_datetime")
         get_start_datetime = ptr_api_get_start_datetime()
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
     end function get_start_datetime
 !%
 !%=============================================================================
@@ -4589,18 +4329,21 @@ contains
         !%---------------------------------------------------------------------
         !% Description:
         !%---------------------------------------------------------------------
-        real(8) :: get_end_datetime
-        character(64) ::  subroutine_name
+            real(8) :: get_end_datetime
+            character(64) ::  subroutine_name
         !%---------------------------------------------------------------------
-        subroutine_name = 'get_end_datetime'
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            subroutine_name = 'get_end_datetime'
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
 
         call load_api_procedure("api_get_end_datetime")
         get_end_datetime = ptr_api_get_end_datetime()
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
     end function get_end_datetime
 !%
 !%=============================================================================
@@ -4612,24 +4355,22 @@ contains
         !% gets the latest NewRunoffTime from SWMM-C (in milliseconds)
         !% and converts to seconds
         !%---------------------------------------------------------------------
-        real(8)       :: interface_get_NewRunoffTime
-        character(64) :: subroutine_name
+            real(8)       :: interface_get_NewRunoffTime
+            character(64) :: subroutine_name
         !%---------------------------------------------------------------------
-        subroutine_name = 'interface_get_NewRunoffTime'
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            subroutine_name = 'interface_get_NewRunoffTime'
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
 
         call load_api_procedure("api_get_NewRunoffTime")
         interface_get_NewRunoffTime = ptr_api_get_NewRunoffTime() / onethousandR
 
-        if (setting%Debug%File%interface)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%interface)  &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
     end function interface_get_NewRunoffTime
-!%
-!%=============================================================================
-!%=============================================================================
-!%
-        
 !%
 !%=============================================================================
 !%=============================================================================
@@ -4638,8 +4379,8 @@ contains
         !%---------------------------------------------------------------------
         !% Description:
         !%---------------------------------------------------------------------
-        integer, intent(in) :: error
-        character(64), intent(in) :: subroutine_name
+            integer, intent(in) :: error
+            character(64), intent(in) :: subroutine_name
         !%---------------------------------------------------------------------
 
         if (error /= 0) then
@@ -4654,14 +4395,11 @@ contains
             write(*,*) trim(setting%File%rpt_file)
             write(*,*) "SWMM User Manual (Appendix E) has details on error codes."
             write(*,*)
-            !stop 
             call util_crashpoint( 63455)
-            !return
         end if
     end subroutine print_api_error
 !%
 !%=============================================================================
 !% END MODULE interface
 !%=============================================================================
-!%
 end module interface_

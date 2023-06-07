@@ -1,7 +1,20 @@
-//=============================================================================
+// FILE add_to_controls.c
+//==========================================================================
+// SWMM5+ release, version 1.0.0
+// 20230608
+// Hydraulics engine that links with EPA SWMM-C
+// June 8, 2023
+//
+// Description:
 // FUNCTIONS FOR SWMM5+ ACCESS TO EPA-SWMM CONTROLS
 // The following should be appended to the bottom of the controls.c file
-// 20220627
+// prior to compiling with SWMM5+
+//
+// Methods
+// Developed from controls.c algorithms in EPA-SWMM to return data needed
+// for the SWMM5+ API to access control information. A controlled element
+// in SWMM5+ on one processor might have to access a control location on
+// another processor.
 //=============================================================================
 int controls_display(void) // brh20220617
     /// Purpose: displays controls for developing API
@@ -301,5 +314,5 @@ int controls_get_action_data(
     return 1; // action data found
 }
 //=============================================================================
-// END ADDITIONAL FUNCTIONS FOR CONTROL.C
+// END add_to_controls.c
 //=============================================================================

@@ -1,3 +1,17 @@
+// FILE api.c
+//==========================================================================
+// SWMM5+ release, version 1.0.0
+// 20230608
+// Hydraulics engine that links with EPA SWMM-C
+// June 8, 2023
+//
+// Description:
+// Application Programming Interface (API) that communicates between
+// EPA-SWMM and SWMM5+
+//
+// Methods
+// Called by procedures in interface.f90
+//===========================================================================
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>

@@ -6106,7 +6106,7 @@ contains
     subroutine init_IC_junction_plan_area ()
         !%------------------------------------------------------------------
         !% Description
-        !% Sets the junction plan area for ImpliedStorage juncitons based
+        !% Sets the junction plan area for ImpliedStorage junctions based
         !% on topwidth or maxbreadth of connected elements.
         !% NOTE: this is called before arrays are packed!
         !%------------------------------------------------------------------
@@ -6168,7 +6168,7 @@ contains
                         largestBreadth = max(largestBreadth,trialBreadth)
                 end do
 
-                !% -- create a storage plan area that is 1/2 of a semicircle of the largest
+                !% -- create a storage plan area that is 1/2 of a circle of the largest
                 !%    branch width, but limit result by the AreaFactorMaximum * AreaMinimum
 
                 if (largestBreadth > zeroR ) then

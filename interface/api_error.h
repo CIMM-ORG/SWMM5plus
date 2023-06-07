@@ -1,3 +1,13 @@
+// FILE api_error.h
+//==========================================================================
+// SWMM5+ release, version 1.0.0
+// 20230608
+// Hydraulics engine that links with EPA SWMM-C
+// June 8, 2023
+//
+// Description:
+// error reporting for the SWMM5+/EPA-SWMM API
+//==========================================================================
 #ifndef API_ERROR_H
 #define API_ERROR_H
 
@@ -52,3 +62,6 @@ void api_report_writeErrorCode();
 #endif
 
 #endif //API_ERROR_H
+//=============================================================================
+// END api_error.h
+//=============================================================================

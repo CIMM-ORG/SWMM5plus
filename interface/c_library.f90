@@ -1,5 +1,14 @@
 module c_library
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% Fortran functions for opening/closing the shared library of EPA-SWMM
+    !%
+    !%==========================================================================
     use iso_c_binding
     use define_settings, only: setting
     use utility_crash, only: util_crashpoint
@@ -56,17 +65,20 @@ module c_library
     end interface
 
 contains
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine c_lib_open(c_lib, errstat, errmsg)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%    Opens the EPA-SWMM shared library
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
             type (c_lib_type), intent(inout) :: c_lib ! pointer to shared library
             integer, intent(out) :: errstat ! -1 ir there was an error, 0 if successful
             character(*), intent(out) :: errmsg
             character(64) :: subroutine_name = "c_lib_open"
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
 
         if (setting%Debug%File%c_library) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -84,27 +96,27 @@ contains
                         'The dynamic library ' // trim(c_lib%filename) // ' could not be loaded.' &
                         //' Check that the file ' // 'exists in the specified location and' &
                         //' that it is compiled for ', (c_intptr_t*8), '-bit systems.'
-                !stop 
                 call util_crashpoint(29873)
                 c_lib%loaded = .false.
             else    
                 c_lib%loaded = .true.
                 errstat = 0
             end if
-            !c_lib%loaded = .true.
         else
             errstat = 0
         end if
 
-        !errstat = 0
-
-        if (setting%Debug%File%c_library) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%c_library) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine c_lib_open
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine c_lib_load(c_lib, errstat, errmsg)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%    Loads functions from the EPA-SWMM shared library. The name of the
         !%    function that wants to be loaded has to be defined in c_lib%procname
@@ -115,12 +127,12 @@ contains
         !%    c_lib%procname = "api_initialize"
         !%    call c_lib_load(c_lib, errstat, errmsg)
         !%
-        !%-----------------------------------------------------------------------------
-        type (c_lib_type), intent(inout) :: c_lib ! pointer to shared library
-        integer, intent(out) :: errstat ! -1 ir there was an error, 0 if successful
-        character(*), intent(out) :: errmsg
-        character(64) :: subroutine_name = "c_lib_load"
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+            type (c_lib_type), intent(inout) :: c_lib ! pointer to shared library
+            integer, intent(out) :: errstat ! -1 ir there was an error, 0 if successful
+            character(*), intent(out) :: errmsg
+            character(64) :: subroutine_name = "c_lib_load"
+        !%------------------------------------------------------------------
 
         if (setting%Debug%File%c_library) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -138,21 +150,25 @@ contains
             errstat = 0 
         end if
 
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%c_library) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        if (setting%Debug%File%c_library) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine c_lib_load
-
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine c_lib_close (c_lib, errstat, errmsg)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !%    Closes the shared library
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
             type (c_lib_type), intent(inout) :: c_lib
             integer, intent(out) :: errstat ! -1 if error, 0 if successful
             character(*), intent(out) :: errmsg
             character(64) :: subroutine_name = "c_lib_close"
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
 
         if (setting%Debug%File%c_library) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -165,7 +181,13 @@ contains
             return
         end if
 
-        if (setting%Debug%File%c_library) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%------------------------------------------------------------------
+            if (setting%Debug%File%c_library) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
     end subroutine c_lib_close
+!%
+!%==========================================================================
+!% END MODULE
+!%==========================================================================
 end module c_library
