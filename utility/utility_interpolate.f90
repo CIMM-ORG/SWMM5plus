@@ -1,5 +1,14 @@
 module utility_interpolate
-
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% interpolation for tables
+    !%
+    !%==========================================================================
     use define_indexes
     use define_indexes
     use define_keys
@@ -21,18 +30,21 @@ contains
 !%==========================================================================
 !%
     real(8) function util_interpolate_linear(X, X1, X2, Y1, Y2) result (Y)
-    !% This is a linear interpolation function
-        real(8), intent(in) :: X, X1, X2, Y1, Y2
+        !%------------------------------------------------------------------
+        !% Description
+        !% linearly interpolate value Y in Y1 < Y < Y2
+        !% given X in X1 < X < X2
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8), intent(in) :: X, X1, X2, Y1, Y2
+        !%------------------------------------------------------------------
+
         if (Y1 == Y2) then
             Y = Y1
             return
         end if
         Y = Y1 + (X - X1) * (Y2 - Y1) / (X2 - X1)
-        ! print *, 'X-X1  ',X-X1
-        ! print *, 'Y2-Y1 ', Y2-Y1
-        ! print *, 'X2-X1 ',X2-X1
-        ! print *, 'Y1    ',Y1
-        ! print *, 'Y     ',Y
+
     end function util_interpolate_linear
 !%  
 !%==========================================================================
@@ -51,6 +63,7 @@ contains
         !%      yVal_col  -- y data column in the curve Valuearray
         !%      interpFlag = 0 for step wise, 1 for linear interp
         !%--------------------------------------------------------------------
+        !% Declarations
             integer, intent(in) :: curveID, er_inCol, er_outCol, xVal_col, yVal_col
             integer, intent(in) :: interpFlag
             real(8), pointer    :: x, y, x1, x2, y1, y2
@@ -67,27 +80,13 @@ contains
             y       => elemR(ElemIdx,er_outCol) !% this is the curve output
         !%---------------------------------------------------------------------
 
-        ! print *, ' '
-        ! print *, 'this curve x', elemR(ElemIdx,er_inCol)
-        ! print *, 'this curve y', elemR(ElemIdx,er_outCol)
-
         !% --- starting position of the curve (these pointers change)
         x1 => curve(curveID)%ValueArray(1,xVal_col)
         y1 => curve(curveID)%ValueArray(1,yVal_col)
 
-        ! print *, ' '
-        ! print *, 'curve X '
-        ! print *, curve(curveID)%ValueArray(:,xVal_col)
-        ! print *, 'curve Y '
-        ! print *, curve(curveID)%ValueArray(:,yVal_col)
-
-        ! print *, 'x1, y1',x1,y1
-
         !% --- maximum x, y values (these pointers change)
         x2 => curve(curveID)%ValueArray(nRows,xVal_col)
         y2 => curve(curveID)%ValueArray(nRows,yVal_col)
-
-        ! print *, 'x2, y2',x2,y2
 
         !% --- parse for where x falls in range (x1,x2)
         if (x < x1) then
@@ -124,28 +123,28 @@ contains
         elseif (x > x2) then
             !% --- if x is larger than upper bound
             select case (interpFlag)
-            case(0)
-                !% --- stepwise: return the largest y2 value
-                y = y2
-                return !% output found and stored in y
-            case(1)
-                !% --- linear: extrapolate based on slope at end of curve
-                x1 => curve(curveID)%ValueArray(nRows-1,xVal_col)
-                y1 => curve(curveID)%ValueArray(nRows-1,yVal_col)
-                !% --- compute the slope for extrapolation
-                if (x2 /= x1) then
-                    slope = (y2 - y1) / (x2 - x1)
-                    if (slope < zeroR) slope = zeroR !% -- don't allow negative slope extrapolation
-                    !% --- interpolate: extrapolate using slope
-                    y = y2 + slope * (x - x2)
-                    return !% output found and stored in y
-                else
-                    !% --- last two points are identical
+                case(0)
+                    !% --- stepwise: return the largest y2 value
                     y = y2
                     return !% output found and stored in y
-                end if
-            case default
-                print *, 'CODE ERROR: Unexpected case default in interpFlag for ',trim(subroutine_name)
+                case(1)
+                    !% --- linear: extrapolate based on slope at end of curve
+                    x1 => curve(curveID)%ValueArray(nRows-1,xVal_col)
+                    y1 => curve(curveID)%ValueArray(nRows-1,yVal_col)
+                    !% --- compute the slope for extrapolation
+                    if (x2 /= x1) then
+                        slope = (y2 - y1) / (x2 - x1)
+                        if (slope < zeroR) slope = zeroR !% -- don't allow negative slope extrapolation
+                        !% --- interpolate: extrapolate using slope
+                        y = y2 + slope * (x - x2)
+                        return !% output found and stored in y
+                    else
+                        !% --- last two points are identical
+                        y = y2
+                        return !% output found and stored in y
+                    end if
+                case default
+                    print *, 'CODE ERROR: Unexpected case default in interpFlag for ',trim(subroutine_name)
                     call util_crashpoint(327768)
             end select
         else
@@ -157,17 +156,17 @@ contains
                 y2 => curve(curveID)%ValueArray(ii,yVal_col)
                 if (x <= x2) then
                     select case (interpFlag)
-                    case (0)
-                        !% --- stepwise value
-                        y = y1
-                        return !% answer found and stored in y, so exit subroutine
-                    case (1)
-                        !% --- linear interpolation
-                        y = util_interpolate_linear(x, x1, x2, y1, y2)
-                        return !% answer found and stored in y, so exit subroutine
-                    case default
-                        print *, 'CODE ERROR: Unexpected case default in interpFlag for ',trim(subroutine_name)
-                        call util_crashpoint(6682093)
+                        case (0)
+                            !% --- stepwise value
+                            y = y1
+                            return !% answer found and stored in y, so exit subroutine
+                        case (1)
+                            !% --- linear interpolation
+                            y = util_interpolate_linear(x, x1, x2, y1, y2)
+                            return !% answer found and stored in y, so exit subroutine
+                        case default
+                            print *, 'CODE ERROR: Unexpected case default in interpFlag for ',trim(subroutine_name)
+                            call util_crashpoint(6682093)
                     end select
                 end if
                 !% --- unsuccessful, increment the x1,y1 position for next loop
@@ -178,7 +177,6 @@ contains
             print *, 'CODE ERROR: unexpected result -- reached end of loop without finding answer'
             call util_crashpoint(698743)
         end if
-
 
     end subroutine util_curve_lookup_singular
 !%  

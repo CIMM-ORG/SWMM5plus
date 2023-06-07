@@ -126,7 +126,7 @@ module outlet_elements
                 case default
                     print *, 'CODE ERROR outlet type unknown for # ', OutletType
                     print *, 'which has key ',trim(reverseKey(OutletType))
-                    stop 5878
+                    call util_crashpoint(5878)
             end select
         end if
         
@@ -182,7 +182,7 @@ module outlet_elements
                 case default
                     print *, 'CODE ERROR outlet type unknown for # ', OutletType
                     print *, 'which has key ',trim(reverseKey(OutletType))
-                    stop 7824
+                    call util_crashpoint(7824)
             end select
         end if
 

@@ -1127,7 +1127,7 @@ module junction_lowlevel
             case default
                 print *, elemSI(JMidx,esi_JunctionMain_OverflowType), trim(reverseKey(elemSI(JMidx,esi_JunctionMain_OverflowType)))
                 print *, 'CODE ERROR: unexpected case default'
-                stop 397894
+                call util_crashpoint(397894)
         end select
 
     end subroutine lljunction_main_update_final   

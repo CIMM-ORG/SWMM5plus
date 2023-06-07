@@ -1,11 +1,16 @@
 module utility_key_default
-!%==========================================================================
-!% Description:
-!% sets the column for any KEY in an integer array to the undefinedKey
-!% value. 
-!% See define_indexes for KEY columns of ***I arrays.
-!% See define_keys for the list of keys
-!%==========================================================================
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% sets the value for any KEY column in an integer array to the undefinedKey
+    !% value. 
+    !% See define_indexes for KEY columns of ***I arrays.
+    !% See define_keys for the list of keys
+    !%==========================================================================
 
     use define_globals
     use define_keys
@@ -34,8 +39,8 @@ module utility_key_default
         !%------------------------------------------------------------------
             integer, allocatable :: keylist(:)
         !%------------------------------------------------------------------
-        !% for links
-        !% keylist must match the number of KEY columns for li_ indexes
+        !% --- for links
+        !%     keylist must match the number of KEY columns for li_ indexes
         allocate(keylist(4))  
         keylist = (/    li_link_type, &
                         li_link_sub_type, &
@@ -45,8 +50,8 @@ module utility_key_default
         link%I(:,keylist) = undefinedKey
         deallocate(keylist)
 
-        !% for nodes
-        !% keylist must match the number of KEY columns for ni_ indexes
+        !% --- for nodes
+        !%     keylist must match the number of KEY columns for ni_ indexes
         allocate(keylist(1))
         keylist(1) = ni_node_type
         node%I(:,keylist) = undefinedKey
@@ -62,9 +67,10 @@ module utility_key_default
         !% Description
         !% sets default undefinedKey for BC%headI and BC%flowI arrays
         !%------------------------------------------------------------------
-        integer, allocatable :: keylist(:)
+        !% Declarations
+            integer, allocatable :: keylist(:)
         !%------------------------------------------------------------------
-        !% keylist must match the number of KEY columns for bi_ indexes
+        !% --- keylist must match the number of KEY columns for bi_ indexes
         allocate(keylist(2))  
         keylist = (/    bi_category, &
                         bi_subcategory /)
@@ -81,9 +87,10 @@ module utility_key_default
     subroutine util_key_default_elemX ()
         !%------------------------------------------------------------------
         !% Description
-        !% sets default undefinedKey for elemI elemSI arrays
+        !% sets default undefinedKey for key items in elemI elemSI arrays
         !%------------------------------------------------------------------
-        integer, allocatable :: keylist(:)
+        !% Declarations
+            integer, allocatable :: keylist(:)
         !%------------------------------------------------------------------
         !% --- keylist must match the number of KEY columns for ei_ indexes
         allocate(keylist(5))  
@@ -148,10 +155,6 @@ module utility_key_default
         deallocate(keylist)
 
     end subroutine util_key_default_face
-!%
-!%==========================================================================
-!%==========================================================================
-!%
 !%
 !%==========================================================================
 !% END OF MODULE

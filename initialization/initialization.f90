@@ -356,7 +356,6 @@ contains
                     write(*,*) '** the json file to run a full simulation.            **'
                     write(*,*) '********************************************************'
                 end if
-                !stop 
                 call util_crashpoint(333578)
             end if
             call util_crashstop(440987)
@@ -1575,7 +1574,7 @@ contains
             !% check for valid links in the control settings
             if (setting%Control%LinkIdx(ii) == nullvalueI) then
                 print*, "Error - json file - setting " // 'Could not find then link ', trim(setting%Control%Links(ii)), ' in the network'
-                stop
+                call util_crashpoint(6298733)
             end if
         end do 
 

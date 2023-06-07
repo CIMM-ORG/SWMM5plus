@@ -29,7 +29,6 @@ module runge_kutta2
     use preissmann_slot
     use adjust
     use diagnostic_elements
-    use utility, only: util_syncwrite
     use utility_crash
     use utility_unit_testing, only: util_utest_CLprint, util_utest_checkIsNan
 
