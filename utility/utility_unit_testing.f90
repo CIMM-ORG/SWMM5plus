@@ -37,6 +37,7 @@ module utility_unit_testing
    public :: util_utest_node_link_image !% checks all images have nodes
    public :: util_utest_slope_checking  !% finds negative slopes
    public :: util_utest_global_index_check !% check global indexes
+   public :: util_utest_syncwrite !% writes from each image for debugging
 
 contains
 !%
@@ -1068,6 +1069,47 @@ end subroutine util_utest_get_elemR_indexName
    end function util_utest_isThisCol_Nan   
 !%
 !%==========================================================================
+!%==========================================================================
+!%
+   subroutine util_utest_syncwrite
+      !%------------------------------------------------------------------
+      !% Description:
+      !% writes the coarray outstring in processor order
+      !% this is useful for debugging when an image is hanging.
+      !%------------------------------------------------------------------
+      !% Declarations:
+          integer :: ii
+          character (len = 256) :: tstring(num_images())
+      !%------------------------------------------------------------------
+      !% Preliminaries:
+      !%------------------------------------------------------------------
+      !% Aliases:
+      !%------------------------------------------------------------------
+
+      sync all
+      if (this_image() == 1) then
+          tstring(1) = trim(outstring)
+          do ii=2,num_images()
+              tstring(ii) = trim(outstring[ii])
+              ! sync all
+              ! flush(6)
+              ! if (ii==this_image()) then
+              !     write(6,*) trim(thisstring),this_image(), thisI
+              !     flush(6)
+              !     !wait(6)
+              !     !call sleep(1)
+              ! end if
+              ! sync all
+          end do
+          do ii=1,num_images()
+              write(6,*) trim(tstring(ii)),ii
+          end do
+      end if
+      sync all
+
+  end subroutine util_utest_syncwrite      
+!%
+!%========================================================================== 
 !% END MODULE    
 !%==========================================================================
 !%

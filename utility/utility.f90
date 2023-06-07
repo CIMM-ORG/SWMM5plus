@@ -1,4 +1,13 @@
 module utility
+    !%==========================================================================
+    !% SWMM5+ release, version 1.0.0
+    !% 20230608
+    !% Hydraulics engine that links with EPA SWMM-C
+    !% June 8, 2023
+    !%
+    !% Description:
+    !% General utility procedures
+!%==========================================================================
 
     use define_indexes
     use define_keys
@@ -9,21 +18,10 @@ module utility
 
     implicit none
 
-!-----------------------------------------------------------------------------
-!
-! Description:
-!   Utility routines that may be called in a number of places
-!
-!-----------------------------------------------------------------------------
-
     private
-
 
     public :: util_print_programheader
 
-
-    public :: util_syncwrite
-    
     public :: util_setting_constraints
     
     public :: util_count_node_types
@@ -117,15 +115,17 @@ module utility
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine util_count_node_types(N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
-        !%-----------------------------------------------------------------------------
+    subroutine util_count_node_types &
+        (N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1)
+        !%------------------------------------------------------------------
         !% Description:
-        !% This subroutine uses the vectorized count() function to search the array for
-        !% numberof instances of each node type
-        !%-----------------------------------------------------------------------------
-        integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1
-        integer :: ii
-        !%-----------------------------------------------------------------------------
+        !% This subroutine uses the vectorized count() function to search 
+        !% the array for number of instances of each node type
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in out) :: N_nBCup, N_nBCdn, N_nJm, N_nStorage, N_nJ2, N_nJ1
+            integer :: ii
+       !%------------------------------------------------------------------
         N_nBCup = count(node%I(:, ni_node_type) == nBCup)
         N_nBCdn = count(node%I(:, ni_node_type) == nBCdn)
         N_nJm = count(node%I(:, ni_node_type) == nJM)
@@ -140,12 +140,13 @@ module utility
 !%
     pure elemental real(8) function util_sign_with_ones &
         (inarray) result (outarray)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% returns is an array of real ones with the sign of the inarray argument
-        !%-----------------------------------------------------------------------------
-        real(8),      intent(in)    :: inarray
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Declarations
+            real(8),      intent(in)    :: inarray
+        !%------------------------------------------------------------------
         outarray = oneR
         outarray = sign(outarray,inarray)
 
@@ -157,36 +158,38 @@ module utility
 !%
     function util_sign_with_ones_or_zero &
         (inarray) result (outarray)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% returns is an array of real ones with the sign of the inarray argument
         !% for non-zero inarray. For zero inarray returns zero.
-        !%-----------------------------------------------------------------------------
-        real(8),intent(in) :: inarray(:)
-        real(8)            :: outarray(size(inarray,1))
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Declarations:
+            real(8),intent(in) :: inarray(:)
+            real(8)            :: outarray(size(inarray,1))
+       !%------------------------------------------------------------------
         outarray = oneR
         outarray = sign(outarray,inarray)
 
-        !% brh 20211227 
         where(inarray == zeroR)
             outarray = zeroI
         end where
 
     end function util_sign_with_ones_or_zero
-
 !%
 !%==========================================================================
 !%==========================================================================
 !%
     subroutine util_print_warning(msg,async)
         !%------------------------------------------------------------------
+        !% Description
         !% Used for opening up the warning files and writing to the file
         !%------------------------------------------------------------------
+        !% Declarations:
             character(len = *), intent(in) :: msg
             logical, optional, intent(in) :: async
             logical :: async_actual
         !%------------------------------------------------------------------
+
         if (present(async)) then
             async_actual = async
         else
@@ -204,21 +207,22 @@ module utility
 !%==========================================================================
 !%
     function util_linspace(startPoint,endPoint,N) result(outArray)
-        !%-----------------------------------------------------------------------------
+        !%------------------------------------------------------------------
         !% Description:
         !% similar to python/matlab linspace
-        !%-----------------------------------------------------------------------------
-        real(8), intent(in)  :: startPoint 
-        real(8), intent(in)  :: endPoint
-        integer, intent(in)  :: N
-        real(8)              :: delta
-        real(8), allocatable :: outArray(:)
-        integer :: ii
-        !%-----------------------------------------------------------------------------
-        !% calculate step size
+        !%------------------------------------------------------------------
+            real(8), intent(in)  :: startPoint 
+            real(8), intent(in)  :: endPoint
+            integer, intent(in)  :: N
+            real(8)              :: delta
+            real(8), allocatable :: outArray(:)
+            integer :: ii
+        !%------------------------------------------------------------------
+
+        !% --- calculate step size
         delta = (endPoint - startPoint)/real(N-1,8)
 
-        !% allocate the outArry based on number of samples
+        !% --- allocate the outArry based on number of samples
         allocate(outArray(N))
 
         do ii = 1, N
@@ -238,6 +242,7 @@ module utility
         !% Note that this should only be called at a place in the code where
         !% the elem(:,er_Volume) reflects the total volume (i.e., full + slot)
         !% HACK -- need a separate volume cons for the small/zero losses
+        !% HACK -- presently requires further work for debugging use
         !%------------------------------------------------------------------
         !% Declarations:
             real(8), pointer :: eCons(:), fQ(:), eQLat(:), VolNew(:), VolOld(:), dt
@@ -259,7 +264,6 @@ module utility
             eCons   => elemR(:,er_VolumeConservation)
             tempCons=> elemR(:,er_Temp01)
             eQLat   => elemR(:,er_FlowrateLateral)
-            !nBarrels=> elemI(:,ei_barrels)
             VolNew  => elemR(:,er_Volume)  
             VolOld  => elemR(:,er_Volume_N0) 
             VolOver => elemR(:,er_VolumeOverFlow)
@@ -271,6 +275,7 @@ module utility
             dt      => setting%Time%Hydraulics%Dt
             BranchExists => elemSI(:,esi_JunctionBranch_Exists)
         !%------------------------------------------------------------------
+
         !% --- for the CC elements
         npack   => npack_elemP(thisColCC)
 
@@ -279,7 +284,6 @@ module utility
         !% --- CONDUIT ELEMENTS =========================================
         if (npack > 0) then
             thisP => elemP(1:npack,thisColCC)
-
 
             !% HACK does not handle overflow (20230423)
 
@@ -334,19 +338,6 @@ module utility
             !         end if
             !     end if
             ! end do  
-
-            !% comprehensive error checking
-            ! print *, ' '
-            ! print *, 'eCons CC'
-            ! print *, eCons(thisP)
-            ! print *, ' '
-            ! print *, 'thisP CC'
-            ! print *, thisP
-            ! print *, ' '
-            ! if (any(abs(eCons(thisP)) > 1.d-4)) then 
-            !     print *, 'eCons error'
-            !     stop 529875
-            ! end if
         end if
 
         !% --- JM elements ====================================
@@ -402,9 +393,6 @@ module utility
                 end if
 
             end do
-
-
-
 
            ! tempCons(thisP) = dt * eQlat(thisP) - VolOver(thisP)
 
@@ -471,21 +459,6 @@ module utility
             !         end if    
             !     end if
             ! end do   
-
-       
-
-            !% comprehensive error checking
-            ! print *, ' '
-            ! print *, 'eCons JM'
-            ! print *, eCons(thisP)
-            ! print *, ' '
-            ! print *, 'thisP JM'
-            ! print *, thisP
-            ! print *, ' '
-            ! if (any(abs(eCons(thisP)) > 1.d-4)) then 
-            !     print *, 'eCons error'
-            !     stop 5298723
-            ! end if
 
         end if
 
@@ -777,52 +750,10 @@ module utility
             iDnSet(ii,3) = ifaceDn(ii)
             iDnSet(ii,4) = ielemDn(ii)
         end do
-            
     
         !%------------------------------------------------------------------
         !% Closing:
     end subroutine util_find_neighbors_of_JM_element
-!%
-!%==========================================================================    
-!%==========================================================================
-!%
-    subroutine util_syncwrite
-        !%------------------------------------------------------------------
-        !% Description:
-        !% writes the coarray outstring in processor order
-        !% this is useful for debugging when an image is hanging.
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer :: ii
-            character (len = 256) :: tstring(num_images())
-        !%------------------------------------------------------------------
-        !% Preliminaries:
-        !%------------------------------------------------------------------
-        !% Aliases:
-        !%------------------------------------------------------------------
-
-        sync all
-        if (this_image() == 1) then
-            tstring(1) = trim(outstring)
-            do ii=2,num_images()
-                tstring(ii) = trim(outstring[ii])
-                ! sync all
-                ! flush(6)
-                ! if (ii==this_image()) then
-                !     write(6,*) trim(thisstring),this_image(), thisI
-                !     flush(6)
-                !     !wait(6)
-                !     !call sleep(1)
-                ! end if
-                ! sync all
-            end do
-            do ii=1,num_images()
-                write(6,*) trim(tstring(ii)),ii
-            end do
-        end if
-        sync all
-
-    end subroutine util_syncwrite      
 !%
 !%==========================================================================    
 !%==========================================================================
@@ -1156,25 +1087,7 @@ module utility
   
     end function util_kinematic_viscosity_from_temperature
 !%
-!%==========================================================================         
 !%==========================================================================
-!%
-        !%------------------------------------------------------------------
-        !% Description:
-        !%
-        !%------------------------------------------------------------------
-        !% Declarations:
-        !%------------------------------------------------------------------
-        !% Preliminaries:
-        !%------------------------------------------------------------------
-        !% Aliases:
-        !%------------------------------------------------------------------
-    
-    
-        !%------------------------------------------------------------------
-        !% Closing:
-!%
-!%==========================================================================
-!% end OF MODULE
+!% END OF MODULE
 !%==========================================================================
 end module utility

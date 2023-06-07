@@ -22,7 +22,7 @@ module face
     use jump
     use pack_mask_arrays, only: pack_CC_zeroDepth_interior_faces, pack_CC_zeroDepth_shared_faces
     use utility_profiler
-    use utility, only: util_sign_with_ones, util_syncwrite
+    use utility, only: util_sign_with_ones
     use utility_crash, only: util_crashpoint
 
     implicit none
