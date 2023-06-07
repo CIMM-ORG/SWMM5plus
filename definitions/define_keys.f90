@@ -303,10 +303,6 @@
         enumerator :: OneSideAdjust    !% one sided link length adjustment has done
         enumerator :: BothSideAdjust   !% both sided link length adjustment has done
         enumerator :: DiagAdjust       !% if the connected link is an diagnostic element
-
-        ! --- default for edge and non-edge node
-        enumerator :: nonEdgeNode      ! Upstream BC nodes are assigned to 1 element
-        enumerator :: EdgeNode         ! Edge node of a partition
  
         !% last items for bookkeeping
         enumerator :: SWMM_FlowUnits_CFS

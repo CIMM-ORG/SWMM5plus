@@ -461,7 +461,8 @@ module pump_elements
         if (elemYN(eIdx,eYN_isBoundary_up)) then 
             Ci   = faceI(Fidx,fi_Connected_image)
             Aidx = faceI(Fidx,fi_GhostElem_uL)
-            sync images(Ci)
+            !% HACK: this sync was causing race conditions
+            ! sync images(Ci)
         else
             Ci   =  this_image()
             Aidx =  faceI(Fidx,fi_Melem_uL)

@@ -642,10 +642,24 @@ contains
 
                 case (nJm)
                     call init_network_map_shared_nJm_nodes (image, fLidx, nIdx)
+                
+                case (nBCup)
+                    write(*,*) 'CODE ERROR: Shared UP BC detected node in ',trim(subroutine_name)
+                    print *,   'Node ', node%Names(nIdx)%str, ' which has key of ',trim(reverseKey(nodeType))
+                    write(*,*) 'Shared boundary nodes are not handeled currently'
+                    
+                    call util_crashpoint(55937)
+
+                case (nBCdn)
+                    write(*,*) 'CODE ERROR: Shared DN BC detected node in ',trim(subroutine_name)
+                    print *,   'Node ', node%Names(nIdx)%str, ' which has key of ',trim(reverseKey(nodeType))
+                    write(*,*) 'Shared boundary nodes are not handeled currently'
+                    
+                    call util_crashpoint(55932)
 
                 case default    
                     write(*,*) 'CODE ERROR: unexpected case default in ',trim(subroutine_name)
-                    print *, 'Node Type # of ',nodeType
+                    print *, 'Node Type # of ',nodeType, 'Node name ', node%Names(nIdx)%str
                     print *, 'which has key of ',trim(reverseKey(nodeType))
                     call util_crashpoint(55934)
             end select
@@ -1826,6 +1840,106 @@ contains
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine init_network_map_shared_nJ2_nodes
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_network_map_shared_nBCup_nodes (image, fLidx, nIdx)
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% set the global index, map, and ghost element for nBCup nodes
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: image, fLidx, nIdx
+            integer, pointer    :: targetImage
+            character(64) :: subroutine_name = 'init_network_map_shared_nBCup_nodes'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+        !% Aliases
+            targetImage => faceI(fLidx,fi_Connected_image)
+        !%-----------------------------------------------------------------
+        !% since the face is a boundary condition face, it will only exist in one image
+        !% thus we have to reset the face from shared to interior face
+        !% --- logical data
+        faceYN(fLidx,fYN_isSharedFace) = .false.
+        faceYN(fLidx,fYN_isUpGhost)    = .false.
+        faceYN(fLidx,fYN_isDnGhost)    = .false.
+
+        !% --- integer data
+        !%     an downstream boundary face does not have any local downstream element
+        !%     thus, it is mapped to the dummy element
+        faceI(fLidx,fi_BCtype)   = BCup
+        faceI(fLidx,fi_Melem_uL) = max_caf_elem_N + N_dummy_elem
+
+        !% reset the node image to current image
+        node%I(nIdx,ni_P_image)       = this_image()
+        !% broadcast the reset to other images
+        node%I(nIdx,ni_P_image)[targetImage] = this_image()
+        node%I(nIdx,ni_P_image)              = this_image()
+        node%I(nIdx,ni_P_is_boundary)        = nonEdgeNode
+        node%I(nidx,ni_elem_idx)             = faceI(fLidx,fi_Melem_dL)
+        node%I(nidx,ni_face_idx)             = fLidx
+        !% reset the connected image value to null
+        faceI(fLidx,fi_Connected_image) = nullvalueI
+        
+        !%-----------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+    end subroutine init_network_map_shared_nBCup_nodes
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+subroutine init_network_map_shared_nBCdn_nodes (image, fLidx, nIdx)
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% set the global index, map, and ghost element for nBCdn nodes
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: image, fLidx, nIdx
+            integer, pointer    :: targetImage
+            character(64) :: subroutine_name = 'init_network_map_shared_nBCdn_nodes'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+        if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+        !% Aliases
+        targetImage => faceI(fLidx,fi_Connected_image)
+        !%-----------------------------------------------------------------
+        !% since the face is a boundary condition face, it will only exist in one image
+        !% thus we have to reset the face from shared to interior face
+        !% --- logical data
+        faceYN(fLidx,fYN_isSharedFace) = .false.
+        faceYN(fLidx,fYN_isUpGhost)    = .false.
+        faceYN(fLidx,fYN_isDnGhost)    = .false.
+
+        !% --- integer data
+        !%     an downstream boundary face does not have any local downstream element
+        !%     thus, it is mapped to the dummy element
+        faceI(fLidx,fi_BCtype)   = BCdn
+        faceI(fLidx,fi_Melem_dL) = max_caf_elem_N + N_dummy_elem
+
+        !% reset the node image to current image.
+        node%I(nIdx,ni_P_image)[targetImage] = this_image()
+        node%I(nIdx,ni_P_image)              = this_image()
+        node%I(nIdx,ni_P_is_boundary)        = nonEdgeNode
+        node%I(nidx,ni_elem_idx)             = faceI(fLidx,fi_Melem_uL)
+        node%I(nidx,ni_face_idx)             = fLidx
+        !% reset the connected image value to null
+        faceI(fLidx,fi_Connected_image) = nullvalueI
+  
+        !%-----------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%network_define) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+    end subroutine init_network_map_shared_nBCdn_nodes
 !%
 !%==========================================================================
 !%==========================================================================

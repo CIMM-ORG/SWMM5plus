@@ -415,6 +415,12 @@ module define_globals
     integer, parameter :: N_elem_nBCup    = 0 ! Upstream BC nodes are assigned to 0 element (only a face)
     integer, parameter :: N_elem_nJ1      = 0 ! Upstream non-BC nodes are assigned to 0 elements (only a face)
 
+    !% --- default for edge and non-edge node
+    !% --- HACK: EdgeNode and NonEdgeNode are identified as 1 and 0 in the partition code
+    !%           storing in the globals as parameter for now
+    integer, parameter :: nonEdgeNode  = 0    ! Upstream BC nodes are assigned to 1 element
+    integer, parameter :: EdgeNode     = 1    ! Edge node of a partition
+
     ! --- default for number of functional storage
     integer :: N_FunctionalStorage = 0
 

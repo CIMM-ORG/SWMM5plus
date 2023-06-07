@@ -1220,6 +1220,17 @@ contains
                      (node%I(ii, ni_P_is_boundary) == zeroI)) then
                     node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
                 end if
+
+                !% HACK: Making sure boundary nodes are not isolated in other images
+                if ( (link_image /= node%I(ii, ni_P_image)) &
+                    .and. &
+                     ((node%I(ii, ni_node_type) == nBCup ) &
+                     .or. &
+                      (node%I(ii, ni_node_type) == nBCdn ))) then
+
+                    node%I(ii, ni_P_is_boundary) = zeroI
+                    node%I(ii, ni_P_image) = link_image
+                end if
             end do
         end do
 
