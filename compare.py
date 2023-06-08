@@ -2,7 +2,6 @@ from re import T
 import sys
 import os
 from datetime import datetime
-from tkinter import TRUE
 import h5py
 import csv
 import re
