@@ -1,16 +1,16 @@
 # dependencies and packages
-# dependencies and packages
 import pandas as pd
 import os
 import sys
 import h5py
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.transforms as transforms
 import matplotlib.patches as patches
 from swmmtoolbox import swmmtoolbox
-
+matplotlib.use("webagg")
 
 # important functions
 def get_index_from_data_array(array,array_name,data_name):
@@ -508,7 +508,7 @@ for profile_name_test in all_attribute_names:
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY
     if save_animation:
         # animation file name
-        animation_name = output_path+"/"+test_case+"_"+ profile_name_test+'.gif' 
+        animation_name = output_path+""+test_case+"_"+ profile_name_test+'.gif' 
         writergif = animation.PillowWriter(fps=10)
         ani.save(animation_name,writer=writergif)
 
