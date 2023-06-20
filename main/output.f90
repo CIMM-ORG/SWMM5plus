@@ -3974,7 +3974,6 @@ contains
 
         CHARACTER(LEN=10), PARAMETER :: aname = "model_data"   ! Attribute name
         CHARACTER(LEN=12), PARAMETER :: Header_name = "header_data" ! Header name
-        CHARACTER(LEN=8 ), PARAMETER :: profiles_name = "profiles"  ! Profiles name
 
         character(LEN=500) :: temp_str
 
@@ -3987,13 +3986,11 @@ contains
         INTEGER(HSIZE_T), DIMENSION(2) :: attr_dims_model = (/11,2/) ! Attribute dimensions for Model_Data
         CHARACTER(LEN=150), DIMENSION(11,2) ::  attr_model_data       ! Stores the infomation of the model_data to be written to the .h5 file
         CHARACTER(LEN=150), DIMENSION(:,:), allocatable  ::  header_data ! Stores the data of the header infomation to be written to the .h5 
-        CHARACTER(LEN=150), DIMENSION(:,:), allocatable  ::  profile_data !Stores the 
         INTEGER(SIZE_T) :: attrlen !length of attributes to be written 
         INTEGER(HSIZE_T), DIMENSION(2) :: data_dims ! the number of dimensions of the attributes and dataset being written to the .h5
         INTEGER(HSIZE_T), DIMENSION(1:2) :: updated_size_data !dimensions of the dataset created
         INTEGER(HSIZE_T), DIMENSION(1:2) :: header_dims       !dimensions of the header created
-        INTEGER(HSIZE_T), DIMENSION(1:2) :: profile_dims      !dimensions of the profiles created
-        INTEGER(HSIZE_T), DIMENSION(1:2) :: max_dims
+        INTEGER(HSIZE_T), DIMENSION(1:2) :: max_dims          !dimensions of the used for creating an expanable dataspace 
 
 
         INTEGER     ::   rank = 2 !% only have 2D arrays so rank is always 2                    
@@ -4015,11 +4012,7 @@ contains
         else 
             allocate(header_data(Ntype+1,3))
         end if
-        !allocating 
-        if( allocated(output_profile_ids)) then
-            allocate(profile_data(max_links_profile_N,max_profiles_N))
-        end if
-             
+
         !% length of the attributes to be stored
         attrlen = 150
 
@@ -4183,74 +4176,52 @@ contains
             header_dims(1:2) = (/Ntype+1,3/)
         end if
 
-        profile_dims(1:2) = (/max_links_profile_N,max_profiles_N/)
         max_dims = (/H5S_UNLIMITED_F, H5S_UNLIMITED_F/)
 
-        !% Converting the profile IDs back to the Link and Node names.
-        !% Nodes are always on odd IDs and links are always on even IDS
-        if( allocated(output_profile_ids)) then
-            do ii = 1, max_profiles_N
-                do jj = 1, max_links_profile_N
-                    if(mod(jj,2) > 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
-                        profile_data(jj,ii) = trim(node%names(output_profile_ids(ii,jj))%str)
-                    else if (mod(jj,2) == 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
-                        profile_data(jj,ii) = trim(link%names(output_profile_ids(ii,jj))%str)
-                    else 
-                        profile_data(jj,ii) = "NULL"
-                    end if
-                end do
-            end do 
-        end if
 
         !%create and then close the dataspace that will store the link data
         CALL h5screate_simple_f(rank, updated_size_data, dspace_id, HD_error ,max_dims)
 
-        !enabling chunking needed for extending datasets
+        !%enabling chunking needed for extending datasets
+        !%chunking allows us to write "chunks" of data at a time, rather than having to write all of the data all at once
         CALL h5pcreate_f(H5P_DATASET_CREATE_F, dset_prop_list, HD_error)
-
+        
+        !%set properties for dataset to enable chunking
         CALL h5pset_chunk_f(dset_prop_list, rank, updated_size_data, HD_error)
 
+        !%creating the dataset, using the properties created above
         CALL h5dcreate_f(file_id, trim(h5_dset_name), H5T_NATIVE_REAL, dspace_id, &
         dset_id, HD_error, dset_prop_list) 
 
+        !%close the dataset
         call h5pclose_f(dset_prop_list, HD_ERROR)
 
+        !%close the dataspace
         CALL h5sclose_f(dspace_id, HD_error)
 
         !%--------------------------------------------
         !%Creating and writing the attribute data for the Model data
+        !%Create a dataset used which will be used to write the model data and store as an attribute
         CALL h5screate_simple_f(rank, attr_dims_model, aspace_id, HD_error)
+        !% Becase we are writing using chars, rather than int or float we need to set the dataset datatype to char and set the max size
         CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
         CALL h5tset_size_f(atype_id, attrlen, HD_error)
+        
+        !% Initializing the attribute dataset for the model data
         CALL h5acreate_f(dset_id, aname, atype_id, aspace_id, attr_id, HD_error)
+        !% Model data will always be this larger, unless increase parameters are created
         data_dims(1) = 11
         data_dims(2) = 2
+        !% Write the attribute data, then close the attribute, datatype and dataset
         CALL h5awrite_f(attr_id, atype_id, attr_model_data,data_dims, HD_error)
         CALL h5aclose_f(attr_id, HD_error)
         CALL h5tclose_f(atype_id, HD_error)
         CALL h5sclose_f(aspace_id, HD_error)
         !%CALL h5dclose_f(dset_id, HD_error)
         !%--------------------------------------------
-
-        !%Storing the profile data 
-        if( allocated(output_profile_ids)) then
-            !attrlen = 100
-            CALL h5screate_simple_f(rank, profile_dims, aspace_id, HD_error)
-            CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
-            CALL h5tset_size_f(atype_id, attrlen, HD_error)
-            CALL h5acreate_f(dset_id, profiles_name, atype_id, aspace_id, attr_id, HD_error)
-            data_dims(1) = max_links_profile_N
-            data_dims(2) = max_profiles_N
-            CALL h5awrite_f(attr_id, atype_id, profile_data,data_dims, HD_error)
-            CALL h5aclose_f(attr_id, HD_error)
-            CALL h5tclose_f(atype_id, HD_error)
-            CALL h5sclose_f(aspace_id, HD_error)
-            !print *, "after writing to hdf5 file"  
-        end if
-
         !%--------------------------------------------
         !%Creating and writing the attribute data for the header data
-        
+        !%Lastly the same process for the header data but data_dims depend if the outputted dataset is FV or not
         attrlen = 150
         CALL h5screate_simple_f(rank, header_dims, aspace_id, HD_error)
         CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
@@ -4271,9 +4242,6 @@ contains
         
         !% deallocating the header data after use
         deallocate(header_data)
-        if( allocated(output_profile_ids)) then
-            deallocate(profile_data)
-        end if
 
     end subroutine outputML_HD5F_create_dset
 !%
@@ -4305,8 +4273,7 @@ contains
 
         CHARACTER(LEN=10), PARAMETER :: aname = "model_data"   ! Attribute name
         CHARACTER(LEN=12), PARAMETER :: Header_name = "header_data" ! Header name
-        CHARACTER(LEN=8 ), PARAMETER :: profiles_name = "profiles"  ! Profiles name
-
+        
         character(LEN=500) :: temp_str
 
         INTEGER(HID_T) :: dspace_id      ! Dataspace identifier
@@ -4318,12 +4285,10 @@ contains
         INTEGER(HSIZE_T), DIMENSION(2) :: attr_dims_model = (/11,2/) ! Attribute dimensions for Model_Data
         CHARACTER(LEN=150), DIMENSION(11,2) ::  attr_model_data       ! Stores the infomation of the model_data to be written to the .h5 file
         CHARACTER(LEN=150), DIMENSION(:,:), allocatable  ::  header_data ! Stores the data of the header infomation to be written to the .h5 
-        CHARACTER(LEN=150), DIMENSION(:,:), allocatable  ::  profile_data !Stores the 
         INTEGER(SIZE_T) :: attrlen !length of attributes to be written 
         INTEGER(HSIZE_T), DIMENSION(2) :: data_dims ! the number of dimensions of the attributes and dataset being written to the .h5
         INTEGER(HSIZE_T), DIMENSION(1:2) :: updated_size_data !dimensions of the dataset created
         INTEGER(HSIZE_T), DIMENSION(1:2) :: header_dims       !dimensions of the header created
-        INTEGER(HSIZE_T), DIMENSION(1:2) :: profile_dims      !dimensions of the profiles created
         INTEGER(HSIZE_T), DIMENSION(1:2) :: max_dims
 
 
@@ -4364,12 +4329,6 @@ contains
             print *, "error inside of outputML_HD5F_create_static_dset unknown FeatureType Given"
             stop
         end if
-
-        !% allocating profile data 
-        if( allocated(output_profile_ids)) then
-            allocate(profile_data(max_links_profile_N,max_profiles_N))
-        end if
-
 
         !% length of the attributes to be stored
         attrlen = 150
@@ -4569,30 +4528,16 @@ contains
             updated_size_data(1:2) = (/N_Out_static_TypeLink,1/)
             header_dims(1:2) =  (/N_Out_static_TypeLink,3/)
         end if
-
-        profile_dims(1:2) = (/max_links_profile_N,max_profiles_N/)
+        
+        
         max_dims = (/H5S_UNLIMITED_F, H5S_UNLIMITED_F/)
 
-        !% Converting the profile IDs back to the Link and Node names.
-        !% Nodes are always on odd IDs and links are always on even IDS
-        if( allocated(output_profile_ids)) then
-            do ii = 1, max_profiles_N
-                do jj = 1, max_links_profile_N
-                    if(mod(jj,2) > 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
-                        profile_data(jj,ii) = trim(node%names(output_profile_ids(ii,jj))%str)
-                    else if (mod(jj,2) == 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
-                        profile_data(jj,ii) = trim(link%names(output_profile_ids(ii,jj))%str)
-                    else 
-                        profile_data(jj,ii) = "NULL"
-                    end if
-                end do
-            end do 
-        end if
-
+        !% See function "outputML_HD5F_create_dset" for further commenting on the writing and creation of the dataset
+        !% It follows the same process for the static outptu
         !%create and then close the dataspace that will store the link data
         CALL h5screate_simple_f(rank, updated_size_data, dspace_id, HD_error ,max_dims)
 
-        !$ Enabling chunking needed for extending datasets
+        !% Enabling chunking needed for extending datasets
         CALL h5pcreate_f(H5P_DATASET_CREATE_F, dset_prop_list, HD_error)
 
         CALL h5pset_chunk_f(dset_prop_list, rank, updated_size_data, HD_error)
@@ -4617,21 +4562,6 @@ contains
         CALL h5tclose_f(atype_id, HD_error)
         CALL h5sclose_f(aspace_id, HD_error)
         !%--------------------------------------------
-
-        !%Storing the profile data 
-        if( allocated(output_profile_ids)) then
-            CALL h5screate_simple_f(rank, profile_dims, aspace_id, HD_error)
-            CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
-            CALL h5tset_size_f(atype_id, attrlen, HD_error)
-            CALL h5acreate_f(dset_id, profiles_name, atype_id, aspace_id, attr_id, HD_error)
-            data_dims(1) = max_links_profile_N
-            data_dims(2) = max_profiles_N
-            CALL h5awrite_f(attr_id, atype_id, profile_data,data_dims, HD_error)
-            CALL h5aclose_f(attr_id, HD_error)
-            CALL h5tclose_f(atype_id, HD_error)
-            CALL h5sclose_f(aspace_id, HD_error)
-        end if
-
         !%--------------------------------------------
         !%Creating and writing the attribute data for the header data
         attrlen = 150
@@ -4666,11 +4596,6 @@ contains
         if( allocated(header_data)) then
             deallocate(header_data)
         end if
-        if( allocated(output_profile_ids)) then
-            deallocate(profile_data)
-        end if
-
-        !print *, 'end of outputML_HD5F_create_static_dset'
 
     end subroutine outputML_HD5F_create_static_dset
 !%
@@ -4739,30 +4664,21 @@ contains
 !%
     subroutine outputML_HD5F_write_profiles(file_id)
 
-        !%Function for writing the output to the correct dataset and dataspace with the 
-        !character(len=*), intent(in)    :: h5_dset_name ! name of dset to be written to  
+        !%Function for writing the profiles to the attribute of the .H5 output file 
         integer(HID_T), intent(in)      :: file_id      ! File ID of the .h5 file
-        !integer, intent(in) :: nLevel  !% Time levels     
-        !integer, intent(in) :: idx1    !% the link being output (kk)
-        !integer, intent(in) :: nIdx2   !% N items in columns (nType or SWMMlink_num_elements)
-        !integer, intent(in) :: idx3    !% the single data type being processed (FV only)
-        !real(8), intent(in) :: Out_ProcessedDataR(:,:,:)
-        !real(8), intent(in) :: Out_ElemDataR(:,:,:,:)    !% (link/node,element,type,timelevel)
-        !logical, intent(in) :: isFV   !% is finite volume output
 
         CHARACTER(LEN=150), DIMENSION(:,:), allocatable  ::  profile_data !Stores the data from the profile array 
-        INTEGER, DIMENSION(:), allocatable :: profile_length
+        INTEGER, DIMENSION(:), allocatable :: profile_length !length of the profile data written
         INTEGER(HSIZE_T), DIMENSION(1:2) :: profile_dims !dimensions of the profile data 
 
         INTEGER(HID_T) :: dset_id       !% Dataset identifier
         INTEGER(HSIZE_T), DIMENSION(1:2)  :: updated_size_data !% Dimensions of the data to be written to the dataset
-        REAL, DIMENSION(:,:), allocatable :: dset_data         !% Array to hold the output of the data to be written to the dataset
-                   
+        
+        
         INTEGER     ::   HD_error !% For HDF5 errors
         INTEGER     ::   ii, jj 
         INTEGER(HID_T) :: atype_id  
         INTEGER(HID_T) :: aspace_id
-        INTEGER(HID_T) :: group_id
         INTEGER(HID_T) :: attr_id
         INTEGER(HSIZE_T), DIMENSION(2) :: data_dims
         INTEGER     ::   rank = 2
@@ -4781,58 +4697,67 @@ contains
         !% Converting the profile IDs back to the Link and Node names.
         !% Nodes are always on odd IDs and links are always on even IDS
         if( allocated(output_profile_ids)) then
+            !% Looping through all the profiles to convert them
             do ii = 1, max_profiles_N
                 first_null = .true.
+                !% loop through all the IDs of a profile
+                !% First checking if it is not null value which is used to identify the end of a profile, 
+                !% and checking if it is an even or odd ID to signify Links and nodes respectively
                 do jj = 1, max_links_profile_N
                     if(mod(jj,2) > 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
+
+                        !% Node found, so the node name is stored in the profile_data array
                         profile_data(jj,ii) = trim(node%names(output_profile_ids(ii,jj))%str)
+                        
+                        !% In the case that this profile is the longest one we check if this is the last node
+                        !% If this profile is the longest one, we also store the length in profile_length array
                         if(jj .eq. max_links_profile_N ) then
                             profile_length(ii) = jj
                         end if 
 
                     else if (mod(jj,2) == 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
+                        !% Link found, so the link name is stored in the profile_data array 
                         profile_data(jj,ii) = trim(link%names(output_profile_ids(ii,jj))%str)
                     else 
+                        !% If no link or Node is found then it is the end of the profile, and we store the length of the profile 
                         if(first_null) then 
                             profile_length(ii) = jj - 1 
                             first_null = .false.
                         end if 
-                        profile_data(jj,ii) = "NULL"
                     end if
                 end do
             end do 
         end if
 
-        !% the dataset is opened
-        !CALL h5dopen_f(file_id, trim(profiles_name), dset_id, HD_error)
-
-        !CALL h5gcreate_f(file_id, "test_1", group_id, HD_error)
-
-        !% create dataspace for profile attribute
-        !% write attirbute data to dataspace attribute 
-
+        !Setting attrlen which is needed when writing char to HDF5 files
         attrlen = 150
+        
+        !Lastly we loop through the profiles
         do ii = 1, max_profiles_N
-
+            
+            !Set the profile dimensions and data dimension we are going to write
             profile_dims(1:2) = (/profile_length(ii),1/)  
             data_dims(1) = profile_length(ii)
             data_dims(2) = 1  
 
+            !We create the the needed data type for writing char to HDF5
             CALL h5screate_simple_f(rank, profile_dims, aspace_id, HD_error)
             CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
             CALL h5tset_size_f(atype_id, attrlen, HD_error)
+            
+            !We create and write the attribute which is given to the file 
             CALL h5acreate_f(file_id, output_profile_names(ii), atype_id, aspace_id, attr_id, HD_error)
             CALL h5awrite_f(attr_id, atype_id, profile_data(:,ii),data_dims, HD_error)
+
+            !We close the attribute datatype and dataset 
             CALL h5aclose_f(attr_id, HD_error)
             CALL h5tclose_f(atype_id, HD_error)
             CALL h5sclose_f(aspace_id, HD_error)
 
         end do
 
-        !% the dataset is closed
-        !CALL h5dclose_f(dset_id, HD_error)
-        
-        !% deallocation of dset_data
+ 
+        !% deallocation of profile_data and profile_lengths used in this function 
         deallocate(profile_data)
         deallocate(profile_length)
     
@@ -4874,49 +4799,49 @@ contains
         !% This is because of the need to transpose the data before writing to hdf5 dataspace because of the difference between column and array bases in fortran vs hdf5 
         if(isFv .and. FeatureType .eq. LinkOut) then  
             
-            !count the number of related phantom links
+            !%count the number of related phantom links
             num_of_phantom_links = count(link%I(:,li_parent_link) .eq. idx1)
             
-            !count total elements being output
+            !%count total elements being output
             sum_elements = sum(link%I(:,li_N_element),MASK=link%I(:,li_parent_link) .eq. idx1)  
             
-            !allocate array to store phantom link_lengths
+            !%allocate array to store phantom link_lengths
             allocate(phantom_link_lengths(num_of_phantom_links),errmsg=emsg)
             phantom_link_lengths = pack(link%I(:,li_N_element),link%I(:,li_parent_link) .eq. idx1)
             
 
-            !allocate the data set for the element static output
+            !% allocate the data set for the element static output
             allocate(dset_data(sum_elements,N_Out_static_TypeElem+1), errmsg=emsg)  
             updated_size_data(1:2) = (/N_Out_static_TypeElem+1,sum_elements/)
 
-            !size of static output array to loop through 
+            !% size of static output array to loop through 
             N_output = size(output_static_elem(:,1))
             
-            !location index for data set 
+            !% location index for data set 
             dset_location_ii = 1
 
-            !counts the number of phantom links to get the proper spacing in the dset array
+            !% counts the number of phantom links to get the proper spacing in the dset array
             phantom_link_counter = 1
             is_phantom_link = .false.
 
             
+            !% loop through output_static_elem and fill the dset_data array with the correct elements that relate to the link
             ii = 1
-            !loop through output_static_elem and fill the dset_data array with the correct elements that relate to the link
             do while ( ii .lt. N_output)
 
-                !first if statement is for the initial link or if a link is not split into a phantom
+                !%first if statement is for the initial link or if a link is not split into a phantom
                 if(output_static_elem(ii,1) .EQ. idx1 .and. output_static_elem(ii,2) .EQ. 1.0 .and. is_phantom_link .EQ. .false.) then
 
-                    !FILL dset_data
+                    !%FILL dset_data
                     dset_data(dset_location_ii:dset_location_ii+link%I(idx1,li_N_element),:) &
                     = output_static_elem(ii:ii+link%I(idx1,li_N_element),3:N_Out_static_TypeElem+1)
 
-                    !exit if not phantom link
+                    !%exit if not phantom link
                     if(sum_elements .EQ. link%I(idx1,li_N_element) ) then
                         exit
                     end if 
 
-                    !set new indexs and look for phantoms related to link
+                    !%set new indexs and look for phantoms related to link
                     ii = ii+link%I(idx1,li_N_element)
                     dset_location_ii = link%I(idx1,li_N_element)+1
                     is_phantom_link = .true.                
@@ -4924,14 +4849,14 @@ contains
 
                 else if(output_static_elem(ii,1) .EQ. idx1 .and. output_static_elem(ii,2) .EQ. 1.0 .and. is_phantom_link .EQ. .true.) then
 
-                    !increase phantom link counter
+                    !%increase phantom link counter
                     phantom_link_counter = phantom_link_counter+1
 
-                    !fill dset_data
+                    !%fill dset_data
                     dset_data(dset_location_ii:dset_location_ii+phantom_link_lengths(phantom_link_counter)-1,:) &
                     = output_static_elem(ii:ii+phantom_link_lengths(phantom_link_counter)-1,3:N_Out_static_TypeElem+1)
 
-                    !update indexes for next phantom link
+                    !%update indexes for next phantom link
                     dset_location_ii = dset_location_ii + phantom_link_lengths(phantom_link_counter)+1
                     ii = ii+phantom_link_lengths(phantom_link_counter)
                 
@@ -5014,8 +4939,8 @@ contains
         (h5_dset_name, file_id, idx1, nIdx2, idx3, nLevel, Out_ProcessedDataR,Out_ElemDataR,isFV)
 
         !%Function for writing the output to the correct dataset and dataspace with the 
-        character(len=*), intent(in)    :: h5_dset_name ! name of dset to be written to  
-        integer(HID_T), intent(in)      :: file_id      ! File ID of the .h5 file
+        character(len=*), intent(in)    :: h5_dset_name !% name of dset to be written to  
+        integer(HID_T), intent(in)      :: file_id      !% File ID of the .h5 file
         integer, intent(in) :: nLevel  !% Time levels     
         integer, intent(in) :: idx1    !% the link being output (kk)
         integer, intent(in) :: nIdx2   !% N items in columns (nType or SWMMlink_num_elements)
@@ -5100,7 +5025,8 @@ contains
 !%
     subroutine outputML_combine_static_elem_data
 
-        !% Function called in finalization to fill the output_static_elem array for the specified types and selected links and nodes 
+        !% Function called in finalization to fill the output_static_elem array for the specified static_data types
+        !% selected in the json for links and nodes 
 
         integer local_index, ii 
         integer, pointer :: Npack, thisP(:), thisType(:)
@@ -5119,9 +5045,7 @@ contains
             local_index = 1
         end if
         
-        !print *, "print before filling 3 and 4+ columns " 
-        !print *, "local_index",local_index
-        !print *, "(Npack+local_index)-1",(Npack+local_index)-1
+
         !% Filling output_static_elem's third column with the Global elem Index 
         output_static_elem(local_index:(Npack+local_index)-1,3)[1] = elemI(thisP,ei_Gidx)
 
@@ -5131,9 +5055,7 @@ contains
         !% Filling output_static_elem's first column with the global link or node index depending on type
         !% Filling output_static_elem's second column with a 1.0 if a link and 0.0 if a node output 
         do ii=1, size(thisP)
-            !print *, "thisP(ii)::", thisP(ii)
             if (elemI(thisP(ii),ei_link_Gidx_SWMM) .NE. nullValueI) then
-                !print *, "link name", link%Names(elemI(thisP(ii),ei_link_Gidx_SWMM))%str
                 output_static_elem(local_index+ii-1,1)[1] = elemI(thisP(ii),ei_link_Gidx_SWMM)
                 output_static_elem(local_index+ii-1,2)[1] = 1.0
             else
@@ -5141,15 +5063,6 @@ contains
                 output_static_elem(local_index+ii-1,2)[1] = 0.0
             end if
         end do
-
-        !print *, "output_static_elem(:,3)[1], this_image() ::", this_Image() 
-        !print *, output_static_elem(:,3)[1]
-        !print *, "output_static_elem(:,1)::", output_static_elem(:,1)
-        !print *, "output_static_elem(:,2)::", output_static_elem(:,2)
-
-        !stop
-        
-        !print *, "after outputML_combine_static_elem_data" 
 
     end subroutine outputML_combine_static_elem_data
 !%
