@@ -10,7 +10,7 @@ import matplotlib.animation as animation
 import matplotlib.transforms as transforms
 import matplotlib.patches as patches
 from swmmtoolbox import swmmtoolbox
-matplotlib.use("webagg")
+# matplotlib.use("webagg")
 
 # important functions
 def get_index_from_data_array(array,array_name,data_name):
@@ -76,7 +76,13 @@ else:
     quit()
 
 # retrieve test case name from the directory
-test_case = output_path.split("/")[-2][:-7]
+if os.name == "posix":  # POSIX systems (Linux, macOS, etc.)
+    test_case = output_path.split("/")[-2][:-7]
+elif os.name == "nt":  # Windows
+    test_case = output_path.split("\\")[-2][:-7]   
+else:
+    print("Unsupported operating system.")
+    quit()
 
 # output h5 file
 output_file = output_path+'/output.h5'
@@ -354,9 +360,9 @@ for profile_name_test in all_attribute_names:
 
 
     # animation plot
-    fig, ax = plt.subplots()
     plt.rcParams['figure.figsize'] = [10, 4]
     plt.rcParams.update({'font.size': 11})
+    fig, ax = plt.subplots()
     fig.tight_layout(pad=2)
     x = 0
     # take 10% of the gradient difference as buffer for plotting

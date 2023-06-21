@@ -995,6 +995,7 @@ module adjust
             integer, pointer :: mapUp(:), mapDn(:)
             real(8), pointer :: coef, vMax, Qlateral(:), Vcoef(:)
             real(8), pointer :: faceFlow(:), elemFlow(:), elemVel(:)
+            real(8), pointer :: faceAu(:), faceAd(:)
             real(8), pointer ::  w_uQ(:), w_dQ(:), elemArea(:), Vvalue(:)
             real(8), pointer :: elemDepth(:), multiplier, smallDepth
             character(64) :: subroutine_name = 'adjust_Vshaped_flowrate'
@@ -1010,7 +1011,9 @@ module adjust
         
             mapUp    => elemI(:,ei_Mface_uL)
             mapDn    => elemI(:,ei_Mface_dL)   
-            faceFlow => faceR(:,fr_Flowrate)  
+            faceFlow => faceR(:,fr_Flowrate)
+            faceAu   => faceR(:,fr_Area_u)
+            faceAd   => faceR(:,fr_Area_d)  
             elemFlow => elemR(:,er_Flowrate)    
             elemVel  => elemR(:,er_Velocity)
             elemArea => elemR(:,er_Area)
@@ -1070,15 +1073,19 @@ module adjust
         endwhere
 
         !% --- blending velocity so that so that area does not matter
-        elemVel(thisP)  =  (oneR - Vcoef(thisP)) * elemVel(thisP) &
-                + Vcoef(thisP) * onehalfR * (faceR(mapDn(thisP),fr_Velocity_u) + faceR(mapUp(thisP),fr_Velocity_d))
+        ! elemVel(thisP)  =  (oneR - Vcoef(thisP)) * elemVel(thisP) &
+        !         + Vcoef(thisP) * onehalfR * (faceR(mapDn(thisP),fr_Velocity_u) + faceR(mapUp(thisP),fr_Velocity_d))
 
         !% ARCHIVE METHOD
         !% --- blend the element and face-average flow rates
-        ! elemFlow(thisP)  =  (oneR - Vcoef(thisP)) * elemFlow(thisP) &
-        !         + Vcoef(thisP) * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
+        elemFlow(thisP)  =  (oneR - Vcoef(thisP)) * elemFlow(thisP) &
+                + Vcoef(thisP) * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
+
+        !% HACK: belnd the face areas as well
+        ! elemArea(thisP)  =  (oneR - Vcoef(thisP)) * elemArea(thisP) &
+        !         + Vcoef(thisP) * onehalfR * (faceAu(mapDn(thisP)) + faceAd(mapUp(thisP)))
         !% --- reset the velocity      
-        ! elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
+        elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
 
 
         !% ARCHIVE METHOD
@@ -1090,10 +1097,10 @@ module adjust
         !     elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
         ! endwhere       
         !% --- reset for high velocity (typically due to small area)
-        ! where ((abs(elemVel(thisP)) > vMax) .and. (Vcoef(thisP) > zeroR))
-        !     elemVel(thisP)  = sign( 0.99d0 * vMax, elemVel(thisP) )
-        !     elemFlow(thisP) = elemVel(thisP) * elemArea(thisP)
-        ! endwhere 
+        where ((abs(elemVel(thisP)) > vMax) .and. (Vcoef(thisP) > zeroR))
+            elemVel(thisP)  = sign( 0.99d0 * vMax, elemVel(thisP) )
+            elemFlow(thisP) = elemVel(thisP) * elemArea(thisP)
+        endwhere 
         
 
         !%------------------------------------------------------------------

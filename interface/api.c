@@ -1613,7 +1613,7 @@ int DLLEXPORT api_get_linkf_attribute(
             break; 
 
         case linkf_transectid :
-            *value = Link[link_idx].xsect.transect;
+            *value = Link[link_idx].xsect.transect+1;
             break;
 
         case linkf_forcemain_coef :
