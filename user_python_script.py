@@ -11,7 +11,7 @@ import matplotlib.patches as patches
 from swmmtoolbox import swmmtoolbox
 
 matplotlib.use("webagg")
-
+matplotlib.rcParams['webagg.address'] = "0.0.0.0"
 
 def get_array_from_dset(file_name,dset_name):
     #returns the data from H5 file for data_set_name
