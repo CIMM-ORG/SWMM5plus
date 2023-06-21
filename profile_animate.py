@@ -10,7 +10,8 @@ import matplotlib.animation as animation
 import matplotlib.transforms as transforms
 import matplotlib.patches as patches
 from swmmtoolbox import swmmtoolbox
-# matplotlib.use("webagg")
+matplotlib.use("webagg")
+matplotlib.rcParams['webagg.address'] = "0.0.0.0"
 
 # important functions
 def get_index_from_data_array(array,array_name,data_name):
