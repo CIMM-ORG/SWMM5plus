@@ -2688,7 +2688,7 @@ contains
                 elemR(ii,er_Length)         = setting%Discretization%NominalElemLength
                 elemR(ii,er_Volume)         = zeroR
 
-                if (curveID < zeroI) then
+                if (curveID <= zeroI) then
                     !% integer data
                     elemSI(ii,esi_Pump_SpecificType) = type_IdealPump 
                 else
