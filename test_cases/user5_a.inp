@@ -17,7 +17,7 @@ START_TIME           00:00:00
 REPORT_START_DATE    08/11/1998
 REPORT_START_TIME    00:00:00
 END_DATE             08/11/1998
-END_TIME             01:00:00
+END_TIME             03:30:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
@@ -919,16 +919,16 @@ O.O_RM           637.8      FIXED      650              YES
 54inch_2         7SB1             9SB1             533.0      0.019      0.0        0.0        0.0        0         
 848pipe          10SB1            17SB1            235.0      0.019      0.0        0.0        0.0        0         
 848chan          10SB1            17SB1            235.0      0.02       4.58       4.5        0.0        0         
-849_1            17SB1            40SB1            150.0      0.019      0.0        0.0        0.0        0         
-849_2            17SB1            40SB1            150.0      0.019      0.0        0.0        0.0        0         
+8491             17SB1            40SB1            150.0      0.019      0.0        0.0        0.0        0         
+8492             17SB1            40SB1            150.0      0.019      0.0        0.0        0.0        0         
 849_trap         17SB1            40SB1            150.0      0.02       4.5        4.5        0.0        0         
 853pipe          49SB1            50SB1            320.0      0.019      0.0        0.0        0.0        0         
 853of            49SB1            50SB1            320.0      0.019      4.08       4.09       0.0        0         
 
 854of            50SB1            53SB1_OF         270.0      0.019      4.09       5.65       0.0        0   
 
-861_1            16SB1            17SB1            60.0       0.019      0.0        0.0        0.0        0         
-861_2            16SB1            17SB1            60.0       0.019      0.0        0.0        0.0        0         
+8611            16SB1            17SB1            60.0       0.019      0.0        0.0        0.0        0         
+8612            16SB1            17SB1            60.0       0.019      0.0        0.0        0.0        0         
 861_trap         16SB1            17SB1            60.0       0.02       4.7        4.5        0.0        0         
 883culv          36SB1            33SB1            280.0      0.019      0.0        0.0        0.0        0         
 883of            36SB1            33SB1            280.0      0.019      2.5        2.5        0.0        0         
@@ -1221,14 +1221,14 @@ WEIR3            1127             1128             TRANSVERSE   8.0        2.63 
 54inch_2         CIRCULAR     4.5              0.0        0          0          1                    
 848pipe          CIRCULAR     3.5              0.0        0          0          1     
 848chan          TRAPEZOIDAL  5.0              5.0        2.0        2.0        1                    
-849_1            CIRCULAR     5.0              0.0        0          0          1                    
-849_2            CIRCULAR     5.0              0.0        0          0          1                 
+8491            CIRCULAR     5.0              0.0        0          0          1                    
+8492            CIRCULAR     5.0              0.0        0          0          1                 
 849_trap         TRAPEZOIDAL  5.0              5.0        2.0        2.0        1                    
 853pipe          CIRCULAR     3.0              0.0        0          0          1                      
 853of            IRREGULAR    135              0          0          0          1                    
 854of            IRREGULAR    136              0          0          0          1                    
-861_1            CIRCULAR     4.0              0.0        0          0          1                    
-861_2            CIRCULAR     4.0              0.0        0          0          1                    
+8611            CIRCULAR     4.0              0.0        0          0          1                    
+8612            CIRCULAR     4.0              0.0        0          0          1                    
 861_trap         TRAPEZOIDAL  5.0              5.0        2.0        2.0        1                    
 883culv          CIRCULAR     2.0              0.0        0          0          1                      
 883of            IRREGULAR    137              0          0          0          1                    

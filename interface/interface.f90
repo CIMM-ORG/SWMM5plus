@@ -2202,7 +2202,6 @@ contains
                         error = ptr_api_get_linkf_attribute(link_idx-1, api_linkf_transectidx, link_value)
                         thisposition = trim(subroutine_name)//'_Q16'
                         call print_api_error(error, thisposition)
-                        !% --- increment by 1 because C indexes start at 0
                     case default
                         !% --- irregular geometry does not have certain geometric features (i.e. bottom width) 
                         if (isInt) then

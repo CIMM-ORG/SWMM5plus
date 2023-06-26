@@ -297,16 +297,16 @@ module geometry
                 elemR(thisP,er_FullTopwidth) = elemR(thisP,er_BreadthMax)
                 do ii=1,size(thisP)
                     mm = thisP(ii)
-                    elemR(thisP(mm),er_AreaBelowBreadthMax) = llgeo_rect_round_area_from_depth_singular &
-                                                               (mm, depthAtMaxBreadth(mm), zeroR)
+                    elemR(mm,er_AreaBelowBreadthMax) = llgeo_rect_round_area_from_depth_singular &
+                                                        (mm, depthAtMaxBreadth(mm), zeroR)
                 end do
 
             case (rect_triang)
                 elemR(thisP,er_FullTopwidth) = elemR(thisP,er_BreadthMax)
                 do ii=1,size(thisP)
                     mm = thisP(ii)
-                    elemR(thisP(mm),er_AreaBelowBreadthMax) = llgeo_rectangular_triangular_area_from_depth_singular &
-                                                               (mm, depthAtMaxBreadth(mm), zeroR)
+                    elemR(mm,er_AreaBelowBreadthMax) = llgeo_rectangular_triangular_area_from_depth_singular &
+                                                        (mm, depthAtMaxBreadth(mm), zeroR)
                 end do
 
             case default
