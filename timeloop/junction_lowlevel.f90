@@ -859,6 +859,11 @@ module junction_lowlevel
 
         if (abs(resid) > localEpsilon) then 
             print *, 'resid ',resid, ' at junction element ',JMidx
+
+            print *, 'Node number ',elemI(JMidx,ei_node_Gidx_SWMM)
+            if (elemI(Jmidx,ei_node_Gidx_SWMM) .ne. nullvalueI) then 
+                print *, 'node name ',trim(node%Names(elemI(Jmidx,ei_node_Gidx_SWMM))%str)
+            end if
             print *, 'on solution step ',setting%Time%Step
             print *, 'at time ',setting%Time%Now / (3600.d0), ' hours'
             print *, 'CODE ERROR: unexpected flowrate residual'

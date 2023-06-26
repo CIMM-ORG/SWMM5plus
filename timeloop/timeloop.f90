@@ -266,7 +266,8 @@ contains
         thisStep = 1
 
         !% --- outer loop of the time-march
-        do while (setting%Time%Now <= setting%Time%End - dtTol)
+        do while ((setting%Time%Now <= setting%Time%End - dtTol) &
+                    .and. (setting%Time%Step < 30512))  !% 20230626brhtest
 
             !% --- set the controls for using spin-up time
             if ((inSpinUpYN) .and. (thisStep > 1)) then
