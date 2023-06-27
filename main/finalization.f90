@@ -76,6 +76,7 @@ contains
                 !% --- write the control file for the stored mult-level files
                 call outputML_write_control_file ()
 
+                !% --- if output static elem output is given, go through and combine those values into one output array
                 if(N_Out_static_TypeElem > 0) then 
                     call outputML_combine_static_elem_data ()
                 end if
