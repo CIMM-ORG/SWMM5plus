@@ -327,6 +327,9 @@ contains
             !% --- first fetch is always the simulation start time with interpolated value 
             BC%flowTimeseries(bc_idx, 1, brts_time)  = setting%Time%Start
             BC%flowTimeseries(bc_idx, 1, brts_value) = interface_get_flowBC(bc_idx, setting%Time%Start)
+
+            !% --- initialize the new inflow time
+            new_inflow_time = BC%flowTimeseries(bc_idx, 1, brts_time)
         else 
             !% --- on subsequent fetches we set the last value as the new first value
             BC%flowTimeseries(bc_idx, 1, brts_time)  = BC%flowTimeseries(bc_idx, NN, brts_time)

@@ -1049,10 +1049,10 @@ int DLLEXPORT api_get_nodef_attribute(
             }
             else
             {
-                *value = API_NULL_VALUE_I;
-                sprintf(errmsg, "Extracting node_extInflow_tSeries for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
-                api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-                return api_err_wrong_type;
+                *value = -1;
+                // sprintf(errmsg, "Extracting node_extInflow_tSeries for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                // api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                // return api_err_wrong_type;
             }
             break;   
 
@@ -1101,22 +1101,28 @@ int DLLEXPORT api_get_nodef_attribute(
             break;
 
         case nodef_extInflow_basePat_type  :
-            bpat = Node[node_idx].extInflow->basePat;
-            //printf(" bpat %d",bpat);
-            if (bpat >= 0) // baseline pattern exists
-                *value = Pattern[bpat].type;
-            else
+            if (Node[node_idx].extInflow)
             {
-                *value = bpat;  // brh changed to bpat (-1) because API_NULL_VALUE_I does not have scope for where its needed
-                //*value = API_NULL_VALUE_I;
-                //printf("  bpat = %d \n", bpat);
-                //printf("  location 3098705 problem with basePatType \n");
-                // brh20211207s  commenting this so that it moves through with null result
-                //sprintf(errmsg, "Extracting node_extInflow_basePat_type for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
-                //api_report_writeErrorMsg(api_err_wrong_type, errmsg);
-                //return api_err_wrong_type;
-                // brh20211207e
+                bpat = Node[node_idx].extInflow->basePat;
+                //printf(" bpat %d",bpat);
+                if (bpat >= 0) // baseline pattern exists
+                    *value = Pattern[bpat].type;
+                else
+                {
+                    *value = bpat;  // brh changed to bpat (-1) because API_NULL_VALUE_I does not have scope for where its needed
+                    //*value = API_NULL_VALUE_I;
+                    //printf("  bpat = %d \n", bpat);
+                    //printf("  location 3098705 problem with basePatType \n");
+                    // brh20211207s  commenting this so that it moves through with null result
+                    //sprintf(errmsg, "Extracting node_extInflow_basePat_type for NODE %s, which doesn't have an extInflow [api.c -> api_get_nodef_attribute]", Node[node_idx].ID);
+                    //api_report_writeErrorMsg(api_err_wrong_type, errmsg);
+                    //return api_err_wrong_type;
+                    // brh20211207e
+                }  
             }
+            else
+                *value = -1; // external inflow does not exist. so, set baseline pattern to -1
+            
             break;   
 
         case nodef_extInflow_baseline :

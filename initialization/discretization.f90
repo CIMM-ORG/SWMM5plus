@@ -37,6 +37,7 @@ contains
         real(8) :: remainder
         real(8), pointer :: elem_nominal_length
         integer, pointer :: min_elem_per_link
+        logical, pointer :: use_nominal_length
         character(64) :: subroutine_name = 'init_discretization_nominal'
     !%----------------------------------------------------------------------
     !% Preliminaries
@@ -44,56 +45,81 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !%----------------------------------------------------------------------
     !% Aliases
+        use_nominal_length  => setting%Discretization%UseNominalElemLength
         elem_nominal_length => setting%Discretization%NominalElemLength
         min_elem_per_link   => setting%Discretization%MinElementPerLink
     !%----------------------------------------------------------------------
 
-        !% --- Adjusts the number of elements in a link based on the length
-        remainder = mod(link%R(link_idx,lr_Length), elem_nominal_length)
+        if (use_nominal_length) then
+            !% --- Adjusts the number of elements in a link based on the length
+            remainder = mod(link%R(link_idx,lr_Length), elem_nominal_length)
 
-        !% --- If the elements fit evenly into the length of link
-        if ( remainder == zeroR ) then
-            link%I(link_idx, li_N_element) = int(link%R(link_idx, lr_Length)/elem_nominal_length)
-            link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
+            !% --- If the elements fit evenly into the length of link
+            if ( remainder == zeroR ) then
+                link%I(link_idx, li_N_element) = int(link%R(link_idx, lr_Length)/elem_nominal_length)
+                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
 
-        !% --- If the remainder is greater than half an element length
-        elseif ( remainder .ge. onehalfR * elem_nominal_length ) then
-            link%I(link_idx, li_N_element) = ceiling(link%R(link_idx,lr_Length)/elem_nominal_length)
-            link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
+            !% --- If the remainder is greater than half an element length
+            elseif ( remainder .ge. onehalfR * elem_nominal_length ) then
+                link%I(link_idx, li_N_element) = ceiling(link%R(link_idx,lr_Length)/elem_nominal_length)
+                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
 
-        !% --- If the remainder is less than half an element length
-        else
-            link%I(link_idx, li_N_element) = floor(link%R(link_idx,lr_Length)/elem_nominal_length)
-            link%R(link_idx, lr_ELementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
-        end if
+            !% --- If the remainder is less than half an element length
+            else
+                link%I(link_idx, li_N_element) = floor(link%R(link_idx,lr_Length)/elem_nominal_length)
+                link%R(link_idx, lr_ELementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
+            end if
 
-        !% --- Additional check to ensure that every link has at least one element
-        if ( link%R(link_idx, lr_Length) .le. elem_nominal_length ) then
-            link%I(link_idx, li_N_element) = oneI
-            link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
-        end if
+            !% --- Additional check to ensure that every link has at least one element
+            if ( link%R(link_idx, lr_Length) .le. elem_nominal_length ) then
+                link%I(link_idx, li_N_element) = oneI
+                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
+            end if
 
-        !% --- only force a minimum number of elements per link if the minimum
-        !%     number of elements per link settings is set to greater than one
-        if (min_elem_per_link > oneI) then
-            !% check for links that has less elements than 
-            !% the specified minimum number of elements
-            if (link%I(link_idx, li_N_element) < min_elem_per_link) then
-                link%I(link_idx, li_N_element) = min_elem_per_link
-                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
+            !% --- only force a minimum number of elements per link if the minimum
+            !%     number of elements per link settings is set to greater than one
+            if (min_elem_per_link > oneI) then
+                !% check for links that has less elements than 
+                !% the specified minimum number of elements
+                if (link%I(link_idx, li_N_element) < min_elem_per_link) then
+                    link%I(link_idx, li_N_element) = min_elem_per_link
+                    link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
+                end if 
+            end if
+
+            !% --- treatment of for special links
+            if ((link%I(link_idx,li_link_type) == lWeir)    .or. &
+                (link%I(link_idx,li_link_type) == lOrifice) .or. &
+                (link%I(link_idx,li_link_type) == lOutlet)  .or. &
+                (link%I(link_idx,li_link_type) == lPump) ) then
+
+                link%I(link_idx, li_N_element) = oneI
+                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
+
             end if 
+        
+        else
+            !% HACK --- experimental code:
+            !% use the minimum number of elements to discretize the system
+            link%I(link_idx, li_N_element)     = min_elem_per_link
+            link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
+
+            !% HACK -- using the nominal element lengths to resize smaller
+            !% elements to nominal element lengths for bigger timesteps
+            ! if (link%R(link_idx, lr_ElementLength) < elem_nominal_length) link%R(link_idx, lr_ElementLength) = elem_nominal_length
+
+            !% --- treatment of for special links
+            if ((link%I(link_idx,li_link_type) == lWeir)    .or. &
+                (link%I(link_idx,li_link_type) == lOrifice) .or. &
+                (link%I(link_idx,li_link_type) == lOutlet)  .or. &
+                (link%I(link_idx,li_link_type) == lPump) ) then
+
+                link%I(link_idx, li_N_element) = oneI
+                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
+
+            end if
+
         end if
-
-        !% --- treatment of for special links
-        if ((link%I(link_idx,li_link_type) == lWeir)    .or. &
-            (link%I(link_idx,li_link_type) == lOrifice) .or. &
-            (link%I(link_idx,li_link_type) == lOutlet)  .or. &
-            (link%I(link_idx,li_link_type) == lPump) ) then
-
-            link%I(link_idx, li_N_element) = oneI
-            link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
-
-        end if 
 
         !%----------------------------------------------------------------------
         !% Closing

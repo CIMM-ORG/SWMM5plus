@@ -2704,38 +2704,37 @@ contains
 
             if (node%YN(node_idx, nYN_has_dwfInflow)) then
 
-                write(*,*) 'call api_nodef_dwfInflow_hourly_pattern'
+                ! write(*,*) 'call api_nodef_dwfInflow_hourly_pattern'
                 p1 = interface_get_nodef_attribute(node_idx, api_nodef_dwfInflow_hourly_pattern)
-                write(*,*) '   p1 = ',p1
+                ! write(*,*) '   p1 = ',p1
 
-                write(*,*) 'api_nodef_dwfInflow_weekend_pattern'
+                ! write(*,*) 'api_nodef_dwfInflow_weekend_pattern'
                 p2 = interface_get_nodef_attribute(node_idx, api_nodef_dwfInflow_weekend_pattern)
-                write(*,*) '   p2 = ',p2
+                ! write(*,*) '   p2 = ',p2
 
-                write(*,*) 'api_nodef_dwfInflow_daily_pattern'
+                ! write(*,*) 'api_nodef_dwfInflow_daily_pattern'
                 p3 = interface_get_nodef_attribute(node_idx, api_nodef_dwfInflow_daily_pattern)
-                write(*,*) '   p3 = ',p3
+                ! write(*,*) '   p3 = ',p3
 
-
-                write(*,*) 'api_nodef_dwfInflow_monthly_pattern'
+                ! write(*,*) 'api_nodef_dwfInflow_monthly_pattern'
                 p4 = interface_get_nodef_attribute(node_idx, api_nodef_dwfInflow_monthly_pattern)
-                write(*,*) '   p4 = ',p4
+                ! write(*,*) '   p4 = ',p4
 
                 if (p1 > 0) then
-                    print *, 'CODE NEEDS TESTING: dwfInflow hourly patterns not tested'
-                    call util_crashpoint(18820871)
+                    ! print *, 'CODE NEEDS TESTING: dwfInflow hourly patterns not tested'
+                    ! call util_crashpoint(18820871)
                     resolution = max(api_hourly, resolution)
                 else if (p2 > 0) then
-                    print *, 'CODE NEEDS TESTING: dwfInflow weekend patterns not tested'
-                    call util_crashpoint(18820872)
+                    ! print *, 'CODE NEEDS TESTING: dwfInflow weekend patterns not tested'
+                    ! call util_crashpoint(18820872)
                     resolution = max(api_weekend, resolution)
                 else if (p3 > 0) then
-                    print *, 'CODE NEEDS TESTING: dwfInflow daily patterns not tested'
-                    call util_crashpoint(18820873)
+                    ! print *, 'CODE NEEDS TESTING: dwfInflow daily patterns not tested'
+                    ! call util_crashpoint(18820873)
                     resolution = max(api_daily, resolution)
                 else if (p4 > 0) then
-                    print *, 'CODE NEEDS TESTING: dwfInflow monthly patterns not tested'
-                    call util_crashpoint(18820874)
+                    ! print *, 'CODE NEEDS TESTING: dwfInflow monthly patterns not tested'
+                    ! call util_crashpoint(18820874)
                     resolution = max(api_monthly, resolution)
                 else
                     write(*,*) '***** unexpected else in ',trim(subroutine_name), 'at 3987044'
@@ -2822,7 +2821,7 @@ contains
         !%     Note that nres=0 returns nullvalueR
         tnextp = util_datetime_get_next_time(tnow, nres) 
 
-        if (node%YN(nidx, nYN_has_extInflow)) then
+        if (node%YN(nidx, nYN_has_extInflow) .or. node%YN(nidx, nYN_has_dwfInflow)) then
             !% --- for external inflows (file), get the timeseries index
             tseries_idx = interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
 

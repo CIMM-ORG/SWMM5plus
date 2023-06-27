@@ -1475,7 +1475,7 @@ module define_indexes
     !% These are arrays with setting%SWMMinput%N_subcatch rows.
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: sYN_hasRunOff            !% TRUE if subcatchment has runoff to an element
+        enumerator :: sYN_hasRunOff = 1        !% TRUE if subcatchment has runoff to an element
         enumerator :: sYN_hasRunOn             !% TRUE if at least one runon to subcatchment
         enumerator :: sYN_lastplusone          !% must be the last enum item
     end enum
@@ -1485,6 +1485,15 @@ module define_indexes
 !% CURVE DATA
 !%==========================================================================
 !%  
+    !% --- data types (columns) in the table
+    !%     define column indexes reading curve data
+    enum, bind(c)
+        enumerator :: curve_read_col_1 = 1
+        enumerator :: curve_read_col_2
+        enumerator :: curve_read_lastplusone !% must be the last enum item
+    end enum
+    integer, parameter :: Ncol_read_curve = curve_read_lastplusone-1
+
     !% --- data types (columns) in the table
     !%     define column indexes for storage curve types
     enum, bind(c)
@@ -1515,8 +1524,9 @@ module define_indexes
 
     !% --- determine the largest number of columns for table data structure
     integer, target :: Ncol_curve = max(&
+                            Ncol_read_curve,    &
                             Ncol_storage_curve, &
-                            Ncol_pump_curve, &
+                            Ncol_pump_curve,    &
                             Ncol_outlet_curve)
 
 !%

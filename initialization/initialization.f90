@@ -1032,41 +1032,38 @@ contains
                     node%I(ii, ni_node_type) = nJm             
                 end if   
 
-            end if
             
-            !% --- further check on offsets for any nJ2 that passed the prior
-            !%     restrictions. In general, we have an nJm if there are 
-            !%     any offsets, except if the offset is a weir or orifice.
-            if ( (node%I(ii, ni_node_type) == nJ2) .and.             &
-                 (link%R(linkUp,lr_OutletOffset) .ne. zeroR) ) then
-                !% --- offsets are OK for upstream weir or orifice links  
-                if (  (link%I(linkUp,li_link_type) .eq. lWeir)       &
-                       .or.                                          &
-                      (link%I(linkUp,li_link_type) .eq. lOrifice)    &
-                    ) then    
-                    !% --- retain nJ2
-                else
-                    !% --- switch to nJm
-                    node%I(ii, ni_node_type) = nJm
+                !% --- further check on offsets for any nJ2 that passed the prior
+                !%     restrictions. In general, we have an nJm if there are 
+                !%     any offsets, except if the offset is a weir or orifice.
+                if (link%R(linkUp,lr_OutletOffset) .ne. zeroR) then
+                    !% --- offsets are OK for upstream weir or orifice links  
+                    if (  (link%I(linkUp,li_link_type) .eq. lWeir)       &
+                        .or.                                          &
+                        (link%I(linkUp,li_link_type) .eq. lOrifice)    &
+                        ) then    
+                        !% --- retain nJ2
+                    else
+                        !% --- switch to nJm
+                        node%I(ii, ni_node_type) = nJm
+                    end if
                 end if
-            end if
 
-            if ( (node%I(ii, ni_node_type) == nJ2) .and.             &
-                 (link%R(linkDn,lr_InletOffset) .ne. zeroR) ) then
-                !% --- offsets are OK for downstream weir or orifice links  
-                if (  (link%I(linkDn,li_link_type) .eq. lWeir)       &
-                       .or.                                          &
-                      (link%I(linkDn,li_link_type) .eq. lOrifice)    &
-                    ) then    
-                    !% --- retain nJ2
-                else
-                    !% --- switch to nJm
-                    node%I(ii, ni_node_type) = nJm
-                end if
-            end if 
 
-            !% --- force some or all of the nJ2 to nJm (used for debugging)
-            if (node%I(ii, ni_node_type) == nJ2) then
+                if (link%R(linkDn,lr_InletOffset) .ne. zeroR) then
+                    !% --- offsets are OK for downstream weir or orifice links  
+                    if (  (link%I(linkDn,li_link_type) .eq. lWeir)       &
+                        .or.                                          &
+                        (link%I(linkDn,li_link_type) .eq. lOrifice)    &
+                        ) then    
+                        !% --- retain nJ2
+                    else
+                        !% --- switch to nJm
+                        node%I(ii, ni_node_type) = nJm
+                    end if
+                end if 
+
+                !% --- force some or all of the nJ2 to nJm (used for debugging)
                 !% --- global forcing of all nodes
                 if (setting%Junction%ForceNodesJM ) then
                     !% --- switch to nJm 
@@ -1143,7 +1140,8 @@ contains
             end if
         end do
 
-        !% Check for small links
+        !% Check for small links while using nominal element length discretization 
+        if (setting%Discretization%UseNominalElemLength) then
             do ii = 1, N_link
                 if ( (link%I(ii,li_link_type) == lChannel) .or. (link%I(ii,li_link_type) == lPipe) ) then
                     if (link%R(ii,lr_Length) < (real(setting%Discretization%MinElementPerLink,8) * setting%Discretization%NominalElemLength)) then
@@ -1159,6 +1157,7 @@ contains
                     end if
                 end if
             end do
+        end if
 
         if (setting%Debug%File%initialization) then
             !%-----------------------------------------------------------------------------
@@ -1505,12 +1504,12 @@ contains
             !% --- allocate the value space
             call util_allocate_curve_entries (ii,curve(ii)%NumRows)
 
-            !% --- get the first entry of the curve
-            curve(ii)%ValueArray(1,:) = interface_get_first_entry_table(ii)
+            !% --- get the first entry of the curve and store them at the first two columns
+            curve(ii)%ValueArray(1,curve_read_col_1:curve_read_col_2) = interface_get_first_entry_table(ii)
 
             !% --- populate the rest of the curves
             do jj = 2,curve(ii)%NumRows
-                curve(ii)%ValueArray(jj,:) = interface_get_next_entry_table(ii, API_CURVE)
+                curve(ii)%ValueArray(jj,curve_read_col_1:curve_read_col_2) = interface_get_next_entry_table(ii, API_CURVE)
             end do
             
         end do

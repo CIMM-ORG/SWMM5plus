@@ -594,7 +594,7 @@ module culvert_elements
             real(8), pointer :: sedimentDepth, totalPipeDiameter
 
             real(8) :: Bhat, Khat, Dhat, Delta, halfM
-            real(8) :: Psi(4), resid(4), Omega(3)
+            real(8) :: Psi(4), resid(4), Omega(4)
 
             integer :: ii
 

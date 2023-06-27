@@ -184,7 +184,7 @@ RECT_C_2         RECT_CLOSED  4                2          0          0          
 R_ROUND_1        RECT_ROUND   3                2          1          0          1                    
 R_ROUND_2        RECT_ROUND   3                2          1          0          1                    
 S_CIRC_1         SEMICIRCULAR 4                0          0          0          1                    
-S_CIRC_2         CIRCULAR     4                0          0          0          1                    
+S_CIRC_2         SEMICIRCULAR 4                0          0          0          1                    
 S_ELPT_1         SEMIELLIPTICAL 4                0          0          0          1                    
 S_ELPT_2         SEMIELLIPTICAL 4                0          0          0          1                    
 TRAPZ_1          TRAPEZOIDAL  4                2          1          1          1                    

@@ -404,6 +404,7 @@ module define_settings
         !real(8) :: JunctionBranchLengthFactor  = 1.d0    !% MUST USE 1.0   !% fraction of NominalElemLength used for JB
         ! real(8) :: MinElemLengthFactor = 0.5d0           !% define the minimum allowable fraction of an element size to help with the cfl
         !integer :: MinElemLengthMethod = ElemLengthAdjust
+        logical :: UseNominalElemLength = .true.
         real(8) :: NominalElemLength   = 10.0d0
         integer :: MinElementPerLink   = 3               !% force a minimum number of elements per link
         real(8) :: FullConduitTopwidthDepthFraction = 0.95d0  !% fraction of full depth used for full topwidth
@@ -1093,7 +1094,11 @@ contains
         if (found) setting%Discretization%AllowChannelOverflowTF = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AllowChannelOverflowTF not found'
       
-  
+        !%                       Discretization.UseNominalElemLength
+        call json%get('Discretization.UseNominalElemLength', logical_value, found)
+        if (found) setting%Discretization%UseNominalElemLength = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.UseNominalElemLength not found'
+
         !%                       Discretization.NominalElemLength
         call json%get('Discretization.NominalElemLength', real_value, found)
         if (found) setting%Discretization%NominalElemLength = real_value
