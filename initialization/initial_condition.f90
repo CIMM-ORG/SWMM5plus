@@ -296,7 +296,6 @@ contains
             elemR(thisP,er_Head) = llgeo_head_from_depth_pure(thisP,elemR(thisP,er_Depth))
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
             call geo_assign_JB_from_head (ep_JM)
-            call slot_JB_computation (ep_JM)
         end if
         
         !% --- Froude number, wavespeed, and interpwights on JB
@@ -357,6 +356,13 @@ contains
         call diagnostic_by_type (ep_Diag, 1)
         !% reset any face values affected
         call face_interpolation (ep_Diag,.true.,.true.,.true.,.true.,.true.)
+
+        Npack => npack_elemP(ep_JM)
+        if (Npack > 0) then
+            thisP => elemP(1:Npack,ep_JM)
+            !% --- JB elements slot computations after face interpolation
+            call slot_JB_computation (ep_JM)
+        end if
 
         !% --- ensure that small and zero depth faces are correct
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 3'
@@ -2651,7 +2657,6 @@ contains
         !% Aliases:
             specificPumpType => link%I(thisLink,li_link_sub_type)
             curveID          => link%I(thisLink,li_curve_id)
-            lastRow          => curve(curveID)%NumRows
         !%-------------------------------------------------------------------
 
         !% --- cycle through the elements to find this link (HACK -- need to rewrite)
@@ -2688,10 +2693,14 @@ contains
                 elemR(ii,er_Length)         = setting%Discretization%NominalElemLength
                 elemR(ii,er_Volume)         = zeroR
 
-                if (curveID < zeroI) then
+                if (curveID <= zeroI) then
                     !% integer data
                     elemSI(ii,esi_Pump_SpecificType) = type_IdealPump 
                 else
+                    !% Aliase for the last row of the pump curve
+                    lastRow          => curve(curveID)%NumRows
+
+                    !% set curve data for pump
                     elemSI(ii,esi_Pump_CurveID) = curveID
                     elemSR(ii,esr_Pump_xMin)    = curve(curveID)%ValueArray(1,curve_pump_Xvar)
                     elemSR(ii,esr_Pump_xMax)    = curve(curveID)%ValueArray(lastRow,curve_pump_Xvar)
@@ -4750,7 +4759,8 @@ contains
             end select
 
             tPack(:,1) = zeroI
-            npack = count(geoType == arch)
+            npack = count(geoType == tabXsectType(ii))
+
             if (npack > 0) then
                 tPack(1:npack,1) = pack(eIdx,geoType == tabXsectType(ii))
                 !% --- get area associated with small volume
@@ -5267,10 +5277,9 @@ contains
                     !% --- BC does not have fixed value if its associated with dwfInflow
                     !%     or if extInflow has tseries or pattern
                     BC%flowI(ii, bi_subcategory) = BCQ_tseries
-                    if (.not. node%YN(nidx, nYN_has_dwfInflow)) then !% extInflow only
-                        if ((SWMMtseriesIdx == -1) .and. (SWMMbasepatType == -1)) then
-                            BC%flowI(ii, bi_subcategory) = BCQ_fixed
-                        end if
+                    
+                    if ((SWMMtseriesIdx == -1) .and. (SWMMbasepatType == -1)) then
+                        BC%flowI(ii, bi_subcategory) = BCQ_fixed
                     end if
 
                 else

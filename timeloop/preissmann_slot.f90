@@ -571,11 +571,11 @@ module preissmann_slot
 
                 !% --- set any diagnostic face as venting point
                 !%     thus not changing preissmann number here
-                where (faceYN(fUP(thisP),fYN_isDiag_adjacent_interior))
+                where (faceYN(fUP(thisP),fYN_isDiag_adjacent_all))
                     isfSlot(fUp(thisP)) = .false.
                 end where
 
-                where (faceYN(fDn(thisP),fYN_isDiag_adjacent_interior))
+                where (faceYN(fDn(thisP),fYN_isDiag_adjacent_all))
                     isfSlot(fDn(thisP)) = .false.
                 end where
 
@@ -726,10 +726,9 @@ module preissmann_slot
                     PNadd  = zeroR
                     do kk=1,max_branch_per_node
                         if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) .ne. oneI) cycle 
-                        if (isSurcharge(JMidx+kk)) then
-                            PNadd = PNadd + PNumber(JMidx+kk)
-                            bcount = bcount + oneI
-                        end if
+
+                        PNadd = PNadd + PNumber(JMidx+kk)
+                        bcount = bcount + oneI
                     end do
 
                     PNumber(JMidx) = max(PNadd/real(bcount,8), oneR)
@@ -743,7 +742,6 @@ module preissmann_slot
                     !% --- find the change in slot depth
                     dSlotDepth(JMidx) = (dSlotArea(JMidx) * (PCelerity(JMidx) ** twoI)) &
                                          / (grav * (fullArea(JMidx)))
-
 
 
                     !% --- for case where change in slot depth is negative while the slot volume

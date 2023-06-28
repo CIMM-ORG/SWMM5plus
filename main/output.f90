@@ -92,7 +92,9 @@ contains
         !% --- setup the output element data types
         call outputML_element_outtype_selection ()
 
+        !% --- setup the static output elem, link and node data types
         call outputML_element_static_outtype_selection () 
+
         !% -- setup the output face data types
         call outputML_face_outtype_selection ()
 
@@ -646,7 +648,7 @@ contains
     subroutine outputML_element_static_outtype_selection ()
         !%------------------------------------------------------------------
         !% Description
-        !% initializes the types of static output data provided for elements, links and nodes
+        !% Initializes the types of static output data provided for elements, links and nodes
         !% Note that this must be done on every image, including those that
         !% don't have any output elements.
         !%------------------------------------------------------------------
@@ -738,13 +740,13 @@ contains
         if (setting%Output%DataOut%isElemFullDepthOut) then
             ii = ii+1
             output_static_types_elemR(ii) = er_FullDepth
-            output_static_typenames_elemR(ii) = 'Element Full Area'
+            output_static_typenames_elemR(ii) = 'Element Full Depth'
             output_static_typeUnits_elemR(ii) = 'm'
             output_static_typeProcessing_elemR(ii) = AverageElements
             output_static_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
         
-        !% --- Element Length
+        !% --- Element Mannings n
         if (setting%Output%DataOut%isElemManningsOut) then
             ii = ii+1
             output_static_types_elemR(ii) = er_ManningsN
@@ -2488,9 +2490,14 @@ contains
                                 !% --- open formatted csv link file
 
                                 if(setting%Output%Report%useCSV) then
+
+                                    !% --- checking if there is static link data to output
                                     if(N_Out_static_TypeLink > 0) then 
+
+                                        !% --- Creating a csv file to write static link data to 
                                         open(newunit=fU_link_csv, file=trim(fn_link_static_csv), form='formatted', &
                                             action='write', access='append')
+
                                         !% --- write header to csv link file
                                         call outputML_csv_static_header( &
                                             fU_link_csv, N_Out_static_TypeLink, nTotalTimeLevels, dummyI, &
@@ -2500,16 +2507,20 @@ contains
                                             dummyarrayI,    &
                                             tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .false.)
 
+                                        !% --- write static output to csv link file 
                                         call outputML_csv_static_writedata(fU_link_csv, &
                                                 SWMMlink, .false., LinkOut)
 
+                                        !% --- close static link csv file
                                         close(fU_link_csv)
                                     end if 
 
                                     if(N_Out_static_TypeElem > 0 ) then 
+                                        !% --- Creating a csv file to write static elem data to 
                                         open(newunit=fU_linkFV_csv, file=trim(fn_linkFV_static_csv), form='formatted', &
                                             action='write', access='append')
-                                        !% write header to csv static link file
+
+                                        !% write header to csv static elem file
                                         call outputML_csv_static_header( &
                                             fU_linkFV_csv, N_Out_static_TypeElem, nTotalTimeLevels, dummyI, &
                                             OutLink_pSWMMidx(kk), &
@@ -2526,7 +2537,7 @@ contains
                                         close(fU_linkFV_csv)
                                     end if 
 
-
+                                    !% --- creating a csv file to write link output data to
                                     open(newunit=fU_link_csv, file=trim(fn_link_csv), form='formatted', &
                                         action='write', access='append')
                                     !% --- write header to csv link file
@@ -2543,17 +2554,19 @@ contains
                                 if(setting%Output%Report%useHD5F) then
 
                                     if(N_Out_static_TypeElem > 0 ) then 
+                                        !% --- writing header and model attributes then creating dataset for link fv static output 
                                         call outputML_HD5F_create_static_dset(fn_linkFV_static_h5,H5_file_id, &
                                             startdate, mminc, &
                                             OutLink_pSWMMidx(kk), &
                                             setting%Time%StartEpoch, &
                                             pOutElem_Gidx(OutLink_pOutElemIdx(kk,1:OutLink_N_elem_in_link(kk))), &
                                             tlinkname, setting%Time%DateTimeStamp, LinkOut, .true. )
-
+                                        !% --- writing to dataset for link fv static output 
                                         call outputML_HD5F_write_static_file(fn_linkFV_static_h5,H5_file_id, &
                                             SWMMlink, .true., LinkOut)
                                     end if
                                     if(N_Out_static_TypeLink > 0 ) then 
+                                        !% --- writing header and model attributes then creating dataset for link static output 
                                         call outputML_HD5F_create_static_dset(fn_link_static_h5,H5_file_id, &
                                             startdate, mminc, &
                                             OutLink_pSWMMidx(kk), &
@@ -2563,10 +2576,12 @@ contains
 
                                             print *, 'here AAA 02'
 
+                                        !% --- writing to dataset for link static output 
                                         call outputML_HD5F_write_static_file(fn_link_static_h5,H5_file_id, &
                                             SWMMlink, .false., LinkOut)
                                     end if 
-
+                                    
+                                    !% --- writing header and model attributes then creating dataset for link 
                                     call outputML_HD5F_create_dset(fn_link_h5,H5_file_id, &
                                         nTypeElem, nLevel, dummyI, &
                                         OutLink_pSWMMidx(kk), &
@@ -2575,6 +2590,7 @@ contains
                                         dummyarrayI,    &
                                         tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .false.)
                                 
+                                    !% --- writing to dataset for link output 
                                     call outputML_HD5F_write_file(fn_link_h5,H5_file_id, &
                                         kk, nTypeElemWtime, dummyI, nLevel,  &
                                         OutLink_ProcessedDataR, OutLink_ElemDataR, .false. )
@@ -2590,6 +2606,9 @@ contains
                                 end if
 
                                 if(setting%Output%Report%useHD5F) then
+                                    !% When hdf5 datasets are set up, we enable chunking which allows us to write multiple times 
+                                    !% to the same dataset, normally this is not allowed.
+                                    !% This is why we need two different HDF5 write functions. 
                                     call outputML_HD5F_extend_write_file(fn_link_h5,H5_file_id, &
                                         kk, nTypeElemWtime, dummyI, nLevel,  &
                                         OutLink_ProcessedDataR, OutLink_ElemDataR, .false. )
@@ -2599,6 +2618,7 @@ contains
                             end if
                            
                             if(setting%Output%Report%useCSV) then
+                                !% writing to the csv file
                                 call outputML_csv_writedata ( &
                                     fU_link_csv, kk, nTypeElemWtime, dummyI, nLevel,  &
                                     OutLink_ProcessedDataR, OutLink_ElemDataR, .false. )
@@ -3730,7 +3750,7 @@ contains
             !% Number of static output elements 
             N_output = size(output_static_elem(:,1))
             !% Loop through the static output elements and find which are links and have the same link index as the passed link
-            !% As stated in outputML_combine_static_elem_data column 2 of the array store the indictor if the element is a link or node
+            !% As stated in outputML_combine_static_elem_data column 2 of the array store the indictor if the element is a link or node (1 for link, 0 for node)
             !% Then write to csv 
             do ii = 1, N_output
                 if(output_static_elem(ii,2) .ne. 0.0 .and. output_static_elem(ii,1) .eq. idx1) then
@@ -3904,9 +3924,9 @@ contains
     subroutine outputML_HD5F_create_file(file_id)
 
         !% Function for opening the HDF5 API and creating the .h5 file for the output
-        !% It returns the fild_id such that the following hd5f functions can write to it
+        !% It returns the file_id such that the following hd5f functions can write to it
         character(len=256) :: h5_file_name       !% Location of .h5 file in local folder 
-        INTEGER(HID_T), intent(out)   :: file_id !% File ID for output
+        INTEGER(HID_T), intent(out)   :: file_id !% File ID needed for hdf5 API 
         INTEGER     ::   HD_error                !% For HDF5 errors
 
         !% Open HDF5 API
@@ -4533,8 +4553,8 @@ contains
         max_dims = (/H5S_UNLIMITED_F, H5S_UNLIMITED_F/)
 
         !% See function "outputML_HD5F_create_dset" for further commenting on the writing and creation of the dataset
-        !% It follows the same process for the static outptu
-        !%create and then close the dataspace that will store the link data
+        !% It follows the same process for the static output 
+        !% create and then close the dataspace that will store the link data
         CALL h5screate_simple_f(rank, updated_size_data, dspace_id, HD_error ,max_dims)
 
         !% Enabling chunking needed for extending datasets
@@ -4691,22 +4711,25 @@ contains
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
+        !allocating temp arrays used for writing the profile data to the attribute of the .h5 file
         allocate(profile_data(max_links_profile_N,max_profiles_N))
         allocate(profile_length(max_profiles_N))
 
         !% Converting the profile IDs back to the Link and Node names.
         !% Nodes are always on odd IDs and links are always on even IDS
         if( allocated(output_profile_ids)) then
-            !% Looping through all the profiles to convert them
+
+            !% Looping through all the profiles to convert 
             do ii = 1, max_profiles_N
                 first_null = .true.
+
                 !% loop through all the IDs of a profile
-                !% First checking if it is not null value which is used to identify the end of a profile, 
+                !% First checking if it is not null value. This null value is used to identify the end of a profile, 
                 !% and checking if it is an even or odd ID to signify Links and nodes respectively
                 do jj = 1, max_links_profile_N
                     if(mod(jj,2) > 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
 
-                        !% Node found, so the node name is stored in the profile_data array
+                        !% Odd Index : Node found, so the node name is stored in the profile_data array
                         profile_data(jj,ii) = trim(node%names(output_profile_ids(ii,jj))%str)
                         
                         !% In the case that this profile is the longest one we check if this is the last node
@@ -4716,7 +4739,7 @@ contains
                         end if 
 
                     else if (mod(jj,2) == 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
-                        !% Link found, so the link name is stored in the profile_data array 
+                        !% Even Index : Link found, so the link name is stored in the profile_data array 
                         profile_data(jj,ii) = trim(link%names(output_profile_ids(ii,jj))%str)
                     else 
                         !% If no link or Node is found then it is the end of the profile, and we store the length of the profile 
@@ -4758,8 +4781,12 @@ contains
 
  
         !% deallocation of profile_data and profile_lengths used in this function 
-        deallocate(profile_data)
-        deallocate(profile_length)
+        if(allocated(profile_data)) then
+            deallocate(profile_data)
+        end if
+        if(allocated(profile_length)) then 
+            deallocate(profile_length)
+        end if 
     
     end subroutine outputML_HD5F_write_profiles
 !%
@@ -4832,7 +4859,7 @@ contains
                 !%first if statement is for the initial link or if a link is not split into a phantom
                 if(output_static_elem(ii,1) .EQ. idx1 .and. output_static_elem(ii,2) .EQ. 1.0 .and. is_phantom_link .EQ. .false.) then
 
-                    !%FILL dset_data
+                    !%fill dset_data
                     dset_data(dset_location_ii:dset_location_ii+link%I(idx1,li_N_element),:) &
                     = output_static_elem(ii:ii+link%I(idx1,li_N_element),3:N_Out_static_TypeElem+1)
 
@@ -4868,7 +4895,8 @@ contains
         else if(isFV .and. FeatureType .eq. NodeElemOut) then
             N_node_elem = 0
             first_elem_detect = .false.
-            
+
+            !Loops through and counts number of node elements being output
             do ii = 1, size(output_static_elem(:,1)) 
                 if(output_static_elem(ii,2) .eq. 0.0 .and. output_static_elem(ii,1) .eq. idx1) then
                     N_node_elem = N_node_elem + 1
@@ -4879,10 +4907,13 @@ contains
 
                 end if
             end do 
+
+            !Reallocated the size of the array for the updated count of how many node there are.
             allocate(dset_data(N_node_elem,N_Out_static_TypeElem+1), errmsg=emsg)  
             updated_size_data(1:2) = (/N_Out_static_TypeElem+1,N_Node_output/)
             N_output = size(output_static_elem(:,1))
             
+            !Store the output data for those elements in that updated array. 
             do ii = 1, N_output
                 if(output_static_elem(ii,1) .EQ. idx1 .and. output_static_elem(ii,2) .EQ. 0.0 ) then 
                     dset_data(:,:) = output_static_elem(first_elem_idx:first_elem_idx+N_node_elem,3:N_Out_static_TypeElem+1)
@@ -4891,7 +4922,12 @@ contains
             end do
 
 
+        !% --- For non FV node and link output
+        
         else if(isFV .eq. .false. .and. FeatureType .eq. NodeOut) then
+            
+            !% reallocate to correct size and store static node output in dset_data 
+
             allocate(dset_data(1,N_Out_static_TypeNode),errmsg=emsg)
             updated_size_data(1:2) = (/N_Out_static_TypeNode,1/)
             N_output = N_Out_static_TypeNode
@@ -4899,6 +4935,8 @@ contains
             dset_data(1,:) = node%R(idx1, output_static_types_Node(:))
 
         else
+
+            !% reallocate to correct size and store static link output in dset_data 
             allocate(dset_data(1,N_Out_static_TypeLink),errmsg=emsg)
             updated_size_data(1:2) =(/N_Out_static_TypeLink,1/)
             N_output = N_Out_static_TypeLink
@@ -4907,6 +4945,7 @@ contains
         end if
 
 
+        !% transpose dset such that the data is written correctly to the .h5 file
         dset_data = transpose(dset_data)
 
        
@@ -4929,6 +4968,9 @@ contains
         if(allocated(phantom_link_lengths)) then
             deallocate(phantom_link_lengths)
         end if 
+        if(allocated(dset_data)) then 
+            deallocate(dset_data)
+        end if
         
     end subroutine outputML_HD5F_write_static_file
 !%
@@ -4938,7 +4980,10 @@ contains
     subroutine outputML_HD5F_extend_write_file &
         (h5_dset_name, file_id, idx1, nIdx2, idx3, nLevel, Out_ProcessedDataR,Out_ElemDataR,isFV)
 
-        !%Function for writing the output to the correct dataset and dataspace with the 
+        !% Function for writing hdf5 for multi-level output
+        !% This is needed because normally hdf5 datasets can not be added on to like csv or other files formats
+        !% We instead use chunking which allows us to write chunks of the dataset at a time rather than writiting it all at once. 
+        
         character(len=*), intent(in)    :: h5_dset_name !% name of dset to be written to  
         integer(HID_T), intent(in)      :: file_id      !% File ID of the .h5 file
         integer, intent(in) :: nLevel  !% Time levels     
@@ -4987,11 +5032,15 @@ contains
         !% the dataset is opened 
         CALL h5dopen_f(file_id, trim(h5_dset_name), dset_id, HD_error)
 
+        !% get and store the id of the dataspace 
         call h5dget_space_f(dset_id,data_space_id,HD_error)
 
+        !% get and store the current dimensions of the dataset 
         call h5sget_simple_extent_dims_f(data_space_id,dims_before_extend,max_dims,HD_error)
         tmp_int1 = dims_before_extend(2)
         dims_before_extend(1) = 0
+
+        !% update the new total dimensions of the dataset 
         if(isFv) then 
             total_dims(1:2) = (/nIdx2+1,tmp_int1+nLevel /)
         else 
@@ -4999,18 +5048,21 @@ contains
         
         end if 
 
+        !% Update the dataset with the new total dimensions 
         call h5dset_extent_f(dset_id,total_dims,HD_error)
 
+        !% Create a simple data space 
         call h5screate_simple_f(2,updated_size_data,memspace_id,HD_error)
 
+        !% get and store the updated id of the dataspace 
         call h5dget_space_f(dset_id,data_space_id,HD_Error)
 
+        !% adds extra space to the dataset 
         call h5sselect_hyperslab_f(data_space_id,H5S_SELECT_SET_F , dims_before_extend, updated_size_data, HD_ERROR)
 
+        !% write to output to the extra space that was added to the dataset 
         call h5dwrite_f(dset_id, H5T_NATIVE_REAL, dset_data, updated_size_data,HD_error, memspace_id,data_space_id)
 
-        !% the dataset is written to using the stored data 
-        
         !% the dataset is closed
         CALL h5sclose_f(data_space_id,HD_error)
         CALL h5dclose_f(dset_id, HD_error)
@@ -5026,7 +5078,7 @@ contains
     subroutine outputML_combine_static_elem_data
 
         !% Function called in finalization to fill the output_static_elem array for the specified static_data types
-        !% selected in the json for links and nodes 
+        !% choosen in the json for links and nodes 
 
         integer local_index, ii 
         integer, pointer :: Npack, thisP(:), thisType(:)
@@ -5038,20 +5090,14 @@ contains
 
         !% Finding local index for each image for output of static element data 
         !% such that all images can write to image one without overlapping data or race conditions. 
+        !% This is because only image one will be handling the writing of output data, as well as 
         sync all 
         if(this_image() .NE. 1) then 
             local_index = sum(N_outelem(1:this_image()-1))+1
         else 
             local_index = 1
         end if
-        
 
-        !% Filling output_static_elem's third column with the Global elem Index 
-        output_static_elem(local_index:(Npack+local_index)-1,3)[1] = elemI(thisP,ei_Gidx)
-
-        !% Filling the rest of output_static_elem's columns with the selected types choosen in the json file 
-        output_static_elem(local_index:(Npack+local_index)-1,4:)[1] = elemR(thisP,thisType)
- 
         !% Filling output_static_elem's first column with the global link or node index depending on type
         !% Filling output_static_elem's second column with a 1.0 if a link and 0.0 if a node output 
         do ii=1, size(thisP)
@@ -5063,6 +5109,12 @@ contains
                 output_static_elem(local_index+ii-1,2)[1] = 0.0
             end if
         end do
+        
+        !% Filling output_static_elem's third column with the Global elem Index 
+        output_static_elem(local_index:(Npack+local_index)-1,3)[1]  = elemI(thisP,ei_Gidx)
+
+        !% Filling the rest of output_static_elem's columns with the selected types choosen in the json file 
+        output_static_elem(local_index:(Npack+local_index)-1,4:)[1] = elemR(thisP,thisType)
 
     end subroutine outputML_combine_static_elem_data
 !%

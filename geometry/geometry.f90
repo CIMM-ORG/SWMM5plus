@@ -364,8 +364,6 @@ module geometry
                     elemR(mm,er_Topwidth)    = llgeo_tabular_from_depth_singular &
                         (mm, depth(mm), breadthMax(mm), setting%ZeroValue%Depth, zeroR, TTableType)
 
-                    elemR(mm,er_HydRadius)  = llgeo_tabular_from_depth_singular &
-                        (mm, depth(mm), fullHydRadius(mm), setting%ZeroValue%Depth, zeroR, RTableType)
 
                     elemR(mm,er_HydRadius) = llgeo_tabular_hydradius_from_area_and_sectionfactor_singular &
                         (mm, elemR(mm,er_Area) , fullhydradius(mm), zeroR, STableType)
@@ -1265,43 +1263,51 @@ module geometry
                         !     *(velocity(tB)**twoR) / (grav) 
 
                         !% --- using velocity on face  
-                        if     ((      isUpBranch) .and. (fVel_d(fup(tB)) > zeroR)) then 
-                            !% --- upstream branch with waterfall inflow to junction main
-                            iswaterfall = .true.
+                        if     (      isUpBranch) then 
 
-                            if (fHead_d(fup(tB)) > fZcrown_d(fup(tB))) then
-                                !% --- surcharged inflow of upstream branch
-                                !%     reduce by Kfactor
-                                head(tB) = fHead_d(fup(tB)) &
-                                    - Kfac(tB) * (fVel_d(fup(tB))**twoI) / (twoR * grav)
+                            if (fVel_d(fup(tB)) > zeroR) then
+                                !% --- upstream branch with waterfall inflow to junction main
+                                iswaterfall = .true.
+
+                                if (fHead_d(fup(tB)) > fZcrown_d(fup(tB))) then
+                                    !% --- surcharged inflow of upstream branch
+                                    !%     reduce by Kfactor
+                                    head(tB) = fHead_d(fup(tB)) &
+                                        - Kfac(tB) * (fVel_d(fup(tB))**twoI) / (twoR * grav)
+                                else
+                                    !% --- Fr=1 inflow from upstream branch
+                                    head(tB) = zBtm(tB) + sedimentDepth(tB)  &
+                                        + (fVel_d(fup(tB))**twoI) / grav
+                                endif
                             else
-                                !% --- Fr=1 inflow from upstream branch
-                                head(tB) = zBtm(tB) + sedimentDepth(tB)  &
-                                    + (fVel_d(fup(tB))**twoI) / grav
-                            endif
-
-                        elseif ((.not. isUpbranch) .and. (fVel_u(fdn(tB)) < zeroR)) then
-                            !% --- downstream branch with inflow waterfall into junction main
-
-                            iswaterfall = .true.
-                            if (fHead_u(fdn(tB)) > fZcrown_u(fdn(tB))) then
-                                !% --- surcharged inflow of downstream branch
-                                !%     reduce by Kfactor
-                                head(tB) = fHead_u(fdn(tB)) &
-                                    - Kfac(tB) * (fVel_u(fdn(tB))**twoI) / (twoR * grav)
-                            else
-                                !% --- Fr=1 inflow from downstream branch
-                                head(tB) = zBtm(tB) + sedimentDepth(tB)  &
-                                    + (fVel_u(fdn(tB))**twoI) / grav
+                                iswaterfall = .false.
+                                !% --- no flow, set below zerovalue
+                                head(tB) = zBtm(tB) + sedimentDepth(tB) + 0.99d0 * setting%ZeroValue%Depth
                             end if
 
-                        else 
-                            iswaterfall = .false.
-                            !% --- no flow, set below zerovalue
-                            head(tB) = zBtm(tB) + sedimentDepth(tB) + 0.99d0 * setting%ZeroValue%Depth
+                        elseif (.not. isUpbranch) then
 
+                            if (fVel_u(fdn(tB)) < zeroR) then
+                                !% --- downstream branch with inflow waterfall into junction main
+
+                                iswaterfall = .true.
+                                if (fHead_u(fdn(tB)) > fZcrown_u(fdn(tB))) then
+                                    !% --- surcharged inflow of downstream branch
+                                    !%     reduce by Kfactor
+                                    head(tB) = fHead_u(fdn(tB)) &
+                                        - Kfac(tB) * (fVel_u(fdn(tB))**twoI) / (twoR * grav)
+                                else
+                                    !% --- Fr=1 inflow from downstream branch
+                                    head(tB) = zBtm(tB) + sedimentDepth(tB)  &
+                                        + (fVel_u(fdn(tB))**twoI) / grav
+                                end if
+                            else 
+                                iswaterfall = .false.
+                                !% --- no flow, set below zerovalue
+                                head(tB) = zBtm(tB) + sedimentDepth(tB) + 0.99d0 * setting%ZeroValue%Depth
+
+                            end if
                         end if
-
                     end if
 
                     !% compute provisional depth
