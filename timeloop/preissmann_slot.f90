@@ -713,7 +713,7 @@ module preissmann_slot
             do mm=1,Npack
                 JMidx = thisP(mm)
 
-                if (volume(JMidx) > fullVolume(JMidx)) then
+                if ((volume(JMidx) > fullVolume(JMidx)) .and. canSurcharge(JMidx)) then
                     SlotVolume(JMidx) = max(volume(JMidx) - fullVolume(JMidx), zeroR)
 
                     SlotArea(JMidx)   = SlotVolume(JMidx) / length(JMidx)  
