@@ -1601,7 +1601,7 @@ contains
             integer       :: ii, jj,kk, offset, offset_profile,name_loc
             integer       :: error, mm
             integer       :: thisUnit, assignedUnit
-            logical       :: doesExist,isOpen
+            logical       :: doesExist,isOpen, first_profile
             character(20) :: accessType
         !%------------------------------------------------------------------
         !% --- alias for the unit number
@@ -1628,6 +1628,7 @@ contains
         delimitator_loc = 2
         offset = 1
         max_links_profile_N = 0
+        first_profile = .true.
 
         !inquire(file = "SL_sub_IN=con_OUT=fix.inp", SIZE = end_of_file)
         !print *, "end of file(bytes):", end_of_file
@@ -1645,11 +1646,18 @@ contains
             endif
 
             if(line .eq. "[PROFILES]") then
-                !print *, "inside of profiles"
+                
                        
                 read(thisUnit, "(A)", iostat = read_status) line
+
+                !Location right before first profile such that we can rewind the file to this offset location 
+                if(first_profile .eq. .true.) then 
+                    offset_profile = FTELL(thisUnit)
+                    first_profile = .false.
+                end if
+
                 read(thisUnit, "(A)", iostat = read_status) line
-                offset_profile = FTELL(thisUnit)
+                
                 max_profiles_N = 0
 
                 do
@@ -1704,10 +1712,9 @@ contains
         !% --- allocate storage for the profiles
         call util_allocate_output_profiles()
 
-        ! print *, "size of profiles", size(output_profile_ids)
-        ! print *, "offset_profile:", offset_profile
 
         !% --- set up for a second reading of the input file
+        !% --- rewind to file and then seek to the location right before profiles
         rewind(thisUnit)
         error = fseek(thisUnit,offset_profile,0)
         output_profile_ids(:,:) = nullValueI
@@ -1723,7 +1730,7 @@ contains
         do  
             !% --- reading in the first profile  
             read(thisUnit, "(A)", iostat = read_status) line
-            
+            print *, "this_line :: ", line
             if (read_status /= 0 ) then
                 exit
             end if
