@@ -3736,9 +3736,13 @@ contains
                 if (elemSR(JMidx,esr_JunctionMain_PondedArea) == zeroR) then
                     !% --- use the overflow weir algorithm
                     elemSI(JMidx,esi_JunctionMain_OverflowType) = OverflowWeir
+                    !% --- since the junction is open, it can not surcharge
+                    elemYN(JMidx,eYN_canSurcharge) = .false.
                 else
                     !% --- use ponded overflow algorithm
                     elemSI(JMidx,esi_JunctionMain_OverflowType) = PondedWeir 
+                    !% --- since the junction is open, it can not surcharge
+                    elemYN(JMidx,eYN_canSurcharge) = .false.
                 end if
             else 
                 !% --- closed conduit overflow
