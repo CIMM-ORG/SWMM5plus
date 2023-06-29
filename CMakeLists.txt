@@ -2,13 +2,14 @@ include(FetchContent)
 include(ExternalProject)
 
 cmake_minimum_required(VERSION 3.16.0)
-project(SWMM5Plus VERSION 0.0.1)
+project(SWMM5Plus VERSION 1.0)
 enable_language (Fortran)
 
 
 find_package (Python3 COMPONENTS Interpreter)
 
 set(testing_available ON)
+set(CPACK_SET_DESTDIR ON)
 
 function(check_python_dependencies module)
 message(STATUS "Looking for Python module '${module}'")
@@ -178,19 +179,19 @@ set_target_properties(swmm5 PROPERTIES LINKER_LANGUAGE C
 CXX_STANDARD 14)
 
 
-add_executable(SWMM
+add_executable(SWMMp
     ${SWMM5X_SOURCES}
 )
-target_include_directories(SWMM PUBLIC
+target_include_directories(SWMMp PUBLIC
     ${HDF5_INCLUDE_DIR}
 )
-target_link_directories(SWMM PUBLIC
+target_link_directories(SWMMp PUBLIC
     ${HDF5_LIB_DIR}
 )
-target_link_libraries(SWMM PUBLIC
+target_link_libraries(SWMMp PUBLIC
     ${HDF5_LIBRARIES}
 )
-add_dependencies(SWMM hdf5)
+add_dependencies(SWMMp hdf5)
 
 #Testing
 check_python_dependencies(tornado)
@@ -204,3 +205,11 @@ if (testing_available)
     message(STATUS "Making tests available")
     add_subdirectory(ctest)    
 endif()
+
+
+#INSTALLATION
+install(TARGETS SWMMp DESTINATION bin)
+install(TARGETS swmm5 DESTINATION lib)
+
+#cpack
+include(CPack)
