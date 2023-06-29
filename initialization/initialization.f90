@@ -145,49 +145,49 @@ contains
 
         !% --- initialize the coarrays that depend on number of images
         !%     and not on number of links/nodes, elements or faces.
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin initialize secondary coarrays"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin initialize secondary coarrays"
         call util_allocate_secondary_coarrays ()
 
         !% --- initialize the API with the SWMM-C code
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin interface between SWMM-C and 5+"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin interface between SWMM-C and 5+"
         call interface_init ()
         call util_crashstop(43974)
 
         !% --- set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
         call init_linknode_arrays ()
         call util_crashstop(31973)
 
         !% --- initialize ForceMain settings (determines if FM is used)
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin Forcemain setting"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin Forcemain setting"
         call init_ForceMain_setting ()
 
         !% --- initialize Adjustments from EPA SWMM input file
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin get adjustments"
+       ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin get adjustments"
         call interface_get_adjustments ()
 
         !% --- setup the irregular transect arrays associated with SWMM-C input links
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
         call init_link_transect_array()
         call util_crashstop(42873)
 
         !% --- initialize globals that are run-time dependent
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
         call init_globals()
         
         !% --- store the SWMM-C curves in equivalent Fortran arrays
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
         call init_curves()
         call util_crashstop(53454)
 
         !% --- read in profiles from .inp file and create 
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 profile processing"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 profile processing"
         if (this_image() .eq. 1) then 
             call init_profiles()
         end if
 
         !% --- initialize culverts
-        if (setting%Output%Verbose) print *, "begin initializing culverts"
+        !if (setting%Output%Verbose) print *, "begin initializing culverts"
         call init_culvert()
 
         !% --- kinematic viscosity for water
@@ -199,7 +199,7 @@ contains
         !%==========================================================================
     
         !% --- break the link-node system into partitions for multi-processor operation
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
         call init_partitioning()
         call util_crashstop(5297)
 
@@ -227,39 +227,39 @@ contains
         !%                NETWORK DEFINITION ON EACH PROCESSOR IMAGE
         !%==========================================================================
         !% --- translate the link-node system into a finite-volume network
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin network define"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin network define"
         call network_define_toplevel ()
         call util_crashstop(3293)
 
         !% --- LINK-ELEM DATA BROADCAST
         !%     ensures that all images have the unique data they need from other images after
         !%     partitioning and network definition
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin init linkarray broadcast"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin init linkarray broadcast"
         call init_linkarray_broadcast()
         call util_crashstop(550987)
 
         !% --- initialize boundary and ghost elem arrays for inter image data transfer
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init boundary ghost"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init boundary ghost"
         call init_boundary_ghost_elem_array ()
         call util_crashstop(2293)
         
         !% --- initialize the time variables
-        if (setting%Output%Verbose) print *, "begin initializing time"
+        !if (setting%Output%Verbose) print *, "begin initializing time"
         call init_time()
 
         !% --- initialize simple controls from json file
-        if (setting%Output%Verbose) print *, "begin initializing simulation controls"
+        !if (setting%Output%Verbose) print *, "begin initializing simulation controls"
         call init_simulation_controls() 
 
         !% --- HYDROLOGY
         if (setting%Simulation%useHydrology) then 
             if (setting%SWMMinput%N_subcatch > 0) then
-                if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin subcatchment initialization"
+                !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin subcatchment initialization"
                 call init_subcatchment()
             else 
                 if (this_image() == 1) then
-                    write(*,'(A)') ' ...setting.Simulation.useHydrology requested, but no subcatchments found.'
-                    write(*,'(A)') ' ...skipping hydrology in this simulation.'
+                    write(*,'(A)') ' ... setting.Simulation.useHydrology requested, but no subcatchments found.'
+                    write(*,'(A)') ' ... skipping hydrology in this simulation.'
                 end if
                 setting%Simulation%useHydrology = .false.
             end if
@@ -271,7 +271,7 @@ contains
         !%==========================================================================
         !%                                   OUTPUT SETUP
         !%==========================================================================
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
         call init_report()
 
         !%==========================================================================
@@ -291,7 +291,7 @@ contains
         end if    
 
         !% --- initial conditions
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init IC_toplevel"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init IC_toplevel"
         call init_IC_toplevel ()       
         call util_crashstop(4429873)
 
@@ -313,7 +313,7 @@ contains
         !%        but that caused linking problems due to use of pack/mask calls
         if (setting%Output%Report%provideYN) then 
             if (setting%Simulation%useHydraulics) then !% 
-                if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin setup of output files"
+                !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin setup of output files"
                 !% --- Get the output element and face locations
                 call outputML_selection ()                
                 !% --- Create packed arrays of elem row numbers that are output
@@ -339,10 +339,10 @@ contains
  
         !%------------------------------------------------------------------- 
         !% Closing
-            if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_check_setup_conditions"
+            !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_check_setup_conditions"
             call init_check_setup_conditions()
 
-            if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_timer_stop"
+            !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_timer_stop"
             call init_timer_stop ()
 
             if (setting%Simulation%stopAfterInitializationYN) then
@@ -360,7 +360,10 @@ contains
             end if
             call util_crashstop(440987)
 
-            if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, 'finished initialization'
+            if ((setting%Output%Verbose) .and. (this_image() == 1)) then 
+                 print *, 'finished initialization'
+                 print *, ' '
+            end if
 
             if (setting%Debug%File%initialization)  &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"   
@@ -2547,16 +2550,25 @@ contains
         !% Preliminaries: 
             if (this_image() .ne. 1) return
         !%------------------------------------------------------------------ 
-        write(*,*) ' '
-        write(*,'(A)') '*******************************************************************'
+        !write(*,*) ' '
+        !write(*,'(A)') '*******************************************************************'
+ 
         
         if (.not. setting%ZeroValue%UseZeroValues) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.ZeroValue.UseZeroValues = false, which is not tested and not presently allowed'
             write(*,'(A)') '** '
             ifound = .true.
             ifail  = .true.
         end if
         if (.not. setting%VariableDT%ApplyYN) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.VariableDT%ApplyYN = false'
             write(*,'(A)') '** This option is not tested and not presently allowed.'
             write(*,'(A)') '** '
@@ -2564,6 +2576,10 @@ contains
             ifail  = .true.
         end if
         if (.not. setting%Time%useSWMMinpYN) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.Time.useSWMMinYN = false'
             write(*,'(A)') '** The simulation will use the timing data from the json file '
             write(*,'(A)') '** rather than fromthe SWMM *.inp file.' 
@@ -2572,6 +2588,10 @@ contains
             ifound = .true.
         end if
         if (setting%TestCase%UseTestCaseYN) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.TestCase.UseTestCaseYN = true'
             write(*,'(A)') '** This option is not tested and not presently allowed.'
             write(*,'(A)') '** '
@@ -2579,6 +2599,10 @@ contains
             ifail  = .true.
         end if
         if (.not. setting%Solver%PreissmannSlot%useSlotTF) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.Solver.PreissmannSlot.useSlotTF = false'
             write(*,'(A)') '** This option is not tested and not presently allowed.'
             write(*,'(A)') '** '
@@ -2586,6 +2610,10 @@ contains
             ifail  = .true.
         end if
         if (setting%Solver%SubtractReferenceHead) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.Solver.SubtractReferenceHead = true'
             write(*,'(A)') '** This option is not tested and not presently allowed.'
             write(*,'(A)') '** '
@@ -2593,6 +2621,10 @@ contains
             ifail  = .true.
         end if
         if (.not. setting%Simulation%useHydraulics) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.Simulation.useHydraulics = false'
             write(*,'(A)') '** This option is not tested and not presently allowed.'
             write(*,'(A)') '** '
@@ -2600,6 +2632,10 @@ contains
             ifail  = .true.
         end if
         if (setting%Profile%useYN) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.Profile.useYN = true. '
             write(*,'(A)') '** This code timing profiler is still in development, so results should '
             write(*,'(A)') '** be used with caution.'
@@ -2607,18 +2643,30 @@ contains
             ifound = .true.
         end if
         if (.not. setting%Output%Verbose) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.Output.Verbose = false. '
             write(*,'(A)') '** While SWMM5+ is in development we recommend using true. '
             write(*,'(A)') '** '
             ifound = .true.
         end if
         if (.not. setting%Output%Warning) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.Output.Warning = false. '
             write(*,'(A)') '** While SWMM5+ is in development we recommend using true. '
             write(*,'(A)') '** '
             ifound = .true.
         end if
         if (.not. setting%File%force_folder_creationYN) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.File.force_folder_creationYN = false.'
             write(*,'(A)') '** This option is not tested and not presently allowed.'
             write(*,'(A)') '** '
@@ -2626,6 +2674,10 @@ contains
             ifail  = .true.
         end if
         if (.not. setting%File%UseCommandLineFoldersYN) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.File.UseCommandLineFoldersYN = false. '
             write(*,'(A)') '** This option is not tested and not presently allowed.'
             write(*,'(A)') '** '
@@ -2633,6 +2685,10 @@ contains
             ifail  = .true.
         end if
         if (setting%BC%disableInterpolationYN) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.BC.disableInterpolationYN = true.'
             write(*,'(A)') '** While SWMM5+ is in development we recommend using false. '
             write(*,'(A)') '** This disables interpolation of time series and simply takes the'
@@ -2641,6 +2697,10 @@ contains
             ifound = .true.
         end if
         if (.not. setting%Output%Report%useSWMMinpYN) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.Output.Report.useSWMMinYN = false.'
             write(*,'(A)') '** The simulation will use the report data from the json file '
             write(*,'(A)') '** rather than from the SWMM *.inp file.'
@@ -2649,6 +2709,10 @@ contains
             ifound = .true.
         end if
         if (.not. setting%Output%Report%provideYN) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.Output.Report.provideYN = false.'
             write(*,'(A)') '** The simulation will suppress the output reporting.'
             write(*,'(A)') '** Use this option with caution.'
@@ -2656,6 +2720,10 @@ contains
             ifound = .true.
         end if
         if (setting%Output%Report%suppress_MultiLevel_Output) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.Report.suppress_MultiLevel_Output = true.'
             write(*,'(A)') '** The simulation will suppress all the output reporting from hydraulics.'
             write(*,'(A)') '** Presently, the only output from hydraulics is through the ML scheme.'
@@ -2664,6 +2732,10 @@ contains
             ifound = .true.
         end if
         if (.not. setting%Limiter%Velocity%UseLimitMaxYN) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.Limiter.Velocity.UseLimitMaxYN = false.'
             write(*,'(A)') '** We recommend using true'
             write(*,'(A)') '** Without a velocity limiter, a minor instability can become'
@@ -2672,6 +2744,10 @@ contains
             ifound = .true.
         end if
         if (.not. setting%Limiter%Dt%UseLimitMinYN) then
+            if (.not. ifound) then 
+                write(*,*) ' '
+                write(*,'(A)') '*******************************************************************'
+            end if
             write(*,'(A)') '** setting.Limiter.Dt.UseLimitMinYN = false.  '
             write(*,'(A)') '** We recommend using true.'
             write(*,'(A)') '** The variable dt will become very small if the simulation'
