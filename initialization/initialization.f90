@@ -1635,7 +1635,7 @@ contains
             integer       :: ii, jj,kk, offset, offset_profile
             integer       :: error, mm
             integer       :: thisUnit
-            logical       :: doesExist,isOpen
+            logical       :: doesExist, isOpen, first_profile
         !%------------------------------------------------------------------
         !% --- alias for the unit number
         thisUnit = setting%File%UnitNumber%inp_file
