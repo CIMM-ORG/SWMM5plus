@@ -210,6 +210,23 @@ contains
 
 
         end if
+
+        !% --- print the output folder (used for profile animation)
+        if (setting%Output%Verbose) then
+            write(*,"(A)") ''
+            write(*,"(A)") 'For profile_animate.py, the latest output (-o arg) is stored at... '
+            write(*,"(A)") trim(setting%File%output_timestamp_subfolder)
+        end if
+
+        !% --- print valid profile names
+        if (setting%Output%Verbose) then
+            write(*,"(A)") ''
+            write(*,"(A)") 'Valid profile_animate.py names (-s arg) are...'
+            do ii=1,max_profiles_N 
+                write(*,"(A)") trim(output_profile_names(ii))
+            end do
+        end if
+
         !% --- close all the allocated data 
         !%     this is located here because it is often a seg fault when creating new code
         call util_deallocate_network_data()

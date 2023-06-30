@@ -46,7 +46,7 @@ def convert_dset_to_csv(file_name,dset_name):
         csv_name = dset_name+'.csv'
         with open(csv_name, 'w',newline='') as csv_file:
             csvwriter = csv.writer(csv_file)
-            csvwriter.writerows((dset.attrs['header_data'][:,:].astype('U13')))
+            csvwriter.writerows((dset.attrs['header_data'][:,:].astype('U')))
             csvwriter.writerows(np.round(dset[:,:],6))
 
 def get_index_from_data_array(array,data_name):
@@ -54,7 +54,7 @@ def get_index_from_data_array(array,data_name):
     # this function doesnot work for linkFV/nodeFV dataset
 
     # find the header in the data array and convert them to string
-    header = array.attrs['header_data'][1,:].astype('U101')
+    header = array.attrs['header_data'][1,:].astype('U')
     # find the colum index in the dataset matching the attribute name
     idx = [i for i, s in enumerate(header) if data_name == s]
     if idx == []:
@@ -72,8 +72,8 @@ def get_unit_from_data_array(array,data_name):
     # returns units of a specific data in the link/node dataset in the h5 file
     
     
-    header = array.attrs['header_data'][1,:].astype('U101')
-    units  = array.attrs['header_data'][2,:].astype('U101')
+    header = array.attrs['header_data'][1,:].astype('U')
+    units  = array.attrs['header_data'][2,:].astype('U')
     # find the colum index in the dataset matching the attribute name
     idx = [i for i, s in enumerate(header) if data_name == s]
     if idx == []:

@@ -1739,7 +1739,7 @@ contains
 
         lasttimeread = 0
         lasttimestart = 0
-        print *, "before outer loop for ML output"
+        !% print *, "before outer loop for ML output"
         !% -----------------------------------------
         !% --- OUTER LOOP CYCLES THROUGH ALL THE MULTI-LEVEL FILES THAT HAVE BEEN WRITTEN
         do ii=1,nWritten
@@ -2055,7 +2055,7 @@ contains
                     end if ! ii=1
                 end if !% NtotalOutputElements > 0
 
-                print *, "storage for elem->node conversion"
+                ! print *, "storage for elem->node conversion"
 
             !% -----------------------------------
             !% --- PART 3b --- STORAGE FOR ELEM->NODE CONVERSION

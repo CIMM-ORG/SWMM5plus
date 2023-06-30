@@ -21,8 +21,8 @@ module preissmann_slot
     public :: slot_CC
     public :: slot_JM
     public :: slot_initialize
-    public :: slot_JM_head_PSadd
-    public :: slot_JM_head_PSremove
+    !public :: slot_JM_head_PSadd
+    !public :: slot_JM_head_PSremove
     public :: slot_CC_adjustments
     public :: slot_JM_adjustments
     public :: slot_JB_computation
@@ -61,71 +61,76 @@ module preissmann_slot
 !%==========================================================================
 !%==========================================================================
 !%    
-    subroutine slot_JM_head_PSadd (thisColP_JM)
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Adjusts head on JM for surcharge and/or ponding effects
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in) :: thisColP_JM
-            integer, pointer :: Npack, thisP(:)
-            !real(8), pointer :: PondedArea(:), PondedVolume(:), PondedHead(:)
-            real(8), pointer :: Head(:), SlotDepth(:)
-        !%------------------------------------------------------------------
-        !% Preliminaries:
-            !% --- exit if not using PS
-            if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
-            !% --- exit if no JM elements
-            Npack => npack_elemP(thisColP_JM)
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
-        !% Aliases
-            thisP        => elemP(1:Npack,thisColP_JM)
-            !PondedArea   => elemSR(:,esr_JunctionMain_PondedArea)
-            !PondedVolume =>  elemR(:,er_VolumePonded)
-            !PondedHead   =>  elemR(:,er_Temp01)
-            Head         =>  elemR(:,er_Head)
-            SlotDepth    =>  elemR(:,er_SlotDepth)
+    ! subroutine slot_JM_head_PSadd (thisColP_JM)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Adjusts head on JM for surcharge and/or ponding effects
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer, intent(in) :: thisColP_JM
+    !         integer, pointer :: Npack, thisP(:)
+    !         !real(8), pointer :: PondedArea(:), PondedVolume(:), PondedHead(:)
+    !         real(8), pointer :: Head(:), SlotDepth(:)
+    !     !%------------------------------------------------------------------
+    !     !% Preliminaries:
+    !         !% --- exit if not using PS
+    !         if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
+    !         !% --- exit if no JM elements
+    !         Npack => npack_elemP(thisColP_JM)
+    !         if (Npack < 1) return
+    !     !%------------------------------------------------------------------
+    !     !% Aliases
+    !         thisP        => elemP(1:Npack,thisColP_JM)
+    !         !PondedArea   => elemSR(:,esr_JunctionMain_PondedArea)
+    !         !PondedVolume =>  elemR(:,er_VolumePonded)
+    !         !PondedHead   =>  elemR(:,er_Temp01)
+    !         Head         =>  elemR(:,er_Head)
+    !         SlotDepth    =>  elemR(:,er_SlotDepth)
 
-        !%------------------------------------------------------------------
+    !     !%------------------------------------------------------------------
 
-        Head(thisP) = Head(thisP) + SlotDepth(thisP)
+    !     print *, 'OBSOLETE 20230628'
+    !     stop 669873
+    !     Head(thisP) = Head(thisP) + SlotDepth(thisP)
 
-    end subroutine slot_JM_head_PSadd
+    ! end subroutine slot_JM_head_PSadd
 !%   
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine slot_JM_head_PSremove (thisColP_JM)
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Adjusts head on JM for surcharge and/or ponding effects
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer, intent(in) :: thisColP_JM
-            integer, pointer :: Npack, thisP(:)
-            !real(8), pointer :: PondedArea(:), PondedVolume(:), PondedHead(:)
-            real(8), pointer :: Head(:), SlotDepth(:)
-        !%------------------------------------------------------------------
-        !% Preliminaries:
-            !% --- exit if not using PS
-            if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
-            Npack => npack_elemP(thisColP_JM)
-            if (Npack < 1) return
-        !%------------------------------------------------------------------
-        !% Aliases:
-            thisP        => elemP(1:Npack,thisColP_JM)
-            !PondedArea   => elemSR(:,esr_JunctionMain_PondedArea)
-            !PondedVolume => elemR (:,er_VolumePonded)
-            !PondedHead   => elemR (:,er_Temp01)
-            Head         => elemR (:,er_Head)
-            SlotDepth    => elemR (:,er_SlotDepth)
-        !%------------------------------------------------------------------
+    ! subroutine slot_JM_head_PSremove (thisColP_JM)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Adjusts head on JM for surcharge and/or ponding effects
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !         integer, intent(in) :: thisColP_JM
+    !         integer, pointer :: Npack, thisP(:)
+    !         !real(8), pointer :: PondedArea(:), PondedVolume(:), PondedHead(:)
+    !         real(8), pointer :: Head(:), SlotDepth(:)
+    !     !%------------------------------------------------------------------
+    !     !% Preliminaries:
+    !         !% --- exit if not using PS
+    !         if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
+    !         Npack => npack_elemP(thisColP_JM)
+    !         if (Npack < 1) return
+    !     !%------------------------------------------------------------------
+    !     !% Aliases:
+    !         thisP        => elemP(1:Npack,thisColP_JM)
+    !         !PondedArea   => elemSR(:,esr_JunctionMain_PondedArea)
+    !         !PondedVolume => elemR (:,er_VolumePonded)
+    !         !PondedHead   => elemR (:,er_Temp01)
+    !         Head         => elemR (:,er_Head)
+    !         SlotDepth    => elemR (:,er_SlotDepth)
+    !     !%------------------------------------------------------------------
 
-        Head(thisP) = Head(thisP) - SlotDepth(thisP)
+    !     print *, 'OBSOLETE 20230628'
+    !     stop 77222987
+
+    !     Head(thisP) = Head(thisP) - SlotDepth(thisP)
  
 
-    end subroutine slot_JM_head_PSremove
+    ! end subroutine slot_JM_head_PSremove
 !%
 !%==========================================================================
 !%==========================================================================
@@ -608,8 +613,7 @@ module preissmann_slot
         !%------------------------------------------------------------------
         !% Description:
         !% Compute Preissmann slot for closed JM's in ETM methods
-        !% Note this does NOT change the volume stored except in the case
-        !% ponding or overflow
+        !% Note this does NOT change the volume stored.
         !%
         !% NOTE: as this is JM only, which have exactly 1 barrel, there
         !% is no need to multiply overflow/ponding by number of barrels.
@@ -621,9 +625,10 @@ module preissmann_slot
             real(8), pointer    :: fullarea(:), fullVolume(:), length(:)
             real(8), pointer    :: PNumber(:), PCelerity(:), pAreaSurcharge(:)
             real(8), pointer    :: volume(:) , SlotVolume(:), SlotDepth(:), SlotArea(:)
-            real(8), pointer    :: SlotWidth(:), maxSlotDepth(:), SurchargeTime(:)
-            real(8), pointer    :: SlotVolN0(:),  SlotDepthN0(:), PNumberInitial(:)
-            real(8), pointer    :: VolumeExtra(:), VolumePonded(:), VolumeOverflow(:)
+            real(8), pointer    :: SlotWidth(:), SurchargeTime(:)
+            !real(8), pointer    :: maxSlotDepth(:)
+            real(8), pointer    :: SlotVolN0(:),  SlotDepthN0(:), PnumberInitial(:)
+            !real(8), pointer    :: VolumeExtra(:), VolumePonded(:), VolumeOverflow(:)
             real(8), pointer    :: TargetPCelerity, cfl, grav, Alpha, Dt, DecayRate
             logical, pointer    :: isSlot(:), isSurcharge(:), canSurcharge(:)
             integer ::  kk, mm, JMidx, bcount 
@@ -655,13 +660,13 @@ module preissmann_slot
             SlotWidth  => elemR(:,er_SlotWidth)
             SlotArea   => elemR(:,er_SlotArea)
             volume     => elemR(:,er_Volume)
-            maxSlotDepth   => elemSR(:,esr_JunctionMain_OverflowHeightAboveCrown)
+            !maxSlotDepth   => elemSR(:,esr_JunctionMain_OverflowHeightAboveCrown)
             pAreaSurcharge => elemSR(:,esr_JunctionMain_Surcharge_Plan_Area)
             PnumberInitial => elemR(:,er_Preissmann_Number_initial)
             SurchargeTime  => elemR(:,er_Surcharge_Time)
-            VolumePonded   => elemR(:,er_VolumePondedTotal)
-            VolumeExtra    => elemR(:,er_Temp01)
-            VolumeOverflow => elemR(:,er_VolumeOverFlow)
+            !VolumePonded   => elemR(:,er_VolumePondedTotal)
+            !VolumeExtra    => elemR(:,er_Temp01)
+            !VolumeOverflow => elemR(:,er_VolumeOverFlow)
             !% --- pointer to elemYN column
             isSlot         => elemYN(:,eYN_isPSsurcharged)
             isSurcharge    => elemYN(:,eYN_isSurcharged)
@@ -681,7 +686,7 @@ module preissmann_slot
         SlotDepth(thisP)      = zeroR
         PCelerity(thisP)      = zeroR
         SlotWidth(thisP)      = zeroR
-        VolumeExtra(thisP)    = zeroR
+        !VolumeExtra(thisP)    = zeroR
         isSlot(thisP)         = .false.
         isSurcharge(thisP)    = .false.
 
@@ -697,12 +702,13 @@ module preissmann_slot
                 SlotWidth(thisP)      = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
                 pAreaSurcharge(thisP) = SlotWidth(thisP) * elemR(thisP,er_Length) 
                 SlotDepth(thisP)      = SlotVolume(thisP) / pAreaSurcharge(thisP)
+                !% obsolete below 20230628 brh
                 !% --- difference between SlotDepth and maximum is the "extra" volume
                 !%     If negative, this is volume that could be filled by ponding
                 !%     If positive, this is volume that is added to ponding or lost 
                 !%     in overflow
-                VolumeExtra(thisP) =  (SlotDepth(thisP) - maxSlotDepth(thisP)) &
-                                        * pAreaSurcharge(thisP)
+                ! VolumeExtra(thisP) =  (SlotDepth(thisP) - maxSlotDepth(thisP)) &
+                !                         * pAreaSurcharge(thisP)
             end where
         case (DynamicSlot)
             !% --- initialize dynamic slot

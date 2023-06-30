@@ -108,13 +108,13 @@ contains
         elemR(:,er_SedimentDepth) = zeroR
 
         !% --- get data that can be extracted from links
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
         call init_IC_from_linkdata ()
 
         sync all
         !% --- set up background geometry for weir, orifice, etc.
         !%     from adjacent elements
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
         call init_IC_diagnostic_geometry_from_adjacent (.true.)
 
         !% --- sync after all the link data has been extracted
@@ -123,30 +123,30 @@ contains
         sync all
         
         !% --- get data that can be extracted from nodes
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_for_nJM_from_nodedata'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_for_nJM_from_nodedata'
         call init_IC_for_nJm_from_nodedata ()
 
         !% --- second call for diagnostic that was next to JM/JB
         sync all
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
         call init_IC_diagnostic_geometry_from_adjacent (.false.)
 
         !% --- identify all faces adjacent to diagnostic elements
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_diagnostic_adjacent_faces'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_diagnostic_adjacent_faces'
         call init_IC_identify_diagnostic_adjacent_faces ()
 
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_diagnostic_adjacent_elements'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_diagnostic_adjacent_elements'
         call init_IC_identify_diagnostic_adjacent_elements ()
 
         !% --- identify special case diagnostic elements that have JB on either side
         !%     these have the face flowrates frozen in the junction residual computation
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_JB_bounded'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_JB_bounded'
         call init_IC_diagnostic_JB_bounded ()
 
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_CC_adjacent_faces'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_CC_adjacent_faces'
         call init_IC_identify_CC_adjacent_faces ()
 
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_CC_adjacent_nonCC_elements'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_CC_adjacent_nonCC_elements'
         call init_IC_identify_CC_adjacent_nonCC_elements () 
 
         !% --- error checking for nullvalues
@@ -171,7 +171,7 @@ contains
         ! end do
 
         !% --- set up the transect arrays
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_elem_transect...'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_elem_transect...'
         call init_IC_elem_transect_arrays ()
         call init_IC_elem_transect_geometry ()
 
@@ -181,11 +181,11 @@ contains
         !% --- ensure that IC depth and volume are consistent
         call init_IC_depth_volume_consistency ()
 
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_error_check'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_error_check'
         call init_IC_error_check ()
        
         !% --- identify the small and zero depths (must be done before pack)
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth'
         !% --- if not using small depth algorithm, then cuttoff is the same as zero depth
         !%     HACK small depth algorithm is presently not functional 20230601
         if (.not. setting%SmallDepth%useMomentumCutoffYN) setting%SmallDepth%MomentumDepthCutoff = setting%ZeroValue%Depth
@@ -194,15 +194,15 @@ contains
         call adjust_element_toplevel (JM) 
 
         !% ---zero out the lateral inflow column
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_set_zero_lateral_inflow'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_set_zero_lateral_inflow'
         call init_IC_set_zero_lateral_inflow ()
 
         !% --- update time marching type
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_solver_select '
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_solver_select '
         call init_IC_solver_select ()
        
         !% --- set up all the static packs and masks
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
 
         !%----------------------------------------------------------------
@@ -210,44 +210,44 @@ contains
         !%---------------------------------------------------------------
 
         !% --- initialize zerovalues for other than depth (must be done after pack)
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC_Zerovalues'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC_Zerovalues'
         call init_IC_ZeroValues_nondepth ()
 
         !% --- set all the zero and small volumes
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 2'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 2'
         call adjust_element_toplevel (CC)
         call adjust_element_toplevel (JB)
         !% HACK QUESTION: do we need JM call here?  20230601
 
         !% --- get the bottom slope
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC bottom slope'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC bottom slope'
         call init_IC_bottom_slope ()
 
         !% --- set small volume values in elements
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_set_SmallVolumes'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_set_SmallVolumes'
         call init_IC_set_SmallVolumes ()
 
         !% --- initialize Preissmann slots
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_slot'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_slot'
         call init_IC_slot ()
 
         !% --- get the velocity and any other derived data
         !%     These are data needed before bc and aux variables are updated
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_derived_data'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_derived_data'
         call init_IC_derived_data()
 
         !% --- set the reference head (based on Zbottom values)
         !%     this must be called before bc_update() so that
         !%     the timeseries for head begins correctly
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_reference_head'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_reference_head'
         call init_reference_head()
 
         !% --- remove the reference head values from arrays
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_subtract_reference_head'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_subtract_reference_head'
         call init_subtract_reference_head()
 
         !% --- create the packed set of nodes for BC
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_nodes'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_nodes'
         call pack_nodes_BC()
         call util_allocate_bc()
 
@@ -255,34 +255,34 @@ contains
         if (setting%Solver%ForceMain%AllowForceMainTF) call forcemain_ManningsN ()
 
         !% --- initialize boundary conditions
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
         call init_bc()
 
         !% --- setup the sectionfactor arrays needed for normal depth computation on outfall BC
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_uniformtable_array"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_uniformtable_array"
         call init_uniformtable_array()
 
         !% --- update the BC so that face interpolation works in update_aux...
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin bc_update'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin bc_update'
         call bc_update()
         if (crashI==1) return
 
 
         !% --- storing dummy values for branches that are invalid
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch dummy values'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch dummy values'
         call init_IC_branch_dummy_values ()
 
         !% --- initialize branch values that need to be zero
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch zero values'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch zero values'
         call init_IC_branch_zero_values ()
 
         !% --- set all the auxiliary (dependent) variables
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables CC'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables CC'
         call update_auxiliary_variables_CC (&
             ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
             .true., .false., dummyIdx)
 
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables JM'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables JM'
         Npack => npack_elemP(ep_JM)
         if (Npack > 0) then
             thisP => elemP(1:Npack,ep_JM)
@@ -324,19 +324,19 @@ contains
         !% --- initialize old head 
         !%     HACK - make into a subroutine if more variables need initializing
         !%     after update_aux_var
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin setting old head'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin setting old head'
         elemR(:,er_Head_N0) = elemR(:,er_Head)
 
         !% --- update diagnostic interpolation weights
         !%     (the interpolation weights of diagnostic elements
         !%     stays the same throughout the simulation. Thus, they
         !%     are only needed to be set at the top of the simulation)
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,  'begin init_IC_diagnostic_interpolation_weights'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,  'begin init_IC_diagnostic_interpolation_weights'
         call init_IC_diagnostic_interpolation_weights()
 
         !% --- set small values to diagnostic element interpolation sets
         !%     Needed so that junk values does not mess up the first interpolation
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin  init_IC_small_values_diagnostic_elements'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin  init_IC_small_values_diagnostic_elements'
         call init_IC_small_values_diagnostic_elements
 
         call adjust_element_toplevel(CC)
@@ -344,15 +344,15 @@ contains
         call adjust_element_toplevel(JB) 
 
         !% --- update faces
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
         call face_interpolation (fp_noBC_IorS,.true.,.true.,.true.,.false.,.false.)
 
         !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
-        if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
+        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
         call control_init_monitoring_and_action_from_EPASWMM()
 
         !% --- update the initial condition in all diagnostic elements
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
         call diagnostic_by_type (ep_Diag, 1)
         !% reset any face values affected
         call face_interpolation (ep_Diag,.true.,.true.,.true.,.true.,.true.)
@@ -365,11 +365,11 @@ contains
         end if
 
         !% --- ensure that small and zero depth faces are correct
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 3'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 3'
         call adjust_zero_and_small_depth_face (.false.)
 
         !% ---populate er_ones columns with ones
-        if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
+        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
     
         !% --- error check for ponding scales 

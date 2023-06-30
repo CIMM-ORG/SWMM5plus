@@ -19,7 +19,7 @@ def get_index_from_data_array(array,array_name,data_name):
     # this function doesnot work for linkFV/nodeFV dataset
 
     # find the header in the data array and convert them to string
-    header = array.attrs['header_data'][1,:].astype('U101')
+    header = array.attrs['header_data'][1,:].astype('U')
     # find the colum index in the dataset matching the attribute name
     idx = [i for i, s in enumerate(header) if data_name == s]
     if idx == []:
@@ -49,7 +49,7 @@ nJm  = 3
 # select what unit to produce the animation to
 unit = 'CMS'
 # save animation
-save_animation = False
+save_animation = True
 #-----------------------------------------------------------------------------------
 # profile name given by arg
 arg_profile_name = ""
@@ -194,10 +194,9 @@ for profile_name_test in all_attribute_names:
     else:
         # say we have a profile like below from the hdf file
 
-        profile = h5_file.attrs[profile_name_test][0,:].astype('U13')
+        profile = h5_file.attrs[profile_name_test][0,:].astype('U')
 
     # say we have a profile like below from the hdf file
-
     element_head     = []
     element_length   = []
     element_zbottom  = []
