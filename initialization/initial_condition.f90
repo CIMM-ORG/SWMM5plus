@@ -66,9 +66,9 @@ contains
         !% set up the initial conditions for all the elements
         !%------------------------------------------------------------------
         !% Declarations:
-            integer          :: ii, iblank, whichTM
+            integer          :: whichTM
             integer, pointer :: whichSolver
-            integer, pointer :: thisCol, Npack, thisP(:)
+            integer, pointer :: Npack, thisP(:)
             character(64)    :: subroutine_name = 'init_IC_toplevel'
         !%-------------------------------------------------------------------
         !% Preliminaries:
@@ -199,7 +199,7 @@ contains
 
         !% --- update time marching type
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_solver_select '
-        call init_IC_solver_select (whichSolver)
+        call init_IC_solver_select ()
        
         !% --- set up all the static packs and masks
         if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
@@ -425,12 +425,9 @@ contains
         !% get the initial depth, flowrate, and geometry data from links
         !%------------------------------------------------------------------
         !% Declarations:
-            integer                                     :: ii, kk, pLink, npack
-            integer, pointer                            :: thisLink, eIdx(:)
+            integer                                     :: ii, pLink
+            integer, pointer                            :: thisLink
             integer, dimension(:), allocatable, target  :: packed_link_idx
-            integer, dimension(:), allocatable, target  :: ePack
-            integer           :: allocation_status, deallocation_status
-            character(len=99) :: emsg
             character(64) :: subroutine_name = 'init_IC_from_linkdata'
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -622,16 +619,15 @@ contains
         !%-----------------------------------------------------------------
         !% Declarations:
             integer, intent(in)  :: thisLink
-            integer              :: mm, ei_max, firstidx(1)
+            integer              :: mm, firstidx(1)
             integer, allocatable :: pElem(:)
             integer, pointer     :: LdepthType,  nUp, nDn
-            integer, pointer     :: thisP(:)
             logical, pointer     :: hasFlapGate
             real(8), pointer     :: DepthUp, DepthDn
             real(8), pointer     :: zLinkUp, zLinkDn, Slope
             real(8), pointer     :: eDepth(:), eHead(:), eLength(:), eZbottom(:)
-            real(8)              :: kappa,  headUp, headDn, linkLength, length2Here
-            real(8)              :: dDelta, hDelta
+            real(8)              :: headUp, headDn, linkLength, length2Here
+            real(8)              :: hDelta
             
             character(64) :: subroutine_name = 'init_IC_get_depth_from_linkdata'
         !%-----------------------------------------------------------------
@@ -899,7 +895,6 @@ contains
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: thisLink
-            integer :: ii
             integer, pointer :: firstelem, lastelem, tNode
             character(64) :: subroutine_name = 'init_IC_get_flow_and_roughness_from_linkdata'
         !%------------------------------------------------------------------
@@ -967,7 +962,6 @@ contains
         !% Declarations:
             integer, intent(in) :: thisLink
             integer, pointer    :: linkType
-            integer             :: ii
 
             character(64) :: subroutine_name = 'init_IC_get_elemtype_from_linkdata'
         !%-------------------------------------------------------------------
@@ -1235,7 +1229,6 @@ contains
         !% Declarations:
             integer, intent(in)  :: thisLink
             integer, pointer     :: firstE, lastE, thisC
-            integer              :: ii
             character(64) :: subroutine_name = 'init_IC_get_culvert_from_linkdata'
         !%-----------------------------------------------------------------
         !% Preliminaries
@@ -1331,9 +1324,7 @@ contains
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: thisLink
-            integer, pointer    :: linkType, thisP(:), eIdx(:)
-
-            integer :: ii, Npack 
+            integer, pointer    :: linkType, eIdx(:)
 
             character(64) :: subroutine_name = 'init_IC_get_geometry_from_linkdata'
         !%------------------------------------------------------------------
@@ -1409,12 +1400,8 @@ contains
             integer, pointer    :: geometryType, link_tidx, eIdx(:), thisP(:)
             integer, pointer    :: fUp(:), fDn(:)
 
-            integer :: Npack, ii, mm
+            integer :: Npack
 
-            !% for pure calls to scalars
-            integer, dimension(1) :: Iarg
-            real(8), dimension(1) :: Rarg
-        
             real(8), pointer    :: depth(:)
             real(8), pointer    :: fullarea(:), fullperimeter(:)
             real(8), pointer    :: fulltopwidth(:), initialDepth(:)
@@ -1787,7 +1774,7 @@ contains
             integer, pointer    :: fUp(:), fDn(:)
             real(8), pointer    :: fullDepth(:), breadthMax(:), fullArea(:)
             real(8), pointer    :: depth(:), fullHydRadius(:)
-            real(8), pointer    :: pi, topwidthDepth
+            real(8), pointer    :: pi
             real(8)             :: bottomHydRadius, dummyA(1)
             character(64) :: subroutine_name = 'init_IC_get_conduit_geometry'
         !%-----------------------------------------------------------------
@@ -2749,7 +2736,7 @@ contains
         !% Declarations:
             integer             :: ii
             integer, intent(in) :: thisLink
-            integer, pointer    :: specificOutletType, curveID, eIDx
+            integer, pointer    :: specificOutletType, curveID
 
             character(64) :: subroutine_name = 'init_IC_get_outlet_geometry'
         !%-------------------------------------------------------------------
@@ -2893,7 +2880,7 @@ contains
             integer, dimension(:), allocatable, target :: packIdx
             integer, pointer :: Fidx, Aidx, thisP
             integer, pointer :: linkIdx
-            integer :: ii, jj, Ci
+            integer :: ii, Ci
             
             character(64) :: subroutine_name = 'init_IC_diagnostic_geometry_from_adjacent'
         !%-----------------------------------------------------------------
@@ -3026,7 +3013,7 @@ contains
         !% Declarations
             integer, pointer :: eDn, eUp
             integer, pointer :: Aidx, Nfaces
-            integer :: ii, Ci, ff
+            integer :: Ci, ff
         !%-----------------------------------------------------------------
         !% Aliases:
             Nfaces => N_face(this_image())
@@ -3109,7 +3096,7 @@ contains
         !% Declarations
             integer, pointer :: eDn, eUp
             integer, pointer :: Aidx, Nfaces
-            integer :: ii, Ci, ff
+            integer :: Ci, ff
         !%-----------------------------------------------------------------
         !% Aliases:
             Nfaces => N_face(this_image())
@@ -3597,13 +3584,9 @@ contains
         !% Declarations
             integer, intent(in) :: thisJunctionNode
 
-            integer              :: ii, jj, kk, JMidx, JBidx, Aidx, Ci
-            integer, pointer     :: BranchIdx, JBgeometryType, JmType, curveID, NumRows
-            integer, pointer     :: Fidx, F2idx
-            integer              :: nbranches
-            real(8), allocatable :: integrated_volume(:)
+            integer              :: ii, JMidx, JBidx, Aidx, Ci
+            integer, pointer     :: BranchIdx, JBgeometryType, JmType, Fidx, curveID 
             real(8)              :: LupMax, LdnMax
-            real(8)              :: aa,bb, lowZ, largestBreadth, trialBreadth
             logical              :: isupstream
             real(8), pointer     :: pi
 
@@ -3665,6 +3648,12 @@ contains
 
         !% --- junction main depth and head from initial conditions
         elemR(JMidx,er_Depth)     = node%R(thisJunctionNode,nr_InitialDepth)
+
+        !% --- zero depths eat nJm
+        if (elemR(JMidx,er_Depth) .le. setting%ZeroValue%Depth) then
+            elemR(JMidx,er_Depth) = setting%ZeroValue%Depth  * 0.99d0 
+        end if
+
         elemR(JMidx,er_Head)      = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
         elemR(JMidx,er_FullDepth) = node%R(thisJunctionNode,nr_FullDepth)
         elemR(JMidx,er_Zcrown)    = elemR(JMidx,er_FullDepth) + elemR(JMidx,er_Zbottom)
@@ -3850,7 +3839,7 @@ contains
             !% --- check for dry
             if (elemR(JBidx,er_Head) < elemR(JBidx,er_Zbottom)) then
                 elemR(JBidx,er_Head) = elemR(JBidx,er_Zbottom)
-                elemR(JBidx,er_Depth) = zeroR
+                elemR(JBidx,er_Depth) = setting%ZeroValue%Depth  * 0.99d0 
             end if
 
             elemR(JBidx,er_VolumeOverFlow) = zeroR
@@ -3877,7 +3866,7 @@ contains
 
             !% --- check if the connected element is Diagnostic weir, pump or orifice
             if ((elemI(Aidx,ei_elementType)[ci] == weir)    .or. &
-                (elemI(Aidx,ei_elementTYpe)[ci] == orifice) .or. &
+                (elemI(Aidx,ei_elementType)[ci] == orifice) .or. &
                 (elemI(Aidx,ei_elementType)[ci] == pump)    .or. &
                 (elemI(Aidx,ei_elementType)[ci] == outlet)       &
                 ) then 
@@ -4350,7 +4339,7 @@ contains
             integer          :: npack, ii
             real(8), pointer :: area(:), area0(:), area1(:), fullarea(:)
             real(8), pointer :: depth(:), fulldepth(:), length(:), ellDepth(:)
-            real(8), pointer :: hydDepth(:), hydRadius(:),  fullHydRadius(:)
+            real(8), pointer :: hydRadius(:),  fullHydRadius(:)
             real(8), pointer :: topwidth(:), fullTopWidth(:), perimeter(:)
             real(8), pointer :: volume(:), volume0(:), volume1(:)
             real(8), pointer :: thisTable(:,:)
@@ -4448,7 +4437,6 @@ contains
         !% the input file
         !%------------------------------------------------------------------
         !% Declarations
-            logical, pointer :: isSmallVol(:)
             integer, pointer :: npack, thisP(:)
             real(8), pointer :: area(:), flowrate(:), velocity(:)
             integer          :: thisCol
@@ -4491,13 +4479,12 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine init_IC_solver_select (whichSolver)
+    subroutine init_IC_solver_select ()
         !%------------------------------------------------------------------
         !% Desscription
         !% select the solver based on depth for all the elements
         !%------------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: whichSolver
             character(64)       :: subroutine_name = 'init_IC_solver_select'
         !%------------------------------------------------------------------
         !% Preliminaries:
@@ -4557,9 +4544,6 @@ contains
         !%-----------------------------------------------------------------
         !% Declarations:
             character(64)       :: subroutine_name = 'init_IC_diagnostic_interpolation_weights'
-
-            integer, pointer ::  Npack, thisP(:), tM
-            integer :: ii, kk, tB
         !%------------------------------------------------------------------
         !% Preliminaries
             if (setting%Debug%File%initial_condition) &
@@ -4649,7 +4633,6 @@ contains
         !%------------------------------------------------------------------
         !% Declarations
             integer, pointer :: npack, thisP(:)
-            integer :: kk
         !%------------------------------------------------------------------
         !% Aliases
             npack   => npack_elemP(ep_JM)
@@ -4684,7 +4667,7 @@ contains
             real(8), pointer    :: depth(:)
             real(8), pointer    :: tempDepth(:), tempArea(:), Atable(:)
             integer, pointer    :: geoType(:), tPack(:,:), eIdx(:) 
-            integer             :: npack, ii, indx, kk
+            integer             :: npack, ii, kk
             integer, dimension(11) :: tabXsectType
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -4948,8 +4931,8 @@ contains
         !% get the geometry data for conduit links and calculate element volumes
         !%-----------------------------------------------------------------
         !% Declarations:
-            integer :: ii, thisSize
             integer, pointer    :: SlotMethod
+            integer, dimension(:), allocatable :: packIdx
             real(8), pointer    :: TargetPCelerity, grav, Alpha
             character(64) :: subroutine_name = 'init_IC_slot'
         !%-----------------------------------------------------------------
@@ -4964,22 +4947,24 @@ contains
             grav                => setting%Constant%gravity
         !%-----------------------------------------------------------------
         !% --- initialize slots
-        thisSize = size(elemR,1)-1
-        elemR(1:thisSize,er_SlotVolume)            = zeroR
-        elemR(1:thisSize,er_SlotArea)              = zeroR
-        elemR(1:thisSize,er_SlotWidth)             = zeroR
-        elemR(1:thisSize,er_dSlotArea)             = zeroR
-        elemR(1:thisSize,er_dSlotDepth)            = zeroR
-        elemR(1:thisSize,er_dSlotVolume)           = zeroR
-        elemR(1:thisSize,er_SlotVolume_N0)         = zeroR
-        elemR(1:thisSize,er_Preissmann_Celerity)   = zeroR
-        elemR(1:thisSize,er_Surcharge_Time)        = zeroR      
-        elemR(1:thisSize,er_SlotDepth_N0)          = elemR(1:thisSize,er_SlotDepth)    
-        elemR(1:thisSize,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
-                                                              * elemR(1:size(elemR,1)-1,er_FullDepth)))
+        !% --- get the set of non dummy elements
+        packIdx = pack(elemI(:,ei_Lidx), (.not. elemYN(:,eYN_isDummy)))
 
-        where (elemR(1:thisSize,er_Preissmann_Number_initial) < setting%PreissmannSlot%MinimumInitialPreissmannNumber)
-            elemR(1:thisSize,er_Preissmann_Number_initial) = setting%PreissmannSlot%MinimumInitialPreissmannNumber   
+        elemR(packIdx,er_SlotVolume)            = zeroR
+        elemR(packIdx,er_SlotArea)              = zeroR
+        elemR(packIdx,er_SlotWidth)             = zeroR
+        elemR(packIdx,er_dSlotArea)             = zeroR
+        elemR(packIdx,er_dSlotDepth)            = zeroR
+        elemR(packIdx,er_dSlotVolume)           = zeroR
+        elemR(packIdx,er_SlotVolume_N0)         = zeroR
+        elemR(packIdx,er_Preissmann_Celerity)   = zeroR
+        elemR(packIdx,er_Surcharge_Time)        = zeroR      
+        elemR(packIdx,er_SlotDepth_N0)          = elemR(packIdx,er_SlotDepth) 
+        elemR(packIdx,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
+                                                              * elemR(packIdx,er_FullDepth)))
+
+        where (elemR(packIdx,er_Preissmann_Number_initial) < setting%PreissmannSlot%MinimumInitialPreissmannNumber)
+            elemR(packIdx,er_Preissmann_Number_initial) = setting%PreissmannSlot%MinimumInitialPreissmannNumber   
         endwhere                                                  
     
         !% --- only calculate slots for ETM time-march
@@ -4996,7 +4981,7 @@ contains
 
                 case (StaticSlot)
 
-                    elemR(1:thisSize,er_Preissmann_Number) = oneR
+                    elemR(packIdx,er_Preissmann_Number) = oneR
 
                     where (elemYN(:,eYN_isPSsurcharged))
                         elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
@@ -5009,9 +4994,9 @@ contains
 
                 case (DynamicSlot)
 
-                    !elemR(1:thisSize,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:thisSize,er_FullDepth))) 
-                    elemR(1:thisSize,er_Preissmann_Number)     = elemR(1:thisSize,er_Preissmann_Number_initial)
-                    elemR(1:thisSize,er_Preissmann_Number_N0)  = elemR(1:thisSize,er_Preissmann_Number)
+                    !elemR(packIdx,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(packIdx,er_FullDepth))) 
+                    elemR(packIdx,er_Preissmann_Number)     = elemR(packIdx,er_Preissmann_Number_initial)
+                    elemR(packIdx,er_Preissmann_Number_N0)  = elemR(packIdx,er_Preissmann_Number)
                     where (elemYN(:,eYN_isPSsurcharged))
                         elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
                         elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
@@ -5046,7 +5031,6 @@ contains
         !%------------------------------------------------------------------
         !% Declarations:
             integer, pointer :: Npack, thisP(:)
-            integer :: er_set(5), esr_set(8), fr_set(3)
         !%------------------------------------------------------------------
         !% Preliminaries:
         !%------------------------------------------------------------------   
@@ -5199,7 +5183,7 @@ contains
         !%
         !%---------------------------------------------------------------------
         !% Declarations
-            integer :: ii, nidx, ntype, counter_bc_er, outfallType
+            integer :: ii, nidx, ntype, outfallType
             integer :: SWMMtseriesIdx, SWMMbasepatType
             character(64) :: subroutine_name = "init_bc"
         !%---------------------------------------------------------------------
@@ -5392,8 +5376,7 @@ contains
         !% for computing normal depth
         !%------------------------------------------------------------------
         !% Declarations
-            integer       :: ii,  lastUT_idx  , kk    
-            real(8) :: thisdepth, thiswidth, Qdelta
+            integer :: ii,  lastUT_idx    
             character(64) :: subroutine_name = 'init_uniformtable_array'
         !%------------------------------------------------------------------
         
@@ -5445,7 +5428,7 @@ contains
             integer, pointer        :: eIdx
             integer                 :: ii, jj
             real(8), pointer        :: grav
-            real(8)                 :: sf, qcrit, thisDepth, deltaD, depthTol
+            real(8)                 :: sf, thisDepth, deltaD, depthTol
             character(64)           :: subroutine_name = 'init_BChead_uniformtable'
         !%------------------------------------------------------------------ 
         !% Aliases
@@ -5522,7 +5505,7 @@ contains
             real(8)  :: thisUvalue, deltaDepth, deltaUvalue, errorU
             real(8)  :: testUvalue, testDepth, testArea, testPerimeter
             real(8)  :: oldtestUvalue, oldtestDepth, oldtestArea, oldtestPerimeter
-            real(8)  :: thisDepth, thisArea, thisPerimeter
+            real(8)  :: thisDepth, thisArea
             real(8), parameter :: uTol = 1.d-3
             logical :: isIncreasing
             character(64) :: subroutine_name = 'init_uniformtabledata_nonUvalue'
@@ -6029,7 +6012,7 @@ contains
         !%------------------------------------------------------------------
         !% Declarations
             integer, pointer      :: Npack, thisJM(:)
-            integer               :: mm, ii, JMidx, JBidx
+            integer               :: mm, JMidx
             integer, dimension(1) :: JMar
 
             real(8)               :: AreaStore, VolStore, maxDepth

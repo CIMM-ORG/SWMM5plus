@@ -181,7 +181,7 @@ module update
         !%------------------------------------------------------------------
             integer, intent(in) :: thisP(:), Npack
             logical, intent(in) :: forceJBQyn !% --- if true then forces JB weight to max
-            integer             :: ii, mm, jB
+            integer             :: mm, jB
             real(8), pointer    :: grav, wavespeed(:), PCelerity(:), velocity(:), length(:), depth(:)
             real(8), pointer    :: w_uQ(:), w_dQ(:), w_uG(:), w_dG(:), w_uH(:), w_dH(:)
             logical, pointer    :: isSlot(:)
@@ -321,7 +321,7 @@ module update
           w_uH      => elemR(:,er_InterpWeight_uH)
           w_dH      => elemR(:,er_InterpWeight_dH)
         !%-----------------------------------------------------------------
-
+        if (Npack >0) then
           w_uQ(thisP) = setting%Limiter%Interpweight%Minimum
           w_dQ(thisP) = setting%Limiter%Interpweight%Minimum
 
@@ -330,6 +330,7 @@ module update
 
           w_uH(thisP) = setting%Limiter%Interpweight%Maximum
           w_dH(thisP) = setting%Limiter%Interpweight%Maximum
+        end if
 
     end subroutine update_interpweights_Diag
 !%
@@ -385,13 +386,12 @@ module update
             real(8), pointer    :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:), w_uP(:), w_dP(:), Area(:)
             real(8), pointer    :: Fr(:), grav
             logical, pointer    :: isSlot(:), fSlot(:)
-            integer :: ii
         !%------------------------------------------------------------------
         !% Preliminaries
             if (setting%Debug%File%update) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
-        Qlateral  => elemR(:,er_FlowrateLateral)
+            Qlateral  => elemR(:,er_FlowrateLateral)
             velocity  => elemR(:,er_Velocity)
             wavespeed => elemR(:,er_WaveSpeed)
             ellDepth  => elemR(:,er_EllDepth)  !% modified hydraulic depth!

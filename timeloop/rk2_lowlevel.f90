@@ -399,7 +399,7 @@ module rk2_lowlevel
         !% Declarations
             integer, intent(in) :: inoutCol, thisCol, Npack
             real(8), pointer    :: velocity(:), oneVec(:)
-            real(8), pointer    :: Kentry(:), Kexit(:), Kconduit(:), length(:)
+            real(8), pointer    :: Kconduit(:), length(:)
             integer, pointer    :: thisP(:)
             character(64)       :: subroutine_name = 'll_minorloss_friction_CC'
         !%------------------------------------------------------------------

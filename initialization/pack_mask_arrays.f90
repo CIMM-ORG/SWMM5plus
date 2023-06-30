@@ -2462,7 +2462,7 @@ contains
                 .and. &
                 (   (elemI(edn,ei_elementType) == JB) &
                     .or.  &
-                    (elemI(eup,ei_elementTYpe) == JB) &
+                    (elemI(eup,ei_elementType) == JB) &
                 ) )
 
         if (npack > 0) then 
@@ -2471,7 +2471,7 @@ contains
                 .and. &
                 (   (elemI(edn,ei_elementType) == JB) &
                    .or.  &
-                    (elemI(eup,ei_elementTYpe) == JB) &
+                    (elemI(eup,ei_elementType) == JB) &
                 ) )
         end if
 

@@ -35,9 +35,6 @@ contains
         !% Description:
         !% Assigns fortran unit numbers for all files in storage
         !%------------------------------------------------------------------
-            character(64) :: subroutine_name = 'util_file_assign_unitnumber'
-        !%------------------------------------------------------------------
-
         !% --- inp, rpt, out, setting files
         setting%File%last_unit = setting%File%last_unit+1
         setting%File%UnitNumber%inp_file = setting%File%last_unit
@@ -342,7 +339,6 @@ contains
             integer :: istat, ireturn, ierr, kk, lc
             logical :: isfolder = .false.
             character(len=256) :: cmsg, default_path, output_path, this_purpose, temppath
-            character(64) :: subroutine_name = "util_file_setup_output_folders"
         !%------------------------------------------------------------------
 
         output_path = trim(setting%File%output_folder)
@@ -644,7 +640,6 @@ contains
             integer :: ierr
             character(len=256), intent(inout) :: full_path
             character(len=256), intent(in) :: input_path, project_path, default_path
-            character(64) :: subroutine_name = "util_file_parse_folder_or_file_path"
         !%------------------------------------------------------------------
 
         !% --- if no project path entered, use the current working directory
@@ -696,7 +691,6 @@ contains
             character(len=256) :: cmsg
             integer :: ierr, istat
             logical :: folder_exist
-            character(64) :: subroutine_name = "util_file_check_if_folder_exist"
         !%------------------------------------------------------------------
 
         inquire (DIRECTORY=trim(thisfolder),EXIST=folder_exist)
@@ -767,7 +761,6 @@ contains
             integer, intent(in) :: thisunit
             integer :: ios
             logical :: file_exist
-            character(64) :: subroutine_name = "util_file_check_if_file_exist"
         !%------------------------------------------------------------------
 
         !% ---checks to see if valid file or folder (cannot distinguish between them)

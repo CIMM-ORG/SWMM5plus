@@ -146,7 +146,7 @@ module face
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: thisPCol
-            integer, pointer    :: Npack, thisP(:), fup, fdn
+            integer, pointer    :: Npack, thisP(:)
             integer :: ii, kk, ff
         !%------------------------------------------------------------------
             Npack => npack_elemP(thisPCol)
@@ -243,9 +243,7 @@ module face
             integer, intent(in)  :: faceCol !, whichTM
             logical, intent(in)  :: Qyn, Hyn, Gyn
             logical, intent(in)  :: skipZeroAdjust, skipJump
-            integer, pointer     :: Npack
             logical              :: isBConly !, isTM
-            integer              :: iblank
             
             character(64) :: subroutine_name = 'face_interpolation'
         !%-------------------------------------------------------------------
@@ -313,7 +311,7 @@ module face
             integer, intent(in) :: thisColP
             logical, intent(in) :: IsJBupstreamYN !% true if JB is upstream of JM
             integer, pointer    :: thisJM(:), Npack
-            integer :: mm, ei_Mface, kstart, kk
+            integer :: mm, ei_Mface, kstart
         !%------------------------------------------------------------------
         !% Preliminaries:
             Npack => npack_elemP(thisColP)
@@ -809,7 +807,6 @@ module face
             integer :: fFlowSet(2), eFlowSet(2)
 
             real(8), pointer :: fQold(:)
-            integer, pointer :: thisP(:)
 
             character(64) :: subroutine_name = 'face_interpolation_interior'
         !%------------------------------------------------------------------
@@ -1019,7 +1016,7 @@ module face
         !% Declarations:
             integer, intent(in) :: fset(:), eset(:), eWdn, eWup, facePackCol, Npack
             integer, pointer :: thisP(:), eup(:), edn(:)
-            integer :: ii, jj
+            integer :: ii
             character(64) :: subroutine_name = 'face_interp_interior_set'
         !%-------------------------------------------------------------------
         !% Preliminaries
@@ -1217,7 +1214,7 @@ module face
         !% Declarations
             integer             :: ii  
             integer, intent(in) :: facePackCol, Npack
-            integer, pointer    :: thisP, ci, BUpIdx, BDnIdx, eUp, eDn
+            integer, pointer    :: thisP, ci, BUpIdx, BDnIdx
             logical, pointer    :: isGhostUp, isGhostDn
             integer(kind=8)     :: crate, cmax, cval
             character(64)       :: subroutine_name = 'inter_image_data_transfer'
@@ -1569,8 +1566,7 @@ module face
         !% -----------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: facePcol
-            integer, pointer :: npack, thisP(:), edn(:), eup(:), mm
-            integer :: ii
+            integer, pointer :: npack, thisP(:), edn(:), eup(:)
         !% -----------------------------------------------------------------
         !% Preliminaries
         !% -----------------------------------------------------------------

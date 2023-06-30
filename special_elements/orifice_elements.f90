@@ -296,9 +296,8 @@ module orifice_elements
             integer, pointer :: FlowDirection
             real(8), pointer :: Flowrate, EffectiveHeadDelta, Zcrest, grav
             real(8), pointer :: dQdH, DischargeCoeff, EffectiveFullArea
-            real(8), pointer :: WeirExponent, SharpCrestedWeirCoeff
-            real(8), pointer :: CriticalHead, FractionCritDepth
-            real(8) :: Coef, ratio
+            real(8), pointer :: WeirExponent, CriticalHead, FractionCritDepth
+            real(8) :: Coef
 
             character(64) :: subroutine_name = 'orifice_flow'
         !%------------------------------------------------------------------

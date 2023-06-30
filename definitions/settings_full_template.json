@@ -36,11 +36,15 @@
     "Discretization" : {
         "AllowChannelOverflowTF" : false,
         "AdjustLinkLengthForJunctionBranchYN" : false,
+        "UseNominalElemLength" : true,
+        "UseEquivalentOrifice" : false,
+        "EquivalentOrificeDischargeCoeff" : 0.6,
         "JunctionBranchLengthFactor" : 1.0,
         "MinElemLengthFactor" : 0.5,
         "MinElemLengthMethod" : "ElemLengthAdjust",
         "NominalElemLength" : 10.00,
-        "MinElementPerLink" : 1,
+        "MinElementPerLink" : 3,
+        "MinLinkLength"     : 10.00,
         "FullConduitTopwidthDepthFraction" : 0.95
     },
     "Eps" : {

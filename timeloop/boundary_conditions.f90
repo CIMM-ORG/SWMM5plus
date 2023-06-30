@@ -134,7 +134,7 @@ contains
         !% data from the timeseries files and overwrite the timeseries arrays
         !%------------------------------------------------------------------
         !% Declarations
-            integer :: ii, nidx, lidx, mm
+            integer :: ii, nidx, lidx
             integer :: interval_counter
             integer, pointer :: TimeSlotsStored, TS_upper_idx
             real(8), pointer :: tnow, tend, ttime
@@ -306,7 +306,6 @@ contains
             integer             :: ii
             integer, pointer    ::  NN, bc_level
             real(8)             :: new_inflow_time
-            real(8)             :: new_inflow_value
             real(8)             :: tdummy
             real(8), pointer    :: timeEnd, timeEndEpoch
             character(64)       :: subroutine_name = "bc_fetch_flow"
@@ -382,8 +381,6 @@ contains
             integer             :: ii
             integer, pointer    :: NN, bc_level
             real(8)             :: new_head_time
-            real(8)             :: new_head_value
-            real(8)             :: tdummy
             real(8), pointer    :: timeEnd, timeEndEpoch
             character(64)       :: subroutine_name = "bc_fetch_head"
         !%-------------------------------------------------------------------
@@ -450,11 +447,10 @@ contains
         !% the boundary condition to get the corresponding value.
         !%-------------------------------------------------------------------
         !% Declarations:
-            real(8) :: normDepth, critDepth
             real(8), pointer :: tnow, flowValue(:)
             integer :: ii,  lower_idx , mm
             integer :: thisBCtype = BCFlow
-            integer, pointer :: nodeIdx, faceIdx, elemUpIdx, upper_idx(:)
+            integer, pointer :: upper_idx(:)
             character(64) :: subroutine_name = 'bc_interpolate_flow'
         !%-------------------------------------------------------------------
         !% Preliminaries:   
@@ -522,9 +518,9 @@ contains
         !% the boundary condition to get the corresponding value.
         !%-------------------------------------------------------------------
         !% Declarations:
-            real(8) :: normDepth, critDepth, thisDepth, smallDepth
+            real(8) :: thisDepth, smallDepth
             real(8), pointer :: tnow, headValue(:), zbottom
-            integer :: ii,  lower_idx , mm
+            integer :: ii,  lower_idx
             integer :: thisBCtype = BCHead
             integer, pointer :: nIdx, fIdx, upper_idx(:), eIdx
             
@@ -609,7 +605,6 @@ contains
             real(8), intent(in)    :: TimeSeries(:,:,:)
             real(8), intent(in)    :: tnow
             integer, intent(in)    :: bc_idx, lower_idx, upper_idx, thisBCtype
-            integer :: ii
             character(64) :: subroutine_name = 'bc_interpolate_timeseries'
         !%------------------------------------------------------------------
 
