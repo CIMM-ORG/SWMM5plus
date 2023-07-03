@@ -216,13 +216,16 @@ contains
             write(*,"(A)") ''
             write(*,"(A)") 'For profile_animate.py, the latest output (-o arg) is stored at... '
             write(*,"(A)") trim(setting%File%output_timestamp_subfolder)
+            write(*,"(A)") ''
+            write(*,"(A)") 'Copy the following for animation of first profile'
+            write(*,"(A)") 'python profile_animate.py -o '//trim(setting%File%output_timestamp_subfolder)//' -s '//trim(output_profile_names(1))
         end if
 
         !% --- print valid profile names
         if (setting%Output%Verbose) then
             write(*,"(A)") ''
             write(*,"(A)") 'Valid profile_animate.py names (-s arg) are...'
-            do ii=1,max_profiles_N 
+            do ii=1,N_profiles 
                 write(*,"(A)") trim(output_profile_names(ii))
             end do
         end if

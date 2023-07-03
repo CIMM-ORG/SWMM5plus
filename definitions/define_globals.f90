@@ -134,6 +134,13 @@ module define_globals
     integer,  target :: N_ActionPoint
     integer,  target :: N_MonitorPoint
 
+    !% --- number of profiles for output
+    integer :: N_Profiles
+    integer :: N_links_in_profile           !% number of links (maximum) in any profile
+    integer :: N_items_in_profile           !% number of items (maximum) in any profile (i.e., link,node,link...)
+    integer :: N_links_on_profile_line = 10 !% number of links on any line of profile definition
+    integer :: N_char_of_profile_name  = 64 !% number of characters allowed in a profile name
+
     !%--- number of culverts on an image
     !integer, allocatable, target :: N_culvert(:)
 
@@ -242,9 +249,15 @@ module define_globals
     !% --- output times
     real(8), allocatable :: output_times(:)
 
+    !% --- character length used in HDF5 output
+    integer, parameter :: stringLength_HDF5 = 150
+
     !% --- Profile_Outputs
     integer, allocatable, target :: output_profile_ids(:,:)
-    character(len=256), allocatable, target :: output_profile_names(:)
+    integer, allocatable, target :: output_profile_link_idx(:,:)
+    character(len=stringLength_HDF5), allocatable, target :: output_profile_names(:)
+    character(len=stringLength_HDF5), allocatable, target :: output_profile_link_names(:,:)
+    character(len=stringLength_HDF5), allocatable, target :: output_profile_node_names(:,:)
 
     !% --- filenames for output binaries
     character(len=256), allocatable, target :: output_binary_filenames(:)
@@ -271,6 +284,10 @@ module define_globals
     integer, allocatable :: SWMMlink_num_elements(:) !% number of elements in each output link
     integer, allocatable :: SWMMnode_num_elements(:) !% number of elements in each output node
     integer, allocatable :: SWMMnode_num_faces(:)    !% number of faces in each output node
+
+    !% --- maximum string length in link%Names or node%Names
+    !%     value set in util_allocate_linknode()
+    integer :: max_names_string_length = 0
 
     !% --- Temporary arrays that don't fit in any of the standard array structures
     integer, allocatable, target :: temp_BCupI(:,:)  !% number of BCup faces.
@@ -389,9 +406,6 @@ module define_globals
     !% --- Coarray variables
     integer :: max_caf_elem_N    ! size of all elem array in coarray
     integer :: max_caf_face_N    ! size of all face array in coarray
-
-    integer :: max_links_profile_N  ! size of the max amount of links in a profile
-    integer :: max_profiles_N ! size of how how many profiles there are
 
     !% --- assign status parameters for nodes
     integer, parameter :: nUnassigned = 998877

@@ -130,7 +130,7 @@ elif unit == 'MLD':
     Yunit = '(m)'
     Qunit = '(mld)'
 else:
-    print('Worng unit type seletced')
+    print('Wrong unit type selected')
     quit()
 
 # find the name of all the dataset

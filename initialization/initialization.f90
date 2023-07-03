@@ -1597,18 +1597,12 @@ contains
         !% in the EPA SWMM *.inp file
         !%------------------------------------------------------------------
         !% Declarations:
-            character(50) :: line, name, link_names, num_links, profile_name, profile_name_temp
-            character(50) :: this_name
-            integer       :: index_of_start, delimitator_loc, profile_pos, end_of_file
-            integer       :: read_status, debt, line_number = 1
-            integer       :: ii, jj,kk, offset, offset_profile,name_loc
-            integer       :: error, mm
-            integer       :: thisUnit, assignedUnit
-            logical       :: doesExist,isOpen, first_profile
-            character(20) :: accessType
+            integer :: thisUnit, file_loc
+            logical :: doesExist, isOpen
         !%------------------------------------------------------------------
         !% --- alias for the unit number
         thisUnit = setting%File%UnitNumber%inp_file
+        file_loc = 0
 
         !% --- check that file exists
         inquire(unit=thisUnit,EXIST=doesExist)
@@ -1628,86 +1622,14 @@ contains
         
         open(thisUnit, file = trim(setting%File%inp_file), STATUS = 'OLD', ACTION = 'READ')
 
-        delimitator_loc = 2
-        offset = 1
-        max_links_profile_N = 0
-        first_profile = .true.
+        call init_profiles_count (thisUnit, file_loc)
 
-        !inquire(file = "SL_sub_IN=con_OUT=fix.inp", SIZE = end_of_file)
-        !print *, "end of file(bytes):", end_of_file
-
-        !% --- Read through the input file looking for the profiles 
-        !%     This first read simply counts the profiles and finds the
-        !%     maximum number of links in the largest profile
-        mm=0
-        do
-            mm=mm+1 
-            read(thisUnit, "(A)", iostat = read_status) line
-
-            if (read_status /= 0) then 
-                exit
-            endif
-
-            if(line .eq. "[PROFILES]") then
-                
-                       
-                read(thisUnit, "(A)", iostat = read_status) line
-
-                !Location right before first profile such that we can rewind the file to this offset location 
-                if(first_profile .eq. .true.) then 
-                    offset_profile = FTELL(thisUnit)
-                    first_profile = .false.
-                end if
-
-                read(thisUnit, "(A)", iostat = read_status) line
-                
-                max_profiles_N = 0
-
-                do
-                    read(thisUnit, "(A)", iostat = read_status) line
-                    if (line .eq. "" .or. read_status /= 0 ) then
-                        exit
-                    end if
-                    name = line 
-                    delimitator_loc = 2
-    
-                    !% --- storing profile name and link names 
-                    index_of_start = index(name,"""",.true.)
-                    link_names     = trim(ADJUSTL(name(index_of_start+1:len(name))))
-                    profile_name   = trim(ADJUSTL(name(1:index_of_start+1)))
-
-                    !% --- checking if the profile is finished being output or is split amongust multiple lines 
-                    if(profile_name .eq. profile_name_temp) then
-                        ii = ii - 1  
-                    else
-                        ii = -1
-                        max_profiles_N = max_profiles_N+1
-                    end if 
-        
-                    do while (delimitator_loc > 1)
-                        delimitator_loc = index(link_names," ")
-                        link_names = trim(ADJUSTL(link_names(delimitator_loc+1:)))
-                        ii = ii + 1
-                    end do 
-
-                    if(max_links_profile_N < ii) then
-                        max_links_profile_N = ii 
-                    end if
-
-                    profile_name_temp = profile_name
-
-                end do
-            else
-                !% no profiles on this line
-            endif
-            
-        end do
-
-        !% --- set the maximum number of links in any profile.
-        max_links_profile_N = (max_links_profile_N*2) + 1 
+        !% --- set the maximum number of items in a profile
+        !%     assumes every link is separated by one node
+        N_items_in_profile = (N_links_in_profile*twoI) + oneI 
 
         !% --- exit if no profiles were found
-        if(max_links_profile_N .eq. 1) then
+        if (N_Profiles == 0) then
             print *, "...no profiles found"
             return
         endif
@@ -1715,118 +1637,525 @@ contains
         !% --- allocate storage for the profiles
         call util_allocate_output_profiles()
 
-
-        !% --- set up for a second reading of the input file
-        !% --- rewind to file and then seek to the location right before profiles
-        rewind(thisUnit)
-        error = fseek(thisUnit,offset_profile,0)
-        output_profile_ids(:,:) = nullValueI
-        read(thisUnit, "(A)", iostat = read_status) line
-
-        !% ---  Loop through profile again this time storing the profiles
-        !%      They are store in 2D array each row is a different profile
-        !%      Each column alternates node, link, node, link, node, etc
-
-        ii = 0  
-        profile_name_temp = "NULL"
-
-        do  
-            !% --- reading in the first profile  
-            read(thisUnit, "(A)", iostat = read_status) line
-            print *, "this_line :: ", line
-            if (read_status /= 0 ) then
-                exit
-            end if
-
-            !% --- finding where the actual profile starts
-            delimitator_loc = 2
-            name = line 
-            index_of_start = index(name,"""",.true.)
-            link_names = trim(ADJUSTL(name(index_of_start+1:len(name))))
-            profile_name = trim(ADJUSTL(name(1:index_of_start+1)))
-            
-            !% --- checking if the profile is complete or has another line
-            if(profile_name .eq. profile_name_temp) then 
-                ii = ii 
-                jj = jj 
-            else 
-                jj = 0
-                ii = ii+1
-                if(ii .LE. max_profiles_N) then 
-                    output_profile_names(ii) = trim(profile_name(2:index(profile_name,'"',.true.)-1))
-                end if 
-
-            end if 
-
-            do 
-                !% ---storing list of profiles and the name of the Link 
-                !%    is added to the output_profile_ids array
-                delimitator_loc = index(link_names," ")
-                if(delimitator_loc <= 1)then 
-                    exit
-                end if
-                jj = jj + 1
-
-                !% --- this_name is the selected link name
-                !%     link_names is the remainder of the link names in the profile
-                this_name  = trim(ADJUSTL(link_names(1:delimitator_loc)))
-                link_names = trim(ADJUSTL(link_names(delimitator_loc+1:)))
-
-                !print *, 'this_name, link ',this_name, link_names
-                
-                !% --- Now we need to check that the user wrote the profile correctly
-                !%     This means checking if the link name exists and the profile is
-                !%     correctly written upstream -> downstream
-                do kk = 1,N_Link
-                    if(link%names(kk)%str == this_name) then
-
-                        if(jj > 2) then
-                            if(link%I(kk,li_Mnode_u) .neqv. output_profile_ids(ii,(jj*2)-1)) then
-                                print *, 'USER CONFIGURATION ERROR'
-                                print *, "Profiles in *.inp file are not continuous"
-                                print *, "Link:: ", link%names(kk)%str, " is not connected to Link:: ", link%names(output_profile_ids(ii,(jj*2)-1))%str
-                                call util_crashpoint(6229873)
-                                exit
-                            end if
-
-                        end if
-
-                        !% --- Once again links are stored in even idxs
-                        !%     and nodes are stored in odd idxs
-                        output_profile_ids(ii,(jj*2)+1) = link%I(kk,li_Mnode_d)
-                        output_profile_ids(ii,jj*2) = kk 
-
-                        if(jj .eq. 1) then
-                            output_profile_ids(ii,1) = link%I(kk,li_Mnode_u)
-                        end if  
-                        
-                        exit !% found this link so exit the loop
-
-                    end if
-
-                    if (kk .eq. N_LINK ) then
-                        print *, 'USER CONFIGURATION ERROR'
-                        print *, 'Profiles in *.inp file have an unknown link'
-                        print *, 'Unknown link name is ',trim(this_name)  
-                        call util_crashpoint(830984)
-                        exit
-                    end if
-
-                end do
-
-            end do
-
-            profile_name_temp = profile_name   
-            
-        end do
+        !% --- store the output_profile_link_names and output_profile_names
+        call init_profiles_read (thisUnit, file_loc)
 
         close (thisUnit)
 
+        !% --- store the output profile link idexes
+        call init_profiles_get_link_idx ()
+
+        !% --- add nodes between the profile links and check continuity
+        call init_profiles_add_nodes ()
+   
     end subroutine init_profiles
 !%
 !%==========================================================================
 !%==========================================================================
+!%   
+    subroutine init_profiles_count (thisUnit, file_loc)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Counts the number of profiles and the maximum number of
+        !% links in any profile (which are globals)
+        !%------------------------------------------------------------------
+            integer, intent(in)    :: thisUnit !% open file for reading
+            integer, intent(inout) :: file_loc !% loc in file for profile header
+            character(max_names_string_length*N_links_on_profile_line+N_char_of_profile_name) &
+                :: lineRead, nameRead, profile_name, profile_name_last, link_names
+
+            integer :: delimiter_loc, nLinks, mmLine, temploc
+            integer :: read_status, index_of_start
+            logical :: EndOfProfile  = .false.
+            logical :: first_profile = .true.
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        delimiter_loc = 2
+
+        !% --- initialize global counters
+        N_links_in_profile = 0
+        N_profiles = 0
+
+        !% --- initialize decision variables
+        first_profile     = .true.
+        profile_name_last = "NULL"
+
+        !% --- initialize local coutners
+        nLinks = 0
+
+        !% --- Read through the input file looking for the profiles 
+        !%     This first read simply counts the profiles and finds the
+        !%     maximum number of links in the largest profile
+        mmLine=0 !% line counter, used for debugging only
+
+        EndOfProfile = .false.
+        do while (.not. EndOfProfile) !% --- outer loop
+            !% --- cycle through the input file
+            mmLine=mmLine+1 
+
+            !% --- store start of this line
+            temploc = FTELL(thisUnit)
+            !% --- read line of input file
+            read(thisUnit, "(A)", iostat = read_status) lineRead
+            if (read_status /= 0) then 
+                !% -- end of file or read error
+                exit
+            endif
+            lineRead = ADJUSTL(lineRead)
+
+            if(lineRead .eq. "[PROFILES]") then
+                !% --- Set file_loc at the [PROFILES] header
+                !%     Allows later rewind of the file to this offset location 
+                if(first_profile) then 
+                    file_loc = temploc
+                    first_profile = .false.
+                end if
+
+                !% --- read the next line below the header       
+                read(thisUnit, "(A)", iostat = read_status) lineRead
+                EndOfProfile = util_read_blankline_or_EOF (read_status, lineRead)
+                if (EndOfProfile) exit !% --- break outer do loop without any profiles defined
+
+                !% --- remove any leading blanks
+                lineRead = ADJUSTL(lineRead)
+
+                !% --- cycle for comment lines
+                do while (index(lineRead,';') == 1)
+                    !% --- read the next line        
+                    read(thisUnit, "(A)", iostat = read_status) lineRead
+                    EndOfProfile = util_read_blankline_or_EOF (read_status, lineRead)
+                    if (EndOfProfile) exit !% --- break outer do loop without any profiles defined
+                    !% --- remove any leading blanks
+                    lineRead = ADJUSTL(lineRead)
+                end do
+
+                do while (.not. EndOfProfile) !% --- inner loop
+
+                    !% --- first item on the line is the name of the profile
+                    !%     which is in quotations, so the location of the
+                    !%     start of the string is 2
+                    nameRead      = lineRead 
+                    delimiter_loc = 2
+    
+                    !% --- subdividing nameRead for profile name and link names 
+                    !%     find end of the profile name (last quote mark)
+                    !%     true = backwards (from end of string)
+                    index_of_start = index(nameRead,"""",.true.)
+                    !% --- store string with the profile name (includes quotation marks)
+                    profile_name   = trim(ADJUSTL(nameRead(1:index_of_start+1)))
+                    !% --- store string of only the link names
+                    link_names     = trim(ADJUSTL(nameRead(index_of_start+1:len(nameRead))))
+
+                    if (profile_name_last .eq. "NULL") then 
+                        !% --- this is the first profile
+                        N_Profiles = 1
+                        nLinks = 0
+                    else
+                        !% --- second or later profile line
+                        if (profile_name .eq. profile_name_last) then 
+                            !% --- continuing the same profile
+                            !%     nLinks will accumulate
+                        else 
+                            !% --- adding a new profile (prior profile done)
+                            !% --- check if prior profile had max links
+                            N_links_in_profile = max(N_links_in_profile,nLinks)
+                            N_Profiles = N_Profiles+1
+                            !% --- reset the link counter
+                            nLinks = 0
+                        end if
+                    end if
+
+                    !% --- count the number of links in this profile by iteratively looking for
+                    !%     the blank delimiter and removing the data before it
+                    do while (delimiter_loc > 1)
+                        !% --- find next blank character between link names
+                        delimiter_loc = index(link_names," ")
+                        if (delimiter_loc .le. 1) exit
+                        !% --- remove the preceding string data, leading blanks, and trailing blanks
+                        link_names = trim(ADJUSTL(link_names(delimiter_loc+1:)))
+                        nLinks = nLinks + 1
+                    end do
+                    !% --- check for new maximum
+                    N_links_in_profile = max(N_links_in_profile,nLinks)
+
+                    !% --- store this profile name as the last one read
+                    profile_name_last = profile_name
+
+                    !% --- read the next line
+                    read(thisUnit, "(A)", iostat = read_status) lineRead
+                    EndOfProfile = util_read_blankline_or_EOF (read_status, lineRead)
+                    if (EndOfProfile) exit !% --- break inner and outer loops on blank or EOF
+                    !% --- remove any leading blanks
+                    lineRead = ADJUSTL(lineRead)
+
+                    !% --- cycle for comment lines
+                    do while (index(lineRead,';') == 1)
+                        !% --- read the next line        
+                        read(thisUnit, "(A)", iostat = read_status) lineRead
+                        EndOfProfile = util_read_blankline_or_EOF (read_status, lineRead)
+                        if (EndOfProfile) exit !% --- break loops
+                        !% --- remove any leading blanks
+                        lineRead = ADJUSTL(lineRead)
+                    end do
+
+                end do !% --- inner loop
+                if (EndOfProfile) exit  !% --- break outer loop
+            else
+                !% no profiles on this line
+            endif
+            
+        end do !% --- outer loop
+
+    end subroutine init_profiles_count
 !%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_profiles_read (thisUnit, file_loc)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Reads in the links for the profiles and stores the 
+        !% output_profile_link_names and output_profile_names
+        !%------------------------------------------------------------------
+            integer, intent(in) :: thisUnit, file_loc
+
+            character(max_names_string_length * N_links_on_profile_line + N_char_of_profile_name) &
+                    :: lineRead, this_name, profile_name_last, link_names, profile_name, &
+                       this_link
+            integer :: ierror, read_status, iprof, jlink, delimiter_loc
+            integer :: index_of_start
+            logical :: EndOfProfile = .false.
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        
+        !% --- initialize decision variables
+        profile_name_last = "NULL"
+        
+        !% --- rewind this unit and reset to [PROFILE] header line
+        rewind(thisUnit)
+        ierror = fseek(thisUnit, file_loc, 0)
+
+        !% --- if position not found, then exit
+        if (ierror /= 0) then 
+            print *, '... [PROFILE] location not found in *.inp file'
+            return
+        end if
+        
+        !% --- begin reading above [PROFILE] header
+        read(thisUnit, "(A)", iostat = read_status) lineRead
+        do while (lineRead == ' ')
+            read(thisUnit, "(A)", iostat = read_status) lineRead
+        end do
+        if(lineRead .eq. "[PROFILES]") then
+
+            !% --- read the next line below the header       
+            read(thisUnit, "(A)", iostat = read_status) lineRead
+            EndOfProfile = util_read_blankline_or_EOF (read_status, lineRead)
+            if (EndOfProfile) return !% --- break outer do loop without any profiles defined
+
+            !% --- remove any leading blanks
+            lineRead = ADJUSTL(lineRead)
+
+             !% --- cycle for comment lines
+            do while (index(lineRead,';') == 1)
+                !% --- read the next line        
+                read(thisUnit, "(A)", iostat = read_status) lineRead
+                EndOfProfile = util_read_blankline_or_EOF (read_status, lineRead)
+                if (EndOfProfile) exit !% --- break outer do loop without any profiles defined
+                !% --- remove any leading blanks
+                lineRead = ADJUSTL(lineRead)
+            end do
+
+            iprof = 0
+            jlink = 0
+            do while (.not. EndOfProfile) 
+
+                !% --- first item on the line is the name of the profile
+                !%     which is in quotations, so the location of the
+                !%     start of the string is 2
+                delimiter_loc = 2
+
+                !% --- subdividing nameRead for profile name and link names 
+                !%     find end of the profile name (last quote mark)
+                !%     true = backwards (from end of string)
+                index_of_start = index(lineRead,"""",.true.)
+                !% --- store string with the profile name (includes quotation marks)
+                profile_name   = trim(ADJUSTL(lineRead(1:index_of_start+1)))
+                !% --- store string of only the link names
+                link_names     = trim(ADJUSTL(lineRead(index_of_start+1:len(lineRead))))
+
+                !% --- store the trimmed profile name
+                if (profile_name .eq. profile_name_last) then 
+                    !% --- this is a continuing profile
+                    !%     name is already stored
+                    !%     do not change iprof
+                else
+                    !% --- starting a new profile
+                    !%     get the profile name without quotation marks
+                    iprof = iprof+1
+                    !% --- check profile counter
+                    if (iprof > size(output_profile_link_names,1)) then 
+                        print *, 'CODE ERROR: profile counter is too small'
+                        print *, 'storage is ',size(output_profile_link_names,1)
+                        print *, 'iprof = ',iprof
+                        call util_crashpoint(71197)
+                        return
+                    end if
+
+                    !% --- trim the name of quotation marks
+                    this_name = trim(profile_name(2:index(profile_name,'"',.true.)-1))
+
+                    !% --- check length before storing
+                    if (len_trim(this_name) .le. stringLength_HDF5) then
+                        output_profile_names(iprof) = trim(this_name)
+                    else
+                        print *, 'CONFIGURATION ERROR: profile name is too long'
+                        print *, 'SWMM5+ value for stringLength_HDF5 is ',stringLength_HDF5 
+                        print *, 'profile has name ',trim(this_name)
+                        print *, 'which is of length ',len_trim(this_name)
+                        call util_crashpoint(610874)
+                        return
+                    end if
+                    !% --- set last name for checking continuing profile
+                    profile_name_last = profile_name
+                end if
+
+                !% --- cycle through the link names to identify links
+                !% --- find next blank character between link names
+                delimiter_loc = index(link_names," ")
+                do while (delimiter_loc > 1)
+                    !% --- increment link counter
+                    jlink = jlink + 1
+                    !% --- check link counter
+                    if (jlink > size(output_profile_link_names,2)) then 
+                        print *, 'CODE ERROR: profile link counter is too small'
+                        print *, 'storage is ',size(output_profile_link_names,2)
+                        print *, 'jlink = ',jlink 
+                        call util_crashpoint(71197)
+                        return
+                    end if
+                    !% --- get this link name
+                    this_link = trim(ADJUSTL(link_names(1:delimiter_loc)))
+                    !% --- check length before storing
+                    if (len_trim(this_link) .le. stringLength_HDF5) then 
+                        output_profile_link_names(iprof,jlink) = trim(this_link)
+                    else
+                        print *, 'USER CONFIGURATION ERROR: link name is too long'
+                        print *, 'link name in profile exceeded the SWMM5+ '
+                        print *, 'value for stringLength_HDF5 of ',stringLength_HDF5 
+                        print *, 'link with name ',trim(this_name)
+                        print *, 'is of length ',len_trim(this_name)
+                        call util_crashpoint(2209874)
+                        return
+                    end if
+                    !% --- remove this link name from the link name list
+                    link_names = trim(ADJUSTL(link_names(delimiter_loc+1:)))
+                    !% --- get the next delimiter
+                    delimiter_loc = index(link_names," ")    
+                    !print *, 'link names ',link_names                
+                end do
+
+                !% --- read the next line
+                read(thisUnit, "(A)", iostat = read_status) lineRead
+                EndOfProfile = util_read_blankline_or_EOF (read_status, lineRead)
+
+            end do
+
+        else
+            print *, 'CODE ERROR: misalignment of PROFILE reading'
+            call util_crashpoint(7209873)
+            return
+        end if
+
+    end subroutine init_profiles_read
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_profiles_get_link_idx ()
+        !%------------------------------------------------------------------
+        !% Descriptions
+        !% adds nodes between links in the output_profile
+        !% checks for link-node-link continuity
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer :: pp, mm, kk
+            logical :: foundLast
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            if (N_Profiles < 1) return
+        !%------------------------------------------------------------------
+        !% 
+        !% --- cycle through the profiles
+        do pp =1,N_profiles
+            !% --- cycle through links of the system
+            do kk = 1,N_link
+                !% --- look for links in the profile
+                if (any(output_profile_link_names .eq. trim(link%names(kk)%str))) then 
+                    do mm = 1,N_links_in_profile
+                        if (output_profile_link_names(pp,mm) .eq.  trim(link%names(kk)%str)) then 
+                            !% --- store the link index
+                            output_profile_link_idx(pp,mm) = link%I(kk,li_idx)
+                            ! print *, 'this link in profile'
+                            ! print *, pp,mm, output_profile_link_idx(pp,mm), trim(output_profile_link_names(pp,mm))
+                        else
+                            !% --- kk link is not a profile link
+                        end if
+                    end do !% profile links
+                end if
+            end do !% links
+        end do !% pp profiles
+
+        !% --- check for link names that do not exist
+        do pp = 1, N_profiles
+            do mm = 1,N_links_in_profile 
+                if (( trim(output_profile_link_names(pp,mm)) .ne. "NULL") &
+                    .and.                                                        &
+                    (output_profile_link_idx(pp,mm) .eq. nullvalueI)) then 
+                    !% --- profile name not found
+                    print *, 'USER CONFIGURATION ERROR: Profile link name not found'
+                    print *, 'The profile includes link name ', trim(output_profile_link_names(pp,mm))
+                    print *, 'which was not found in the system links of the *.inp file '
+                    call util_crashpoint(2297445)
+                    return
+                else
+                    !% --- no problem
+                end if
+            end do
+        end do
+
+        !% --- check for continuity in storage and that there are at least 2 links
+        !%     in a profile
+        do pp = 1,N_Profiles
+            foundLast = .false.
+            do mm = 1,N_links_in_profile
+                if (output_profile_link_idx(pp,mm) .ne. nullvalueI) then
+                    !% --- profile has index
+                    if (foundLast) then 
+                        !% --- an index should not occur after foundLast is true
+                        print *, 'CODE ERROR in output profiles'
+                        print *, 'The output_profile_link_idx(:,:) is not contiguous'
+                        print *, 'for profile ',trim(output_profile_names(pp))
+                        print *, 'at link ', trim(output_profile_link_names(pp,mm))
+                        call util_crashpoint(2209874)
+                        return
+                    else 
+                        !% --- no problems
+                    end if
+                else
+                    foundLast = .true.
+                    if (mm < 2) then 
+                        print *, 'USER CONFIGURATION ERROR in output profiles'
+                        print *, 'The output profile does not have a least two valid links'
+                        print *, 'for profile ',trim(output_profile_names(pp))
+                        call util_crashpoint(5198733)
+                        return
+                    else
+                        !% --- no problem 
+                    end if
+                end if
+            end do
+        end do
+
+    end subroutine init_profiles_get_link_idx   
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_profiles_add_nodes ()
+        !%------------------------------------------------------------------
+        !% Descriptions
+        !% adds nodes between links in the output_profile_ids
+        !% checks for link-node-link continuity
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer :: pp, mm
+            integer, pointer :: thisNode, nextNode, testNode, thisLink, nextLink 
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        do pp = 1,N_Profiles
+            !% --- store the starting node (upstream of 1st link)
+            thisNode => link%I(output_profile_link_idx(pp,1),li_Mnode_u)
+            output_profile_node_names(pp,1) = trim(node%Names(thisNode)%str)
+            output_profile_ids(pp,1) = thisNode
+            !% --- store the starting link (item 2)
+            output_profile_ids(pp,2) = output_profile_link_idx(pp,1)
+            !% --- cycle through the links
+            do mm = 1,N_links_in_profile-1
+                thisLink => output_profile_link_idx(pp,mm)
+                nextLink => output_profile_link_idx(pp,mm+1)
+                !% --- get the downstream node of thisLink
+                thisNode => link%I(thisLink,li_Mnode_d)
+                !% --- store the node data
+                output_profile_ids(pp,2*mm+1) = thisNode
+                output_profile_node_names(pp,mm+1) = trim(node%Names(thisNode)%str)
+                !% --- check if next link exists
+                if (nextLink .ne. nullvalueI) then
+                    !% --- get the upstream node of nextLink
+                    testNode => link%I(nextLink,li_Mnode_u)
+                    !% --- check that the next link has the same upstream node
+                    if (thisNode .ne. testNode) then 
+                        print *, 'USER CONFIGURATION ERROR in output profile'
+                        print *, 'Profile is not contiguous'
+                        print *, 'Upstream link          ',trim(output_profile_link_names(pp,mm))
+                        print *, '...has downstream node ',trim(node%Names(thisNode)%str)
+                        print *, 'Downstream link        ',trim(output_profile_link_names(pp,mm+1))
+                        print *, '... has upstream node  ',trim(node%Names(testNode)%str)
+                        print *, 'The correct downstream link should be one that connects to'
+                        print *, '... the downstream node.'
+                        call util_crashpoint(7220987)
+                    else
+                        !% --- store next link
+                        output_profile_ids(pp,2*mm+2) = nextLink
+                        !% --- store next node
+                        nextNode => link%I(nextLink,li_Mnode_d)
+                        output_profile_ids(pp,2*mm+3) = nextNode     
+                        output_profile_node_names(pp,mm+2) = trim(node%Names(nextNode)%str)
+                    end if
+                else
+                    !% --- null value found for next link, profile is done
+                    cycle !% mm
+                endif
+            end do !% mm profile links
+        end do !% pp profiles   
+
+        !% --- test output SAVE FOR DEBUGGING
+        ! do pp = 1,N_profiles
+        !     print *, 'Profile Name:',trim(output_profile_names(pp))
+        !     !print *, output_profile_ids(pp,:)
+        !     do mm=1,N_items_in_profile
+        !         !print *, '      ', mm,  output_profile_ids(pp,mm)
+        !         if (output_profile_ids(pp,mm) .ne. nullvalueI) then
+        !             if (mod(mm,2) .eq. 0) then 
+        !                 print *, 'link: ',mm, output_profile_ids(pp,mm), trim(output_profile_link_names(pp,1+((mm-1)/2)))
+        !             else
+        !                 print *, 'node: ', mm, output_profile_ids(pp,mm), trim(output_profile_node_names(pp,1+((mm-1)/2)))
+        !             end if
+        !         end if
+        !     end do
+        ! end do
+
+        !% --- check for nodes and links that have the same names
+        do pp = 1,N_profiles
+            do mm = 1,N_links_in_profile
+                if (any(output_profile_node_names(pp,:) .eq. trim(output_profile_link_names(pp,mm)))) then 
+                    print *, 'USER CONFIGURATION ERROR: found link and node with identical names'
+                    print *, 'To prevent confusion, SWMM5+ requires links and nodes to have '
+                    print *, 'unique names in profiles. Problem found with '
+                    print *, 'link and node named:', trim(output_profile_link_names(pp,mm))
+                    call util_crashpoint(5109873)
+                    return
+                end if
+            end do
+        end do
+
+    end subroutine init_profiles_add_nodes   
+!%
+!%==========================================================================
+!%==========================================================================
+!%    
     subroutine init_partitioning()
         !%------------------------------------------------------------------
         !% Description:

@@ -29,6 +29,8 @@ module utility
     public :: util_sign_with_ones_or_zero
     public :: util_print_warning
     public :: util_linspace
+
+    public :: util_read_blankline_or_EOF 
     
     public :: util_accumulate_volume_conservation
     public :: util_total_volume_conservation
@@ -175,6 +177,31 @@ module utility
         end where
 
     end function util_sign_with_ones_or_zero
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    pure function util_read_blankline_or_EOF (readStatus,lineRead)    
+        !%------------------------------------------------------------------
+        !% Description
+        !% returns true if readLine is blank or iostat is /= 0
+        !%------------------------------------------------------------------
+            integer, intent(in)          :: readStatus
+            character(len=*), intent(in) :: lineRead
+            logical                      :: util_read_blankline_or_EOF
+        !%------------------------------------------------------------------
+
+        if (readStatus /= 0) then 
+            !% --- end of file or read error
+            util_read_blankline_or_EOF = .true.
+        elseif (lineRead .eq. "") then 
+            !% --- end of profiles is a blank line
+            util_read_blankline_or_EOF = .true.
+        else
+            util_read_blankline_or_EOF = .false.
+        endif
+
+    end function util_read_blankline_or_EOF
 !%
 !%==========================================================================
 !%==========================================================================

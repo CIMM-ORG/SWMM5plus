@@ -186,6 +186,8 @@ module utility_allocate
         !% --- get the length of the node name and allocate node%Names(:)%str to the correct size
         do ii = 1, N_node
             obj_name_len = interface_get_obj_name_len(ii, API_NODE)
+            !% --- check to see if this is the longest name
+            max_names_string_length = max(max_names_string_length, obj_name_len)
             allocate(character(obj_name_len) :: node%Names(ii)%str, stat=allocation_status, errmsg=emsg)
             call util_allocate_check(allocation_status, emsg, 'character(obj_name_len) :: node%Names(ii)%str')
         end do
@@ -197,6 +199,8 @@ module utility_allocate
 
         do ii = 1, N_link
             obj_name_len = interface_get_obj_name_len(ii, API_LINK)
+            !% --- check to see if this is the longest name
+            max_names_string_length = max(max_names_string_length, obj_name_len)
             allocate(character(obj_name_len) :: link%Names(ii)%str, stat=allocation_status, errmsg=emsg)
             call util_allocate_check(allocation_status, emsg, 'character(obj_name_len) :: link%Names(ii)%str')
         end do
@@ -2095,11 +2099,28 @@ module utility_allocate
         !% timing the code. Possibly rename the profiler
         !%-----------------------------------------------------------------
 
-        allocate(output_profile_ids(max_profiles_N,max_links_profile_N),stat=allocation_status, errmsg= emsg)
+        allocate(output_profile_ids(N_Profiles,N_items_in_profile),stat=allocation_status, errmsg= emsg)
         call util_allocate_check (allocation_status, emsg, 'output_profile_ids')
+        output_profile_ids(:,:) = nullValueI
 
-        allocate(output_profile_names(max_profiles_N),stat=allocation_status, errmsg = emsg)
+        allocate(output_profile_names(N_Profiles),stat=allocation_status, errmsg = emsg)
         call util_allocate_check (allocation_status, emsg, 'output_profile_names')
+        output_profile_names(:) = ''
+
+        allocate(output_profile_link_names(N_Profiles,N_links_in_profile), &
+            stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_profile_link_names')
+        output_profile_link_names(:,:) = ''
+
+        allocate(output_profile_node_names(N_Profiles,N_links_in_profile+1), &
+        stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_profile_node_names')
+        output_profile_node_names(:,:) = ''
+
+        allocate(output_profile_link_idx(N_Profiles,N_links_in_profile), &
+            stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'output_profile_link_idx')
+        output_profile_link_idx(:,:) = nullvalueI
 
     end subroutine util_allocate_output_profiles
 !%    

@@ -3351,8 +3351,8 @@ contains
         write(funitIn,fmt='(a,i8)') 'Profiles::'
         if(allocated(output_profile_ids)) then
 
-            do ii = 1, max_profiles_N
-                do mm = 1, max_links_profile_N
+            do ii = 1, N_profiles
+                do mm = 1, N_items_in_profile
                     if(mod(mm,2) > 0 .and. output_profile_ids(ii,mm) .ne. nullValueI) then
                         write(funitIn,fmt='(2a)',advance='no') node%names(output_profile_ids(ii,mm))%str,','
                     
@@ -3559,11 +3559,11 @@ contains
             write(funitIn,fmt='(a,i8)') 'NumberDataRows: ,',link%I(thisIndex,li_N_element)
             write(funitIn,fmt='(a,i8)') 'NumberDataColumns: ,',N_Out_static_TypeElem + 1 
         
-        else if(isFV .eq. .false. .and. FeatureType .eq. LinkOut) then
+        else if(isFV .eqv. .false. .and. FeatureType .eq. LinkOut) then
             write(funitIn,fmt='(a,i8)') 'NumberDataRows: 1,'
             write(funitIn,fmt='(a,i8)') 'NumberDataColumns: ,',N_Out_static_TypeLink 
         
-        else if(isFV .eq. .false. .and. FeatureType .eq. NodeOut) then
+        else if(isFV .eqv. .false. .and. FeatureType .eq. NodeOut) then
             write(funitIn,fmt='(a,i8)') 'NumberDataRows: 1,'
             write(funitIn,fmt='(a,i8)') 'NumberDataColumns: ,',N_Out_static_TypeNode
         
@@ -3584,8 +3584,8 @@ contains
         !% This goes through and writes the profiles, if they are being used. 
         if(allocated(output_profile_ids)) then
 
-            do ii = 1, max_profiles_N
-                do mm = 1, max_links_profile_N
+            do ii = 1, N_profiles
+                do mm = 1, N_items_in_profile
                     if(mod(mm,2) > 0 .and. output_profile_ids(ii,mm) .ne. nullValueI) then
                         write(funitIn,fmt='(2a)',advance='no') node%names(output_profile_ids(ii,mm))%str,','
                     
@@ -3759,11 +3759,11 @@ contains
             end do 
         
         !% Writing of static Link data 
-        else if (isFV .eq. .false. .and. FeatureType .eq. LinkOut) then
+        else if (isFV .eqv. .false. .and. FeatureType .eq. LinkOut) then
             write(funitIn,'(*(G0.6 : ","))'),link%R(idx1,output_static_types_Link(:))
         
         !% Writing of static node data
-        else if (isFV .eq. .false. .and. FeatureType .eq. NodeOut) then
+        else if (isFV .eqv. .false. .and. FeatureType .eq. NodeOut) then
             write(funitIn,'(*(G0.6 : ","))'), node%R(idx1,output_static_types_Node(:)) 
         
         !% Writing of static fv elem data for nodes
@@ -4004,8 +4004,8 @@ contains
         INTEGER(HID_T) :: atype_id       ! Attribute Dataspace identifier
         INTEGER(HID_T) :: dset_prop_list ! Dataset creation property list, allows us to use chunking for HDF5 datasets
         INTEGER(HSIZE_T), DIMENSION(2) :: attr_dims_model = (/11,2/) ! Attribute dimensions for Model_Data
-        CHARACTER(LEN=150), DIMENSION(11,2) ::  attr_model_data       ! Stores the infomation of the model_data to be written to the .h5 file
-        CHARACTER(LEN=150), DIMENSION(:,:), allocatable  ::  header_data ! Stores the data of the header infomation to be written to the .h5 
+        CHARACTER(LEN=stringLength_HDF5 ), DIMENSION(11,2) ::  attr_model_data       ! Stores the infomation of the model_data to be written to the .h5 file
+        CHARACTER(LEN=stringLength_HDF5 ), DIMENSION(:,:), allocatable  ::  header_data ! Stores the data of the header infomation to be written to the .h5 
         INTEGER(SIZE_T) :: attrlen !length of attributes to be written 
         INTEGER(HSIZE_T), DIMENSION(2) :: data_dims ! the number of dimensions of the attributes and dataset being written to the .h5
         INTEGER(HSIZE_T), DIMENSION(1:2) :: updated_size_data !dimensions of the dataset created
@@ -4034,7 +4034,7 @@ contains
         end if
 
         !% length of the attributes to be stored
-        attrlen = 150
+        attrlen = stringLength_HDF5 
 
         !filling out the model data array 
         attr_model_data(1,1) = "SWMM_ID"
@@ -4242,7 +4242,7 @@ contains
         !%--------------------------------------------
         !%Creating and writing the attribute data for the header data
         !%Lastly the same process for the header data but data_dims depend if the outputted dataset is FV or not
-        attrlen = 150
+        attrlen = stringLength_HDF5 
         CALL h5screate_simple_f(rank, header_dims, aspace_id, HD_error)
         CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
         CALL h5tset_size_f(atype_id, attrlen, HD_error)
@@ -4303,8 +4303,8 @@ contains
         INTEGER(HID_T) :: atype_id       ! Attribute Dataspace identifier
         INTEGER(HID_T) :: dset_prop_list ! Dataset creation property list, allows us to use chunking for HDF5 datasets
         INTEGER(HSIZE_T), DIMENSION(2) :: attr_dims_model = (/11,2/) ! Attribute dimensions for Model_Data
-        CHARACTER(LEN=150), DIMENSION(11,2) ::  attr_model_data       ! Stores the infomation of the model_data to be written to the .h5 file
-        CHARACTER(LEN=150), DIMENSION(:,:), allocatable  ::  header_data ! Stores the data of the header infomation to be written to the .h5 
+        CHARACTER(LEN=stringLength_HDF5 ), DIMENSION(11,2) ::  attr_model_data       ! Stores the infomation of the model_data to be written to the .h5 file
+        CHARACTER(LEN=stringLength_HDF5 ), DIMENSION(:,:), allocatable  ::  header_data ! Stores the data of the header infomation to be written to the .h5 
         INTEGER(SIZE_T) :: attrlen !length of attributes to be written 
         INTEGER(HSIZE_T), DIMENSION(2) :: data_dims ! the number of dimensions of the attributes and dataset being written to the .h5
         INTEGER(HSIZE_T), DIMENSION(1:2) :: updated_size_data !dimensions of the dataset created
@@ -4340,10 +4340,10 @@ contains
                 end if
             end do 
 
-        else if(isFV .eq. .false. .and. FeatureType .eq. LinkOut) then
+        else if(isFV .eqv. .false. .and. FeatureType .eq. LinkOut) then
             allocate(header_data(N_Out_static_TypeLink,3))
 
-        else if(isFV .eq. .false. .and. FeatureType .eq. NodeOut) then
+        else if(isFV .eqv. .false. .and. FeatureType .eq. NodeOut) then
             allocate(header_data(N_Out_static_TypeNode,3))
         else 
             print *, "error inside of outputML_HD5F_create_static_dset unknown FeatureType Given"
@@ -4351,7 +4351,7 @@ contains
         end if
 
         !% length of the attributes to be stored
-        attrlen = 150
+        attrlen = stringLength_HDF5 
 
         !% filling out the attribute model data array 
         attr_model_data(1,1) = "SWMM_ID"
@@ -4455,7 +4455,7 @@ contains
             attr_model_data(11,2) = temp_str
         
         
-        else if(isFV .eq. .false. .and. FeatureType .eq. LinkOut) then
+        else if(isFV .eqv. .false. .and. FeatureType .eq. LinkOut) then
             attr_model_data(10,1) = "NumberDataRows"
             attr_model_data(10,2) = "1"
 
@@ -4477,7 +4477,7 @@ contains
         header_data(:,:) = "0.0"
         
         !%Element Index 
-        if (isFV .EQ. .FAlSE.) then
+        if (isFV .eqv. .FALSE.) then
             header_data(1:N_Out_static_TypeLink,1) = "0"
         
         else
@@ -4500,11 +4500,11 @@ contains
         end if
 
         !% Header 2nd Row - Data Type
-        if (isFV .eq. .False. .and. FeatureType .eq. LinkOut) then
+        if (isFV .eqv. .False. .and. FeatureType .eq. LinkOut) then
 
             header_data(1:N_Out_static_TypeLink,2) = output_static_typeNames_Link
         
-        else if (isFV .eq. .False. .and. FeatureType .eq. NodeOut) then
+        else if (isFV .eqv. .False. .and. FeatureType .eq. NodeOut) then
 
             header_data(1:N_Out_static_TypeNode,2) = output_static_typeNames_Node
 
@@ -4514,11 +4514,11 @@ contains
 
 
         !% Header 3rd Row - Data Units
-        if(isFV .EQ. .FAlSE. .and. FeatureType .eq. LinkOut) then
+        if(isFV .eqv. .False. .and. FeatureType .eq. LinkOut) then
 
             header_data(1:N_Out_static_TypeLink,3) = output_static_typeUnits_Link(:)
 
-        else if(isFV .eq. .False. .and. FeatureType .eq. NodeOut ) then 
+        else if(isFV .eqv. .False. .and. FeatureType .eq. NodeOut ) then 
 
             header_data(1:N_Out_static_TypeNode,3) = output_static_typeUnits_Node(:)
 
@@ -4530,18 +4530,18 @@ contains
         !% Profile - Data Units
 
         !%stores the size of the data that is going to be written  
-        if(isFV .eq. .true. .and. FeatureType .eq. LinkOut) then
+        if(isFV .eqv. .true. .and. FeatureType .eq. LinkOut) then
             sum_elements = sum(link%I(:,li_N_element),MASK=link%I(:,li_parent_link) .eq. thisIndex)  
             !print *, "test sum_elements ::", sum_elements
             updated_size_data(1:2) = (/N_Out_static_TypeElem+1,sum_elements/)
             !updated_size_data(1:2) = (/N_Out_static_TypeElem+1,link%I(thisIndex,li_N_element)/)
             header_dims(1:2) = (/N_Out_static_TypeElem+1,3/)
         
-        else if(isFV .eq. .true. .and. FeatureType .eq. NodeElemOut ) then
+        else if(isFV .eqv. .true. .and. FeatureType .eq. NodeElemOut ) then
             updated_size_data(1:2) =(/N_Out_static_TypeElem+1,N_node_elem/)
             header_dims(1:2) = (/N_Out_static_TypeElem+1,3/)
 
-        else if(isFV .eq. .false. .and. FeatureType .eq. NodeOut) then
+        else if(isFV .eqv. .false. .and. FeatureType .eq. NodeOut) then
             updated_size_data(1:2) = (/N_Out_static_TypeNode,1/)
             header_dims(1:2) = (/N_Out_static_TypeNode,3/)
         else
@@ -4584,7 +4584,7 @@ contains
         !%--------------------------------------------
         !%--------------------------------------------
         !%Creating and writing the attribute data for the header data
-        attrlen = 150
+        attrlen = stringLength_HDF5 
         CALL h5screate_simple_f(rank, header_dims, aspace_id, HD_error)
         CALL h5tcopy_f(H5T_NATIVE_CHARACTER, atype_id, HD_error)
         CALL h5tset_size_f(atype_id, attrlen, HD_error)
@@ -4598,7 +4598,7 @@ contains
             data_dims(1) = N_Out_static_TypeElem+1
             data_dims(2) = 3
 
-        else if(isFV .eq. .false. .and. FeatureType .eq. NodeOut) then
+        else if(isFV .eqv. .false. .and. FeatureType .eq. NodeOut) then
             data_dims(1) = N_Out_static_TypeNode
             data_dims(2) = 3 
         else
@@ -4684,10 +4684,10 @@ contains
 !%
     subroutine outputML_HD5F_write_profiles(file_id)
 
-        !%Function for writing the profiles to the attribute of the .H5 output file 
+        !% --- Function for writing the profiles to the attribute of the .H5 output file 
         integer(HID_T), intent(in)      :: file_id      ! File ID of the .h5 file
 
-        CHARACTER(LEN=150), DIMENSION(:,:), allocatable  ::  profile_data !Stores the data from the profile array 
+        CHARACTER(LEN=stringLength_HDF5), DIMENSION(:,:), allocatable  ::  profile_data !Stores the data from the profile array 
         INTEGER, DIMENSION(:), allocatable :: profile_length !length of the profile data written
         INTEGER(HSIZE_T), DIMENSION(1:2) :: profile_dims !dimensions of the profile data 
 
@@ -4711,22 +4711,22 @@ contains
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-        !allocating temp arrays used for writing the profile data to the attribute of the .h5 file
-        allocate(profile_data(max_links_profile_N,max_profiles_N))
-        allocate(profile_length(max_profiles_N))
+        !% --- allocating temp arrays used for writing the profile data to the attribute of the .h5 file
+        allocate(profile_data(N_items_in_profile,N_profiles))
+        allocate(profile_length(N_profiles))
 
         !% Converting the profile IDs back to the Link and Node names.
         !% Nodes are always on odd IDs and links are always on even IDS
         if( allocated(output_profile_ids)) then
 
             !% Looping through all the profiles to convert 
-            do ii = 1, max_profiles_N
+            do ii = 1, N_profiles
                 first_null = .true.
 
                 !% loop through all the IDs of a profile
                 !% First checking if it is not null value. This null value is used to identify the end of a profile, 
                 !% and checking if it is an even or odd ID to signify Links and nodes respectively
-                do jj = 1, max_links_profile_N
+                do jj = 1, N_items_in_profile
                     if(mod(jj,2) > 0 .and. output_profile_ids(ii,jj) .ne. nullValueI) then
 
                         !% Odd Index : Node found, so the node name is stored in the profile_data array
@@ -4734,7 +4734,7 @@ contains
                         
                         !% In the case that this profile is the longest one we check if this is the last node
                         !% If this profile is the longest one, we also store the length in profile_length array
-                        if(jj .eq. max_links_profile_N ) then
+                        if(jj .eq. N_items_in_profile ) then
                             profile_length(ii) = jj
                         end if 
 
@@ -4752,11 +4752,11 @@ contains
             end do 
         end if
 
-        !Setting attrlen which is needed when writing char to HDF5 files
-        attrlen = 150
+        !% --- Setting attrlen which is needed when writing char to HDF5 files
+        attrlen = stringLength_HDF5
         
         !Lastly we loop through the profiles
-        do ii = 1, max_profiles_N
+        do ii = 1, N_profiles
             
             !Set the profile dimensions and data dimension we are going to write
             profile_dims(1:2) = (/profile_length(ii),1/)  
@@ -4900,7 +4900,7 @@ contains
             do ii = 1, size(output_static_elem(:,1)) 
                 if(output_static_elem(ii,2) .eq. 0.0 .and. output_static_elem(ii,1) .eq. idx1) then
                     N_node_elem = N_node_elem + 1
-                    if(first_elem_detect .eq. .false.) then
+                    if(first_elem_detect .eqv. .false.) then
                         first_elem_detect = .true.
                         first_elem_idx = ii 
                     end if
