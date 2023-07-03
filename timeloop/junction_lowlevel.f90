@@ -73,7 +73,7 @@ module junction_lowlevel
 
             logical :: isUpstreamBranch 
             real(8) :: bsign
-            integer :: frHead, frArea, frHeadAdj, ii, mm
+            integer :: frHead, frArea, frHeadAdj, ii
         !%-----------------------------------------------------------------
         !% Aliases
             !% --- array for the JM index
@@ -211,7 +211,7 @@ module junction_lowlevel
             real(8), pointer :: Ladj, Tadj, Hadj, headJM
             real(8), pointer ::  crk, dt, grav
             real(8), pointer :: VelAdj , FrAdj, Dadj, ZBadj
-            real(8)          :: bsign, denominator, thisArea, FrFactor
+            real(8)          :: bsign, denominator
             logical          :: isInflow, isDownstream
             integer          :: ii
 
@@ -497,7 +497,7 @@ module junction_lowlevel
             real(8), pointer    :: dt, crk, oldVolume(:)
             real(8) :: bsign
 
-            integer :: mm, JMidx
+            integer :: mm
         !%-----------------------------------------------------------------   
         !% Aliases
             Npack       => npack_elemP(thisColP)
@@ -575,18 +575,13 @@ module junction_lowlevel
 
             integer, pointer :: fup(:), fdn(:)
 
-            integer, dimension(1) :: JMar
-
             integer :: kk
-            real(8) :: QratioIn, QratioOut, dQoverflow, Hinc
-            real(8) :: MinHeadForOverflow, OverflowDepth, PondedHead
+            real(8) :: dQoverflow, MinHeadForOverflow, OverflowDepth, PondedHead
 
             real(8), dimension(max_branch_per_node) :: dQ, dH, areaQ
-            real(8), dimension(1) :: Rarray
             real(8), parameter :: localEpsilon = 1.0d-6
-            real(8) :: zbottom, Aout, Ain, AoutOverflow, AinPonded, Astorage
-            real(8) :: dQstorage
-            integer :: zcount, Qcount, bcount
+            real(8) :: Aout, Ain, AoutOverflow, AinPonded, Astorage
+            integer :: bcount
             logical, dimension(max_branch_per_node) :: bFixYN
 
             logical :: repeatYN
@@ -959,8 +954,6 @@ module junction_lowlevel
             real(8)          :: dQdHbranches
             real(8)          :: divisor
 
-            integer :: ii
-
             real(8), parameter :: localEpsilon = 1.0d-6
         !%------------------------------------------------------------------
         !% Aliases
@@ -1112,7 +1105,6 @@ module junction_lowlevel
             integer, intent(in) :: JMidx, istep
             real(8), pointer    :: Qoverflow(:)
             real(8), pointer    :: dt, crk(:)
-            integer             :: ii
         !%------------------------------------------------------------------
         !% Aliases
             !% --- note that Qoverflow includes ponding rate
@@ -1686,7 +1678,7 @@ module junction_lowlevel
             integer, intent(in) :: JMidx, thisCol
             real(8), intent(in) :: thisArray(:,:)
             real(8) :: thissum
-            integer :: k1, k2,kk
+            integer :: kk
         !%------------------------------------------------------------------
         thissum = zeroR
 
@@ -1710,8 +1702,6 @@ module junction_lowlevel
         !% Declarations
             integer, intent(in) :: JMidx, istep
             real(8), pointer    :: Qstorage, Qoverflow, dt, crk
-
-            real(8) :: QnetBranches
         !%------------------------------------------------------------------
         !% Alias
             Qstorage  => elemSR(JMidx,esr_JunctionMain_StorageRate)
@@ -1763,7 +1753,6 @@ module junction_lowlevel
             integer, intent(in) :: JMidx, istep
             real(8), intent(in) :: dH, QnetBranches
             real(8)             :: planArea
-            integer :: ii
         !%------------------------------------------------------------------
         select case (elemSI(JMidx,esi_JunctionMain_Type))
 

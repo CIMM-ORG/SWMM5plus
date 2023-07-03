@@ -442,13 +442,13 @@ module junction_elements
             integer, intent(in) :: Npack, istep
             integer, dimension(Npack), intent(in) :: thisJM 
 
-            integer :: ii, mm, JMidx
+            integer :: mm, JMidx
 
             real(8), pointer :: Qstorage(:), Qoverflow(:), Qlateral(:)
 
-            real(8) :: Qnet, QnetBranches
+            real(8) :: Qnet
             real(8) :: dQdHoverflow, dQdHstorage
-            real(8) :: divisor, dH, resid, MinHeadForOverflow
+            real(8) :: dH, resid, MinHeadForOverflow
             real(8), pointer :: dt, crk(:)
 
             real(8), dimension(2) :: Hbound
@@ -504,9 +504,9 @@ module junction_elements
             !%     overflow or ponding. This sets up for a second step
             if (canOverflowOrPond) then 
                 !% --- crossing from free surface to overflow/ponding
-                if ((elemR(JMidx,er_Head)    .le. MinHeadForOverflow)      & 
-                    .and.                                                  &
-                    (elemR(JMidx,er_Head + dH)  > MinHeadForOverflow)      &
+                if ((elemR(JMidx,er_Head)    .le. MinHeadForOverflow)        & 
+                    .and.                                                    &
+                    ((elemR(JMidx,er_Head) + dH)  > MinHeadForOverflow)      &
                 ) then
                     isCrossingIntoOverflowOrPonding  = .true.
                     isCrossingOutofOverflowOrPonding = .false.
@@ -514,9 +514,9 @@ module junction_elements
                     isCrossingIntoOverflowOrPonding = .false.
                 end if
                 !% --- crossing from overflow/ponding to free surface
-                if ((elemR(JMidx,er_Head)      > MinHeadForOverflow)      & 
-                    .and.                                                  &
-                    (elemR(JMidx,er_Head + dH) < MinHeadForOverflow)      &
+                if ((elemR(JMidx,er_Head)      > MinHeadForOverflow)        & 
+                    .and.                                                   &
+                    ((elemR(JMidx,er_Head) + dH) < MinHeadForOverflow)      &
                 ) then
                     isCrossingOutofOverflowOrPonding  = .true.
                     isCrossingIntoOverflowOrPonding   = .false.
@@ -637,7 +637,7 @@ module junction_elements
             integer, pointer    :: thisJM(:), Npack, JMidx
             real(8), pointer    :: Qoverflow(:), Qstorage(:), Qlateral(:)
 
-            integer :: mm,ii
+            integer :: mm
             real(8) :: resid !% residual in/out flowrate
             real(8) :: QnetIn, QnetOut, QnetBranches
 

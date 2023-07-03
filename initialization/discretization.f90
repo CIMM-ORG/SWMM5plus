@@ -56,18 +56,18 @@ contains
 
             !% --- If the elements fit evenly into the length of link
             if ( remainder == zeroR ) then
-                link%I(link_idx, li_N_element) = int(link%R(link_idx, lr_Length)/elem_nominal_length)
-                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
+                link%I(link_idx, li_N_element) = int(link%R(link_idx, lr_Length) / elem_nominal_length)
+                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
 
             !% --- If the remainder is greater than half an element length
             elseif ( remainder .ge. onehalfR * elem_nominal_length ) then
-                link%I(link_idx, li_N_element) = ceiling(link%R(link_idx,lr_Length)/elem_nominal_length)
-                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
+                link%I(link_idx, li_N_element) = ceiling(link%R(link_idx,lr_Length) / elem_nominal_length)
+                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
 
             !% --- If the remainder is less than half an element length
             else
-                link%I(link_idx, li_N_element) = floor(link%R(link_idx,lr_Length)/elem_nominal_length)
-                link%R(link_idx, lr_ELementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
+                link%I(link_idx, li_N_element) = max(floor(link%R(link_idx,lr_Length) / elem_nominal_length), oneI)
+                link%R(link_idx, lr_ELementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
             end if
 
             !% --- Additional check to ensure that every link has at least one element

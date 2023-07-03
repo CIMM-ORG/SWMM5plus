@@ -549,9 +549,9 @@ module geometry
         !% Declarations:
             integer, intent(in) :: UT_idx, utd_sheet
             integer, pointer    :: eIdx
-            real(8), pointer    :: gravity, thistable(:)
+            real(8), pointer    :: thistable(:)
             real(8)             :: QcritNormalized
-            integer :: ii, utr_Max
+            integer :: utr_Max
         !%------------------------------------------------------------------
         !% Aliases
             eIdx      => uniformTableI(UT_idx,uti_elem_idx)
@@ -1153,24 +1153,17 @@ module geometry
             integer, pointer :: fup(:), fdn(:)
             real(8), pointer :: area(:), depth(:), head(:), hydradius(:)
             real(8), pointer :: length(:), perimeter(:), topwidth(:), velocity(:), flowrate(:)
-            real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ellDepth(:) !, ellMax(:)
+            real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ellDepth(:)
             real(8), pointer :: zCrown(:), fullArea(:), fulldepth(:), fullperimeter(:)
-            real(8), pointer :: sedimentDepth(:), thisTable(:,:)
-            real(8), pointer :: fulltopwidth(:), breadthmax(:)
-            real(8), pointer :: slotDepth(:), slotVolume(:), overflow(:), fullhydradius(:)
-            real(8), pointer :: Atable(:), Ttable(:), Rtable(:), Stable(:)
+            real(8), pointer :: sedimentDepth(:), fulltopwidth(:), breadthmax(:)
+            real(8), pointer :: fullhydradius(:), Atable(:), Ttable(:), Rtable(:), Stable(:)
             real(8), pointer :: grav, fVel_u(:), fVel_d(:) 
-            real(8), pointer :: fZcrown_u(:), fZcrown_d(:), fHead_u(:), fHead_d(:) 
-            logical, pointer :: isSlot(:)     
+            real(8), pointer :: fZcrown_u(:), fZcrown_d(:), fHead_u(:), fHead_d(:)  
 
-            real(8) :: depthnorm, zeroHydRadius
             integer :: tB, ii, kk, tBA(1)
-
             logical :: isUpBranch, isWaterfall
 
-            integer, allocatable :: tempP(:)
             character(64)  :: subroutine_name = 'geo_assign_JB_from_head'
-
         !%---------------------------------------------------------------------
         !% Preliminaries
             if (setting%Debug%File%geometry) &
@@ -1487,7 +1480,7 @@ module geometry
                                 perimeter(tB)= max(perimeter(tB),setting%ZeroValue%Topwidth + setting%ZeroValue%Depth)
 
                                 !% --- irregular must be continuously-increasing in width
-                                ellDepth(tB)  = geo_hyddepth_from_area_and_topwidth_singular (tB, area(tB), topwidth(tB), setting%ZeroValue%Depth*0.99d0) 
+                                ellDepth(tB)  = geo_hyddepth_from_area_and_topwidth_singular (area(tB), topwidth(tB), setting%ZeroValue%Depth*0.99d0) 
 
                             !% --- CLOSED CONDUITS
                             !%     closed conduits typically have look-up functions for area, topwidth and hydraulic
@@ -2569,7 +2562,6 @@ module geometry
             real(8), pointer :: ellDepth(:), head(:), area(:), topwidth(:) , depth(:)
             real(8), pointer :: ZbreadthMax(:), breadthMax(:), areaBelowBreadthMax(:)
             real(8), pointer :: zcrown(:)
-            integer :: ii
 
             character(64) :: subroutine_name = 'geo_elldepth_from_head_CC'
         !%------------------------------------------------------------------
@@ -3077,7 +3069,7 @@ module geometry
 !%==========================================================================
 !%
     real(8) function geo_hyddepth_from_area_and_topwidth_singular &
-        (idx, area, topwidth, ZeroValueHydDepth)  result (outvalue)
+        (area, topwidth, ZeroValueHydDepth)  result (outvalue)
         !%------------------------------------------------------------------
         !% Descriptions:
         !% computes the hydraulic depth for area and topwidth of a single
@@ -3085,7 +3077,6 @@ module geometry
         !%------------------------------------------------------------------
         !% Declarations
             real(8), intent(in)  :: area, topwidth, ZeroValueHydDepth
-            integer, intent(in)  :: idx
             character(64) :: subroutine_name = 'geo_hyddepth_from_area_and_topwidth_singular'
         !%------------------------------------------------------------------   
      
@@ -3110,7 +3101,7 @@ module geometry
         !%------------------------------------------------------------------
         !% Declarations
             integer, target, intent(in) :: thisP(:)
-            real(8), pointer :: depth(:), volume(:), length(:), area(:)
+            real(8), pointer :: depth(:), volume(:), length(:)
         !%------------- -----------------------------------------------------
         !% Aliases
             depth       => elemR(:,er_Depth)

@@ -30,7 +30,7 @@ contains
     logical, optional, intent(in) :: arr_log(:,:)
     character(len = :), allocatable :: file_name
     character(len = 5) :: str_image
-    integer :: ii, jj, fu, rc, image
+    integer :: ii, jj, fu, rc
 
     !if (crashYN) return
     if (setting%Debug%File%initialization) &

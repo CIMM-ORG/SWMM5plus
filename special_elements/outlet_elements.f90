@@ -144,7 +144,6 @@ module outlet_elements
             integer, pointer :: FlowDirection, CurveID, OutletType
             real(8), pointer :: Flowrate, Depth, CurrentSetting, EffectiveHeadDelta, qCoeff, qExpon, dQdH
             logical, pointer :: hasFlapGate
-            real(8) :: CoeffOrifice
         !%------------------------------------------------------------------ 
         !% Aliases
             OutletType         => elemSI(eIdx,esi_Outlet_SpecificType)

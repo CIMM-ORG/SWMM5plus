@@ -49,17 +49,12 @@ module runge_kutta2
         !% single RK2 step for explicit time advance of SVE
         !%------------------------------------------------------------------
         !% Declarations:
-            integer          :: istep, ii, kk, mm
-            integer          :: fr_hAdj, fr_aAdj
-            integer, pointer :: Npack, thisP(:), fup(:), fdn(:), thisJB(:)
-            integer, pointer :: JMar(:), fAdj(:)
+            integer          :: istep, ii
+            integer, pointer :: Npack, thisP(:)
             
-            real(8), pointer :: deltaH(:), energyQ(:), grav, dt
-            real(8)          :: bsign
+            real(8), pointer :: grav, dt
             real(8)          :: volume1, volume2, inflowVolume, outflowVolume
-
-            logical :: isUpstreamFace, isUpstreamBranch
-
+            
             character(64) :: subroutine_name = 'rk2_toplevel_ETM'
         !%------------------------------------------------------------------
         !% Preliminaries

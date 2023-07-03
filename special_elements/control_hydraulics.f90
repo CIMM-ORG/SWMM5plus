@@ -90,12 +90,8 @@ contains
         !% initializes the storage for controls and monitoring from the
         !% EPASWMM code
         !%------------------------------------------------------------------
-            integer :: nRules, nPremise, nThenAction, nElseAction, ii, rr
-            integer :: iLeft, iRight, thisPremiseLevel, success, numUnique
-            integer :: npoint
+            integer :: nRules, nPremise, nThenAction, nElseAction, ii
             integer, pointer :: thisElem
-            integer, allocatable :: location(:), linknodesimType(:), attribute(:)
-            integer, allocatable :: irank(:)
             character(64) :: subroutine_name = 'control_init_monitoring_and_action_from_EPASWMM'
         !%------------------------------------------------------------------
         !%------------------------------------------------------------------
@@ -142,7 +138,7 @@ contains
         !% monitorR array.
         !%------------------------------------------------------------------
         !% Declarations
-            integer :: ii, kk
+            integer :: ii
             real(8), target :: rdummy
             integer, pointer :: Eidx
             character(64) :: subroutine_name = 'control_update_monitor_across_images'
@@ -426,7 +422,6 @@ contains
             integer :: ii
             integer, pointer :: Eidx, elemType, hasChanged, dface
             real(8), pointer :: thisSetting
-            logical, pointer :: isClosedConduit
             character(64) :: subroutine_name = 'control_update_element_values'
         !%------------------------------------------------------------------
 
@@ -516,8 +511,7 @@ contains
             integer :: iLeft, iRight, thisPremiseLevel, success, numUnique
             integer :: npoint
             integer, allocatable :: location(:), linknodesimType(:), attribute(:)
-            integer, allocatable :: irank(:), simulation(:)
-            character(512) :: thisName
+            integer, allocatable :: irank(:)
             character(64) :: subroutine_name = 'control_init_monitor_points'
         !%------------------------------------------------------------------
         !% --- each premise may add two monitoring points (LHS and RHS)

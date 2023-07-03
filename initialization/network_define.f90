@@ -39,7 +39,7 @@ contains
         !%   Requires network links and nodes before execution
         !%-------------------------------------------------------------------
         !% Declarations:
-            integer :: ii, jj
+            integer :: jj
             character(64) :: subroutine_name = 'init_network_define_toplevel'
         !%-------------------------------------------------------------------
         !% Preliminaries:
@@ -228,9 +228,6 @@ contains
             integer :: ii, image
             integer :: ElemGlobalCounter, FaceGlobalCounter
             integer :: ElemLocalCounter, FacelocalCounter
-            integer :: unique_faces
-            integer, pointer :: Lidx
-            integer, pointer :: NodeUp, NodeDn, NodeUpTyp, NodeDnTyp
             character(64) :: subroutine_name = 'init_network_datacreate'
         !%-------------------------------------------------------------------
         !% Preliminaries    

@@ -61,7 +61,7 @@ contains
         !%-------------------------------------------------------------------
         !% Declarations
             real(8)          :: startTime, endTime, reportStart
-            logical          :: doHydraulicsStepYN, doHydrologyStepYN, SpinUpOutputYN
+            logical          :: doHydraulicsStepYN, doHydrologyStepYN
             real(8), pointer :: dtTol
             integer(kind=8)  :: cval, crate, cmax
             character(64)    :: subroutine_name = 'timeloop_toplevel'
@@ -255,7 +255,6 @@ contains
             real(8), pointer          :: dtTol
             integer(kind=8), pointer  :: thisStep
             integer(kind=8)           :: cval, crate, cmax
-            integer :: ii
             logical :: BCupdateYN
         !%-------------------------------------------------------------------
         !% Aliases
@@ -532,9 +531,6 @@ contains
         !% Top level hydraulic solver for a single time step
         !%-------------------------------------------------------------------
         !% Declarations:
-            integer, allocatable :: tempP(:)
-            integer              :: ii, kk
-            real(8)              :: tvolume
             character(64)        :: subroutine_name = 'tl_hydraulics'
         !%-------------------------------------------------------------------
         !% Preliminaries:
@@ -823,9 +819,8 @@ contains
             logical, pointer       :: useHydrology, useHydraulics
             real(8), pointer       :: nextHydraulicsTime, nextHydrologyTime
             real(8), pointer       :: lastHydraulicsTime, lastHydrologyTime
-            real(8)                :: nextTime, nextTimeLocal
+            real(8)                :: nextTime
             real(8), pointer       :: dtTol, timeNow, dtHydraulics, dtHydrology
-            integer                :: minImg
             integer, pointer       :: reportStep
             integer(kind=8), pointer    :: hydraulicStep, hydrologyStep, step
             character(64)          :: subroutine_name = 'tl_increment_counters'
@@ -1061,7 +1056,6 @@ contains
             real(8), pointer :: Volume(:), SmallVolume(:), Area(:)
             real(8), pointer :: Qface(:), Qelem(:), Qlat(:)
             real(8), pointer :: flowrate(:), volumeDelta(:), timeToDepth(:)
-            real(8) :: dt1, dt2
         !%------------------------------------------------------------------
         !% Aliases
             ncol        => col_elemP(ep_CC) !% cannot use JM elements
@@ -1191,7 +1185,7 @@ contains
 
             real(8) :: execution_realtime
             real(8) :: execution_realtime_per_step, steps_to_finish
-            real(8) :: simulation_fraction, seconds_to_completion, time_to_completion
+            real(8) :: seconds_to_completion
             real(8) :: thistime
 
             character(8) :: timeunit
@@ -1275,7 +1269,6 @@ contains
             real(8), pointer    :: thisDT
             integer, pointer :: Npack, thisP(:)
             real(8), pointer :: velocity(:), wavespeed(:), length(:), PCelerity(:)
-            integer :: itemp(1), ip, fup, fdn, eup, edn, ii
             integer(8), pointer :: step
 
             real(8), parameter :: smallDepth = 0.0001
@@ -1522,7 +1515,7 @@ contains
             real(8)          :: newDTlimit
 
             integer, pointer :: thisP(:), Npack
-            integer :: thisCol, ii
+            integer :: thisCol
         !%------------------------------------------------------------------
         !% Preliminaries:
         !%------------------------------------------------------------------

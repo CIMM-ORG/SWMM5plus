@@ -245,7 +245,7 @@ module weir_elements
             real(8), pointer :: Area, Flowrate, EffectiveFullDepth, Depth, dQdH 
             real(8), pointer :: EffectiveHeadDelta, grav
             logical, pointer :: hasFlapGate
-            real(8) :: CoeffOrifice, hLoss
+            real(8) :: CoeffOrifice
         !%------------------------------------------------------------------
         !% Aliases
             Area               => elemR (eIdx,er_Area)
@@ -311,7 +311,7 @@ module weir_elements
 
             logical, pointer    :: hasFlapGate
 
-            real(8) :: Zmidpt, CrestLength, SubCorrectionTriangular, SubCorrectionRectangular
+            real(8) :: CrestLength, SubCorrectionTriangular, SubCorrectionRectangular
             real(8) :: FlowRect, FlowTriang, ratio
         !%------------------------------------------------------------------
         !% Aliases:

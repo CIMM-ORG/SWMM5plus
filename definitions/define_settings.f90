@@ -407,6 +407,9 @@ module define_settings
         logical :: UseNominalElemLength = .true.
         real(8) :: NominalElemLength   = 10.0d0
         integer :: MinElementPerLink   = 3               !% force a minimum number of elements per link
+        logical :: UseEquivalentOrifice = .false.        !% replace small conduits with equivalent orifice
+        real(8) :: EquivalentOrificeDischargeCoeff = 0.6 !% discharge coefficient of the equivalent orifice
+        real(8) :: MinLinkLength        = 10.0d0         !% below the min link length, replace with equivalent orifice
         real(8) :: FullConduitTopwidthDepthFraction = 0.95d0  !% fraction of full depth used for full topwidth
     end type DiscretizationType
 
@@ -839,7 +842,6 @@ contains
             integer, allocatable :: ilen(:)
             real(8)              :: real_value
             real(8), allocatable :: rvec(:)
-            integer, allocatable :: ivec(:)
             logical :: logical_value
             logical :: found
             logical, pointer :: jsoncheck
@@ -1100,10 +1102,25 @@ contains
         if (found) setting%Discretization%UseNominalElemLength = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.UseNominalElemLength not found'
 
+        !%                       Discretization.UseEquivalentOrifice
+        call json%get('Discretization.UseEquivalentOrifice', logical_value, found)
+        if (found) setting%Discretization%UseEquivalentOrifice = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.UseEquivalentOrifice not found'
+
+        !%                       Discretization.EquivalentOrificeDischargeCoeff
+        call json%get('Discretization.EquivalentOrificeDischargeCoeff', real_value, found)
+        if (found) setting%Discretization%EquivalentOrificeDischargeCoeff = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.EquivalentOrificeDischargeCoeff not found'
+
         !%                       Discretization.NominalElemLength
         call json%get('Discretization.NominalElemLength', real_value, found)
         if (found) setting%Discretization%NominalElemLength = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.NominalElemLength not found'
+
+        !%                       Discretization.MinLinkLength
+        call json%get('Discretization.MinLinkLength', real_value, found)
+        if (found) setting%Discretization%MinLinkLength = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.MinLinkLength not found'
 
         !%                       Discretization.MinElementPerLink
         call json%get('Discretization.MinElementPerLink', integer_value, found)

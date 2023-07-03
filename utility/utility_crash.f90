@@ -76,8 +76,8 @@ module utility_crash
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: indexnumber
-            integer :: depthloc, headloc, flowloc, nlarge
-            real(8) :: depthmax, headmax, flowmax, percentU
+            integer :: nlarge
+            real(8) :: percentU
             logical :: iscrash
         !%------------------------------------------------------------------
 
@@ -237,8 +237,6 @@ module utility_crash
 
             character(len=14) :: ename(8)
             integer           :: eset(8)
-
-            real(8) :: temp2(9), temp1(9)
         !%------------------------------------------------------------------
         !% Aliases
             NN => N_elem(this_image())

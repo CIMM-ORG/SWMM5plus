@@ -60,9 +60,6 @@ contains
         !% Calls all the initialization subroutines
         !%-------------------------------------------------------------------
         !% Declarations
-            integer              :: ii,jj
-            integer, pointer     :: Npack, thisP(:)
-            integer, allocatable :: tempP(:)
             real(8)              :: arbitraryreal = 0.d0
             character(64)        :: subroutine_name = 'initialize_toplevel'
         !%-------------------------------------------------------------------
@@ -423,7 +420,7 @@ contains
         !% This is a character array in the form YYYYMMDD_hhmm
         !%-------------------------------------------------------------------
         !% Declarations:
-            integer           :: thisTime(8), ii, thisunit, ios
+            integer           :: thisTime(8)
             character(len=4)  :: cyear
             character(len=2)  :: cmonth, cday, chour, cmin
             character(len=13) :: datetimestamp
@@ -587,7 +584,7 @@ contains
             !%     the default stored in setting. A better approach would be to allow different links
             !%     to have different depth types. However, this requires changes to the *.inp file or
             !%     development of a new auxiliary input file.
-            link%I(ii,li_InitialDepthType)  = setting%Link%DefaultInitDepthType
+            link%I(ii,li_InitialDepthType)   = setting%Link%DefaultInitDepthType
             link%R(ii,lr_Length)             = interface_get_linkf_attribute(ii, api_linkf_conduit_length,   .false.)
             link%R(ii,lr_BreadthScale)       = interface_get_linkf_attribute(ii, api_linkf_xsect_wMax,       .false.)
             link%R(ii,lr_LeftSlope)          = interface_get_linkf_attribute(ii, api_linkf_left_slope,       .false.)
@@ -597,7 +594,7 @@ contains
             link%R(ii,lr_FullArea)           = interface_get_linkf_attribute(ii, api_linkf_xsect_aFull,      .false.)
             link%R(ii,lr_FullHydRadius)      = interface_get_linkf_attribute(ii, api_linkf_xsect_rFull,      .false.)
             link%R(ii,lr_BottomDepth)        = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
-            link%R(ii,lr_BottomRadius)        = interface_get_linkf_attribute(ii, api_linkf_xsect_rBot,      .false.)
+            link%R(ii,lr_BottomRadius)       = interface_get_linkf_attribute(ii, api_linkf_xsect_rBot,      .false.)
             link%R(ii,lr_FlowrateInitial)    = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
             link%R(ii,lr_FlowrateLimit)      = interface_get_linkf_attribute(ii, api_linkf_qlimit,           .false.)
             link%R(ii,lr_Kconduit_MinorLoss) = interface_get_linkf_attribute(ii, api_linkf_cLossAvg,         .false.)
@@ -606,7 +603,7 @@ contains
             link%R(ii,lr_SeepRate)           = interface_get_linkf_attribute(ii, api_linkf_seepRate,         .false.)
             link%R(ii,lr_ForceMain_Coef)     = interface_get_linkf_attribute(ii, api_linkf_forcemain_coef,   .false.)
             link%R(ii,lr_Setting)            = interface_get_linkf_attribute(ii, api_linkf_setting,          .false.)
-            link%R(ii,lr_TimeLastSet)         = interface_get_linkf_attribute(ii, api_linkf_timelastset,     .false. )
+            link%R(ii,lr_TimeLastSet)        = interface_get_linkf_attribute(ii, api_linkf_timelastset,     .false.)
 
             !% --- Note that link%R(ii,lr_Slope) and link%R(ii,lr_TopWidth) are defined in network_define.f08 
             !%     because SWMM5 reverses negative slope
@@ -690,6 +687,40 @@ contains
 
             !% --- set output links
             link%YN(ii,lYN_isOutput) = (interface_get_linkf_attribute(ii,api_linkf_rptFlag,.true.) == 1)
+
+            !% HACK: experimental code
+            !% --- replace smaller links using an equivalent orifice
+            if (setting%Discretization%UseEquivalentOrifice) then
+
+                if ( (link%R(ii,lr_Length) < setting%Discretization%MinLinkLength)                   .and. &
+                     ((link%I(ii,li_link_type) == lpipe) .or. (link%I(ii,li_link_type) == lchannel)) .and. &
+                     (.not. link%YN(ii,lYN_isPhantomLink))                                            ) then
+                    
+                    if (this_image() == 1) then
+                        print*, 'WARNING: Converting link to equivalent orifice'
+                        print*, 'Link index is ',ii,' link name is ',  trim(link%Names(ii)%str)
+                        print*, 'has lenght of ', link%R(ii,lr_Length) 
+                        print*, 'Which is smaller than user defined minimum link lenght of ', setting%Discretization%MinLinkLength
+                        print*
+                    end if
+                    
+                    !% set the link type type as Orifice
+                    link%I(ii,li_link_type) = lOrifice
+                    !% set the sub orifice type as side orifice
+                    link%I(ii,li_link_sub_type) = lSideOrifice 
+                    !% set a default discharge coefficient from settings
+                    link%R(ii,lr_DischargeCoeff1) = setting%Discretization%EquivalentOrificeDischargeCoeff
+                    !% set orifice time to operate to zero
+                    link%R(ii,lr_DischargeCoeff2) = zeroR
+                    !% set the default geometry of the equivalent orifice as circular
+                    link%I(ii,li_geometry) = lCircular
+                    !% reset the orifice opening from the original link full area
+                    link%R(ii,lr_FullDepth) = sqrt(fourR * link%R(ii,lr_FullArea) / setting%Constant%pi)
+                    !% reset the length of the element as minimum link lenght (will be reset later)
+                    link%R(ii,lr_Length) = setting%Discretization%MinLinkLength
+                end if
+
+            end if
 
         end do
 
@@ -2242,9 +2273,9 @@ contains
         !% than one image
         !%------------------------------------------------------------------
         !% Declarations:
-            integer :: ii, kk
+            integer :: ii
             integer, pointer :: nodeIdx(:), elemIdx(:), nodeType(:)
-            integer, pointer :: tface, subRunon, thisSub, thisRunon
+            integer, pointer :: tface, thisSub, thisRunon
             character(64) :: subroutine_name = 'init_subcatchment'
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -2577,10 +2608,10 @@ contains
         !% Declarations
             integer :: nimgs_assign
             integer, allocatable :: unique_imagenum(:)
-            integer :: ii, jj, kk, idx, counter, elem_counter=0, face_counter=0, junction_counter=0
+            integer :: ii, jj, idx, counter, elem_counter=0, face_counter=0, junction_counter=0
 
             integer :: duplicated_face_counter=0
-            integer, allocatable :: node_index(:), link_index(:), temp_arr(:)
+            integer, allocatable :: node_index(:), link_index(:)
             character(64) :: subroutine_name = 'init_coarray_length'
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -3191,11 +3222,6 @@ contains
         !%------------------------------------------------------------------
         !% Description:
         !% Inialize culvert parameters and numbers.
-        !%------------------------------------------------------------------
-        !% Declarations:
-            integer :: ii
-            integer, pointer :: thisLink
-        !%------------------------------------------------------------------
         !%------------------------------------------------------------------
 
         !% --- set up the culvert parameters array
