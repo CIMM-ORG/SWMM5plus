@@ -48,7 +48,7 @@ contains
         !% and li_P_image in link%I.
         !%------------------------------------------------------------------
         !% Declarations
-            character(64) :: subroutine_name = 'BIPquick_subroutine'
+            character(64) :: subroutine_name = 'BIPquick_toplevel'
 
             integer, allocatable :: packed_links_bypass(:), packed_nodes_bypass(:)
             integer, allocatable :: totalweight_nodes_pack(:)
@@ -428,8 +428,8 @@ contains
             integer :: jj
         !%--------------------------------------------------------------------
         !% Preliminaries
-            if (setting%Debug%File%BIPquick) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            ! if (setting%Debug%File%BIPquick) &
+                ! write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%--------------------------------------------------------------------
 
         irecCount = irecCount + 1    !% global counter for how often this is called
@@ -462,8 +462,8 @@ contains
 
         !%--------------------------------------------------------------------
         !% Closing
-            if (setting%Debug%File%BIPquick) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+            ! if (setting%Debug%File%BIPquick) &
+            ! write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine calc_upstream_weight
 !%
 !%============================================================================
