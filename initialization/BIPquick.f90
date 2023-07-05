@@ -953,11 +953,13 @@ contains
         character(64) :: subroutine_name = 'phantom_node_generator'
 
             integer, intent(in out)   :: phantom_node_idx, phantom_link_idx
-            real(8), intent(in)       :: phantom_node_start, partition_threshold
+            real(8), intent(in out)   :: phantom_node_start
+            real(8), intent(in)       :: partition_threshold
             integer, intent(in)       :: spanning_link
             integer :: upstream_node_list(max_up_branch_per_node)
             integer :: downstream_node, upstream_node
             integer :: kk
+            real(8) :: adjustedLinkLength
             real    :: l1, l2, y1, y2
         !%--------------------------------------------------------------------
         !% Preliminaries
@@ -1007,6 +1009,46 @@ contains
         !% --- Copy the link row entries from the spanning link to the phantom link
         link%I(phantom_link_idx, :) = link%I(spanning_link, :)
         link%R(phantom_link_idx, :) = link%R(spanning_link, :)
+
+        !% find what will be the adjusted link length if the orinal cut is used
+        adjustedLinkLength = link%R(spanning_link, lr_Length) - phantom_node_start
+
+
+        !% HACK CODE
+        !% try to keep the phantom link length closer to nominal element length
+        if (setting%Partitioning%PhantomLinkAdjust) then
+            print*, '         spanning link name   ', link%names(spanning_link)%str, ' ...'
+            print*, '         which has a length of', link%R(spanning_link,lr_length), ' ...'
+            print*, '         cutting  at length   ', link%R(spanning_link, lr_Length) - phantom_node_start, ' from downstream'
+            print*, '         resulting in phantom link of length',  phantom_node_start   
+            
+            if (phantom_node_start < setting%Discretization%NominalElemLength) then
+                !% check if the nominal elemment length is twice the link length (not well tested)
+                if (link%R(spanning_link, lr_Length) > twoR * setting%Discretization%NominalElemLength) then
+                    phantom_node_start = setting%Discretization%NominalElemLength
+                    print*, '         since the cut is resulting in a phantom link ... '
+                    print*, '         adjusted the cut at length   ', link%R(spanning_link, lr_Length) - phantom_node_start, ' from downstream'
+                    print*, '         resulting in new phantom link of length',  phantom_node_start
+                else
+                !% else do nothing
+                end if 
+            end if
+
+            !% try to keep the adjusted link length closer to nominal element length
+            if (adjustedLinkLength < setting%Discretization%NominalElemLength) then
+                !% check if the nominal elemment length is twice the link length (not well tested)
+                if (link%R(spanning_link, lr_Length) > twoR * setting%Discretization%NominalElemLength) then
+                    adjustedLinkLength = setting%Discretization%NominalElemLength
+                    phantom_node_start = link%R(spanning_link, lr_Length) - adjustedLinkLength
+                    print*, '         since the cut is resulting in a spanning link ... '
+                    print*, '         adjusted the cut at length   ', link%R(spanning_link, lr_Length) - phantom_node_start, ' from downstream'
+                    print*, '         resulting in new phantom link of length',  phantom_node_start
+                else
+                !% else do nothing
+                end if
+            end if
+            print*
+        end if
 
         !% --- The phantom link length is the spanning_link length - the phantom node location
         link%R(phantom_link_idx, lr_Length) = link%R(spanning_link, lr_Length) - phantom_node_start
