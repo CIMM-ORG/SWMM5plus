@@ -3022,10 +3022,108 @@ contains
 !%==========================================================================
 !%
     subroutine pack_JB_zeroDepth_shared_faces ()
+        !%------------------------------------------------------------------
+        !% Description
+        !% Dynamic pack for JB-adjacent shared faces that have zero depth  
+        !% elements on one or both sides
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, pointer :: N_shared_faces 
+            integer, pointer :: thisP, eup, edn, gup, gdn, c_image
+            integer, pointer :: ptype_up_zero, ptype_dn_zero, ptype_both_zero
+            integer, pointer :: npack_up_zero, npack_dn_zero, npack_both_zero
+            logical, pointer :: isUpGhost, isDnGhost
+            integer :: ii
+        !%------------------------------------------------------------------
+        !% Aliases:
+            !% pointer towards the total number of shared faces in an image
+            N_shared_faces  => npack_facePS(fp_JB_IorS)
+            ptype_up_zero   => col_facePS(fp_JB_upstream_is_zero_IorS)
+            npack_up_zero   => npack_facePS(ptype_up_zero)
+            ptype_dn_zero   => col_facePS(fp_JB_downstream_is_zero_IorS)
+            npack_dn_zero   => npack_facePS(col_facePS(ptype_dn_zero))
+            ptype_both_zero => col_facePS(fp_JB_bothsides_are_zero_IorS)
+            npack_both_zero => npack_facePS(col_facePS(ptype_both_zero))
+        !%------------------------------------------------------------------
+        !% --- initialize the npacks
+        npack_up_zero   = 0
+        npack_dn_zero   = 0
+        npack_both_zero = 0
 
-    !% NOTE: As of 20230601 packs for zerodepth shared faces on JB elements
-    !% are not needed. However, we are keeping this stub routine available
-    !% in case this becomes an issue.
+        if (N_shared_faces > 0) then
+            !% --- cycle through faces with CC on both sides
+            do ii = 1,N_shared_faces
+
+                thisP       => facePS(ii,fp_JB_IorS) !% --- face for testing
+                eup         => faceI(thisP,fi_Melem_uL)
+                edn         => faceI(thisP,fi_Melem_dL)
+                isUpGhost   => faceYN(thisP,fYN_isUpGhost)
+                gup         => faceI(thisP,fi_GhostElem_uL)
+                isDnGhost   => faceYN(thisP,fYN_isDnGhost)
+                gdn         => faceI(thisP,fi_GhostElem_dL)
+                c_image     => faceI(thisP,fi_Connected_image)
+
+                if (isUpGhost) then
+
+                    !% --- zero depth on upstream element
+                    if ((      elemYN(gup,eYN_isZeroDepth)[c_image]) .and.  &
+                        (.not. elemYN(edn,eYN_isZeroDepth)         ))  then
+
+                        npack_up_zero = npack_up_zero + oneI
+                        facePS(npack_up_zero,ptype_up_zero) = thisP
+                    
+                    !% --- zero depth on downstream element
+                    else if ((.not. elemYN(gup,eYN_isZeroDepth)[c_image]) .and.  &
+                                    (elemYN(edn,eYN_isZeroDepth)               ))  then
+
+                            npack_dn_zero = npack_dn_zero + oneI
+                            facePS(npack_dn_zero,ptype_dn_zero) = thisP
+                    
+                    !% --- zero depth on both elements        
+                    else if ((elemYN(gup,eYN_isZeroDepth)[c_image]) .and.  &
+                                (elemYN(edn,eYN_isZeroDepth)         ))  then 
+
+                            npack_both_zero = npack_both_zero + oneI
+                            facePS(npack_both_zero,ptype_both_zero) = thisP
+
+                    else 
+                        !% --- zero depth element not found
+                    end if
+                
+                else if (isDnGhost) then
+                
+                    !% --- zero depth on upstream element
+                    if ((      elemYN(eup,eYN_isZeroDepth)               ) .and.  &
+                        (.not. elemYN(gdn,eYN_isZeroDepth)[c_image]))  then
+
+                        npack_up_zero = npack_up_zero + oneI
+                        facePS(npack_up_zero,ptype_up_zero) = thisP
+                    
+                    !% --- zero depth on downstream element
+                    else if ((.not. elemYN(eup,eYN_isZeroDepth)         ) .and.  &
+                            (       elemYN(gdn,eYN_isZeroDepth)[c_image]))  then
+
+                            npack_dn_zero = npack_dn_zero + oneI
+                            facePS(npack_dn_zero,ptype_dn_zero) = thisP
+                    
+                    !% --- zero depth on both elements   
+                    else if ((elemYN(eup,eYN_isZeroDepth)         ) .and.  &
+                                (elemYN(gdn,eYN_isZeroDepth)[c_image]))  then
+                            
+                            npack_both_zero = npack_both_zero + oneI
+                            facePS(npack_both_zero,ptype_both_zero) = thisP
+
+                    else 
+                    !% --- no zero depth element found
+                    end if
+                else 
+                    print *, 'CODE ERROR: unexpected else'
+                    call util_crashpoint(798723)
+                end if
+            end do
+        else 
+            !% --- no shared elements
+        end if
 
     end subroutine pack_JB_zeroDepth_shared_faces
 !%

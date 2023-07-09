@@ -163,7 +163,12 @@ module runge_kutta2
             !%     for all CC and Diag elements (not allowed on junctions)
             call face_flowrate_for_openclosed_elem (ep_CCDiag)
 
-            !% HACK QUESTION: DO WE NEED ANOTHER SYNC HERE AND DATA TRANSFER? 
+            !% --- face sync
+            !%     sync all the images first. then copy over the data between
+            !%     shared-identical faces. then sync all images again
+            sync all
+            call face_shared_face_sync (fp_noBC_IorS)
+            sync all
             !% OR CAN face_flowrate_for_openclosed_elem
             !% BE MOVED UPWARDS IN STEPPING SO THAT IT GETS SYNCED?
 

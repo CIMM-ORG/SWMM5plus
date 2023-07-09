@@ -1865,11 +1865,6 @@ module face
                         else 
                             faceR(thisP,fr_Flowrate) = zeroR
                         end if
-
-                        !% --- the face values should be identical apart from the newly adjusted values
-                        !%     transfer only the flowrate data column to the indetical location 
-                        faceR(Ifidx,fr_Flowrate)[ci] = faceR(thisP,fr_Flowrate)
-
                     else 
                         !% --- no action
                     end if
@@ -1883,11 +1878,6 @@ module face
                         else 
                             faceR(thisP,fr_Flowrate) = zeroR
                         end if
-
-                        !% --- the face values should be identical apart from the newly adjusted values
-                        !%     transfer only the flowrate data column to the indetical location 
-                        faceR(Ifidx,fr_Flowrate)[ci] = faceR(thisP,fr_Flowrate)
-
                     else 
                         !% --- no action
                     end if
@@ -1948,6 +1938,46 @@ module face
 !%========================================================================== 
 !%==========================================================================  
 !%  
+    subroutine face_shared_face_sync_single (facePcol,col)
+        !% -----------------------------------------------------------------
+        !% Description:
+        !% sync data between shared faces
+        !% 
+        !% -----------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: facePcol,col
+            integer, pointer :: npack, thisP, ci, Ifidx
+            logical, pointer :: isDiverged
+            integer :: ii
+        !% -----------------------------------------------------------------
+        npack => npack_facePS(facePCol)
+        if (npack < 1) return
+
+        do ii = 1,Npack
+            !%----------------------------------------------------------
+            !% Aliases
+                thisP           => facePS(ii,facePCol)
+                ci              => faceI(thisP,fi_Connected_image)
+                Ifidx           => faceI(thisP,fi_Identical_Lidx)
+                isDiverged      => faceYN(thisP,fYN_isSharedFaceDiverged)
+            !%----------------------------------------------------------
+                
+            !% --- check if the shared face has been diverged
+            if (isDiverged) then
+                !% --- if the face has been diverged, copy the whole shared face 
+                !%     column in the identical face location at the connected image
+                faceR(Ifidx,col)[ci] = faceR(thisP,col)
+
+                !% --- after the transfer, set the divergence check to false
+                isDiverged = .false.
+            end if
+        end do
+
+    end subroutine face_shared_face_sync_single
+!%  
+!%========================================================================== 
+!%==========================================================================  
+!% 
     subroutine face_flowrate_for_openclosed_elem (elemPcol)
         !%------------------------------------------------------------------
         !% Description:
@@ -1967,6 +1997,10 @@ module face
             faceR(fdn(thisP),fr_Flowrate) = zeroR
             faceR(fdn(thisP),fr_Velocity_d) = zeroR 
             faceR(fdn(thisP),fr_Velocity_u) = zeroR
+
+            where (faceYN(fdn(thisP),fYN_isSharedFace))
+                faceYN(fdn(thisP),fYN_isSharedFaceDiverged) = .true.
+            end where
         endwhere
    
        end subroutine face_flowrate_for_openclosed_elem    

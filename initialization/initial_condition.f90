@@ -4931,8 +4931,8 @@ contains
         !% get the geometry data for conduit links and calculate element volumes
         !%-----------------------------------------------------------------
         !% Declarations:
+            integer :: thisSize
             integer, pointer    :: SlotMethod
-            integer, dimension(:), allocatable :: packIdx
             real(8), pointer    :: TargetPCelerity, grav, Alpha
             character(64) :: subroutine_name = 'init_IC_slot'
         !%-----------------------------------------------------------------
@@ -4948,23 +4948,22 @@ contains
         !%-----------------------------------------------------------------
         !% --- initialize slots
         !% --- get the set of non dummy elements
-        packIdx = pack(elemI(:,ei_Lidx), (.not. elemYN(:,eYN_isDummy)))
+        thisSize = size(elemR,1)-1
+        elemR(1:thisSize,er_SlotVolume)            = zeroR
+        elemR(1:thisSize,er_SlotArea)              = zeroR
+        elemR(1:thisSize,er_SlotWidth)             = zeroR
+        elemR(1:thisSize,er_dSlotArea)             = zeroR
+        elemR(1:thisSize,er_dSlotDepth)            = zeroR
+        elemR(1:thisSize,er_dSlotVolume)           = zeroR
+        elemR(1:thisSize,er_SlotVolume_N0)         = zeroR
+        elemR(1:thisSize,er_Preissmann_Celerity)   = zeroR
+        elemR(1:thisSize,er_Surcharge_Time)        = zeroR      
+        elemR(1:thisSize,er_SlotDepth_N0)          = elemR(1:thisSize,er_SlotDepth)    
+        elemR(1:thisSize,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
+                                                              * elemR(1:size(elemR,1)-1,er_FullDepth)))
 
-        elemR(packIdx,er_SlotVolume)            = zeroR
-        elemR(packIdx,er_SlotArea)              = zeroR
-        elemR(packIdx,er_SlotWidth)             = zeroR
-        elemR(packIdx,er_dSlotArea)             = zeroR
-        elemR(packIdx,er_dSlotDepth)            = zeroR
-        elemR(packIdx,er_dSlotVolume)           = zeroR
-        elemR(packIdx,er_SlotVolume_N0)         = zeroR
-        elemR(packIdx,er_Preissmann_Celerity)   = zeroR
-        elemR(packIdx,er_Surcharge_Time)        = zeroR      
-        elemR(packIdx,er_SlotDepth_N0)          = elemR(packIdx,er_SlotDepth) 
-        elemR(packIdx,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
-                                                              * elemR(packIdx,er_FullDepth)))
-
-        where (elemR(packIdx,er_Preissmann_Number_initial) < setting%PreissmannSlot%MinimumInitialPreissmannNumber)
-            elemR(packIdx,er_Preissmann_Number_initial) = setting%PreissmannSlot%MinimumInitialPreissmannNumber   
+        where (elemR(1:thisSize,er_Preissmann_Number_initial) < setting%PreissmannSlot%MinimumInitialPreissmannNumber)
+            elemR(1:thisSize,er_Preissmann_Number_initial) = setting%PreissmannSlot%MinimumInitialPreissmannNumber   
         endwhere                                                  
     
         !% --- only calculate slots for ETM time-march
@@ -4981,7 +4980,7 @@ contains
 
                 case (StaticSlot)
 
-                    elemR(packIdx,er_Preissmann_Number) = oneR
+                    elemR(1:thisSize,er_Preissmann_Number) = oneR
 
                     where (elemYN(:,eYN_isPSsurcharged))
                         elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
@@ -4994,9 +4993,9 @@ contains
 
                 case (DynamicSlot)
 
-                    !elemR(packIdx,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(packIdx,er_FullDepth))) 
-                    elemR(packIdx,er_Preissmann_Number)     = elemR(packIdx,er_Preissmann_Number_initial)
-                    elemR(packIdx,er_Preissmann_Number_N0)  = elemR(packIdx,er_Preissmann_Number)
+                    !elemR(1:thisSize,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:thisSize,er_FullDepth))) 
+                    elemR(1:thisSize,er_Preissmann_Number)     = elemR(1:thisSize,er_Preissmann_Number_initial)
+                    elemR(1:thisSize,er_Preissmann_Number_N0)  = elemR(1:thisSize,er_Preissmann_Number)
                     where (elemYN(:,eYN_isPSsurcharged))
                         elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
                         elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
