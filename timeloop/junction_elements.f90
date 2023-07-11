@@ -265,12 +265,25 @@ module junction_elements
 
         end if
 
+        !% ==============================================================
+        !% --- face sync
+        !%     sync all the images first. then copy over the data between
+        !%     shared-identical faces. then sync all images again
+        !%     This ensures faces between JB and adjacent element are
+        !%     identical when face is shared between processors
+        sync all
+        call face_shared_face_sync (fp_noBC_IorS)
+        sync all
+        !% 
+        !% ==============================================================
+
         !% --- these calls are outside of the if (N_nJM) statement to prevent any race conditions
         !% --- update various packs of zeroDepth faces
         call pack_JB_zeroDepth_interior_faces ()
+        
         sync all
         call pack_JB_zeroDepth_shared_faces ()  !% HACK STUB ROUTINE NOT COMPLETE
-
+        sync all
         !% --- set face geometry and flowrates where adjacent element is zero
         !%     only applies to faces with JB on one side
         call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &
@@ -401,14 +414,14 @@ module junction_elements
 
         !% --- auxiliary variables update
         !% --- wave speed, Froude number on JM
-            Npack => npack_elemP(ep_JM)
-            if (Npack > 0) then
-                thisP => elemP(1:Npack, ep_JM)
-                !% --- adjust JM for small or zero depth (may be redundant)
-                call adjust_element_toplevel (JM)
-                call update_wavespeed_element(thisP)
-                call update_Froude_number_element (thisP) 
-            end if
+        Npack => npack_elemP(ep_JM)
+        if (Npack > 0) then
+            thisP => elemP(1:Npack, ep_JM)
+            !% --- adjust JM for small or zero depth (may be redundant)
+            call adjust_element_toplevel (JM)
+            call update_wavespeed_element(thisP)
+            call update_Froude_number_element (thisP) 
+        end if
 
         !% NOTE TRUE FORCES Q weight on JB to minimum, which
         !% means that face interpolation will have JB values

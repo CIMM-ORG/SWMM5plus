@@ -1947,7 +1947,7 @@ module utility_allocate
         !%------------------------------------------------------------------        
 
         if (N_Total_Curves < 1) then
-            print *, '...No curves found'
+            if (this_image() == 1)print *, '...No curves found'
             return 
         end if
 

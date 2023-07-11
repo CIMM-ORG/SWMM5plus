@@ -212,7 +212,7 @@ contains
         end if
 
         !% --- print the output folder (used for profile animation)
-        if (setting%Output%Verbose) then
+        if ((setting%Output%Verbose) .and. (N_profiles>zeroI)) then
             write(*,"(A)") ''
             write(*,"(A)") 'For profile_animate.py, the latest output (-o arg) is stored at... '
             write(*,"(A)") trim(setting%File%output_timestamp_subfolder)
@@ -222,7 +222,7 @@ contains
         end if
 
         !% --- print valid profile names
-        if (setting%Output%Verbose) then
+        if ((setting%Output%Verbose) .and. (N_profiles>zeroI)) then
             write(*,"(A)") ''
             write(*,"(A)") 'Valid profile_animate.py names (-s arg) are...'
             do ii=1,N_profiles 

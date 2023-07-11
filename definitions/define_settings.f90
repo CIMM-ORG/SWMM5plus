@@ -541,6 +541,7 @@ module define_settings
     type PartitioningType
         !% Allowable values: BQquick
         integer :: PartitioningMethod = BQuick
+        logical :: PhantomLinkAdjust  = .false.
     endtype PartitioningType
 
     !% setting%Profile
@@ -1678,7 +1679,12 @@ contains
                 stop 73785
             end if
         end if
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Partitioning.PartitioningMethod not found'
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Partitioning.PartitioningMethod not found'        
+
+        !%                       PhantomLinkAdjust
+        call json%get('Partitioning.PhantomLinkAdjust', logical_value, found)
+        if (found) setting%Partitioning%PhantomLinkAdjust = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Partitioning.PhantomLinkAdjust not found'
   
     !% Profile. =====================================================================
         !%                       Profile.useYN

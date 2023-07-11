@@ -99,7 +99,6 @@ contains
             call co_broadcast(link%I, source_image=1)
             call co_broadcast(link%R, source_image=1)
             call co_broadcast(link%YN, source_image=1)
-            sync all
         end if
 
         !%------------------------------------------------------------------

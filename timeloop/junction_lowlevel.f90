@@ -164,12 +164,7 @@ module junction_lowlevel
                     !% --- apply strict velocity limiter
                     where (abs(elemR(thisJB,er_Velocity)) > setting%Limiter%Velocity%Maximum)
                         elemR(thisJB,er_Velocity) = sign(setting%Limiter%Velocity%Maximum * 0.99d0, elemR(thisJB,er_Velocity))
-                    endwhere
-
-                    !% --- push flowrate and velocity to faces
-                    faceR(fidx(thisJB),fr_Flowrate)   = elemR(thisJB,er_Flowrate)
-                    faceR(fidx(thisJB),fr_Velocity_u) = elemR(thisJB,er_Velocity)
-                    faceR(fidx(thisJB),fr_Velocity_d) = elemR(thisJB,er_Velocity)
+                    endwhere       
             endwhere 
 
             !% --- for a trivial outflow and a trivial dH, set flow to zero
@@ -184,6 +179,16 @@ module junction_lowlevel
                 !% --- inconsistent flow direction and pressure gradient   
                 elemR(thisJB,er_Flowrate) = zeroR
             endwhere
+
+            !% --- push flowrate and velocity to faces
+            faceR(fidx(thisJB),fr_Flowrate)   = elemR(thisJB,er_Flowrate)
+            faceR(fidx(thisJB),fr_Velocity_u) = elemR(thisJB,er_Velocity)
+            faceR(fidx(thisJB),fr_Velocity_d) = elemR(thisJB,er_Velocity)
+            !% --- check if the elem data has either been pushed 
+            !%     to a shared face. if so then mark that face
+            where (faceYN(fidx(thisJB),fYN_isSharedFace))
+                faceYN(fidx(thisJB),fYN_isSharedFaceDiverged) = .true.
+            end where
         end do
 
         !% --- update JB froude number and wave speed
@@ -523,6 +528,12 @@ module junction_lowlevel
             faceR(fIdx(thisCC),fr_Flowrate_Conservative) &
                  = faceR(fIdx(thisCC),fr_Flowrate_Conservative) &
                  + faceR(fIdx(thisCC),fr_DeltaQ)
+                
+            !% --- check if the elem data has either been pushed 
+            !%     to a shared face. if so then mark that face
+            where (faceYN(fIdx(thisCC),fYN_isSharedFace))
+                faceYN(fIdx(thisCC),fYN_isSharedFaceDiverged) = .true.
+            end where
         end if
 
         !% --- store present volume

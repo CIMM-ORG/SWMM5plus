@@ -999,7 +999,6 @@ contains
         !% --- store the global value of maximum CFL
         cfl_max = tl_get_max_CFL(ep_CCJM_NOTzerodepth,newDT)
     
-        sync all
         !% --- distribute across images
         call co_max(cfl_max)
 
@@ -1814,6 +1813,13 @@ contains
                 !% --- no change in DT
             end if
         endif
+
+        !% --- match the last check step across images.
+        !%     this ensures new timestep is shecked at
+        !%     the same time across all images. as a result
+        !%     consistancy is maintained across single vs
+        !%     multi processor simulations
+        call co_max(lastCheckStep)
 
         !% --- check for minimum limit
         if (setting%Limiter%Dt%UseLimitMinYN) then

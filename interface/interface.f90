@@ -924,7 +924,8 @@ contains
             dummyI)
         call print_api_error(error, subroutine_name)
         api_is_initialized = .true.
-        print *, ' ' !% needed because there is no \n after the EPA-SWMM printout of "Retrieving project data"
+
+        if (this_image() == 1) print *, ' ' !% needed because there is no \n after the EPA-SWMM printout of "Retrieving project data"
 
         !% --- get the time start, end, and interval data from SWMM-C input file
         call interface_get_SWMM_times()
