@@ -576,6 +576,8 @@ module define_settings
         real(8) :: ManningsN = 0.1d0
         real(8) :: PumpVolumeFactor = 0.5d0  !% 
         real(8) :: LateralInflowSmallDepth = 0.05d0
+        real(8) :: BCInflowSmallDepth = 0.05d0
+        real(8) :: InflowSmallDepthMultiplier = 2.d0
     end type SmallDepthType
 
     ! setting%Solver

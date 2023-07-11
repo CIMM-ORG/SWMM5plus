@@ -1365,73 +1365,117 @@ contains
             real(8), intent(inout) :: thisDT
 
             integer, pointer :: BCelemIdx(:)
-            real(8), pointer :: depthLimit(:), DTlimit(:), depthScale(:)
-            real(8), pointer :: BCQ(:), topwidth(:), length(:), depth(:)
-            real(8), pointer :: alpha, gravity, smallDepth
+            real(8), pointer :: DTlimit(:), BCQ(:), PlanArea(:), HeightRise(:)
+            !real(8), pointer :: depthLimit(:), depthScale(:)
+            !real(8), pointer :: topwidth(:), length(:), depth(:)
+            !real(8), pointer :: alpha, gravity, smallDepth
             real(8) :: newDTlimit
         !%------------------------------------------------------------------
         !% Preliminaries:
-            !if (crashYN) return
-            temp_BCupI(:,:) = nullValueI
-            temp_BCupR(:,:) = nullValueR
+            ! temp_BCupI(:,:) = nullValueI
+            ! temp_BCupR(:,:) = nullValueR
         !%------------------------------------------------------------------
         !% Aliases:
             BCelemIdx  => temp_BCupI(:,1)
 
-            depthLimit => temp_BCupR(:,1)
-            DTlimit    => temp_BCupR(:,2)
-            BCQ        => temp_BCupR(:,3)
-            depthScale => temp_BCupR(:,4)
+            BCQ        => temp_BCupR(:,1)
+            PlanArea   => temp_BCupR(:,2)
+            DTlimit    => temp_BCupR(:,3)
+            HeightRise => temp_BCupR(:,4)
 
-            topwidth   => elemR(:,er_TopWidth)
-            length     => elemR(:,er_Length)
-            depth      => elemR(:,er_Depth)
+            !depthLimit => temp_BCupR(:,1)
+            !DTlimit    => temp_BCupR(:,2)
+            !BCQ        => temp_BCupR(:,3)
+            !depthScale => temp_BCupR(:,4)
+            !length     => elemR(:,er_Length)
+            !topwidth   => elemR(:,er_TopWidth)
+            !depth      => elemR(:,er_Depth)
 
-            alpha      => setting%VariableDT%CFL_inflow_max
-            gravity    => setting%Constant%gravity
-            smallDepth => setting%SmallDepth%MomentumDepthCutoff
+            !alpha      => setting%VariableDT%CFL_inflow_max
+            !gravity    => setting%Constant%gravity
+            !smallDepth => setting%SmallDepth%MomentumDepthCutoff
         !%------------------------------------------------------------------
         
         !% --- set the timestep limiter for upstream inflow boundary conditions (BCup)
         if (size(BC%P%BCup) > 0) then
 
-            !% --- ensure flowrate used for limiter is  positive and non-zero
-            BCQ(:) = max( abs(BC%flowR(BC%P%BCup,br_value)), setting%Eps%Velocity)
+            !% --- similar approach to Lateral Inflow limiter
+
+            !% --- initialize temporary arrays
+            PlanArea   = zeroR
+            HeightRise = zeroR 
+            BCQ        = zeroR
+            DTLimit    = huge(zeroR)
 
             !% --- store the element indexes downstream of a BCup face
             BCelemIdx =  faceI(BC%flowI(BC%P%BCup,bi_face_idx), fi_Melem_dL)
+            
+            !% --- store positive flowrates
+            BCQ(:) = max(abs(BC%flowR(BC%P%BCup,br_value)), zeroR)
 
-            !% --- store the scaling depth limit defined by when the induced velocity
-            !%     from an inflow is similar to the gravity wave speed of the BC inflow
-            depthScale = ( (alpha**4) * (BCQ**2) / (gravity * (topwidth(BCelemIdx)**2) ) )**onethirdR
-
-            !% --- get the depth limit for maximum depth that the time step will be limited as 
-            !%     either the depth scale or the specified smallDepth limit
-            depthLimit = max(smallDepth, depthScale)
-
-            DTlimit = length(BCelemIdx) * ( ( alpha * topwidth(BCelemIdx) / (gravity * BCQ) )**onethirdR) 
-        
-            !% --- where the depth is greater than the depthlimit the DT inflow limiter
-            !%     is not needed, and we can use the existing DT value
-            depthLimit = depth(BCelemIdx) - depthLimit
-            where (depthLimit .ge. zeroR)
-                DTlimit = thisDT
+            !% --- get the geometry associated with a simple inflow
+            where (BCQ > zeroR)
+                PlanArea = elemR(BCelemIdx,er_Length) * elemR(BCelemIdx,er_BreadthMax)
+                HeightRise = BCQ * thisDT / PlanArea
             endwhere
 
-            !% --- get the smallest DT in the limiter array
-            newDTlimit = minval(DTlimit)
+            !% --- if the depth is small and the heighrise is large, then limit the time step
+            !%     to a height rise of twice the local small depth value
+            where ((HeightRise > setting%SmallDepth%BCInflowSmallDepth)                   &
+                .and.                                                                     &
+                (elemR(:,er_Depth) < twoR * setting%SmallDepth%InflowSmallDepthMultiplier &
+                                          * setting%SmallDepth%BCInflowSmallDepth))
 
-            !% --- use the smaller value of the new limit or the input
-            thisDT = min(newDTlimit,thisDT) 
+                DTlimit = setting%SmallDepth%InflowSmallDepthMultiplier  &
+                        * setting%SmallDepth%LateralInflowSmallDepth * PlanArea / BCQ
+            endwhere
 
-            !% --- return to null value storage
-            temp_BCupI(:,:) = nullValueI
-            temp_BCupR(:,:) = nullValueR
+            newDTlimit = minval(DTlimit,(DTlimit > zeroR))
+
+            thisDT = min(thisDT, newDTlimit)
+
+            ! !% --- ARCHIVE 20230711
+            ! !% --- ensure flowrate used for limiter is positive and non-zero
+            ! BCQ(:) = max( abs(BC%flowR(BC%P%BCup,br_value)), setting%Eps%Velocity)
+
+            ! !% --- store the element indexes downstream of a BCup face
+            ! BCelemIdx =  faceI(BC%flowI(BC%P%BCup,bi_face_idx), fi_Melem_dL)
+
+            ! !% --- store the scaling depth limit defined by when the induced velocity
+            ! !%     from an inflow is similar to the gravity wave speed of the BC inflow
+            ! depthScale = ( (alpha**4) * (BCQ**2) / (gravity * (topwidth(BCelemIdx)**2) ) )**onethirdR
+
+            ! !% --- get the depth limit for maximum depth that the time step will be limited as 
+            ! !%     either the depth scale or the specified smallDepth limit
+            ! depthLimit = max(smallDepth, depthScale)
+
+            ! DTlimit = length(BCelemIdx) * ( ( alpha * topwidth(BCelemIdx) / (gravity * BCQ) )**onethirdR) 
+        
+            ! !% --- where the depth is greater than the depthlimit the DT inflow limiter
+            ! !%     is not needed, and we can use the existing DT value
+            ! depthLimit = depth(BCelemIdx) - depthLimit
+            ! where (depthLimit .ge. zeroR)
+            !     DTlimit = thisDT
+            ! endwhere
+
+            ! !% --- get the smallest DT in the limiter array
+            ! newDTlimit = minval(DTlimit)
+
+            ! !% --- use the smaller value of the new limit or the input
+            ! thisDT = min(newDTlimit,thisDT) 
+
+            ! !% --- return to null value storage
+            ! temp_BCupI(:,:) = nullValueI
+            ! temp_BCupR(:,:) = nullValueR
         else
             !% --- continue -- no DT limitation if there are no BCup faces
         end if
 
         !%------------------------------------------------------------------
+        !% Closing
+            temp_BCupI(:,1)   = nullValueI
+            temp_BCupR(:,1:4) = nullValueR
+
     end subroutine tl_limit_BCinflow_dt
 !%
 !%==========================================================================
@@ -1548,13 +1592,15 @@ contains
             HeightRise = Qlat * thisDT / PlanArea
         endwhere
 
-        !% --- if th depth is small and the heighrise is large, then limit the time step
+        !% --- if the depth is small and the heighrise is large, then limit the time step
         !%     to a height rise of twice the local small depth value
-        where ((HeightRise > setting%SmallDepth%LateralInflowSmallDepth)  &
-                .and.                                                     &
-                (elemR(:,er_Depth) < fourR * setting%SmallDepth%LateralInflowSmallDepth))
+        where ((HeightRise > setting%SmallDepth%LateralInflowSmallDepth)                  &
+                .and.                                                                     &
+                (elemR(:,er_Depth) < twoR * setting%SmallDepth%InflowSmallDepthMultiplier &
+                                          * setting%SmallDepth%LateralInflowSmallDepth))
 
-            DTlimit = twoR * setting%SmallDepth%LateralInflowSmallDepth * PlanArea / Qlat
+            DTlimit = setting%SmallDepth%InflowSmallDepthMultiplier &
+                    * setting%SmallDepth%LateralInflowSmallDepth * PlanArea / Qlat
         endwhere
 
         newDTlimit = minval(DTlimit)

@@ -59,8 +59,9 @@ contains
 
          integer :: ii, jj, kk, mm
 
-         integer, dimension(7) :: iet = (/6346,   441, 440,  442,  451,  444, 578 /)
-         integer, dimension(3) :: ift = (/     437,             438,       440/)
+         integer, dimension(4) :: iet =     (/1,   2,  3,  4 /)
+         integer, dimension(5) :: ift = (/  1,   2,  3,  4, 5/)
+
 
       !%------------------------------------------------------------------
       !% Preliminaries:
@@ -77,13 +78,17 @@ contains
 
       !% --- USEFUL HEADER -----------------------------------------------
 
-         if (setting%Time%Step < 37000) return 
+         !if (setting%Time%Step < 37000) return 
 
          print *, ' '
          write(*,"(A,A, e12.5)") ' ',trim(inputstring)     
          write(*,"(A,i7,A, f12.5, A, f12.5, A)") '        step = ',setting%Time%Step ,&
          '; dt = ',setting%Time%Hydraulics%Dt,&
          '; time = ',setting%Time%Now / 60.d0 , 'min'    
+
+
+         ! print *, link%I(1,li_first_elem_idx), link%I(1,li_last_elem_idx)
+         ! stop 2309874
 
          !% --- check node for valid branches
          ! print *, 'iet ',iet(2)
@@ -92,8 +97,8 @@ contains
          ! end do
 
          !% --- get faces upstream
-         !print *, fup(iet)
-         !print *, fdn(iet)
+         ! print *, fup(iet)
+         ! print *, fdn(iet)
 
          ! print *, eup(437)
          ! print *, edn(438)
@@ -101,44 +106,43 @@ contains
 
          ! stop 7709874
 
-         write(*,"(A,9f12.3,A,4f12.3)") 'head', &
-            elemR(iet(1),er_Head), &
+         write(*,"(A,15f12.3)") 'head', &
                faceR(ift(1),fr_Head_u), &
                faceR(ift(1),fr_Head_d), &
-            elemR(iet(2),er_Head), &
-            elemR(iet(3),er_Head), &
-            elemR(iet(4),er_Head), &
+            elemR(iet(1),er_Head), &
                faceR(ift(2),fr_Head_u), &
                faceR(ift(2),fr_Head_d), &
-            elemR(iet(5),er_Head), &
-            ' break ', &
-            elemR(iet(6),er_Head), &
+            elemR(iet(2),er_Head), &
                faceR(ift(3),fr_Head_u), &
                faceR(ift(3),fr_Head_d), &
-            elemR(iet(7),er_Head)
+            elemR(iet(3),er_Head), &
+               faceR(ift(4),fr_Head_u), &
+               faceR(ift(4),fr_Head_d), &
+            elemR(iet(4),er_Head), &
+               faceR(ift(5),fr_Head_u), &
+               faceR(ift(5),fr_Head_d)
 
-            write(*,"(A,9f12.3,A,4f12.3)") 'flow', &
+            write(*,"(A,15f12.3)") 'flow', &
+               faceR(ift(1),fr_Flowrate), &
+               faceR(ift(1),fr_Flowrate), &
             elemR(iet(1),er_Flowrate), &
-               faceR(ift(1),fr_Flowrate), &
-               faceR(ift(1),fr_Flowrate), &
+               faceR(ift(2),fr_Flowrate), &
+               faceR(ift(2),fr_Flowrate), &
             elemR(iet(2),er_Flowrate), &
+               faceR(ift(3),fr_Flowrate), &
+               faceR(ift(3),fr_Flowrate), &
             elemR(iet(3),er_Flowrate), &
+               faceR(ift(4),fr_Flowrate), &
+               faceR(ift(4),fr_Flowrate), &
             elemR(iet(4),er_Flowrate), &
-               faceR(ift(2),fr_Flowrate), &
-               faceR(ift(2),fr_Flowrate), &
-            elemR(iet(5),er_Flowrate), &
-            ' break ', &
-            elemR(iet(6),er_Flowrate), &
-               faceR(ift(3),fr_Flowrate), &
-               faceR(ift(3),fr_Flowrate), &
-            elemR(iet(7),er_Flowrate)
-         
+               faceR(ift(5),fr_Flowrate), &
+               faceR(ift(5),fr_Flowrate)
+            
             print *, ' '
-            print *, elemSR(440,esr_JunctionMain_StorageRate)
+
          
          return 
 
-         stop 7704384
 
    end subroutine util_utest_CLprint   
 !%

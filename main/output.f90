@@ -444,14 +444,15 @@ contains
             output_typeProcessing_elemR(ii) = AverageElements
             output_typeMultiplyByBarrels_elemR(ii) = oneI 
         end if
-        !% --- Flow rate Average
+        !% --- Face-averaged flow rate
         if (setting%Output%DataOut%isFlowrateOut) then
             ii = ii+1
             output_types_elemR(ii) = er_Flowrate
-            output_typenames_elemR(ii) = 'Average Flowrate'
+            output_typenames_elemR(ii) = 'FaceAverageFlowrate'
             output_typeUnits_elemR(ii) = 'm^3/s'
             output_typeProcessing_elemR(ii) = AverageElements
             output_typeMultiplyByBarrels_elemR(ii) = oneI
+            !% --- assign an output column for face-averaged flowrate
             setting%Output%ElemFlowAvgIndex = ii
         end if
         !% --- Conservative Flux rates, on elements this is the lateral flows
@@ -1118,7 +1119,7 @@ contains
                     end if
                 end if
 
-                !% --- For elements that need their flowrate averaged    
+                !% --- Computing face-averaged flowrate   
                 if (setting%output%ElemFlowAvgIndex > 0 ) then
                     where(elemI(1:Npack,ei_elementType) .eq. CC )
                         elemOutR(1:Npack,setting%output%ElemFlowAvgIndex,thisLevel) = ( faceR(elemI(1:Npack,ei_Mface_uL),fr_Flowrate) &
