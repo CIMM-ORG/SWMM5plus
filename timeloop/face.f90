@@ -1608,8 +1608,8 @@ module face
                 faceR(thisP,fr_Depth_d) = max(faceR(thisP,fr_Head_d) - faceR(thisP,fr_Zbottom), 0.99d0 * setting%ZeroValue%Depth)
                 faceR(thisP,fr_Depth_u) = faceR(thisP,fr_Depth_d)
 
-                !% --- area is larger of the existing or the upstream
-                faceR(thisP,fr_Area_d) = max(faceR(thisP,fr_Area_d), elemR(eup(thisP),er_Area))
+                !% --- area is larger of the existing or the downstream
+                faceR(thisP,fr_Area_d) = max(faceR(thisP,fr_Area_d), elemR(edn(thisP),er_Area))
                 faceR(thisP,fr_Head_u) = faceR(thisP,fr_Head_d)
 
                 !% NOTE: the "consistent" approach does not work because at small depths the
@@ -1682,11 +1682,12 @@ module face
                         faceR(thisP,fr_Depth_u) = max(faceR(thisP,fr_Head_u) - faceR(thisP,fr_Zbottom), 0.99d0 * setting%ZeroValue%Depth)
                         faceR(thisP,fr_Depth_d) = faceR(thisP,fr_Depth_u)
 
-                        if (faceR(thisP,fr_Depth_u) > setting%ZeroValue%Depth) then 
-                            faceR(thisP,fr_Area_u) = geo_area_from_depth_singular(eup,faceR(thisP,fr_Depth_u),setting%ZeroValue%Area)
-                        else
-                            faceR(thisP,fr_Area_u) = setting%ZeroValue%Area
-                        end if
+                        ! if (faceR(thisP,fr_Depth_u) > setting%ZeroValue%Depth) then 
+                        !     faceR(thisP,fr_Area_u) = geo_area_from_depth_singular(eup,faceR(thisP,fr_Depth_u),setting%ZeroValue%Area)
+                        ! else
+                        !     faceR(thisP,fr_Area_u) = setting%ZeroValue%Area
+                        ! end if
+                        faceR(thisP,fr_Area_u) = max(faceR(thisP,fr_Area_u), elemR(eup,er_Area))
                         faceR(thisP,fr_Area_d) = faceR(thisP,fr_Area_u) 
 
                         !% --- the face values should be identical apart from the newly adjusted values
@@ -1708,11 +1709,12 @@ module face
                         faceR(thisP,fr_Depth_d) = max(faceR(thisP,fr_Head_d) - faceR(thisP,fr_Zbottom), 0.99d0 * setting%ZeroValue%Depth)
                         faceR(thisP,fr_Depth_u) = faceR(thisP,fr_Depth_d)
                     
-                        if (faceR(thisP,fr_Depth_d) > setting%ZeroValue%Depth) then 
-                            faceR(thisP,fr_Area_d) = geo_area_from_depth_singular(edn,faceR(thisP,fr_Depth_d),setting%ZeroValue%Area)
-                        else
-                            faceR(thisP,fr_Area_d) = setting%ZeroValue%Area
-                        end if
+                        ! if (faceR(thisP,fr_Depth_d) > setting%ZeroValue%Depth) then 
+                        !     faceR(thisP,fr_Area_d) = geo_area_from_depth_singular(edn,faceR(thisP,fr_Depth_d),setting%ZeroValue%Area)
+                        ! else
+                        !     faceR(thisP,fr_Area_d) = setting%ZeroValue%Area
+                        ! end if
+                        faceR(thisP,fr_Area_d) = max(faceR(thisP,fr_Area_d), elemR(edn,er_Area))
                         faceR(thisP,fr_Area_u) = faceR(thisP,fr_Area_d)
 
                         !% --- the face values should be identical apart from the newly adjusted values

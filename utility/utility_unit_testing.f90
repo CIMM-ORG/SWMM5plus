@@ -53,6 +53,7 @@ contains
       !%------------------------------------------------------------------
       !% Declarations:
          character (len=*), intent(in) :: inputstring
+         !integer, intent(in) :: istep
 
          integer, pointer :: fup(:), fdn(:), eup(:), edn(:)
          real(8), pointer :: dt, oneVec(:), grav
@@ -80,11 +81,133 @@ contains
 
          !if (setting%Time%Step < 37000) return 
 
-         print *, ' '
-         write(*,"(A,A, e12.5)") ' ',trim(inputstring)     
-         write(*,"(A,i7,A, f12.5, A, f12.5, A)") '        step = ',setting%Time%Step ,&
-         '; dt = ',setting%Time%Hydraulics%Dt,&
-         '; time = ',setting%Time%Now / 60.d0 , 'min'    
+         ! print *, ' '
+         if (setting%Time%Step < 117) return
+         !if (istep == 1) return
+         !if (this_image() == 1) write(*,"(A,A, e12.5)") ' ',trim(inputstring)     
+         ! write(*,"(A,i7,A, f12.5, A, f12.5, A)") '        step = ',setting%Time%Step ,&
+         ! '; dt = ',setting%Time%Hydraulics%Dt,&
+         ! '; time = ',setting%Time%Now / 60.d0 , 'min'    
+
+         ! do ii=1,N_elem(this_image())
+         !    print *, ii, elemI(ii,ei_elementType), trim(reverseKey(elemI(ii,ei_elementType))), elemI(ii,ei_link_Gidx_BIPquick)
+         ! end do
+
+         ! stop 5509873
+
+         ! if (num_images() == 1) then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'Q ,',setting%Time%Now ,',',   elemR(38,er_Flowrate),',', faceR(elemI(38,ei_Mface_dL),fr_Flowrate),',', elemR(39,er_Flowrate),',', faceR(elemI(39,ei_Mface_dL),fr_Flowrate),',',elemR(40,er_Flowrate), ',', faceR(elemI(40,ei_Mface_dL),fr_Flowrate)
+         !    else
+         !    if (this_image() == 1)  then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'Q ,',setting%Time%Now ,',',   elemR(38,er_Flowrate),',', faceR(elemI(38,ei_Mface_dL),fr_Flowrate),',', elemR(39,er_Flowrate),',', faceR(elemI(39,ei_Mface_dL),fr_Flowrate),',',elemR(40,er_Flowrate), ',', faceR(elemI(40,ei_Mface_dL),fr_Flowrate)
+         !    end if
+         ! end if
+
+         ! if (num_images() == 1) then 
+         !    write(*,"(a,f16.10,7(a,f22.17))") 'Vel ,',setting%Time%Now ,',',   elemR(38,er_Velocity),',', faceR(elemI(38,ei_Mface_dL),fr_Velocity_d),',', elemR(39,er_Velocity),',', faceR(elemI(39,ei_Mface_dL),fr_Velocity_d),',',elemR(40,er_Velocity), ',', faceR(elemI(40,ei_Mface_dL),fr_Velocity_d)
+         ! else
+         !    if (this_image() == 1)  then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'Vel ,',setting%Time%Now ,',',   elemR(38,er_Velocity),',', faceR(elemI(38,ei_Mface_dL),fr_Velocity_d),',', elemR(39,er_Velocity),',', faceR(elemI(39,ei_Mface_dL),fr_Velocity_d),',',elemR(40,er_Velocity), ',', faceR(elemI(40,ei_Mface_dL),fr_Velocity_d)
+         !    end if
+         ! end if
+
+         if (num_images() == 1) then 
+                write(*,"(a,f16.10,7(a,f22.17))") 'H ,',setting%Time%Now ,',',   elemR(38,er_Head),',', faceR(elemI(38,ei_Mface_dL),fr_Head_d),',', elemR(39,er_Head),',', faceR(elemI(39,ei_Mface_dL),fr_Head_d),',',elemR(40,er_Head), ',', faceR(elemI(40,ei_Mface_dL),fr_Head_d)
+         else
+             if (this_image() == 1)  then 
+                write(*,"(a,f16.10,7(a,f22.17))") 'H ,',setting%Time%Now ,',',   elemR(38,er_Head),',', faceR(elemI(38,ei_Mface_dL),fr_Head_d),',', elemR(39,er_Head),',', faceR(elemI(39,ei_Mface_dL),fr_Head_d),',',elemR(40,er_Head), ',', faceR(elemI(40,ei_Mface_dL),fr_Head_d)
+             end if
+         end if
+
+         ! if (num_images() == 1) then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'Vol ,',setting%Time%Now ,',',   elemR(38,er_Volume),',',  elemR(39,er_Volume),',',elemR(40,er_Volume)
+         ! else
+         !    if (this_image() == 1)  then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'Vol ,',setting%Time%Now ,',',   elemR(38,er_Volume),',',  elemR(39,er_Volume),',',elemR(40,er_Volume)
+         !    end if
+         ! end if
+
+         ! if (num_images() == 1) then 
+         !    write(*,"(a,f16.10,7(a,f22.17))") 'SCont ,',setting%Time%Now ,',',   elemR(38,er_SourceContinuity),',',  elemR(39,er_SourceContinuity),',',elemR(40,er_SourceContinuity)
+         ! else
+         !    if (this_image() == 1)  then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'SCont ,',setting%Time%Now ,',',   elemR(38,er_SourceContinuity),',',  elemR(39,er_SourceContinuity),',',elemR(40,er_SourceContinuity)
+         !    end if
+         ! end if
+
+
+         ! if (num_images() == 1) then 
+         !    write(*,"(a,f16.10,7(a,f22.17))") 'SMom ,',setting%Time%Now ,',',   elemR(38,er_SourceMomentum),',',  elemR(39,er_SourceMomentum),',',elemR(40,er_SourceMomentum)
+         ! else
+         !    if (this_image() == 1)  then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'SMom ,',setting%Time%Now ,',',   elemR(38,er_SourceMomentum),',',  elemR(39,er_SourceMomentum),',',elemR(40,er_SourceMomentum)
+         !    end if
+         ! end if
+
+         ! if (num_images() == 1) then 
+         !    write(*,"(a,f16.10,7(a,f22.17))") 'Ksource ,',setting%Time%Now ,',',   elemR(38,er_Ksource),',',  elemR(39,er_Ksource),',',elemR(40,er_Ksource)
+         ! else
+         !    if (this_image() == 1)  then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'Ksource ,',setting%Time%Now ,',',   elemR(38,er_Ksource),',',  elemR(39,er_Ksource),',',elemR(40,er_Ksource)
+         !    end if
+         ! end if
+
+         ! if (num_images() == 1) then 
+         !    write(*,"(a,f16.10,7(a,f22.17))") 'GammaM,',setting%Time%Now ,',',   elemR(38,er_GammaM),',',  elemR(39,er_GammaM),',',elemR(40,er_GammaM)
+         ! else
+         !    if (this_image() == 1)  then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'GammaM ,',setting%Time%Now ,',',   elemR(38,er_GammaM),',',  elemR(39,er_GammaM),',',elemR(40,er_GammaM)
+         !    end if
+         ! end if
+
+         ! if (num_images() == 1) then 
+         !    write(*,"(a,f16.10,7(a,f22.17))") 'VelocityN0,',setting%Time%Now ,',',   elemR(38,er_Velocity_N0),',',  elemR(39,er_Velocity_N0),',',elemR(40,er_Velocity_N0)
+         ! else
+         !    if (this_image() == 1)  then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'VelocityN0,',setting%Time%Now ,',',   elemR(38,er_Velocity_N0),',',  elemR(39,er_Velocity_N0),',',elemR(40,er_Velocity_N0)
+         !    end if
+         ! end if
+
+         ! if (num_images() == 1) then 
+         !    write(*,"(a,f16.10,7(a,f22.17))") 'VolumeN0,',setting%Time%Now ,',',   elemR(38,er_Volume_N0),',',  elemR(39,er_Volume_N0),',',elemR(40,er_Volume_N0)
+         ! else
+         !    if (this_image() == 1)  then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'VolumeN0,',setting%Time%Now ,',',   elemR(38,er_Volume_N0),',',  elemR(39,er_Volume_N0),',',elemR(40,er_Volume_N0)
+         !    end if
+         ! end if
+
+         ! if (num_images() == 1) then 
+         !    write(*,"(a,f16.10,7(a,f22.17))") 'fAreaUp,',setting%Time%Now ,',',   faceR(elemI(38,ei_Mface_dL),fr_Area_u),',',  faceR(elemI(39,ei_Mface_dL),fr_Area_u),',',faceR(elemI(40,ei_Mface_dL),fr_Area_u)
+         ! else
+         !    if (this_image() == 1)  then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'fAreaUp,',setting%Time%Now ,',',   faceR(elemI(38,ei_Mface_dL),fr_Area_u),',',  faceR(elemI(39,ei_Mface_dL),fr_Area_u),',',faceR(elemI(40,ei_Mface_dL),fr_Area_u)
+         !    end if
+         ! end if
+
+         ! if (num_images() == 1) then 
+         !    !print *, faceP(1:npack_faceP(fp_CC_downstream_is_zero_IorS),fp_CC_downstream_is_zero_IorS)
+         !    !print *, faceP(1:npack_faceP(fp_CC_upstream_is_zero_IorS),fp_CC_upstream_is_zero_IorS)
+         !    print *, faceP(1:npack_faceP(fp_CC_bothsides_are_zero_IorS),fp_CC_bothsides_are_zero_IorS)
+         !    !print *, fp_CC_upstream_is_zero_IorS
+         !    !print *, fp_CC_bothsides_are_zero_IorS
+         ! else
+         !    if (this_image() == 1)  then 
+         !       !print *, faceP(1:npack_faceP(fp_CC_downstream_is_zero_IorS),fp_CC_downstream_is_zero_IorS)
+         !       !print *, faceP(1:npack_faceP(fp_CC_upstream_is_zero_IorS),fp_CC_upstream_is_zero_IorS)
+         !       print *, faceP(1:npack_faceP(fp_CC_bothsides_are_zero_IorS),fp_CC_bothsides_are_zero_IorS)
+         !       !print *, fp_CC_upstream_is_zero_IorS
+         !       !print *, fp_CC_bothsides_are_zero_IorS
+         !    end if
+         ! end if
+
+
+         ! if (num_images() == 1) then 
+         !    write(*,"(a,f16.10,7(a,f22.17))") 'fAreaDn,',setting%Time%Now ,',',   faceR(elemI(38,ei_Mface_uL),fr_Area_d),',',  faceR(elemI(39,ei_Mface_uL),fr_Area_d),',',faceR(elemI(40,ei_Mface_uL),fr_Area_d)
+         ! else
+         !    if (this_image() == 1)  then 
+         !       write(*,"(a,f16.10,7(a,f22.17))") 'fAreaDn,',setting%Time%Now ,',',   faceR(elemI(38,ei_Mface_uL),fr_Area_d),',',  faceR(elemI(39,ei_Mface_uL),fr_Area_d),',',faceR(elemI(40,ei_Mface_uL),fr_Area_d)
+         !    end if
+         ! end if
 
 
          ! print *, link%I(1,li_first_elem_idx), link%I(1,li_last_elem_idx)
@@ -106,42 +229,42 @@ contains
 
          ! stop 7709874
 
-         write(*,"(A,15f12.3)") 'head', &
-               faceR(ift(1),fr_Head_u), &
-               faceR(ift(1),fr_Head_d), &
-            elemR(iet(1),er_Head), &
-               faceR(ift(2),fr_Head_u), &
-               faceR(ift(2),fr_Head_d), &
-            elemR(iet(2),er_Head), &
-               faceR(ift(3),fr_Head_u), &
-               faceR(ift(3),fr_Head_d), &
-            elemR(iet(3),er_Head), &
-               faceR(ift(4),fr_Head_u), &
-               faceR(ift(4),fr_Head_d), &
-            elemR(iet(4),er_Head), &
-               faceR(ift(5),fr_Head_u), &
-               faceR(ift(5),fr_Head_d)
+         ! write(*,"(A,15f12.3)") 'head', &
+         !       faceR(ift(1),fr_Head_u), &
+         !       faceR(ift(1),fr_Head_d), &
+         !    elemR(iet(1),er_Head), &
+         !       faceR(ift(2),fr_Head_u), &
+         !       faceR(ift(2),fr_Head_d), &
+         !    elemR(iet(2),er_Head), &
+         !       faceR(ift(3),fr_Head_u), &
+         !       faceR(ift(3),fr_Head_d), &
+         !    elemR(iet(3),er_Head), &
+         !       faceR(ift(4),fr_Head_u), &
+         !       faceR(ift(4),fr_Head_d), &
+         !    elemR(iet(4),er_Head), &
+         !       faceR(ift(5),fr_Head_u), &
+         !       faceR(ift(5),fr_Head_d)
 
-            write(*,"(A,15f12.3)") 'flow', &
-               faceR(ift(1),fr_Flowrate), &
-               faceR(ift(1),fr_Flowrate), &
-            elemR(iet(1),er_Flowrate), &
-               faceR(ift(2),fr_Flowrate), &
-               faceR(ift(2),fr_Flowrate), &
-            elemR(iet(2),er_Flowrate), &
-               faceR(ift(3),fr_Flowrate), &
-               faceR(ift(3),fr_Flowrate), &
-            elemR(iet(3),er_Flowrate), &
-               faceR(ift(4),fr_Flowrate), &
-               faceR(ift(4),fr_Flowrate), &
-            elemR(iet(4),er_Flowrate), &
-               faceR(ift(5),fr_Flowrate), &
-               faceR(ift(5),fr_Flowrate)
+         !    write(*,"(A,15f12.3)") 'flow', &
+         !       faceR(ift(1),fr_Flowrate), &
+         !       faceR(ift(1),fr_Flowrate), &
+         !    elemR(iet(1),er_Flowrate), &
+         !       faceR(ift(2),fr_Flowrate), &
+         !       faceR(ift(2),fr_Flowrate), &
+         !    elemR(iet(2),er_Flowrate), &
+         !       faceR(ift(3),fr_Flowrate), &
+         !       faceR(ift(3),fr_Flowrate), &
+         !    elemR(iet(3),er_Flowrate), &
+         !       faceR(ift(4),fr_Flowrate), &
+         !       faceR(ift(4),fr_Flowrate), &
+         !    elemR(iet(4),er_Flowrate), &
+         !       faceR(ift(5),fr_Flowrate), &
+         !       faceR(ift(5),fr_Flowrate)
             
-            print *, ' '
+         !    print *, ' '
 
          
-         return 
+         ! return 
 
 
    end subroutine util_utest_CLprint   
