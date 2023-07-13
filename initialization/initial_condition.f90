@@ -4962,8 +4962,8 @@ contains
         elemR(1:thisSize,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
                                                               * elemR(1:size(elemR,1)-1,er_FullDepth)))
 
-        where (elemR(1:thisSize,er_Preissmann_Number_initial) < setting%PreissmannSlot%MinimumInitialPreissmannNumber)
-            elemR(1:thisSize,er_Preissmann_Number_initial) = setting%PreissmannSlot%MinimumInitialPreissmannNumber   
+        where (elemR(1:thisSize,er_Preissmann_Number_initial) < setting%Solver%PreissmannSlot%MinimumInitialPreissmannNumber)
+            elemR(1:thisSize,er_Preissmann_Number_initial)    = setting%Solver%PreissmannSlot%MinimumInitialPreissmannNumber   
         endwhere                                                  
     
         !% --- only calculate slots for ETM time-march
