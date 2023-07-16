@@ -50,8 +50,9 @@ module define_indexes
         enumerator :: li_P_image             ! image number assigned from BIPquick
         enumerator :: li_parent_link         ! A map to the corresponding SWMM link after a BIPquick link-split
         enumerator :: li_weir_EndContractions ! (0,1) to indicate contraction
-        enumerator :: li_RoadSurface           ! roadsurface type for roadway weir
+        enumerator :: li_RoadSurface         ! roadsurface type for roadway weir
         enumerator :: li_curve_id            ! curve id if the link is associated with any curve
+        enumerator :: li_lateralInflowNode   ! downstream node from which the lateral inflow is coming from
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx
         enumerator :: li_transect_idx         ! transect index if the link is associated with an irregular geometry transect
@@ -100,6 +101,7 @@ module define_indexes
         enumerator :: lr_Setting               !% the 0 to 1 open/close setting of EPA-SWMM
         enumerator :: lr_TargetSetting         !% target setting of a control action
         enumerator :: lr_TimeLastSet           !% the time (in seconds) the link setting was last changed
+        enumerator :: lr_VolumeFractionMetric  !% a metric to distribute the lateral inflows across a link
         enumerator :: lr_ZbottomUp             ! Z bottom of upstream node
         enumerator :: lr_ZbottomDn             ! Z bottom of downstream node
         enumerator :: lr_lastplusone !% must be last enum item
@@ -195,6 +197,7 @@ module define_indexes
         enumerator :: nr_head
         enumerator :: nr_Volume
         enumerator :: nr_Flooding
+        enumerator :: nr_UpLinksFullVolume
         enumerator :: nr_JunctionBranch_Kfactor
         enumerator :: nr_lastplusone !% must be last enum item
     end enum
@@ -285,6 +288,7 @@ module define_indexes
          enumerator :: ei_geometryType              !% KEY cross-sectional geometry type  (static)
          enumerator :: ei_barrels                   !% Integer number of barrels
          enumerator :: ei_HeqType                   !% KEY type of head equation (static)
+         enumerator :: ei_lateralInflowNode         !% SWMM node from which the element will get lateral inflow
          enumerator :: ei_link_Gidx_SWMM            !% link index from global SWMM network  (static)
          enumerator :: ei_link_Gidx_BIPquick        !% link index from global BIPquick network  (static)
          enumerator :: ei_link_pos                  !% position (elem from upstream = 1 to downstream = n) in link
@@ -403,6 +407,7 @@ module define_indexes
         enumerator :: er_VolumePonded               !% volume ponding this time step
         enumerator :: er_VolumePondedTotal          !% Volume ponded total
         enumerator :: er_VolumeStore                !% temporary storage used for adjacent AC and ETM elements
+        enumerator :: er_VolumeFractionMetric       !% metric to distribute lateral inflow across channel/conduit elements
         enumerator :: er_WaveSpeed                  !% wave speed in element
         enumerator :: er_YoverYfull                 !% ratio of depth to full depth for tabular geometry
         enumerator :: er_Zbottom                    !% bottom elevation of element (static)

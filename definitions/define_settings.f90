@@ -405,6 +405,7 @@ module define_settings
         ! real(8) :: MinElemLengthFactor = 0.5d0           !% define the minimum allowable fraction of an element size to help with the cfl
         !integer :: MinElemLengthMethod = ElemLengthAdjust
         logical :: UseNominalElemLength = .true.
+        logical :: DistributeOpenChannelInflowsTF = .false.
         real(8) :: NominalElemLength   = 10.0d0
         integer :: MinElementPerLink   = 3               !% force a minimum number of elements per link
         logical :: UseEquivalentOrifice = .false.        !% replace small conduits with equivalent orifice
@@ -1109,6 +1110,11 @@ contains
         call json%get('Discretization.UseEquivalentOrifice', logical_value, found)
         if (found) setting%Discretization%UseEquivalentOrifice = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.UseEquivalentOrifice not found'
+
+        !%                       Discretization.DistributeOpenChannelInflowsTF
+        call json%get('Discretization.DistributeOpenChannelInflowsTF', logical_value, found)
+        if (found) setting%Discretization%DistributeOpenChannelInflowsTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.DistributeOpenChannelInflowsTF not found'
 
         !%                       Discretization.EquivalentOrificeDischargeCoeff
         call json%get('Discretization.EquivalentOrificeDischargeCoeff', real_value, found)

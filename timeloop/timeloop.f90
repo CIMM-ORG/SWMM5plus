@@ -352,7 +352,12 @@ contains
                 if ((.not. setting%SWMMinput%IgnoreGroundwater) .and. &
                             (setting%SWMMinput%N_groundwater > 0) ) then 
                     call interface_get_groundwater_inflow ()
-                end if 
+                end if
+
+                !% --- distribute lateral inflow over open CC elements
+                if (setting%Discretization%DistributeOpenChannelInflowsTF) then
+                    call tl_distribute_external_lat_inflow ()
+                end if
 
                 !% --- set hydraulics time step to handle inflow
                 call tl_update_hydraulics_timestep(.false.)
@@ -1922,6 +1927,59 @@ contains
         end if
 
     end subroutine tl_roundoff_DT
+!% 
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine tl_distribute_external_lat_inflow()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Distribute external lateral inflow across upstream open CC links
+        !%------------------------------------------------------------------
+        !% Declarations:
+        integer :: ii
+        integer, pointer :: npack, thisP(:), thisBC, nBarrels(:), eType(:)
+        real(8), pointer :: Qlateral(:), VolumeFraction(:)
+        logical, pointer :: canSurcharve(:)
+        !%------------------------------------------------------------------
+        !% Aliases:
+            eType          => elemI(:,ei_elementType)
+            nBarrels       => elemI(:,ei_barrels)
+            Qlateral       => elemR(:,er_FlowrateLateral)
+            VolumeFraction => elemR(:,er_VolumeFractionMetric)
+            canSurcharve   => elemYN(:,eYN_canSurcharge)
+        !%------------------------------------------------------------------
+        npack    => npack_elemP(ep_BClat)
+        thisP    => elemP(1:npack,ep_BClat)
+        if (npack > 0) then
+            !% only remove the external lateral inflows from open JM and open CC elements
+            where (((eType(thisP) == CC) .or. (eType(thisP) == JM)) .and. (.not. canSurcharve(thisP)))
+                Qlateral(thisP) = Qlateral(thisP) &
+                    - BC%flowR(BC%P%BClat,br_value) / real(nBarrels(thisP),8)
+            end where
+        end if
+
+        
+        !% now set the aliases to CC elements
+        npack    => npack_elemP(ep_CC_Open_Elements)
+        thisP    => elemP(1:npack,ep_CC_Open_Elements)
+
+        !% now distribute the lateral inflow at CC elements
+        do ii = 1,N_nBClat
+            thisBC     => BC%P%BClat(ii)
+            !% distribute the external lateral inflow over open CC elemtens
+            where (elemI(thisP,ei_lateralInflowNode) == BC%flowI(thisBC, bi_node_idx))
+                Qlateral(thisP) = Qlateral(thisP) +  &
+                        VolumeFraction(thisP) * BC%flowR(thisBC,br_value) / real(nBarrels(thisP),8)
+            end where
+        end do
+
+        !% now distribute the subcatchment, RDII, and groundwater lat inflow to CC elements
+
+        !% HACK: This doesnot take care of the lateral inflows in Diag/JM downstream of Diag elements
+        !% need to come up with a way of generalizing that
+
+    end subroutine tl_distribute_external_lat_inflow
 !% 
 !%==========================================================================
 !% END OF MODULE
