@@ -182,7 +182,7 @@ module define_settings
                                              !% large topwidths that will cause large plan areas at their junctions.
     end type
 
-    !% setting%PreissmannSlot
+    !% setting%Solver%PreissmannSlot
     type PreissmannSlotType
         logical :: useSlotTF = .true.
         !% Allowable values: DynamicSlot, StaticSlot
@@ -760,7 +760,7 @@ module define_settings
         type(OrificeType)        :: Orifice
         type(OutputType)         :: Output
         type(PartitioningType)   :: Partitioning
-        type(PreissmannSlotType) :: PreissmannSlot
+        !type(PreissmannSlotType) :: PreissmannSlot
         type(ProfileType)        :: Profile
         type(PumpSettingType)    :: Pump
         type(SimulationType)     :: Simulation
