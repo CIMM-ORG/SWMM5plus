@@ -366,8 +366,10 @@ contains
                 call tl_hydraulics()
             
                 !% --- accumulate RunOn from hydraulic elements to subcatchments
-                if ((setting%Simulation%useHydrology) .and. (any(subcatchYN(:,sYN_hasRunOn)))) then 
-                    call tl_subcatchment_accumulate_runon ()
+                if (setting%Simulation%useHydrology) then
+                    if (any(subcatchYN(:,sYN_hasRunOn))) then 
+                        call tl_subcatchment_accumulate_runon ()
+                    end if
                 end if
 
                 !% --- close the clock tick for hydraulic loop evaluation
@@ -880,8 +882,9 @@ contains
         end if
 
         !% --- Ensure that all processors use the same time step.
-        !%     Find the minimum hydraulics time and store accross all processors.
+        !%     Find the minimum hydraulics and hydrology time and store accross all processors.
         call co_min(nextHydraulicsTime)
+        call co_min(nextHydrologyTime)
         !% --- Take the nextTime as the minimum of either the Hydrology or Hydraulics time
         !%     Done on a single processor because they all should have identical nextHydrologyTIme
         nextTime = min(nextHydraulicsTime, nextHydrologyTime)
@@ -943,6 +946,7 @@ contains
             real(8), pointer    :: nextHydraulicsTime, lastHydraulicsTime
 
             integer             :: neededSteps, pindex(1)
+            integer(kind=8), pointer :: lastCheckStep
     
             character(64)        :: subroutine_name = 'tl_update_hydraulics_timestep'
         !%-------------------------------------------------------------------
@@ -954,7 +958,8 @@ contains
             useHydrology       => setting%Simulation%useHydrology
             matchHydrologyStep => setting%Time%matchHydrologyStep
             nextHydraulicsTime => setting%Time%Hydraulics%NextTime
-            lastHydraulicsTime => setting%Time%Hydraulics%LastTime        
+            lastHydraulicsTime => setting%Time%Hydraulics%LastTime    
+            lastCheckStep      => setting%VariableDT%LastCheckStep    
             timeNow            => setting%Time%Now
         !%----------------------------------------------------------------------
         !% --- note oldDT is NOT a alias as we want it fixed while newDT
@@ -986,6 +991,13 @@ contains
             end if
             !% --- get the dt
             call tl_DT_standard(newDT, oldDT, oldCFL)  
+
+            !% --- match the last check step across images.
+            !%     this ensures new timestep is shecked at
+            !%     the same time across all images. as a result
+            !%     consistancy is maintained across single vs
+            !%     multi processor simulations
+            call co_max(lastCheckStep)
 
             !% --- neededSteps is irrelevant without hydrology matching,
             !%     but this using 3 forces a rounding operation below
@@ -1299,7 +1311,7 @@ contains
             wavespeed(thisP) = zeroR
             Pcelerity(thisP) = zeroR
         endwhere
-    
+
         !% --- set the outvalue
         if (Npack > 0) then 
             if (setting%Solver%PreissmannSlot%useSlotTF) then
@@ -1666,6 +1678,7 @@ contains
 
             real(8), pointer :: nextHydrologyTime, LastHydraulicsTime
             real(8), pointer :: CFL_hi, dtTol
+            integer(kind=8), pointer :: lastCheckStep
             real(8) :: timeLeft, timeLeftCFL
         !%------------------------------------------------------------------
         !% Aliases
@@ -1673,6 +1686,7 @@ contains
             dtTol              => setting%Time%DtTol
             nextHydrologyTime  => setting%Time%Hydrology%NextTime
             lastHydraulicsTime => setting%Time%Hydraulics%LastTime 
+            lastCheckStep      => setting%VariableDT%LastCheckStep
         !%------------------------------------------------------------------
 
         !% --- for combined hydrology and hydraulics 
@@ -1710,6 +1724,13 @@ contains
             call tl_DT_standard (newDT, oldDT, oldCFL)
             neededSteps = 3
         end if
+
+        !% --- match the last check step across images.
+        !%     this ensures new timestep is shecked at
+        !%     the same time across all images. as a result
+        !%     consistancy is maintained across single vs
+        !%     multi processor simulations
+        call co_max(lastCheckStep)
 
   end subroutine tl_DT_hydrology_match
 !%
@@ -1818,13 +1839,6 @@ contains
                 !% --- no change in DT
             end if
         endif
-
-        !% --- match the last check step across images.
-        !%     this ensures new timestep is shecked at
-        !%     the same time across all images. as a result
-        !%     consistancy is maintained across single vs
-        !%     multi processor simulations
-        call co_max(lastCheckStep)
 
         !% --- check for minimum limit
         if (setting%Limiter%Dt%UseLimitMinYN) then

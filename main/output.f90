@@ -445,7 +445,7 @@ contains
             output_typeMultiplyByBarrels_elemR(ii) = oneI 
         end if
         !% --- Face-averaged flow rate
-        if (setting%Output%DataOut%isFlowrateOut) then
+        if (setting%Output%DataOut%isFlowrateAvgOut) then
             ii = ii+1
             output_types_elemR(ii) = er_Flowrate
             output_typenames_elemR(ii) = 'FaceAverageFlowrate'

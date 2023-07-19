@@ -1503,6 +1503,21 @@ contains
         if (found) setting%Output%DataOut%isVolumeOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isVolumeOut not found'
 
+        !%                       Dataout.isVolumeConsOut
+        call json%get('Output.DataOut.isVolumeConsOut', logical_value, found)
+        if (found) setting%Output%DataOut%isVolumeConsOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isVolumeConsOut not found'
+
+        !%                       Dataout.isVolumeOverflowOut
+        call json%get('Output.DataOut.isVolumeOverflowOut', logical_value, found)
+        if (found) setting%Output%DataOut%isVolumeOverflowOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isVolumeOverflowOut not found'
+
+        !%                       Dataout.isVolumePondedOut
+        call json%get('Output.DataOut.isVolumePondedOut', logical_value, found)
+        if (found) setting%Output%DataOut%isVolumePondedOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isVolumePondedOut not found'
+
         !%                       Dataout.isWaveSpeedOut
         call json%get('Output.DataOut.isWaveSpeedOut', logical_value, found)
         if (found) setting%Output%DataOut%isWaveSpeedOut = logical_value
