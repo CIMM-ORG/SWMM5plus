@@ -6064,7 +6064,7 @@ contains
                     call storage_plan_area_from_volume (Jmar, 1)
 
                     !% --- the pond length for this storage depends on length scale at maximum volume
-                    PondLength = max(PondLength, ScaleFactor * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)))
+                    PondLength = ScaleFactor * sqrt(elemSR(JMidx,esr_Storage_Plan_Area))
 
                     !% --- return the volume and storage area
                     elemR (JMidx,er_Volume)             = VolStore

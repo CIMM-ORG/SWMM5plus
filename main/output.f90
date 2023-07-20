@@ -38,16 +38,16 @@ module output
     public :: outputML_combine_and_write_data
     public :: outputML_convert_elements_to_linknode_and_write
     
-    public :: outputML_HD5F_create_file
-    public :: outputML_HD5F_close_file
+    public :: outputML_HDF5_create_file
+    public :: outputML_HDF5_close_file
 
-    public :: outputML_HD5F_create_static_dset
-    public :: outputML_HD5F_write_static_file
+    public :: outputML_HDF5_create_static_dset
+    public :: outputML_HDF5_write_static_file
 
-    public :: outputML_HD5F_create_dset
-    public :: outputML_HD5F_write_file
-    public :: outputML_HD5F_write_profiles
-    public :: outputML_HD5F_extend_write_file
+    public :: outputML_HDF5_create_dset
+    public :: outputML_HDF5_write_file
+    public :: outputML_HDF5_write_profiles
+    public :: outputML_HDF5_extend_write_file
     
     public :: outputML_combine_static_elem_data
 
@@ -445,7 +445,7 @@ contains
             output_typeMultiplyByBarrels_elemR(ii) = oneI 
         end if
         !% --- Face-averaged flow rate
-        if (setting%Output%DataOut%isFlowrateOut) then
+        if (setting%Output%DataOut%isFlowrateAvgOut) then
             ii = ii+1
             output_types_elemR(ii) = er_Flowrate
             output_typenames_elemR(ii) = 'FaceAverageFlowrate'
@@ -1119,7 +1119,7 @@ contains
                     end if
                 end if
 
-                !% --- Computing face-averaged flowrate   
+                !% --- Computing face-averaged flowrate (isFlowrateAvgOut) 
                 if (setting%output%ElemFlowAvgIndex > 0 ) then
                     where(elemI(1:Npack,ei_elementType) .eq. CC )
                         elemOutR(1:Npack,setting%output%ElemFlowAvgIndex,thisLevel) = ( faceR(elemI(1:Npack,ei_Mface_uL),fr_Flowrate) &
@@ -1702,7 +1702,7 @@ contains
         !% --- close the control file
         close(thisUnit)
 
-        !% --- Open the HD5F API and file   
+        !% --- Open the HDF5 API and file   
 
         !% --- get the start time as "thisd
         call util_datetime_decodedate(StartTimeEpoch, startdate(1), startdate(2), startdate(3))
@@ -1731,10 +1731,10 @@ contains
         !% --- HACK to make this independent of globals, this call will have to be changed and files always written/read.
         call outputML_get_all_output_binary_filenames (nWritten)
 
-        if(setting%Output%Report%useHD5F) then 
-                call outputML_HD5F_create_file(H5_file_id)
+        if(setting%Output%Report%useHDF5) then 
+                call outputML_HDF5_create_file(H5_file_id)
                 if( allocated(output_profile_ids)) then
-                    call outputML_HD5F_write_profiles(H5_file_id)
+                    call outputML_HDF5_write_profiles(H5_file_id)
                 end if 
         end if
 
@@ -2552,23 +2552,23 @@ contains
                                 end if 
 
                                 !% --- open a new HDF5 file
-                                if(setting%Output%Report%useHD5F) then
+                                if(setting%Output%Report%useHDF5) then
 
                                     if(N_Out_static_TypeElem > 0 ) then 
                                         !% --- writing header and model attributes then creating dataset for link fv static output 
-                                        call outputML_HD5F_create_static_dset(fn_linkFV_static_h5,H5_file_id, &
+                                        call outputML_HDF5_create_static_dset(fn_linkFV_static_h5,H5_file_id, &
                                             startdate, mminc, &
                                             OutLink_pSWMMidx(kk), &
                                             setting%Time%StartEpoch, &
                                             pOutElem_Gidx(OutLink_pOutElemIdx(kk,1:OutLink_N_elem_in_link(kk))), &
                                             tlinkname, setting%Time%DateTimeStamp, LinkOut, .true. )
                                         !% --- writing to dataset for link fv static output 
-                                        call outputML_HD5F_write_static_file(fn_linkFV_static_h5,H5_file_id, &
+                                        call outputML_HDF5_write_static_file(fn_linkFV_static_h5,H5_file_id, &
                                             SWMMlink, .true., LinkOut)
                                     end if
                                     if(N_Out_static_TypeLink > 0 ) then 
                                         !% --- writing header and model attributes then creating dataset for link static output 
-                                        call outputML_HD5F_create_static_dset(fn_link_static_h5,H5_file_id, &
+                                        call outputML_HDF5_create_static_dset(fn_link_static_h5,H5_file_id, &
                                             startdate, mminc, &
                                             OutLink_pSWMMidx(kk), &
                                             setting%Time%StartEpoch, &
@@ -2578,12 +2578,12 @@ contains
                                             print *, 'here AAA 02'
 
                                         !% --- writing to dataset for link static output 
-                                        call outputML_HD5F_write_static_file(fn_link_static_h5,H5_file_id, &
+                                        call outputML_HDF5_write_static_file(fn_link_static_h5,H5_file_id, &
                                             SWMMlink, .false., LinkOut)
                                     end if 
                                     
                                     !% --- writing header and model attributes then creating dataset for link 
-                                    call outputML_HD5F_create_dset(fn_link_h5,H5_file_id, &
+                                    call outputML_HDF5_create_dset(fn_link_h5,H5_file_id, &
                                         nTypeElem, nLevel, dummyI, &
                                         OutLink_pSWMMidx(kk), &
                                         startdate, setting%Time%StartEpoch, &
@@ -2592,7 +2592,7 @@ contains
                                         tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .false.)
                                 
                                     !% --- writing to dataset for link output 
-                                    call outputML_HD5F_write_file(fn_link_h5,H5_file_id, &
+                                    call outputML_HDF5_write_file(fn_link_h5,H5_file_id, &
                                         kk, nTypeElemWtime, dummyI, nLevel,  &
                                         OutLink_ProcessedDataR, OutLink_ElemDataR, .false. )
                                     
@@ -2606,11 +2606,11 @@ contains
                                         action='write', access='append')
                                 end if
 
-                                if(setting%Output%Report%useHD5F) then
+                                if(setting%Output%Report%useHDF5) then
                                     !% When hdf5 datasets are set up, we enable chunking which allows us to write multiple times 
                                     !% to the same dataset, normally this is not allowed.
                                     !% This is why we need two different HDF5 write functions. 
-                                    call outputML_HD5F_extend_write_file(fn_link_h5,H5_file_id, &
+                                    call outputML_HDF5_extend_write_file(fn_link_h5,H5_file_id, &
                                         kk, nTypeElemWtime, dummyI, nLevel,  &
                                         OutLink_ProcessedDataR, OutLink_ElemDataR, .false. )
 
@@ -2658,9 +2658,9 @@ contains
                                         tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .true. )
                                 end if
 
-                                if(setting%Output%Report%useHD5F) then
+                                if(setting%Output%Report%useHDF5) then
                                     
-                                    call outputML_HD5F_create_dset(fn_linkFV_h5,H5_file_id, &
+                                    call outputML_HDF5_create_dset(fn_linkFV_h5,H5_file_id, &
                                         OutLink_N_elem_in_link(kk), nLevel, mminc, &
                                         OutLink_pSWMMidx(kk), &
                                         startdate, setting%Time%StartEpoch, &
@@ -2668,7 +2668,7 @@ contains
                                         pOutElem_Gidx(OutLink_pOutElemIdx(kk,1:OutLink_N_elem_in_link(kk))), &
                                         tlinkname, setting%Time%DateTimeStamp, time_units_str, LinkOut, .true. )
 
-                                    call outputML_HD5F_write_file(fn_linkFV_h5,H5_file_id, &
+                                    call outputML_HDF5_write_file(fn_linkFV_h5,H5_file_id, &
                                         kk, OutLink_N_elem_in_link(kk), mminc, nLevel,  &
                                         OutLink_ProcessedDataR, OutLink_ElemDataR, .true.)
 
@@ -2683,8 +2683,8 @@ contains
                                         action='write', position='append')
                                 end if
 
-                                if(setting%Output%Report%useHD5F) then 
-                                    call outputML_HD5F_extend_write_file(fn_linkFV_h5,H5_file_id, &
+                                if(setting%Output%Report%useHDF5) then 
+                                    call outputML_HDF5_extend_write_file(fn_linkFV_h5,H5_file_id, &
                                         kk, OutLink_N_elem_in_link(kk), mminc, nLevel,  &
                                         OutLink_ProcessedDataR, OutLink_ElemDataR, .true.)
                                 end if
@@ -2821,13 +2821,13 @@ contains
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeElemOut, .false.)
                                 end if
 
-                                if(setting%Output%Report%useHD5F) then  
+                                if(setting%Output%Report%useHDF5) then  
 
                                     !% Check if there static node data to output 
                                     if(N_Out_static_TypeNode > 0 ) then
 
                                         !% Create HDF5 file and dataset to write static output to 
-                                        call outputML_HD5F_create_static_dset(fn_node_static_h5,H5_file_id, &
+                                        call outputML_HDF5_create_static_dset(fn_node_static_h5,H5_file_id, &
                                             startdate, mminc, &
                                             OutNodeElem_pSWMMidx(kk), &
                                             setting%Time%StartEpoch, &
@@ -2835,7 +2835,7 @@ contains
                                             tnodename, setting%Time%DateTimeStamp, NodeOut, .false.)
 
 !                                       !% write the static data to the HDF5 file 
-                                        call outputML_HD5F_write_static_file(fn_node_static_h5,H5_file_id, &
+                                        call outputML_HDF5_write_static_file(fn_node_static_h5,H5_file_id, &
                                             SWMMnode, .false.,NodeOut)
                                     end if
 
@@ -2843,7 +2843,7 @@ contains
                                     if(N_Out_static_TypeElem > 0 ) then 
 
                                         !% Create HDF5 file and dataset to write static output to 
-                                        call outputML_HD5F_create_static_dset(fn_nodeFV_static_h5,H5_file_id, &
+                                        call outputML_HDF5_create_static_dset(fn_nodeFV_static_h5,H5_file_id, &
                                                 startdate, mminc, &
                                                 SWMMnode, &
                                                 setting%Time%StartEpoch, &
@@ -2851,11 +2851,11 @@ contains
                                                 tnodename, setting%Time%DateTimeStamp, NodeElemOut, .true.)
 
                                         !% write the static data to the HDF5 file
-                                        call outputML_HD5F_write_static_file(fn_nodeFV_static_h5,H5_file_id, &
+                                        call outputML_HDF5_write_static_file(fn_nodeFV_static_h5,H5_file_id, &
                                              SWMMnode, .true., NodeElemOut)
                                            
                                     end if 
-                                    call outputML_HD5F_create_dset(fn_nodeElem_h5,H5_file_id, &
+                                    call outputML_HDF5_create_dset(fn_nodeElem_h5,H5_file_id, &
                                         nTypeElem, nLevel, dummyI, &
                                         OutNodeElem_pSWMMidx(kk), &
                                         startdate, setting%Time%StartEpoch, &
@@ -2863,7 +2863,7 @@ contains
                                         pOutElem_Gidx(OutNodeElem_pOutElemIdx(kk,1:OutNodeElem_N_elem_in_node(kk))), &
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeElemOut, .false.)
 
-                                    call outputML_HD5F_write_file(fn_nodeElem_h5,H5_file_id, &
+                                    call outputML_HDF5_write_file(fn_nodeElem_h5,H5_file_id, &
                                         kk, nTypeElemWtime, dummyI, nLevel,  &
                                         OutNodeElem_ProcessedDataR, OutNodeElem_ElemDataR, .false. )
 
@@ -2876,8 +2876,8 @@ contains
                                         action='write', access='append')
                                 end if
 
-                                if(setting%Output%Report%useHD5F) then 
-                                    call outputML_HD5F_extend_write_file(fn_nodeElem_h5,H5_file_id, &
+                                if(setting%Output%Report%useHDF5) then 
+                                    call outputML_HDF5_extend_write_file(fn_nodeElem_h5,H5_file_id, &
                                         kk, nTypeElemWtime, dummyI, nLevel,  &
                                         OutNodeElem_ProcessedDataR, OutNodeElem_ElemDataR, .false. )
                                 end if
@@ -2923,8 +2923,8 @@ contains
                                     
                                 end if    
                                 
-                                if(setting%Output%Report%useHD5F) then
-                                    call outputML_HD5F_create_dset(fn_nodeElemFV_h5,H5_file_id, &
+                                if(setting%Output%Report%useHDF5) then
+                                    call outputML_HDF5_create_dset(fn_nodeElemFV_h5,H5_file_id, &
                                         OutNodeElem_N_elem_in_node(kk), nLevel, mminc, &
                                         OutNodeElem_pSWMMidx(kk), &
                                         startdate, setting%Time%StartEpoch, &
@@ -2932,7 +2932,7 @@ contains
                                         pOutElem_Gidx(OutNodeElem_pOutElemIdx(kk,1:OutNodeElem_N_elem_in_node(kk))), &
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeElemOut, .true.)
 
-                                    call outputML_HD5F_write_file(fn_nodeElemFV_h5,H5_file_id, &
+                                    call outputML_HDF5_write_file(fn_nodeElemFV_h5,H5_file_id, &
                                         kk, OutNodeElem_N_elem_in_node(kk), mminc, nLevel,  &
                                         OutNodeElem_ProcessedDataR, OutNodeElem_ElemDataR, .true.)
                                 end if
@@ -2944,8 +2944,8 @@ contains
                                         action='write', position='append')
                                 end if
 
-                                if(setting%Output%Report%useHD5F) then 
-                                    call outputML_HD5F_extend_write_file(fn_nodeElemFV_h5,H5_file_id, &
+                                if(setting%Output%Report%useHDF5) then 
+                                    call outputML_HDF5_extend_write_file(fn_nodeElemFV_h5,H5_file_id, &
                                         kk, OutNodeElem_N_elem_in_node(kk), mminc, nLevel,  &
                                         OutNodeElem_ProcessedDataR, OutNodeElem_ElemDataR, .true.)
                                 end if
@@ -3029,9 +3029,9 @@ contains
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .false.)
                                 end if
 
-                                if(setting%Output%Report%useHD5F) then
+                                if(setting%Output%Report%useHDF5) then
                                     
-                                    call outputML_HD5F_create_dset(fn_nodeFace_h5, H5_file_id, &
+                                    call outputML_HDF5_create_dset(fn_nodeFace_h5, H5_file_id, &
                                         nTypeFace, nLevel, dummyI, &
                                         OutNodeFace_pSWMMidx(kk), &
                                         startdate, setting%Time%StartEpoch, &
@@ -3040,7 +3040,7 @@ contains
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .false.)
 
 
-                                    call outputML_HD5F_write_file(fn_nodeFace_h5,H5_file_id, &
+                                    call outputML_HDF5_write_file(fn_nodeFace_h5,H5_file_id, &
                                         kk, nTypeFaceWtime, dummyI, nLevel,  &
                                         OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .false. )
 
@@ -3054,8 +3054,8 @@ contains
                                 end if
 
                                 
-                                if(setting%Output%Report%useHD5F) then 
-                                    call outputML_HD5F_extend_write_file(fn_nodeFace_h5,H5_file_id, &
+                                if(setting%Output%Report%useHDF5) then 
+                                    call outputML_HDF5_extend_write_file(fn_nodeFace_h5,H5_file_id, &
                                         kk, nTypeFaceWtime, dummyI, nLevel,  &
                                         OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .false. )
                                 end if
@@ -3101,8 +3101,8 @@ contains
 
                                 end if
 
-                                if(setting%Output%Report%useHD5F) then
-                                    call outputML_HD5F_create_dset(fn_nodeFaceFV_h5,H5_file_id, &
+                                if(setting%Output%Report%useHDF5) then
+                                    call outputML_HDF5_create_dset(fn_nodeFaceFV_h5,H5_file_id, &
                                         OutNodeFace_N_face_in_node(kk), nLevel, mminc, &
                                         OutNodeFace_pSWMMidx(kk), &
                                         startdate, setting%Time%StartEpoch, &
@@ -3110,7 +3110,7 @@ contains
                                         pOutFace_Gidx(OutNodeFace_pOutFaceIdx(kk,1:OutNodeFace_N_face_in_node(kk))), &
                                         tnodename, setting%Time%DateTimeStamp, time_units_str, NodeFaceOut, .true. )  
 
-                                    call outputML_HD5F_write_file(fn_nodeFaceFV_h5,H5_file_id, &
+                                    call outputML_HDF5_write_file(fn_nodeFaceFV_h5,H5_file_id, &
                                         kk, OutNodeFace_N_face_in_node(kk), mminc, nLevel,  &
                                         OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .true.)    
                                     !% --- finished writing headers
@@ -3121,8 +3121,8 @@ contains
                                         action='write', position='append')
                                 end if
 
-                                if(setting%Output%Report%useHD5F) then 
-                                    call outputML_HD5F_extend_write_file(fn_nodeFaceFV_h5,H5_file_id, &
+                                if(setting%Output%Report%useHDF5) then 
+                                    call outputML_HDF5_extend_write_file(fn_nodeFaceFV_h5,H5_file_id, &
                                         kk, OutNodeFace_N_face_in_node(kk), mminc, nLevel,  &
                                         OutNodeFace_ProcessedDataR, OutNodeFace_FaceDataR, .true.)
                                 end if
@@ -3219,8 +3219,8 @@ contains
         end if
 
         !% Close H5 file and HDF5 API
-        if(setting%Output%Report%useHD5F) then 
-            call outputML_HD5F_close_file(H5_file_id)
+        if(setting%Output%Report%useHDF5) then 
+            call outputML_HDF5_close_file(H5_file_id)
         end if
 
         if (setting%Debug%File%output) &
@@ -3922,10 +3922,10 @@ contains
 !% HDF5 FUNCTIONS
 !%==========================================================================
 !%
-    subroutine outputML_HD5F_create_file(file_id)
+    subroutine outputML_HDF5_create_file(file_id)
 
         !% Function for opening the HDF5 API and creating the .h5 file for the output
-        !% It returns the file_id such that the following hd5f functions can write to it
+        !% It returns the file_id such that the following HDF5 functions can write to it
         character(len=256) :: h5_file_name       !% Location of .h5 file in local folder 
         INTEGER(HID_T), intent(out)   :: file_id !% File ID needed for hdf5 API 
         INTEGER     ::   HD_error                !% For HDF5 errors
@@ -3939,12 +3939,12 @@ contains
         !% Open the .h5 file
         CALL h5fcreate_f(h5_file_name, H5F_ACC_TRUNC_F, file_id, HD_error)
 
-    end subroutine outputML_HD5F_create_file
+    end subroutine outputML_HDF5_create_file
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine outputML_HD5F_close_file(file_id)
+    subroutine outputML_HDF5_close_file(file_id)
 
         !% Function for closing the HDF5 API and closing the .h5 file 
         integer(HID_T), intent(in) :: file_id   !% File ID of output file
@@ -3956,12 +3956,12 @@ contains
         !% Close the HDF5 API
         call h5close_f(HD_error)    
 
-    end subroutine outputML_HD5F_close_file
+    end subroutine outputML_HDF5_close_file
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine outputML_HD5F_create_dset(h5_dset_name,file_id,nType, nTotalTimeLevels, thistype, thisIndex, &
+    subroutine outputML_HDF5_create_dset(h5_dset_name,file_id,nType, nTotalTimeLevels, thistype, thisIndex, &
         startdate, startEpoch,                &
         output_type_names, output_type_units, &
         elementsInLink,                       &
@@ -4020,7 +4020,7 @@ contains
         
 
         character(len=99)   :: emsg
-        character(64)       :: subroutine_name = 'outputML_HD5F_create_dset'
+        character(64)       :: subroutine_name = 'outputML_HDF5_create_dset'
 
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -4264,12 +4264,12 @@ contains
         !% deallocating the header data after use
         deallocate(header_data)
 
-    end subroutine outputML_HD5F_create_dset
+    end subroutine outputML_HDF5_create_dset
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine outputML_HD5F_create_static_dset(h5_dset_name,file_id,startdate, thistype, thisIndex, &
+    subroutine outputML_HDF5_create_static_dset(h5_dset_name,file_id,startdate, thistype, thisIndex, &
         startEpoch, &
         elementsInLink, tlinkname, ModelRunID, FeatureType, isFV)
         
@@ -4319,7 +4319,7 @@ contains
         
 
         character(len=99)   :: emsg
-        character(64)       :: subroutine_name = 'outputML_HD5F_create_static_dset'
+        character(64)       :: subroutine_name = 'outputML_HDF5_create_static_dset'
 
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -4347,7 +4347,7 @@ contains
         else if(isFV .eqv. .false. .and. FeatureType .eq. NodeOut) then
             allocate(header_data(N_Out_static_TypeNode,3))
         else 
-            print *, "error inside of outputML_HD5F_create_static_dset unknown FeatureType Given"
+            print *, "error inside of outputML_HDF5_create_static_dset unknown FeatureType Given"
             stop
         end if
 
@@ -4553,7 +4553,7 @@ contains
         
         max_dims = (/H5S_UNLIMITED_F, H5S_UNLIMITED_F/)
 
-        !% See function "outputML_HD5F_create_dset" for further commenting on the writing and creation of the dataset
+        !% See function "outputML_HDF5_create_dset" for further commenting on the writing and creation of the dataset
         !% It follows the same process for the static output 
         !% create and then close the dataspace that will store the link data
         CALL h5screate_simple_f(rank, updated_size_data, dspace_id, HD_error ,max_dims)
@@ -4618,12 +4618,12 @@ contains
             deallocate(header_data)
         end if
 
-    end subroutine outputML_HD5F_create_static_dset
+    end subroutine outputML_HDF5_create_static_dset
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine outputML_HD5F_write_file &
+    subroutine outputML_HDF5_write_file &
         (h5_dset_name, file_id, idx1, nIdx2, idx3, nLevel, Out_ProcessedDataR,Out_ElemDataR,isFV)
 
         !%Function for writing the output to the correct dataset and dataspace with the 
@@ -4646,7 +4646,7 @@ contains
         
 
         character(len=99)   :: emsg
-        character(64)       :: subroutine_name = 'outputML_HD5F_write_file'
+        character(64)       :: subroutine_name = 'outputML_HDF5_write_file'
 
 
         if (setting%Debug%File%output) &
@@ -4678,12 +4678,12 @@ contains
         !% deallocation of dset_data
         deallocate(dset_data)
     
-    end subroutine outputML_HD5F_write_file
+    end subroutine outputML_HDF5_write_file
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine outputML_HD5F_write_profiles(file_id)
+    subroutine outputML_HDF5_write_profiles(file_id)
 
         !% --- Function for writing the profiles to the attribute of the .H5 output file 
         integer(HID_T), intent(in)      :: file_id      ! File ID of the .h5 file
@@ -4707,7 +4707,7 @@ contains
         LOGICAL     :: first_null
  
         character(len=99)   :: emsg
-        character(64)       :: subroutine_name = 'outputML_HD5F_write_profiles'
+        character(64)       :: subroutine_name = 'outputML_HDF5_write_profiles'
 
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -4789,12 +4789,12 @@ contains
             deallocate(profile_length)
         end if 
     
-    end subroutine outputML_HD5F_write_profiles
+    end subroutine outputML_HDF5_write_profiles
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine outputML_HD5F_write_static_file &
+    subroutine outputML_HDF5_write_static_file &
         (h5_dset_name, file_id, idx1, isFV, FeatureType)
 
         !%Function for writing the static output to the correct dataset and dataspace with HDF5
@@ -4817,7 +4817,7 @@ contains
         LOGICAL     ::   first_elem_detect = .false.
         
         character(len=99)   :: emsg
-        character(64)       :: subroutine_name = 'outputML_HD5F_write_static_file'
+        character(64)       :: subroutine_name = 'outputML_HDF5_write_static_file'
 
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -4973,12 +4973,12 @@ contains
             deallocate(dset_data)
         end if
         
-    end subroutine outputML_HD5F_write_static_file
+    end subroutine outputML_HDF5_write_static_file
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine outputML_HD5F_extend_write_file &
+    subroutine outputML_HDF5_extend_write_file &
         (h5_dset_name, file_id, idx1, nIdx2, idx3, nLevel, Out_ProcessedDataR,Out_ElemDataR,isFV)
 
         !% Function for writing hdf5 for multi-level output
@@ -5008,7 +5008,7 @@ contains
         INTEGER     ::   HD_error !% For HDF5 errors
     
         character(len=99)   :: emsg
-        character(64)       :: subroutine_name = 'outputML_HD5F_extend_write_file'
+        character(64)       :: subroutine_name = 'outputML_HDF5_extend_write_file'
 
         if (setting%Debug%File%output) &
              write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -5071,7 +5071,7 @@ contains
         !% deallocation of dset_data
         deallocate(dset_data)
     
-    end subroutine outputML_HD5F_extend_write_file
+    end subroutine outputML_HDF5_extend_write_file
 !%
 !%==========================================================================
 !%==========================================================================

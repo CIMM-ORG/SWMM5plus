@@ -119,9 +119,9 @@ for ii in range(len(num_processors)):
     rpt_path = output_dir_timestamped + inp_name +'.rpt'
 
     if(settings_path==""):
-        os.system('./SWMM -i ' + inp_path + ' -o ' + output_dir_timestamped)
+        os.system('./build/SWMMp -i ' + inp_path + ' -o ' + output_dir_timestamped)
     else:
-        os.system('./SWMM -i ' + inp_path + ' -s ' + settings_path + ' -o '+ output_dir_timestamped)
+        os.system('./build/SWMMp -i ' + inp_path + ' -s ' + settings_path + ' -o '+ output_dir_timestamped)
 
     # locating the swmm5_plus output directory inside of the timestamped folder
     # We have to loop because when swmm5_plus runs it also names the output with a timestamped folder so we don't know it before runtime

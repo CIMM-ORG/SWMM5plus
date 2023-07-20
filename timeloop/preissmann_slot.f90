@@ -296,7 +296,7 @@ module preissmann_slot
             real(8), pointer :: area(:), depth(:), head(:), length(:), volume(:), zcrown(:), zbottom(:)
             real(8), pointer :: fullDepth(:), fullArea(:), fPNumber(:), PNumber(:), PCelerity(:), ellDepth(:)
             real(8), pointer :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)!, ellMax(:)
-            real(8), pointer :: overflow(:), grav, TargetPCelerity, Alpha
+            real(8), pointer :: overflow(:), grav, TargetPCelerity !%, Alpha
             logical, pointer :: isSlot(:) , fSlot(:), isSurcharge(:), canSurcharge(:)
             integer, pointer :: SlotMethod, fUp(:), fDn(:)
             integer :: tB, ii, kk
@@ -342,7 +342,7 @@ module preissmann_slot
             fSlot      => faceYN(:,fYN_isPSsurcharged)
             SlotMethod      => setting%Solver%PreissmannSlot%Method
             TargetPCelerity => setting%Solver%PreissmannSlot%TargetCelerity
-            Alpha           => setting%Solver%PreissmannSlot%Alpha
+            !Alpha           => setting%Solver%PreissmannSlot%Alpha
         !%------------------------------------------------------------------
         !% --- JB slot adjustment
         !%     cycle through the all the main junctions and each of its branches
@@ -455,7 +455,7 @@ module preissmann_slot
             real(8), pointer    :: SlotWidth(:), SlotVolume(:), SlotDepth(:), SlotArea(:)
             real(8), pointer    :: dSlotVol(:), dSlotArea(:), dSlotDepth(:), SlotVolN0(:), volume(:) 
             real(8), pointer    :: velocity(:), fPNumber(:), SurchargeTime(:), PnumberInitial(:)
-            real(8), pointer    :: TargetPCelerity, grav, Dt, Alpha, cfl, DecayRate
+            real(8), pointer    :: TargetPCelerity, grav, Dt, cfl, DecayRate !, Alpha
             logical, pointer    :: isSlot(:), isfSlot(:), isSurcharge(:)
             character(64) :: subroutine_name = "slot_CC"
         !%------------------------------------------------------------------
@@ -499,7 +499,7 @@ module preissmann_slot
             SlotMethod          => setting%Solver%PreissmannSlot%Method
             TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
             DecayRate           => setting%Solver%PreissmannSlot%DecayRate
-            Alpha               => setting%Solver%PreissmannSlot%Alpha
+            !Alpha               => setting%Solver%PreissmannSlot%Alpha
             cfl                 => setting%VariableDT%CFL_target
             grav                => setting%Constant%gravity
             Dt                  => setting%Time%Hydraulics%Dt
@@ -629,7 +629,7 @@ module preissmann_slot
             !real(8), pointer    :: maxSlotDepth(:)
             real(8), pointer    :: SlotVolN0(:),  SlotDepthN0(:), PnumberInitial(:)
             !real(8), pointer    :: VolumeExtra(:), VolumePonded(:), VolumeOverflow(:)
-            real(8), pointer    :: TargetPCelerity, cfl, grav, Alpha, Dt, DecayRate
+            real(8), pointer    :: TargetPCelerity, cfl, grav, Dt, DecayRate ! , Alpha
             logical, pointer    :: isSlot(:), isSurcharge(:), canSurcharge(:)
             integer ::  kk, mm, JMidx, bcount 
             real(8) :: PNadd
@@ -674,7 +674,7 @@ module preissmann_slot
             !% --- pointer to necessary settings struct
             SlotMethod          => setting%Solver%PreissmannSlot%Method
             TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
-            Alpha               => setting%Solver%PreissmannSlot%Alpha
+            !Alpha               => setting%Solver%PreissmannSlot%Alpha
             DecayRate           => setting%Solver%PreissmannSlot%DecayRate
             cfl                 => setting%VariableDT%CFL_target
             grav                => setting%Constant%gravity

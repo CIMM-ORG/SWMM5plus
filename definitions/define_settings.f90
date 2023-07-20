@@ -160,7 +160,7 @@ module define_settings
 
     !% setting%Junction%Overflow
     type OverflowType
-        !% --- global values are initialized in define_default_setting()
+        !% --- global values are initialized in define_settings_default()
         !%     changes made here have no effect!
         real(8) :: OrificeLength !% length of overflow orifice (m)
         real(8) :: OrificeHeight!% height of overflow orifice (m)
@@ -197,7 +197,7 @@ module define_settings
     type ReportType
         logical :: useSWMMinpYN = .true.
         logical :: provideYN = .true.
-        logical :: useHD5F   = .true.
+        logical :: useHDF5   = .true.
         logical :: useCSV    = .true.
         logical :: suppress_MultiLevel_Output = .false.
         real(8) :: StartTime = 0.0d0
@@ -474,7 +474,7 @@ module define_settings
         logical :: ForceStorage = .true.   !% forces nJM junctions without explicit storage to have implied storage
         integer :: FunStorageN  = 10       !% number of curve entries for functional storage   
         real(8) :: kFactor      = 0.0      !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
-        real(8) :: InfiniteExtraDepthValue = 1000.d0  !% Surcharge Depth if this value or higher is treated as impossible to overflow
+        real(8) :: InfiniteExtraDepthValue = 999.d0  !% Surcharge Depth if this value or higher is treated as impossible to overflow
 
         !% Ponding ScaleFactor is multiplier of junction/storage length scale (sqrt of area) to get minimum length scale of ponding
         real(8) :: PondingScaleFactor = 10.d0 
@@ -1610,10 +1610,10 @@ contains
         if (found) setting%Output%Report%provideYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.Report.provideYN not found'
 
-        !%                       Report.useHD5F
-        call json%get('Output.Report.useHD5F', logical_value, found)
-        if (found) setting%Output%Report%useHD5F = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.Report.useHD5F not found'
+        !%                       Report.useHDF5
+        call json%get('Output.Report.useHDF5', logical_value, found)
+        if (found) setting%Output%Report%useHDF5 = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.Report.useHDF5 not found'
 
         !%                       Report.useCSV
         call json%get('Output.Report.useCSV', logical_value, found)
@@ -1893,6 +1893,11 @@ contains
         call json%get('Solver.PreissmannSlot.DecayRate', real_value, found)
         if (found) setting%Solver%PreissmannSlot%DecayRate = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.DecayRate not found'
+
+      !%                      Minimum initial preissmann number
+        call json%get('Solver.PreissmannSlot.MinimumInitialPreissmannNumber', real_value, found)
+        if (found) setting%Solver%PreissmannSlot%MinimumInitialPreissmannNumber = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.MinimumInitialPreissmannNumber not found'
 
 
     !% TestCase.  =====================================================================
