@@ -475,7 +475,7 @@ contains
         !%   EPA-SWMM functionalities.
         !%------------------------------------------------------------------
         !% Declarations   
-            integer          :: ii, total_n_links
+            integer          :: ii, jj, total_n_links, link_idx
             integer, pointer :: linkUp, linkDn
             logical          :: noerrorfound
             character(64)    :: subroutine_name = 'init_linknode_arrays'
@@ -573,7 +573,7 @@ contains
             node%I(link%I(ii,li_Mnode_d), ni_idx_base1 + node%I(link%I(ii,li_Mnode_d), ni_N_link_u)) = ii
 
             !% --- increment the connection counter for the node upstream
-            node%I(link%I(ii,li_Mnode_u), ni_N_link_d) = node%I(link%I(ii,li_Mnode_u), ni_N_link_d) + 1
+            node%I(link%I(ii,li_Mnode_u), ni_N_link_d) = node%I(link%I(ii,li_Mnode_u), ni_N_link_d) + oneI
 
             !% --- set the maps for the upstream node to the downstream link (ni_Mlink_d#)
             !%     NOTE: this makes use of the ordering of the ni_Mlink_d# in define_indexes
@@ -737,7 +737,7 @@ contains
                 call util_crashpoint(387666)
             end if
 
-            if (node%I(ii, ni_N_link_u) > max_dn_branch_per_node) then
+            if (node%I(ii, ni_N_link_d) > max_dn_branch_per_node) then
                 if (this_image() == 1) then
                     write(*,*) 'USER CONFIGURATION ERROR'
                     write(*,"(A,i4,A)") 'One or more nodes have more than ',max_dn_branch_per_node,' downstream connections'
@@ -1135,8 +1135,41 @@ contains
                 if (node%I(ii, ni_node_type) == nJ1) node%I(ii, ni_node_type) = nBCup
             end if
 
+
+            !% --- calculate the full volumes of the links upstream of a node
+            !%     this volume will be used later the distribute lateral inflows across links
+            node%R(ii,nr_UpLinksFullVolume) = zeroR
+
+            do jj = 1,node%I(ii,ni_N_link_u)
+                !% pointer to the upstream links of that node
+                link_idx = node%I(ii,ni_idx_base1 + jj)
+
+                !% only calculate the volumes of open channels 
+                if (link%I(link_idx,li_link_type) == lchannel) then
+                    !% add the the volume of the upstream links
+                    node%R(ii,nr_UpLinksFullVolume) = node%R(ii,nr_UpLinksFullVolume) &
+                                    + link%R(link_idx,lr_FullArea) * link%R(link_idx,lr_Length)    
+                end if
+
+            end do
+
             !% --- note pattern initialization MUST be called after inflows are set
             node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
+        end do
+
+        !% --- find the volume fraction metric for channel links to distribute lateral inflows
+        do ii = 1, setting%SWMMinput%N_link
+            if (link%I(ii,li_link_type) == lchannel) then
+                link%R(ii,lr_VolumeFractionMetric) = link%R(ii,lr_FullArea) * link%R(ii,lr_Length) &
+                                                / node%R(link%I(ii,li_Mnode_d),nr_UpLinksFullVolume)
+            else
+                !% --- lateral inflows will not be distributed for non channel links.
+                link%R(ii,lr_VolumeFractionMetric) = zeroR
+            end if
+
+            !% save the node from which lateral inflows will be distributed
+            link%I(ii,li_lateralInflowNode)    = link%I(ii,li_Mnode_d)
+
         end do
 
         !% --- error checking for disconnected nodes

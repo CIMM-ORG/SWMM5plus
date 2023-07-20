@@ -405,6 +405,7 @@ module define_settings
         ! real(8) :: MinElemLengthFactor = 0.5d0           !% define the minimum allowable fraction of an element size to help with the cfl
         !integer :: MinElemLengthMethod = ElemLengthAdjust
         logical :: UseNominalElemLength = .true.
+        logical :: DistributeOpenChannelInflowsTF = .false.
         real(8) :: NominalElemLength   = 10.0d0
         integer :: MinElementPerLink   = 3               !% force a minimum number of elements per link
         logical :: UseEquivalentOrifice = .false.        !% replace small conduits with equivalent orifice
@@ -1110,6 +1111,11 @@ contains
         if (found) setting%Discretization%UseEquivalentOrifice = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.UseEquivalentOrifice not found'
 
+        !%                       Discretization.DistributeOpenChannelInflowsTF
+        call json%get('Discretization.DistributeOpenChannelInflowsTF', logical_value, found)
+        if (found) setting%Discretization%DistributeOpenChannelInflowsTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.DistributeOpenChannelInflowsTF not found'
+
         !%                       Discretization.EquivalentOrificeDischargeCoeff
         call json%get('Discretization.EquivalentOrificeDischargeCoeff', real_value, found)
         if (found) setting%Discretization%EquivalentOrificeDischargeCoeff = real_value
@@ -1496,6 +1502,21 @@ contains
         call json%get('Output.DataOut.isVolumeOut', logical_value, found)
         if (found) setting%Output%DataOut%isVolumeOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isVolumeOut not found'
+
+        !%                       Dataout.isVolumeConsOut
+        call json%get('Output.DataOut.isVolumeConsOut', logical_value, found)
+        if (found) setting%Output%DataOut%isVolumeConsOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isVolumeConsOut not found'
+
+        !%                       Dataout.isVolumeOverflowOut
+        call json%get('Output.DataOut.isVolumeOverflowOut', logical_value, found)
+        if (found) setting%Output%DataOut%isVolumeOverflowOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isVolumeOverflowOut not found'
+
+        !%                       Dataout.isVolumePondedOut
+        call json%get('Output.DataOut.isVolumePondedOut', logical_value, found)
+        if (found) setting%Output%DataOut%isVolumePondedOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isVolumePondedOut not found'
 
         !%                       Dataout.isWaveSpeedOut
         call json%get('Output.DataOut.isWaveSpeedOut', logical_value, found)

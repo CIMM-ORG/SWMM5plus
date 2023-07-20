@@ -908,14 +908,17 @@ contains
         !%------------------------------------------------------------------  
         !% --- handle all the initial conditions that don't depend on geometry type
         where (elemI(:,ei_link_Gidx_BIPquick) == thisLink)
-            elemR(:,er_Flowrate)           = link%R(thisLink,lr_FlowrateInitial) / link%I(thisLink,li_barrels)
-            elemR(:,er_Flowrate_N0)        = link%R(thisLink,lr_FlowrateInitial) / link%I(thisLink,li_barrels)
-            elemR(:,er_Flowrate_N1)        = link%R(thisLink,lr_FlowrateInitial) / link%I(thisLink,li_barrels)
-            elemR(:,er_ManningsN)          = link%R(thisLink,lr_Roughness)
+            elemR(:,er_Flowrate)             = link%R(thisLink,lr_FlowrateInitial) / link%I(thisLink,li_barrels)
+            elemR(:,er_Flowrate_N0)          = link%R(thisLink,lr_FlowrateInitial) / link%I(thisLink,li_barrels)
+            elemR(:,er_Flowrate_N1)          = link%R(thisLink,lr_FlowrateInitial) / link%I(thisLink,li_barrels)
+            elemR(:,er_ManningsN)            = link%R(thisLink,lr_Roughness)
             !% --- distribute minor losses uniformly over all the elements in thi link
-            elemR(:,er_Kconduit_MinorLoss) = link%R(thisLink,lr_Kconduit_MinorLoss) / (real(lastelem - firstelem + oneI,8))
-            elemR(:,er_FlowrateLimit)      = link%R(thisLink,lr_FlowrateLimit)
-            elemR(:,er_SeepRate)           = link%R(thisLink,lr_SeepRate)
+            elemR(:,er_Kconduit_MinorLoss)   = link%R(thisLink,lr_Kconduit_MinorLoss) / (real(lastelem - firstelem + oneI,8))
+            !% --- distribute volume fraction for lateral inflow across elements
+            elemR(:,er_VolumeFractionMetric) = link%R(thisLink,lr_VolumeFractionMetric) * elemR(:,er_Length) / link%R(thisLink,lr_Length)
+            elemI(:,ei_lateralInflowNode)    = link%I(thisLink,li_lateralInflowNode)
+            elemR(:,er_FlowrateLimit)        = link%R(thisLink,lr_FlowrateLimit)
+            elemR(:,er_SeepRate)             = link%R(thisLink,lr_SeepRate)
         endwhere
 
         !% --- assign minor losses

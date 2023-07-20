@@ -352,7 +352,12 @@ contains
                 if ((.not. setting%SWMMinput%IgnoreGroundwater) .and. &
                             (setting%SWMMinput%N_groundwater > 0) ) then 
                     call interface_get_groundwater_inflow ()
-                end if 
+                end if
+
+                !% --- distribute lateral inflow over open CC elements
+                if (setting%Discretization%DistributeOpenChannelInflowsTF) then
+                    call tl_distribute_external_lat_inflow ()
+                end if
 
                 !% --- set hydraulics time step to handle inflow
                 call tl_update_hydraulics_timestep(.false.)
@@ -361,8 +366,10 @@ contains
                 call tl_hydraulics()
             
                 !% --- accumulate RunOn from hydraulic elements to subcatchments
-                if ((setting%Simulation%useHydrology) .and. (any(subcatchYN(:,sYN_hasRunOn)))) then 
-                    call tl_subcatchment_accumulate_runon ()
+                if (setting%Simulation%useHydrology) then
+                    if (any(subcatchYN(:,sYN_hasRunOn))) then 
+                        call tl_subcatchment_accumulate_runon ()
+                    end if
                 end if
 
                 !% --- close the clock tick for hydraulic loop evaluation
@@ -875,8 +882,9 @@ contains
         end if
 
         !% --- Ensure that all processors use the same time step.
-        !%     Find the minimum hydraulics time and store accross all processors.
+        !%     Find the minimum hydraulics and hydrology time and store accross all processors.
         call co_min(nextHydraulicsTime)
+        call co_min(nextHydrologyTime)
         !% --- Take the nextTime as the minimum of either the Hydrology or Hydraulics time
         !%     Done on a single processor because they all should have identical nextHydrologyTIme
         nextTime = min(nextHydraulicsTime, nextHydrologyTime)
@@ -938,6 +946,7 @@ contains
             real(8), pointer    :: nextHydraulicsTime, lastHydraulicsTime
 
             integer             :: neededSteps, pindex(1)
+            integer(kind=8), pointer :: lastCheckStep
     
             character(64)        :: subroutine_name = 'tl_update_hydraulics_timestep'
         !%-------------------------------------------------------------------
@@ -949,7 +958,8 @@ contains
             useHydrology       => setting%Simulation%useHydrology
             matchHydrologyStep => setting%Time%matchHydrologyStep
             nextHydraulicsTime => setting%Time%Hydraulics%NextTime
-            lastHydraulicsTime => setting%Time%Hydraulics%LastTime        
+            lastHydraulicsTime => setting%Time%Hydraulics%LastTime    
+            lastCheckStep      => setting%VariableDT%LastCheckStep    
             timeNow            => setting%Time%Now
         !%----------------------------------------------------------------------
         !% --- note oldDT is NOT a alias as we want it fixed while newDT
@@ -981,6 +991,13 @@ contains
             end if
             !% --- get the dt
             call tl_DT_standard(newDT, oldDT, oldCFL)  
+
+            !% --- match the last check step across images.
+            !%     this ensures new timestep is shecked at
+            !%     the same time across all images. as a result
+            !%     consistancy is maintained across single vs
+            !%     multi processor simulations
+            call co_max(lastCheckStep)
 
             !% --- neededSteps is irrelevant without hydrology matching,
             !%     but this using 3 forces a rounding operation below
@@ -1294,7 +1311,7 @@ contains
             wavespeed(thisP) = zeroR
             Pcelerity(thisP) = zeroR
         endwhere
-    
+
         !% --- set the outvalue
         if (Npack > 0) then 
             if (setting%Solver%PreissmannSlot%useSlotTF) then
@@ -1661,6 +1678,7 @@ contains
 
             real(8), pointer :: nextHydrologyTime, LastHydraulicsTime
             real(8), pointer :: CFL_hi, dtTol
+            integer(kind=8), pointer :: lastCheckStep
             real(8) :: timeLeft, timeLeftCFL
         !%------------------------------------------------------------------
         !% Aliases
@@ -1668,6 +1686,7 @@ contains
             dtTol              => setting%Time%DtTol
             nextHydrologyTime  => setting%Time%Hydrology%NextTime
             lastHydraulicsTime => setting%Time%Hydraulics%LastTime 
+            lastCheckStep      => setting%VariableDT%LastCheckStep
         !%------------------------------------------------------------------
 
         !% --- for combined hydrology and hydraulics 
@@ -1705,6 +1724,13 @@ contains
             call tl_DT_standard (newDT, oldDT, oldCFL)
             neededSteps = 3
         end if
+
+        !% --- match the last check step across images.
+        !%     this ensures new timestep is shecked at
+        !%     the same time across all images. as a result
+        !%     consistancy is maintained across single vs
+        !%     multi processor simulations
+        call co_max(lastCheckStep)
 
   end subroutine tl_DT_hydrology_match
 !%
@@ -1814,13 +1840,6 @@ contains
             end if
         endif
 
-        !% --- match the last check step across images.
-        !%     this ensures new timestep is shecked at
-        !%     the same time across all images. as a result
-        !%     consistancy is maintained across single vs
-        !%     multi processor simulations
-        call co_max(lastCheckStep)
-
         !% --- check for minimum limit
         if (setting%Limiter%Dt%UseLimitMinYN) then
             if (newDT < setting%Limiter%Dt%Minimum) then 
@@ -1922,6 +1941,59 @@ contains
         end if
 
     end subroutine tl_roundoff_DT
+!% 
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine tl_distribute_external_lat_inflow()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Distribute external lateral inflow across upstream open CC links
+        !%------------------------------------------------------------------
+        !% Declarations:
+        integer :: ii
+        integer, pointer :: npack, thisP(:), thisBC, nBarrels(:), eType(:)
+        real(8), pointer :: Qlateral(:), VolumeFraction(:)
+        logical, pointer :: canSurcharve(:)
+        !%------------------------------------------------------------------
+        !% Aliases:
+            eType          => elemI(:,ei_elementType)
+            nBarrels       => elemI(:,ei_barrels)
+            Qlateral       => elemR(:,er_FlowrateLateral)
+            VolumeFraction => elemR(:,er_VolumeFractionMetric)
+            canSurcharve   => elemYN(:,eYN_canSurcharge)
+        !%------------------------------------------------------------------
+        npack    => npack_elemP(ep_BClat)
+        thisP    => elemP(1:npack,ep_BClat)
+        if (npack > 0) then
+            !% only remove the external lateral inflows from open JM and open CC elements
+            where (((eType(thisP) == CC) .or. (eType(thisP) == JM)) .and. (.not. canSurcharve(thisP)))
+                Qlateral(thisP) = Qlateral(thisP) &
+                    - BC%flowR(BC%P%BClat,br_value) / real(nBarrels(thisP),8)
+            end where
+        end if
+
+        
+        !% now set the aliases to CC elements
+        npack    => npack_elemP(ep_CC_Open_Elements)
+        thisP    => elemP(1:npack,ep_CC_Open_Elements)
+
+        !% now distribute the lateral inflow at CC elements
+        do ii = 1,N_nBClat
+            thisBC     => BC%P%BClat(ii)
+            !% distribute the external lateral inflow over open CC elemtens
+            where (elemI(thisP,ei_lateralInflowNode) == BC%flowI(thisBC, bi_node_idx))
+                Qlateral(thisP) = Qlateral(thisP) +  &
+                        VolumeFraction(thisP) * BC%flowR(thisBC,br_value) / real(nBarrels(thisP),8)
+            end where
+        end do
+
+        !% now distribute the subcatchment, RDII, and groundwater lat inflow to CC elements
+
+        !% HACK: This doesnot take care of the lateral inflows in Diag/JM downstream of Diag elements
+        !% need to come up with a way of generalizing that
+
+    end subroutine tl_distribute_external_lat_inflow
 !% 
 !%==========================================================================
 !% END OF MODULE
