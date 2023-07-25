@@ -4934,94 +4934,276 @@ contains
         !% get the geometry data for conduit links and calculate element volumes
         !%-----------------------------------------------------------------
         !% Declarations:
-            integer :: thisSize
-            integer, pointer    :: SlotMethod
-            real(8), pointer    :: TargetPCelerity, grav, Alpha
             character(64) :: subroutine_name = 'init_IC_slot'
         !%-----------------------------------------------------------------
         !% Preliminaries
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
-        !% Aliases
-            SlotMethod          => setting%Solver%PreissmannSlot%Method
-            TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
-            Alpha               => setting%Solver%PreissmannSlot%Alpha
-            grav                => setting%Constant%gravity
-        !%-----------------------------------------------------------------
-        !% --- initialize slots
-        !% --- get the set of non dummy elements
-        thisSize = size(elemR,1)-1
-        elemR(1:thisSize,er_SlotVolume)            = zeroR
-        elemR(1:thisSize,er_SlotArea)              = zeroR
-        elemR(1:thisSize,er_SlotWidth)             = zeroR
-        elemR(1:thisSize,er_dSlotArea)             = zeroR
-        elemR(1:thisSize,er_dSlotDepth)            = zeroR
-        elemR(1:thisSize,er_dSlotVolume)           = zeroR
-        elemR(1:thisSize,er_SlotVolume_N0)         = zeroR
-        elemR(1:thisSize,er_Preissmann_Celerity)   = zeroR
-        elemR(1:thisSize,er_Surcharge_Time)        = zeroR      
-        elemR(1:thisSize,er_SlotDepth_N0)          = elemR(1:thisSize,er_SlotDepth)    
-        elemR(1:thisSize,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
-                                                              * elemR(1:size(elemR,1)-1,er_FullDepth)))
 
-        where (elemR(1:thisSize,er_Preissmann_Number_initial) < setting%Solver%PreissmannSlot%MinimumInitialPreissmannNumber)
-            elemR(1:thisSize,er_Preissmann_Number_initial)    = setting%Solver%PreissmannSlot%MinimumInitialPreissmannNumber   
-        endwhere                                                  
-    
-        !% --- only calculate slots for ETM time-march
-        if (setting%Solver%SolverSelect == ETM) then
+        !% --- initialize preissmann slot variables for CC and JB elements
+        call init_IC_slot_CCJB ()
 
-            !% --- initialization where starting condition is surcharged
-            where ((elemR(:,er_Head) > elemR(:,er_Zcrown)) .and. (elemYN(:,eYN_canSurcharge)))
-                elemYN(:,eYN_isPSsurcharged) = .true.
-                elemR (:,er_SlotDepth)      = elemR(:,er_Head) - elemR(:,er_Zcrown)
-            endwhere
-
-            !% --- initialize PS dependent variables
-            select case (SlotMethod)
-
-                case (StaticSlot)
-
-                    elemR(1:thisSize,er_Preissmann_Number) = oneR
-
-                    where (elemYN(:,eYN_isPSsurcharged))
-                        elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
-                        elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2)
-                        elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth) 
-                        elemR(:,er_SlotVolume)          = elemR(:,er_SlotArea) * elemR(:,er_Length)
-                        !% --- add slot volume to total volume (which was set to full volume)
-                        elemR(:,er_Volume)              = elemR(:,er_Volume) + elemR(:,er_SlotVolume)
-                    end where
-
-                case (DynamicSlot)
-
-                    !elemR(1:thisSize,er_Preissmann_Number)     = TargetPCelerity / (Alpha * sqrt(grav * elemR(1:thisSize,er_FullDepth))) 
-                    elemR(1:thisSize,er_Preissmann_Number)     = elemR(1:thisSize,er_Preissmann_Number_initial)
-                    elemR(1:thisSize,er_Preissmann_Number_N0)  = elemR(1:thisSize,er_Preissmann_Number)
-                    where (elemYN(:,eYN_isPSsurcharged))
-                        elemR(:,er_Preissmann_Celerity) = TargetPCelerity / elemR(:,er_Preissmann_Number)
-                        elemR(:,er_SlotWidth)           = (grav * elemR(:,er_FullArea)) / (elemR(:,er_Preissmann_Celerity)**2.0)
-                        elemR(:,er_SlotArea)            = elemR(:,er_SlotDepth) * elemR(:,er_SlotWidth)
-                        elemR(:,er_SlotVolume)          = elemR(:,er_SlotArea) * elemR(:,er_Length)
-                        !% --- add slot volume to total volume (which was set to full volume)
-                        elemR(:,er_Volume)              = elemR(:,er_Volume) + elemR(:,er_SlotVolume)
-                    end where
-
-                case default
-                    !% should not reach this stage
-                    print*, 'In ', subroutine_name
-                    print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
-                    print *, 'which has key ',trim(reverseKey(SlotMethod))
-                    call util_crashpoint(71109872)
-            end select
-        end if
+        !% --- initialize preissmann slot variables for JM elements
+        call init_IC_slot_JM ()
 
         !%------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     end subroutine init_IC_slot
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine init_IC_slot_CCJB ()
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% initialize Preissmann Slot for CC, JB, Diagnostic elements
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            real(8) :: OldTargetPCelerity
+            integer, pointer    :: SlotMethod, thisColP, npack, thisP(:)
+            real(8), pointer    :: TargetPCelerity, grav, Alpha, MinPnumber
+            character(64) :: subroutine_name = 'init_IC_slot_CCJB'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+        !% Aliases
+            thisColP =>   col_elemP(ep_CCJBDiag)
+            Npack    => npack_elemP(thisColP)
+            if (Npack < 1) return
+
+            thisP               => elemP(1:Npack,thisColP)
+            SlotMethod          => setting%Solver%PreissmannSlot%Method
+            TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
+            Alpha               => setting%Solver%PreissmannSlot%Alpha
+            grav                => setting%Constant%gravity
+            MinPnumber          => setting%Solver%PreissmannSlot%PNminumum 
+
+            !% parameter check
+            if ((any(elemYN(thisP,eYN_canSurcharge))) .and. &
+                (SlotMethod == DynamicSlot)           .and. &
+                (Alpha < oneR))                          then
+
+                if (this_image() == 1) then
+                    write(*,*) 'USER CONFIGURATION ERROR'
+                    write(*,*) 'A value of setting.Solver.PreissmannSlot.Alpha >= 1 '
+                    write(*,*) 'is required for the dynamic Preissmann slot algorithm'
+                end if
+
+                call util_crashpoint(129876)
+            end if
+
+            !% --- initialize slots
+            elemR(thisP,er_SlotVolume)            = zeroR
+            elemR(thisP,er_SlotArea)              = zeroR
+            elemR(thisP,er_SlotWidth)             = zeroR
+            elemR(thisP,er_dSlotArea)             = zeroR
+            elemR(thisP,er_dSlotDepth)            = zeroR
+            elemR(thisP,er_dSlotVolume)           = zeroR
+            elemR(thisP,er_SlotVolume_N0)         = zeroR
+            elemR(thisP,er_Preissmann_Celerity)   = zeroR
+            elemR(thisP,er_Surcharge_Time)        = zeroR  
+            elemR(thisP,er_SlotDepth_N0)          = elemR(thisP,er_SlotDepth)
+            elemR(thisP,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
+                                                                  * elemR(thisP,er_FullDepth))) 
+            !% --- saving the target celerity at a temporary spot for now
+            elemR(thisP,er_Temp01)                = TargetPCelerity
+            OldTargetPCelerity                    = TargetPCelerity
+
+            !% --- only calculate slots for ETM time-march
+            if (setting%Solver%SolverSelect == ETM) then  
+                !% --- initialization where starting condition is surcharged
+                where ((elemR(thisP,er_Head) > elemR(thisP,er_Zcrown)) .and. (elemYN(thisP,eYN_canSurcharge)))
+                    elemYN(thisP,eYN_isPSsurcharged) = .true.
+                    elemR (thisP,er_SlotDepth)      = elemR(thisP,er_Head) - elemR(thisP,er_Zcrown)
+                endwhere
+
+                !% --- initialize PS dependent variables
+                select case (SlotMethod)
+
+                    case (StaticSlot)
+                        elemR(thisP,er_Preissmann_Number) = oneR
+                        where (elemYN(thisP,eYN_isPSsurcharged))
+                            elemR(thisP,er_Preissmann_Celerity) = TargetPCelerity / elemR(thisP,er_Preissmann_Number)
+                            elemR(thisP,er_SlotWidth)           = (grav * elemR(thisP,er_FullArea)) / (elemR(thisP,er_Preissmann_Celerity)**2)
+                            elemR(thisP,er_SlotArea)            = elemR(thisP,er_SlotDepth) * elemR(thisP,er_SlotWidth) 
+                            elemR(thisP,er_SlotVolume)          = elemR(thisP,er_SlotArea) * elemR(thisP,er_Length)
+                            !% --- add slot volume to total volume (which was set to full volume)
+                            elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
+                        end where
+                    
+                    case (DynamicSlot)
+
+                        where (elemR(thisP,er_Preissmann_Number_initial) < oneR)
+                            !% --- resetting the target celerity on CC elements, where it results in a very wide slot
+                            elemR(thisP,er_Temp01) = MinPnumber * Alpha * sqrt(grav * elemR(thisP,er_FullDepth))
+                        endwhere
+
+                        !% --- rest the global target preissmann celerity to the new maximum 
+                        TargetPCelerity = maxval(elemR(thisP,er_Temp01))
+                        !% --- boradcast the new target preissmann celerity across images
+                        call co_max(TargetPCelerity)
+
+                        !% --- reset the initial preissmann numbers
+                        elemR(thisP,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
+                                                                  * elemR(thisP,er_FullDepth))) 
+
+                        if (TargetPCelerity > OldTargetPCelerity) then
+                            if (this_image() == 1) then
+                                Write(*,*) '       '
+                                Write(*,*) 'Warning: User provided setting.Solver.PreissmannSlot.TargetCelerity is too low'
+                                write(*,"(A,F7.2,A,F7.2,A)") ' increasing the Target Preissmann Celerity from ', OldTargetPCelerity, &
+                                    ' to ', TargetPCelerity, ' m/s '
+                                print* 
+                            end if
+                        else if (TargetPCelerity < OldTargetPCelerity) then
+                            Write(*,*) '       '
+                            write(*,"(A,F7.2,A)") 'FATAL ERROR: the new TargetCelerity ', TargetPCelerity, ' is lower '
+                            write(*,"(A,F7.2,A)") 'than the user provided TargetCelerity ', OldTargetPCelerity, ' which should not happen'
+                            call util_crashpoint(1134546)
+                        else
+                            !% --- no change is target preissmann celerity, do nothing
+                        end if
+
+                        elemR(thisP,er_Preissmann_Number)     = elemR(thisP,er_Preissmann_Number_initial)
+                        elemR(thisP,er_Preissmann_Number_N0)  = elemR(thisP,er_Preissmann_Number)
+                        where (elemYN(thisP,eYN_isPSsurcharged))
+                            elemR(thisP,er_Preissmann_Celerity) = TargetPCelerity / elemR(thisP,er_Preissmann_Number)
+                            elemR(thisP,er_SlotWidth)           = (grav * elemR(thisP,er_FullArea)) / (elemR(thisP,er_Preissmann_Celerity)**twoI)
+                            elemR(thisP,er_SlotArea)            = elemR(thisP,er_SlotDepth) * elemR(thisP,er_SlotWidth)
+                            elemR(thisP,er_SlotVolume)          = elemR(thisP,er_SlotArea) * elemR(thisP,er_Length)
+                            !% --- add slot volume to total volume (which was set to full volume)
+                            elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
+                        end where
+
+                    case default
+                        !% should not reach this stage
+                        print*, 'In ', subroutine_name
+                        print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
+                        print *, 'which has key ',trim(reverseKey(SlotMethod))
+                        call util_crashpoint(71109872)
+                end select
+            end if    
+        !%-----------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine init_IC_slot_CCJB
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine init_IC_slot_JM
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% initialize Preissmann Slot for JM elements
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer ::  kk, mm, JMidx, bcount 
+            real(8) :: PNadd
+            integer, pointer    :: SlotMethod, thisColP, npack, thisP(:)
+            real(8), pointer    :: TargetPCelerity, grav, Alpha, MinPnumber
+            character(64) :: subroutine_name = 'init_IC_slot_JM'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+        !% Aliases
+            thisColP =>   col_elemP(ep_JM)
+            Npack    => npack_elemP(thisColP)
+            if (Npack < 1) return
+
+            thisP               => elemP(1:Npack,thisColP)
+            SlotMethod          => setting%Solver%PreissmannSlot%Method
+            TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
+            Alpha               => setting%Solver%PreissmannSlot%Alpha
+            grav                => setting%Constant%gravity
+            MinPnumber          => setting%Solver%PreissmannSlot%PNminumum 
+
+            !% --- initialize slots
+            elemR(thisP,er_SlotVolume)            = zeroR
+            elemR(thisP,er_SlotArea)              = zeroR
+            elemR(thisP,er_SlotWidth)             = zeroR
+            elemR(thisP,er_dSlotArea)             = zeroR
+            elemR(thisP,er_dSlotDepth)            = zeroR
+            elemR(thisP,er_dSlotVolume)           = zeroR
+            elemR(thisP,er_SlotVolume_N0)         = zeroR
+            elemR(thisP,er_Preissmann_Celerity)   = zeroR
+            elemR(thisP,er_Surcharge_Time)        = zeroR  
+            elemR(thisP,er_SlotDepth_N0)          = elemR(thisP,er_SlotDepth)
+
+            !% --- only calculate slots for ETM time-march
+            if (setting%Solver%SolverSelect == ETM) then  
+                !% --- initialization where starting condition is surcharged
+                where ((elemR(thisP,er_Head) > elemR(thisP,er_Zcrown)) .and. (elemYN(thisP,eYN_canSurcharge)))
+                    elemYN(thisP,eYN_isPSsurcharged) = .true.
+                    elemR (thisP,er_SlotDepth)      = elemR(thisP,er_Head) - elemR(thisP,er_Zcrown)
+                endwhere
+
+                !% --- initialize PS dependent variables
+                select case (SlotMethod)
+
+                    case (StaticSlot)
+                        elemR(thisP,er_Preissmann_Number) = oneR
+                        where (elemYN(thisP,eYN_isPSsurcharged))
+                            elemR(thisP,er_Preissmann_Celerity) = TargetPCelerity / elemR(thisP,er_Preissmann_Number)
+                            elemR(thisP,er_SlotWidth)           = (grav * elemR(thisP,er_FullArea)) / (elemR(thisP,er_Preissmann_Celerity)**2)
+                            elemR(thisP,er_SlotArea)            = elemR(thisP,er_SlotDepth) * elemR(thisP,er_SlotWidth) 
+                            elemR(thisP,er_SlotVolume)          = elemR(thisP,er_SlotArea) * elemR(thisP,er_Length)
+                            !% --- add slot volume to total volume (which was set to full volume)
+                            elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
+                        end where
+                    
+                    case (DynamicSlot)
+
+                        !% --- requires cycling through the junctions to get the initial preissmann number
+                        do mm=1,Npack
+                            JMidx = thisP(mm)
+
+                            !% --- smooth out the initial preissmann number before 
+                            !%     celerity calculation with adjacent branches    
+                            bcount = zeroI
+                            PNadd  = zeroR
+
+                            do kk=1,max_branch_per_node
+                                if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) .ne. oneI) cycle 
+
+                                PNadd = PNadd + elemR(JMidx+kk,er_Preissmann_Number_initial)
+                                bcount = bcount + oneI
+                            end do
+                            !% the average initial preissmann number from the branches
+                            elemR(JMidx,er_Preissmann_Number_initial) = max(PNadd/real(bcount,8), oneR)
+                        end do
+
+                        elemR(thisP,er_Preissmann_Number)     = elemR(thisP,er_Preissmann_Number_initial)
+                        elemR(thisP,er_Preissmann_Number_N0)  = elemR(thisP,er_Preissmann_Number)
+                        where (elemYN(thisP,eYN_isPSsurcharged))
+                            elemR(thisP,er_Preissmann_Celerity) = TargetPCelerity / elemR(thisP,er_Preissmann_Number)
+                            elemR(thisP,er_SlotWidth)           = (grav * elemR(thisP,er_FullArea)) / (elemR(thisP,er_Preissmann_Celerity)**twoI)
+                            elemR(thisP,er_SlotArea)            = elemR(thisP,er_SlotDepth) * elemR(thisP,er_SlotWidth)
+                            elemR(thisP,er_SlotVolume)          = elemR(thisP,er_SlotArea) * elemR(thisP,er_Length)
+                            !% --- add slot volume to total volume (which was set to full volume)
+                            elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
+                        end where
+
+                    case default
+                        !% should not reach this stage
+                        print*, 'In ', subroutine_name
+                        print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
+                        print *, 'which has key ',trim(reverseKey(SlotMethod))
+                        call util_crashpoint(71109872)
+                end select
+            end if    
+        !%-----------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
+    end subroutine init_IC_slot_JM
 !
 !==========================================================================
 !==========================================================================
