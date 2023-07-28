@@ -978,16 +978,20 @@ contains
                          .and.                                               &
                          (link%I(linkDn,li_link_type) .ne. lChannel)         &
                          .and.                                               &
-                         ((node%R(ii,nr_OverflowHeightAboveCrown)            &
-                           == setting%Junction%InfiniteExtraDepthValue)      &
+                         (( (node%R(ii,nr_OverflowHeightAboveCrown)                              &
+                                < setting%Junction%InfiniteExtraDepthValue + 0.01d0)             &
+                            .and.                                                                &
+                            (node%R(ii,nr_OverflowHeightAboveCrown)                              &
+                                > setting%Junction%InfiniteExtraDepthValue - 0.01d0)             &
+                            )                                                                    &   
                            .or.                                              &
-                           ( (node%R(ii,nr_OverflowHeightAboveCrown)                              &
+                           ( (node%R(ii,nr_OverflowHeightAboveCrown)                               &
                                 < setting%Junction%InfiniteExtraDepthValue*meters_per_ft + 0.01d0) &
-                            .and.                                                                 &
-                            (node%R(ii,nr_OverflowHeightAboveCrown)                               &
+                            .and.                                                                  &
+                            (node%R(ii,nr_OverflowHeightAboveCrown)                                &
                                 > setting%Junction%InfiniteExtraDepthValue*meters_per_ft - 0.01d0) &
-                            )                                                                     & 
-                          )                                                                       &
+                            )                                                                      & 
+                          )                                                                        &
                           ) then
                         !% nJ2 CLOSED CONDUIT FACE
                         !% --- if both links are NOT open channel AND the OverflowDepth

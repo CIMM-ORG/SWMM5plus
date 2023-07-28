@@ -974,7 +974,7 @@ contains
 
     !% ep_CCDiag
         !% --- all elements that are CC or Diag
-        ptype => col_elemP(ep_CCDiagJM)
+        ptype => col_elemP(ep_CCDiag)
         npack => npack_elemP(ptype)
         npack = count( &
                     (elemI(:,ei_elementType) == CC) &

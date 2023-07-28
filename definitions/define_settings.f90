@@ -190,7 +190,7 @@ module define_settings
         real(8) :: TargetCelerity = 15.0d0
         real(8) :: Alpha = 3.0d0
         real(8) :: DecayRate = 5.0
-        real(8) :: MinimumInitialPreissmannNumber = 3.0d0
+        real(8) :: PNminumum = 3.0d0
     end type PreissmannSlotType
 
     !% setting%Output%Report
@@ -1921,9 +1921,9 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.DecayRate not found'
 
       !%                      Minimum initial preissmann number
-        call json%get('Solver.PreissmannSlot.MinimumInitialPreissmannNumber', real_value, found)
-        if (found) setting%Solver%PreissmannSlot%MinimumInitialPreissmannNumber = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.MinimumInitialPreissmannNumber not found'
+        call json%get('Solver.PreissmannSlot.PNminumum', real_value, found)
+        if (found) setting%Solver%PreissmannSlot%PNminumum = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.PNminumum not found'
 
 
     !% TestCase.  =====================================================================
