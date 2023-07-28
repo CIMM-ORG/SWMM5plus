@@ -4954,6 +4954,9 @@ contains
         !% --- initialize preissmann slot variables for JM elements
         call init_IC_slot_JM ()
 
+        !% --- initialize preissmann slot variables for Diagnostic elements
+        call init_IC_slot_Diag ()
+
         !%------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%initial_condition) &
@@ -4966,7 +4969,7 @@ contains
     subroutine init_IC_slot_CCJB ()
         !%-----------------------------------------------------------------
         !% Description:
-        !% initialize Preissmann Slot for CC, JB, Diagnostic elements
+        !% initialize Preissmann Slot for CC, JB elements
         !%-----------------------------------------------------------------
         !% Declarations:
             real(8) :: OldTargetPCelerity
@@ -4979,7 +4982,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------
         !% Aliases
-            thisColP =>   col_elemP(ep_CCJBDiag)
+            thisColP =>   col_elemP(ep_CCJB)
             Npack    => npack_elemP(thisColP)
             if (Npack < 1) return
 
@@ -5045,8 +5048,9 @@ contains
                     
                     case (DynamicSlot)
 
-                        where (elemR(thisP,er_Preissmann_Number_initial) < oneR)
-                            !% --- resetting the target celerity on CC elements, where it results in a very wide slot
+                        where ((elemI(thisP,ei_elementType) == CC               ) .and. &
+                               (elemR(thisP,er_Preissmann_Number_initial) < oneR)       )
+                            !% --- resetting the target celerity only on CC elements, where it may results in a very wide slot
                             elemR(thisP,er_Temp01) = MinPnumber * Alpha * sqrt(grav * elemR(thisP,er_FullDepth))
                         endwhere
 
@@ -5211,6 +5215,59 @@ contains
             if (setting%Debug%File%initial_condition) &
             write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
     end subroutine init_IC_slot_JM
+!
+!==========================================================================
+!==========================================================================
+!
+    subroutine init_IC_slot_Diag
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% initialize Preissmann Slot for Diag elements
+        !% Preissmann slot is not needed in diagnostic elements
+        !% however, the variables are needed to be initialized so that
+        !% they dont have junk valuse, which may throw off the interpolation
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            real(8) :: MaxCCPreissmannNumber
+            integer, pointer    :: SlotMethod, thisColP, npack, thisP(:)
+            real(8), pointer    :: TargetPCelerity, grav, Alpha, MinPnumber
+            character(64) :: subroutine_name = 'init_IC_slot_JM'
+        !%-----------------------------------------------------------------
+        !% Preliminaries
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-----------------------------------------------------------------
+        !% Aliases
+            thisColP =>   col_elemP(ep_Diag)
+            Npack    => npack_elemP(thisColP)
+            if (Npack < 1) return
+
+            thisP               => elemP(1:Npack,thisColP)
+
+            MaxCCPreissmannNumber = maxval(elemR(:,er_Preissmann_Number), elemI(:,ei_ElementType) == CC)
+
+            !% --- initialize slots
+            elemR(thisP,er_SlotVolume)                = zeroR
+            elemR(thisP,er_SlotArea)                  = zeroR
+            elemR(thisP,er_SlotWidth)                 = zeroR
+            elemR(thisP,er_dSlotArea)                 = zeroR
+            elemR(thisP,er_dSlotDepth)                = zeroR
+            elemR(thisP,er_dSlotVolume)               = zeroR
+            elemR(thisP,er_SlotVolume_N0)             = zeroR
+            elemR(thisP,er_Preissmann_Celerity)       = zeroR
+            elemR(thisP,er_Surcharge_Time)            = zeroR  
+            elemR(thisP,er_SlotDepth_N0)              = zeroR
+            elemR(thisP,er_Preissmann_Number_initial) = MaxCCPreissmannNumber
+            elemR(thisP,er_Preissmann_Number)         = MaxCCPreissmannNumber
+            elemR(thisP,er_Preissmann_Celerity)       = zeroR
+            elemR(thisP,er_SlotWidth)                 = zeroR
+            elemR(thisP,er_SlotArea)                  = zeroR
+            elemR(thisP,er_SlotVolume)                = zeroR
+!%-----------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%initial_condition) &
+            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]" 
+    end subroutine init_IC_slot_Diag
 !
 !==========================================================================
 !==========================================================================

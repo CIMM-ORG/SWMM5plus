@@ -1017,7 +1017,11 @@ contains
         !% HACK CODE
         !% try to keep the phantom link length closer to nominal element length
         if (setting%Partitioning%PhantomLinkAdjust) then
-            print*, '         spanning link name   ', link%names(spanning_link)%str, ' ...'
+            if (spanning_link <= setting%SWMMinput%N_link) then
+                print*, '         spanning link name   ', link%names(spanning_link)%str, ' ...'
+            else
+                print*, '         cutting at a phantom link whcih has a link index of ', spanning_link, ' ...'
+            end if
             print*, '         which has a length of', link%R(spanning_link,lr_length), ' ...'
             print*, '         cutting  at length   ', link%R(spanning_link, lr_Length) - phantom_node_start, ' from downstream'
             print*, '         resulting in phantom link of length',  phantom_node_start   
