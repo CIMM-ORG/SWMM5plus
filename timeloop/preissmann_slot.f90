@@ -197,7 +197,7 @@ module preissmann_slot
                     SlotDepth(thisP)  = zeroR
                 end where 
             case default 
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(6552981)
         end select
 
@@ -267,7 +267,7 @@ module preissmann_slot
                     SlotDepth(thisP)  = zeroR
                 end where 
             case default 
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(655298)
         end select
 
@@ -779,7 +779,7 @@ module preissmann_slot
             end do
 
         case default 
-            print *, 'CODE ERROR: unexpected case default'
+            print *, 'CODE ERROR unexpected case default'
             call util_crashpoint(720984)
         end select
 

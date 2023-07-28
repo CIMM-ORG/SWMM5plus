@@ -77,7 +77,7 @@ contains
                 ! print *, ''
                 if ((BC%flowR(ii,br_value) / elemR(BC%flowI(ii,bi_elem_idx),er_FullArea)) &
                     .ge. setting%Limiter%Velocity%Maximum) then
-                    print *, 'USER CONFIGURATION ERROR'
+                    print *, 'USER CONFIGURATION ERROR for inflow velocity'
                     print *, 'Implied inflow velocity exceeds the setting.Limiter.Velocity.Maximum'
                     print *, 'for one or more inflow elements (usually due to small area)'
                     print *, 'Error at BC bi_idx ',BC%flowI(ii,bi_idx)
@@ -198,7 +198,7 @@ contains
                                     // trim(node%Names(nidx)%str) // " has smaller time intervals than the present model time step")
                                 end if
                             else 
-                                print *, 'CODE ERROR: unexpected else'
+                                print *, 'CODE ERROR unexpected else'
                                 call util_crashpoint(582973)
                             end if
                         else
@@ -548,7 +548,7 @@ contains
             select case (BC%headI(ii,bi_subcategory))
 
                 case (BCH_tidal)
-                    print *, 'USER CONFIGURATION ERROR '
+                    print *, 'USER CONFIGURATION ERROR for tidal BC'
                     print *, 'Tidal BC not supported in SWMM5+'
                     call util_crashpoint(90222387)
 
@@ -611,7 +611,7 @@ contains
         !% --- error checking
         if (lower_idx <= 0) then 
             !% lower_idx <= 0 is an error condition
-            write(*,*), 'CODE ERROR: unexpected lower_idx value in ',trim(subroutine_name)
+            write(*,*), 'CODE ERROR unexpected lower_idx value in ',trim(subroutine_name)
             call util_crashpoint( 987098)   
             return
         end if

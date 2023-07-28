@@ -99,7 +99,7 @@ module weir_elements
         !% --- error check
         !%     EPA-SWMM allows the weir setting to be between 0.0 and 1.0
         if (.not. ((CurrentSetting .ge. 0.0) .and. (CurrentSetting .le. 1.0))) then
-            print *, 'CODE ERROR: orifice element has er_Setting that is not between 0.0 and 1.0'
+            print *, 'CODE ERROR orifice element has er_Setting that is not between 0.0 and 1.0'
             call util_crashpoint(668723)
         end if
 
@@ -219,7 +219,7 @@ module weir_elements
                 call roadway_weir_flow (eIdx)
 
             case default
-                print *, 'CODE ERROR: unknown weir type, ', specificWeirType,'  in network'
+                print *, 'CODE ERROR unknown weir type, ', specificWeirType,'  in network'
                 print *, 'which has key ',trim(reverseKey(specificWeirType))
                 call util_crashpoint(9966223)
         end select
@@ -519,7 +519,7 @@ module weir_elements
                 Flowrate = SubCorrectionTriangular * Flowrate
                 
             case default
-                print *, 'CODE ERROR: unknown weir type, ', specificWeirType,'  in network'
+                print *, 'CODE ERROR unknown weir type, ', specificWeirType,'  in network'
                 print *, 'which has key ',trim(reverseKey(specificWeirType))
                 call util_crashpoint(2229587)
 
@@ -617,7 +617,7 @@ module weir_elements
                 HydRadius = (TriangularSideSlope * Depth) &
                                 / (twoR * sqrt(oneR + (TriangularSideSlope ** twoR)))
             case default
-                print *, 'CODE ERROR: unknown weir type, ', SpecificWeirType,'  in network'
+                print *, 'CODE ERROR unknown weir type, ', SpecificWeirType,'  in network'
                 print *, 'which has key ',trim(reverseKey(SpecificWeirType))
                 call util_crashpoint(828834)
         end select
@@ -689,7 +689,7 @@ module weir_elements
             case (vnotch_weir)
                 Area      = TriangularSideSlope * zY ** twoR - TriangularSideSlope * z ** twoR
             case default
-                print *, 'CODE ERROR: unknown weir type, ', SpecificWeirType,'  in network'
+                print *, 'CODE ERROR unknown weir type, ', SpecificWeirType,'  in network'
                 print *, 'which has key ',trim(reverseKey(SpecificWeirType))
                 call util_crashpoint(2255234)
         end select

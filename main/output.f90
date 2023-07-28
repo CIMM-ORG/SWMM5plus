@@ -196,7 +196,7 @@ contains
                     isElemOut(ii) = .false.
                 end if
             case default
-                write (*,"(A)") 'CODE ERROR: statement should be unreachable'
+                write (*,"(A)") 'CODE ERROR statement should be unreachable'
                 write (*,"(A)") ' invalid element type was ',elementType(ii)
                 write (*,"(A)") ' which has key ',trim(reverseKey(elementType(ii)))
                 !stop 
@@ -631,7 +631,7 @@ contains
             case (InDays)
                 output_typeUnits_withtime_elemR(1) = 'days'
             case default
-                write(*,'(A)') 'ERROR (code, user) unknown value forsetting.Output.Report.TimeUnits of...'
+                write(*,'(A)') 'CODE ERROR unknown value forsetting.Output.Report.TimeUnits of...'
                 write(*,*) setting%Output%Report%TimeUnits
                 call util_crashpoint( 583003)
         end select
@@ -1038,7 +1038,7 @@ contains
         case (InDays)
             output_typeUnits_withtime_faceR(1) = 'days'
         case default
-            write(*,'(A)') 'ERROR (code, user) unknown value setting.Output.Report.TimeUnits of...'
+            write(*,'(A)') 'CODE ERROR unknown value setting.Output.Report.TimeUnits of...'
             write(*,*) setting%Output%Report%TimeUnits
             call util_crashpoint( 99624)
         end select
@@ -1360,7 +1360,7 @@ contains
         !% --- Need a method for (1) larger string (2)) warning if the number
         !% --- of files gets large and (3) soft stop when max is hit
         if (nWritten > 99999) then
-            write(*,"(A)") 'ERROR (code, user): the intermediate output files have reached ...'
+            write(*,"(A)") 'CODE ERROR : the intermediate output files have reached ...'
             write(*,"(A,I6,A)") '...the code the limit of',nWritten,' files...'
             write(*,"(A)") 'Suggest increasing setting.Output.StoredLevels.'
             call util_crashpoint(220973)
@@ -1381,7 +1381,7 @@ contains
         open(newunit=thisUnit, file=trim(file_name), form='unformatted', &
                 action='write',status='new', iostat = ios)
         if (ios /= 0) then
-            write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
+            write(*,"(A)") 'CODE ERROR file could not be opened for writing...'
             write(*,"(A)") 'filename is ...'
             write(*,"(A)") trim(file_name)
             call util_crashpoint(982736)
@@ -1486,7 +1486,7 @@ contains
         open(unit=thisUnit, file=trim(file_name), form='unformatted', &
                 action='write',status='new', iostat = ios)
         if (ios /= 0) then
-            write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
+            write(*,"(A)") 'CODE ERROR file could not be opened for writing...'
             write(*,"(A)") 'filename is ...'
             write(*,"(A)") trim(file_name)
             call util_crashpoint(92763)
@@ -1674,7 +1674,7 @@ contains
         open(newunit=thisUnit, file=trim(thisFile), form='unformatted', &
                 action='read',status='old', iostat = ios)
         if (ios /= 0) then
-            write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
+            write(*,"(A)") 'CODE ERROR file could not be opened for writing...'
             write(*,"(A)") 'filename is ...'
             write(*,"(A)") trim(thisFile)
             call util_crashpoint( 309870)
@@ -1723,7 +1723,7 @@ contains
             time_units_str = 'days'
             time_scale_for_output = seconds_per_day
         case default
-            write(*,'(A)') 'ERROR (code) unknown value of setting%Output%Report%TimeUnits of ...'
+            write(*,'(A)') 'cunknown value of setting%Output%Report%TimeUnits of ...'
             write(*,*) setting%Output%Report%TimeUnits
             call util_crashpoint( 883345)
         end select
@@ -1754,7 +1754,7 @@ contains
                 open(newunit=thisUnit, file=thisFile, form='unformatted', &
                     action='read', iostat=ios)
                 if (ios .ne. 0) then
-                    write(*,"(A)") 'ERROR (file): iostat /=0 for open() file named ...'
+                    write(*,"(A)") 'CODE ERROR iostat /=0 for open() file named ...'
                     write(*,"(A)") trim(thisFile)
                     write(*,"(A)") '... file is an unformated file of output data...'
                     write(*,"(A,i5)") '... iostat value = ',ios
@@ -1770,7 +1770,7 @@ contains
                     output_times(:) = nullvalueR
                     read(thisUnit) output_times(1:nLevel)
                 else
-                    write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
+                    write(*,"(A)") 'CODE ERROR unexpected array size problem...'
                     write(*,"(A,i5)") '...output_times has size ',shape(output_times)
                     write(*,"(A,i5)") '...but needs to read in ',nLevel
                     call util_crashpoint(87364)
@@ -1791,7 +1791,7 @@ contains
                         output_types_elemR(:) = nullvalueI
                         read(thisUnit) output_types_elemR(1:nTypeElem)
                     else
-                        write(*,"(A)") 'ERROR (code, file), unexpected array size problem...'
+                        write(*,"(A)") 'CODE ERROR, unexpected array size problem...'
                         write(*,"(A,i5)") '...output_types_elemR has size ',size(output_types_elemR)
                         write(*,"(A,i5)") '...but needs to read in ',nTypeElem
                         call util_crashpoint(209837)
@@ -1810,27 +1810,27 @@ contains
                     read(thisUnit) dimvector
                     !% --- error checking
                     if (dimvector(1) .ne. nTotalElem) then
-                        write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
+                        write(*,"(A)") 'CODE ERROR unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(1) has value ',dimvector(1)
                         write(*,"(A,i5)") '...but nTotalElem is ',nTotalElem
                         call util_crashpoint(109287)
                     end if
                     if (dimvector(2) .ne. nTypeElem) then
-                        write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
+                        write(*,"(A)") 'CODE ERROR unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(2) has value ',dimvector(2)
                         write(*,"(A,i5)") '...but nTotalElem is ',nTypeElem
                         call util_crashpoint(88273)
                     end if
                     !% --- ensure that dimvector(3) is less than or equal to allocated
                     if (dimvector(3) > olddimvector(3)) then
-                        write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
+                        write(*,"(A)") 'CODE ERROR unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(3) has value ',dimvector(3)
                         write(*,"(A,i5)") '...but olddimvector(3) is ',olddimvector(3)
                         call util_crashpoint(77283)
                     end if
                     !% --- check the dimvector(3) is consistent with lasttimestart and lasttimeread
                     if (dimvector(3) .ne. lasttimeread + 1 - lasttimestart) then
-                        write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
+                        write(*,"(A)") 'CODE ERROR unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(3) has value ',dimvector(3)
                         write(*,"(A,i5)") '...but lasttimeread is  ',lasttimeread
                         write(*,"(A,i5)") '...and lasttimestart is ',lasttimestart
@@ -1862,7 +1862,7 @@ contains
                         output_types_faceR(:) = nullvalueI
                         read(thisUnit) output_types_faceR(1:nTypeFace)
                     else
-                        write(*,"(A)") 'ERROR (code, file), unexpected array size problem...'
+                        write(*,"(A)") 'CODE ERROR, unexpected array size problem...'
                         write(*,"(A,i5)") '...output_types_faceR has size ',size(output_types_faceR)
                         write(*,"(A,i5)") '...but needs to read in ',nTypeFace
                         call util_crashpoint(87629)
@@ -1881,14 +1881,14 @@ contains
                     read(thisUnit) dimvector
                     !% --- error checking
                     if (dimvector(1) .ne. nTotalFace) then
-                        write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
+                        write(*,"(A)") 'CODE ERROR unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(1) has value ',dimvector(1)
                         write(*,"(A,i5)") '...but nTotalFace is ',nTotalFace
                         !stop 
                         call util_crashpoint(441282)
                     end if
                     if (dimvector(2) .ne. nTypeFace) then
-                        write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
+                        write(*,"(A)") 'CODE ERROR unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(2) has value ',dimvector(2)
                         write(*,"(A,i5)") '...but nTotalElem is ',nTypeFace
                         !stop 
@@ -1896,7 +1896,7 @@ contains
                     end if
                     !% --- ensure that dimvector(3) is less than or equal to allocated
                     if (dimvector(3) > olddimvector(3)) then
-                        write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
+                        write(*,"(A)") 'CODE ERROR unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(3) has value ',dimvector(3)
                         write(*,"(A,i5)") '...but olddimvector(3) is ',olddimvector(3)
                         !stop 
@@ -1904,7 +1904,7 @@ contains
                     end if
                     !% --- check the dimvector(3) is consistent with lasttimestart and lasttimeread
                     if (dimvector(3) .ne. lasttimeread + 1 - lasttimestart) then
-                        write(*,"(A)") 'ERROR (code, file): unexpected array size problem...'
+                        write(*,"(A)") 'CODE ERROR unexpected array size problem...'
                         write(*,"(A,i5)") '...dimvector(3) has value ',dimvector(3)
                         write(*,"(A,i5)") '...but lasttimeread is  ',lasttimeread
                         write(*,"(A,i5)") '...and lasttimestart is ',lasttimestart
@@ -1940,7 +1940,7 @@ contains
                             if (SWMMlink == nullvalueI) then !% then this is a node
                                 SWMMnode => pOutElem_Node_SWMM_idx(kk)
                                 if (SWMMnode == nullvalueI) then
-                                    write(*,'(A)') 'ERROR (code) unexpected nullvalue for an output element...'
+                                    write(*,'(A)') 'CODE ERROR unexpected nullvalue for an output element...'
                                     write(*,'(A)') '... appears to be neither a link nor a node.'
                                     write(*,'(A,i8)') '... kk = ',kk
                                     write(*,'(A,i8)') '... Global Element Index = ',pOutElem_Gidx(kk)
@@ -1971,7 +1971,7 @@ contains
                             SWMMnode => pOutFace_Node_SWMM_idx(kk)
 
                             if (SWMMnode == nullvalueI) then !% then this is a face not pointing at a node
-                                write(*,'(A)') 'ERROR (code) unexpected nullvalue for an output face...'
+                                write(*,'(A)') 'CODE ERROR unexpected nullvalue for an output face...'
                                 write(*,'(A)') '... appears to be not part of the SWMM node set.'
                                 call util_crashpoint(11298)
                             else
@@ -2002,7 +2002,7 @@ contains
 
                         !% code error check
                         if (setting%SWMMinput%N_link .ne. (size(link%I(:,li_idx))-additional_rows)) then
-                            write(*,"(A)") 'ERROR (code): we assumed size of setting%SWMMinput%N_link and size of li_idx are identical...'
+                            write(*,"(A)") 'CODE ERROR we assumed size of setting%SWMMinput%N_link and size of li_idx are identical...'
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
                             write(*,"(A)") '... setting%SWMMinput%N_link is ',setting%SWMMinput%N_link
                             write(*,"(A)") ',... size(link%I(:,li_idx)) is ',(size(link%I(:,li_idx))-additional_rows)
@@ -2070,7 +2070,7 @@ contains
 
                         !% code error check
                         if (setting%SWMMinput%N_node .ne. (size(node%I(:,ni_idx))-additional_rows)) then
-                            write(*,"(A)") 'ERROR (code): we assumed size of setting%SWMMinput%N_node and size of ni_idx are identical...'
+                            write(*,"(A)") 'CODE ERROR we assumed size of setting%SWMMinput%N_node and size of ni_idx are identical...'
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
                             write(*,"(A)") '... setting%SWMMinput%N_node is ',setting%SWMMinput%N_node
                             write(*,"(A)") ',... size(node%I(:,ni_idx)) is ',(size(node%I(:,ni_idx))-additional_rows)
@@ -2132,7 +2132,7 @@ contains
 
                         !% code error check
                         if (setting%SWMMinput%N_node .ne. (size(node%I(:,ni_idx))- additional_rows)) then
-                            write(*,"(A)") 'ERROR (code): we assumed size of setting%SWMMinput%N_node and size of ni_idx are identical...'
+                            write(*,"(A)") 'CODE ERROR we assumed size of setting%SWMMinput%N_node and size of ni_idx are identical...'
                             write(*,"(A)") '... they are not, which is a mismatch for the output. Need code rewrite.'
                             write(*,"(A)") '... setting%SWMMinput%N_node is ',setting%SWMMinput%N_node
                             write(*,"(A)") ',... size(node%I(:,ni_idx)) is ',(size(node%I(:,ni_idx))-additional_rows)
@@ -2240,16 +2240,20 @@ contains
                                     OutLink_ProcessedDataR(kk,pp,1:nLevel) = &
                                         maxval(reshape(OutLink_ElemDataR(kk,1:npackElem,pp,1:nLevel),rlimits(1:2)),dim=1)
                                 case (SingleValue)
+                                    print *, 'CODE ERROR: SingleValue output'
+                                    print *, 'SingleValue option for link output is non-functional'
+                                    call util_crashpoint(629873)
                                     if (npackElem > 1) then
                                         !% if there is more than one value and a single value is desired, only
                                         !% print the FV file
                                         isOutLinkWriteFVonly(kk) = .true.
+                                        
                                     else
                                         OutLink_ProcessedDataR(kk,pp,1:nLevel) &
                                             = OutLink_ElemDataR(kk,1,pp,1:nLevel)
                                     end if
                                 case default
-                                    write(*,'(A)') 'CODE ERROR: unknown key index for output_typeProcessing_elemR of ...'
+                                    write(*,'(A)') 'CODE ERROR unknown key index for output_typeProcessing_elemR of ...'
                                     write(*,*) output_typeProcessing_elemR(pp-1)
                                     write(*,*), 'which has key ',reverseKey(output_typeProcessing_elemR(pp-1))
                                     call util_crashpoint( 7778734)
@@ -2325,7 +2329,7 @@ contains
                                             = OutNodeElem_ElemDataR(kk,1,pp,1:nLevel)
                                     end if
                                 case default
-                                    write(*,'(A)') 'ERROR (code) unknown key index for output_typeProcessing_elemR of ...'
+                                    write(*,'(A)') 'CODE ERROR unknown key index for output_typeProcessing_elemR of ...'
                                     write(*,*) output_typeProcessing_elemR(pp-1)
                                     write(*,*), 'which has key ',reverseKey(output_typeProcessing_elemR(pp-1))
                                     call util_crashpoint( 559345)
@@ -2406,7 +2410,7 @@ contains
                                             = OutNodeFace_FaceDataR(kk,1,pp,1:nLevel)
                                     end if
                                 case default
-                                    write(*,'(A)') 'ERROR (code) unknown key index for output_typeProcessing_faceR of ...'
+                                    write(*,'(A)') 'CODE ERROR unknown key index for output_typeProcessing_faceR of ...'
                                     write(*,*) output_typeProcessing_faceR(pp-1)
                                     write(*,*), 'which has key ',reverseKey(output_typeProcessing_faceR(pp-1))
                                     call util_crashpoint( 2285334)
@@ -2450,17 +2454,17 @@ contains
                         !% -- error checking
                         !% -- HACK -- need to write a check routine with VERIFY() to make sure link%Names(SWMMlink)%str is a valid string
                         if (.not. allocated(link%Names(SWMMlink)%str)) then
-                            write (*,"(A,i8)") 'ERROR (code): link%Name(SWMMlink)%str not allocated for SWMMlink=',SWMMlink
+                            write (*,"(A,i8)") 'CODE ERROR link%Name(SWMMlink)%str not allocated for SWMMlink=',SWMMlink
                             call util_crashpoint(10347)
                         end if
 
                         if (len(link%Names(SWMMlink)%str) == 0) then
-                            write(*,"(A,i8)") 'ERROR (code)): link%Name(kk)%str is empty for SWMMlink= ',SWMMlink
+                            write(*,"(A,i8)") 'CODE ERROR): link%Name(kk)%str is empty for SWMMlink= ',SWMMlink
                             call util_crashpoint(110387)
                         end if
 
                         if (len(link%Names(SWMMlink)%str) > len(tlinkname)) then
-                            write(*,"(A)") 'ERROR (user): User link name is too long...'
+                            write(*,"(A)") 'USER CONFIGURATION ERROR User link name is too long...'
                             write(*,"(A,i8)") '... in link%Name(kk)%str is too long for SWMMlink= ',SWMMlink
                             write(*,"(A,i8)") '... max length is: ',len(link%Names(SWMMlink)%str)
                             write(*,"(A)") '... link name in SWMM is ...'
@@ -2717,17 +2721,17 @@ contains
                         !% -- error checking
                         !% -- HACK -- need to write a check routine with VERIFY() to make sure link%Names(SWMMlink)%str is a valid string
                         if (.not. allocated(node%Names(SWMMnode)%str)) then
-                            write (*,"(A,i8)") 'ERROR (code): node%Name(SWMMnode)%str not allocated for SWMMnode=',SWMMnode
+                            write (*,"(A,i8)") 'CODE ERROR node%Name(SWMMnode)%str not allocated for SWMMnode=',SWMMnode
                             call util_crashpoint(667567)
                         end if
 
                         if (len(node%Names(SWMMnode)%str) == 0) then
-                            write(*,"(A,i8)") 'ERROR (code)): node%Name(SWMMnode)%str is empty for SWMMnode= ',SWMMnode
+                            write(*,"(A,i8)") 'CODE ERROR): node%Name(SWMMnode)%str is empty for SWMMnode= ',SWMMnode
                             call util_crashpoint(77987)
                         end if
 
                         if (len(node%Names(SWMMnode)%str) > len(tnodename)) then
-                            write(*,"(A)") 'ERROR (user): User node name is too long...'
+                            write(*,"(A)") 'USER CONFIGURATION ERROR User node name is too long...'
                             write(*,"(A,i8)") '... in node%Name(SWMMnode)%str is too long for SWMMnode= ',SWMMnode
                             write(*,"(A,i8)") '... max length is: ',len(node%Names(SWMMnode)%str)
                             write(*,"(A)") '... node name in SWMM is ...'
@@ -2834,7 +2838,7 @@ contains
                                             pOutElem_Gidx(OutNodeElem_pOutElemIdx(kk,1:OutNodeElem_N_elem_in_node(kk))), &
                                             tnodename, setting%Time%DateTimeStamp, NodeOut, .false.)
 
-!                                       !% write the static data to the HDF5 file 
+                                       !% write the static data to the HDF5 file 
                                         call outputML_HDF5_write_static_file(fn_node_static_h5,H5_file_id, &
                                             SWMMnode, .false.,NodeOut)
                                     end if
@@ -2980,17 +2984,17 @@ contains
                         !% -- error checking
                         !% -- HACK -- need to write a check routine with VERIFY() to make sure link%Names(SWMMnode)%str is a valid string
                         if (.not. allocated(node%Names(SWMMnode)%str)) then
-                            write (*,"(A,i8)") 'ERROR (code): node%Name(SWMMnode)%str not allocated for SWMMnode=',SWMMnode
+                            write (*,"(A,i8)") 'CODE ERROR node%Name(SWMMnode)%str not allocated for SWMMnode=',SWMMnode
                             call util_crashpoint(98763)
                         end if
 
                         if (len(node%Names(SWMMnode)%str) == 0) then
-                            write(*,"(A,i8)") 'ERROR (code)): node%Name(SWMMnode)%str is empty for SWMMnode= ',SWMMnode
+                            write(*,"(A,i8)") 'CODE ERROR): node%Name(SWMMnode)%str is empty for SWMMnode= ',SWMMnode
                             call util_crashpoint(1208)
                         end if
 
                         if (len(node%Names(SWMMnode)%str) > len(tnodename)) then
-                            write(*,"(A)") 'ERROR (user): User node name is too long...'
+                            write(*,"(A)") 'USER CONFIGURATION ERROR User node name is too long...'
                             write(*,"(A,i8)") '... in node%Name(SWMMnode)%str is too long for SWMMnode= ',SWMMnode
                             write(*,"(A,i8)") '... max length is: ',len(node%Names(SWMMnode)%str)
                             write(*,"(A)") '... node name in SWMM is ...'
@@ -3280,7 +3284,7 @@ contains
         case (NodeFaceOut)
             write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Node(FVface)'
         case default
-            write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+            write(*,'(A)') 'CODE ERROR Unknown FeatureType of ',FeatureType
             print *, 'which has key ',trim(reverseKey(FeatureType))
             call util_crashpoint( 663986)
         end select
@@ -3297,7 +3301,7 @@ contains
                 write(funitIn,fmt='(a,i8)') 'CODE(...node_Gidx_SWMM): ,', thisIndex
 
             case default
-                write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+                write(*,'(A)') 'CODE ERROR Unknown FeatureType of ',FeatureType
                 print *, 'which has key ',trim(reverseKey(FeatureType))
                 call util_crashpoint( 993764)
         end select
@@ -3333,7 +3337,7 @@ contains
         case (NodeOut)
             write(funitIn,fmt='(*(a))') 'HeaderRowsContain: ',',', 'NodeID',',','DataType',',','Units'
         case default
-            write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+            write(*,'(A)') 'CODE ERROR Unknown FeatureType of ',FeatureType
             print *, 'which has key ',trim(reverseKey(FeatureType))
             !stop 
             call util_crashpoint( 873853)   
@@ -3398,7 +3402,7 @@ contains
                 end do
                 write(funitIn,fmt='(i8)') 0
             case default
-                write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+                write(*,'(A)') 'CODE ERROR Unknown FeatureType of ',FeatureType
                 print *, 'which has key ',trim(reverseKey(FeatureType))
                 !stop 
                 call util_crashpoint( 93873)
@@ -3496,7 +3500,7 @@ contains
         case (NodeOut)
             write(funitIn,fmt='(2a)') 'FeatureType: ,', 'Node'
         case default
-            write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+            write(*,'(A)') 'CODE ERROR Unknown FeatureType of ',FeatureType
             print *, 'which has key ',trim(reverseKey(FeatureType))
             call util_crashpoint( 663986)
         end select
@@ -3513,7 +3517,7 @@ contains
                 write(funitIn,fmt='(a,i8)') 'CODE(...node_Gidx_SWMM): ,', thisIndex
 
             case default
-                write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+                write(*,'(A)') 'CODE ERROR Unknown FeatureType of ',FeatureType
                 print *, 'which has key ',trim(reverseKey(FeatureType))
                 call util_crashpoint( 993764)
         end select
@@ -3549,7 +3553,7 @@ contains
         case (NodeOut)
             write(funitIn,fmt='(*(a))') 'HeaderRowsContain: ',',', 'NodeID',',','DataType',',','Units'
         case default
-            write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+            write(*,'(A)') 'CODE ERROR Unknown FeatureType of ',FeatureType
             print *, 'which has key ',trim(reverseKey(FeatureType))
             call util_crashpoint( 873853)   
         end select
@@ -3629,7 +3633,7 @@ contains
                 end do
                 write(funitIn,fmt='(i8)') 0
             case default
-                write(*,'(A)') 'CODE ERROR: Unknown FeatureType of ',FeatureType
+                write(*,'(A)') 'CODE ERROR Unknown FeatureType of ',FeatureType
                 print *, 'which has key ',trim(reverseKey(FeatureType))
                 call util_crashpoint( 93873)
             end select
@@ -3819,7 +3823,7 @@ contains
                 file=trim(setting%File%outputML_filename_file), &
                 form='formatted',action='write',status='new', iostat=ios)
                 if (ios /= 0) then
-                    write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
+                    write(*,"(A)") 'CODE ERROR file could not be opened for writing...'
                     write(*,"(A)") 'filename is ...'
                     write(*,"(A)") trim(file_name)
                     call util_crashpoint(223077)
@@ -3841,7 +3845,7 @@ contains
                     file=trim(setting%File%outputML_filename_file), &
                     form='formatted',action='write',status='new', iostat=ios)
                     if (ios /= 0) then
-                        write(*,"(A)") 'ERROR (CODE) file could not be opened for writing...'
+                        write(*,"(A)") 'CODE ERROR file could not be opened for writing...'
                         write(*,"(A)") 'filename is ...'
                         write(*,"(A)") trim(file_name)
                         call util_crashpoint(329928)
@@ -3888,7 +3892,7 @@ contains
             fnunit   => setting%File%UnitNumber%outputML_filename_file
             inquire(UNIT=fnunit,EXIST=doesexist)
             if (.not. doesexist) then 
-                write(*,"(A)") 'ERROR (file), expected the file of output file names to already exist.'
+                write(*,"(A)") 'CODE ERROR, expected the file of output file names to already exist.'
                 write(*,"(A)") 'but it cannot be found. The filename is'
                 write(*,"(A)") trim(setting%File%outputML_filename_file)
                 write(*,"(A,i6)") 'and the unit number is ',fnunit 
@@ -3902,7 +3906,7 @@ contains
                 file=trim(setting%File%outputML_filename_file), &
                 form='formatted',action='read', iostat=ios)
             if (ios /= 0) then
-                write(*,"(A)") 'ERROR (file): iostat /=0 for open() file named ....'
+                write(*,"(A)") 'CODE ERROR iostat /=0 for open() file named ....'
                 write(*,"(A)") trim(setting%File%outputML_filename_file)
                 write(*,"(A)") '... file is the outputML_filename_file ...'
                 write(*,"(A,i5)") '... iostat value = ',ios
@@ -4053,7 +4057,7 @@ contains
                 attr_model_data(2,1) = "FeatureType"
                 attr_model_data(2,2) = "Node(FVface)"
             case default
-                attr_model_data(2,1) = "CODE ERROR: Unknown FeatureType of "
+                attr_model_data(2,1) = "CODE ERROR Unknown FeatureType of "
                 attr_model_data(2,2) = "trim(reverseKey(FeatureType))"
                 call util_crashpoint(447332)
         end select
@@ -4080,7 +4084,7 @@ contains
                 attr_model_data(3,2) = trim(temp_str)
 
             case default
-                attr_model_data(3,1) = "CODE ERROR: Unknown FeatureType of "
+                attr_model_data(3,1) = "CODE ERROR Unknown FeatureType of "
                 write (temp_str,*) FeatureType
                 attr_model_data(3,2) = trim(temp_str)
                 print *, 'which has key ',trim(reverseKey(FeatureType))
@@ -4120,7 +4124,7 @@ contains
             attr_model_data(9,1) = "HeaderRowsContain:"
             attr_model_data(9,2) = "FaceID,DataType,Units"
         case default
-            attr_model_data(9,1) = "CODE ERROR: Unknown FeatureType of :"
+            attr_model_data(9,1) = "CODE ERROR Unknown FeatureType of :"
             write (temp_str,*) FeatureType
             attr_model_data(9,2) = trim(temp_str)
             print *, 'which has key ',trim(reverseKey(FeatureType))
@@ -4155,7 +4159,7 @@ contains
                 header_data(2:Ntype+1,1) = temp_str
 
             case default
-                print *, 'CODE ERROR: Unknown FeatureType of which has key ',trim(reverseKey(FeatureType))
+                print *, 'CODE ERROR Unknown FeatureType of which has key ',trim(reverseKey(FeatureType))
                 call util_crashpoint( 93473)
 
             end select
@@ -4372,7 +4376,7 @@ contains
                 attr_model_data(2,1) = "FeatureType"
                 attr_model_data(2,2) = "NODE"
             case default
-                attr_model_data(2,1) = "CODE ERROR: Unknown FeatureType of "
+                attr_model_data(2,1) = "CODE ERROR Unknown FeatureType of "
                 attr_model_data(2,2) = "trim(reverseKey(FeatureType))"
                 call util_crashpoint(447332)
         end select
@@ -4399,7 +4403,7 @@ contains
                 attr_model_data(3,2) = trim(temp_str)
 
             case default
-                attr_model_data(3,1) = "CODE ERROR: Unknown FeatureType of "
+                attr_model_data(3,1) = "CODE ERROR Unknown FeatureType of "
                 write (temp_str,*) FeatureType
                 attr_model_data(3,2) = trim(temp_str)
                 print *, 'which has key ',trim(reverseKey(FeatureType))
@@ -4439,7 +4443,7 @@ contains
             attr_model_data(9,1) = "HeaderRowsContain:"
             attr_model_data(9,2) = "NodeID,DataType,Units"
         case default
-            attr_model_data(9,1) = "CODE ERROR: Unknown FeatureType of :"
+            attr_model_data(9,1) = "CODE ERROR Unknown FeatureType of :"
             write (temp_str,*) FeatureType
             attr_model_data(9,2) = trim(temp_str)
             print *, 'which has key ',trim(reverseKey(FeatureType))
@@ -4493,7 +4497,7 @@ contains
                 header_data(1,3) = "-"
 
             case default
-                print *, 'CODE ERROR: Unknown FeatureType of which has key ',trim(reverseKey(FeatureType))
+                print *, 'CODE ERROR Unknown FeatureType of which has key ',trim(reverseKey(FeatureType))
                 call util_crashpoint( 93473)
 
             end select

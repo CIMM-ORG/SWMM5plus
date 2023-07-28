@@ -375,7 +375,7 @@ module rk2_lowlevel
                     / ( eightR * Afull(thisP)/Pfull(thisP)  )
 
             case default
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(5592283)
         end select
                

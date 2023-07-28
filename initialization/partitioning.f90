@@ -81,7 +81,7 @@ contains
                     call BIPquick_toplevel()
                     ! call init_partitioning_bquick_diagnostic ()
                 else
-                    print *, 'CODE ERROR: unexpected else'
+                    print *, 'CODE ERROR unexpected else'
                     print *, 'partitioning method not supported'
                     print *, 'value found is ',setting%Partitioning%PartitioningMethod
                     print *, 'Valid values are ', Default, Random, Blink, BQuick
@@ -358,7 +358,7 @@ contains
                 case (nJM)
                     num_attributed_elements = num_attributed_elements + N_elem_nJm
                 case default 
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     print *, 'unknown node type # of ',node%I(ii, ni_node_type)
                     print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
                     call util_crashpoint(1098226)
@@ -491,7 +491,7 @@ contains
                 case (nJM)
                     elem_per_image(assigning_image) = elem_per_image(assigning_image) + N_elem_nJm
                 case default 
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     print *, 'unknown node type # of ',node%I(ii, ni_node_type)
                     print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
                     call util_crashpoint(1098226)
@@ -651,7 +651,7 @@ contains
                 case (nJM)
                     elem_per_image(current_image) = elem_per_image(current_image) + N_elem_nJm
                 case default 
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     print *, 'unknown node type # of ',node%I(ii, ni_node_type)
                     print *, 'which has key of ',trim(reverseKey(node%I(ii, ni_node_type)))
                     call util_crashpoint(73875)

@@ -80,7 +80,7 @@ module outlet_elements
         !% --- error check
         !%     EPA-SWMM allows the outlet setting to be only 0.0 or 1.0
         if (.not. ((elemR(eIdx,er_Setting) == 0.0) .or. (elemR(eIdx,er_Setting) == 1.0))) then
-            print *, 'CODE ERROR: outlet element has er_Setting that is not 0.0 or 1.0'
+            print *, 'CODE ERROR outlet element has er_Setting that is not 0.0 or 1.0'
             call util_crashpoint(6387233)
         end if
 

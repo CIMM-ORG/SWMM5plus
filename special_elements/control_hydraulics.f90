@@ -309,7 +309,7 @@ contains
 
             !% --- error checking
             if ((targetSetting < zeroR) .or. (targetSetting > oneR)) then
-                print *, 'CODE ERROR: target setting from controls is less than 0 or greater than 1'
+                print *, 'CODE ERROR target setting from controls is less than 0 or greater than 1'
                 call util_crashpoint(778734)
             end if
 
@@ -341,12 +341,12 @@ contains
                         end if
                         !% --- error check
                         if ((thisSetting .ne. zeroR) .or. (thisSetting .ne. oneR)) then
-                            print *, 'CODE ERROR: a closed conduit element has an er_Setting of other than 0.0 or 1.0'
+                            print *, 'CODE ERROR a closed conduit element has an er_Setting of other than 0.0 or 1.0'
                             call util_crashpoint(598723)
                         end if
                     else
                         !% --- not a closed conduit (open channel)
-                        print *, 'CODE/USER ERROR: control action point on an open channel, which is not allowed'
+                        print *, 'CODE ERROR OR USER CONFIGURATION ERROR control action point on an open channel, which is not allowed'
                         call util_crashpoint(587223)
                     end if
 
@@ -387,15 +387,15 @@ contains
                     end if
 
                 case (JM)
-                    print *, 'CODE/USER ERROR: control action point on a junction main, which is not allowed'
+                    print *, 'CODE ERROR OR USER CONFIGURATION ERROR control action point on a junction main, which is not allowed'
                     call util_crashpoint(558273)
                     
                 case (JB)
-                    print *, 'CODE/USER ERROR control action point on a junction branch, which is not allowed'
+                    print *, 'CODE ERROR OR USER CONFIGURATION ERROR control action point on a junction branch, which is not allowed'
                     call util_crashpoint(682734)
 
                 case default
-                    print *, 'CODE ERROR: unexpected element type # ',elemType
+                    print *, 'CODE ERROR unexpected element type # ',elemType
                     if (elemType .ne. nullvalueI) print *, 'with keyword of ',trim(reverseKey(elemType))
                     call util_crashpoint(343723)
 
@@ -477,15 +477,15 @@ contains
                     end if
 
                 case (JM)
-                    print *, 'CODE/USER ERROR: control action point on a junction main, which is not allowed'
+                    print *, 'CODE ERROR OR USER CONFIGURATION ERROR control action point on a junction main, which is not allowed'
                     call util_crashpoint(558273)
                     
                 case (JB)
-                    print *, 'CODE/USER ERROR control action point on a junction branch, which is not allowed'
+                    print *, 'CODE ERROR OR USER CONFIGURATION ERROR control action point on a junction branch, which is not allowed'
                     call util_crashpoint(682734)
 
                 case default
-                    print *, 'CODE ERROR: unexpected element type # ',elemType
+                    print *, 'CODE ERROR unexpected element type # ',elemType
                     if (elemType .ne. nullvalueI) print *, 'with keyword of ',trim(reverseKey(elemType))
                     call util_crashpoint(343723)
 
@@ -555,7 +555,7 @@ contains
 
                     !% --- error checking
                     if (iRight > size(location)) then
-                        print *, 'CODE ERROR: more premises found that space allocated for storage '
+                        print *, 'CODE ERROR more premises found that space allocated for storage '
                         call util_crashpoint(3298734)
                     end if
                 else
@@ -608,11 +608,11 @@ contains
                     case (1)  ! link
                         rr = count(link%I(:,li_idx) == monitorI(ii,mi_linknode_idx))
                     case default
-                        print *, 'CODE ERROR: unexpected default case'
+                        print *, 'CODE ERROR unexpected default case'
                         call util_crashpoint(448229)
                 end select
                 if (rr .ne. 1) then
-                    print *, 'CODE OR DATA ERROR: monitor point does not match node or link indexes'
+                    print *, 'CODE ERROR monitor point does not match node or link indexes'
                     call util_crashpoint(598272)
                 end if
             end do
@@ -705,7 +705,7 @@ contains
 
         !% --- error checking
         if (N_ActionPoint < 1) then
-            print *, 'CODE OR DATA ERROR: expected at least 1 action point from controls'
+            print *, 'CODE ERROR expected at least 1 action point from controls'
             call util_crashpoint(77632)
         end if
        
@@ -720,7 +720,7 @@ contains
         do ii=1,N_ActionPoint
             rr = count(link%I(:,li_idx) == actionI(ii,ai_link_idx))
             if (rr .ne. 1) then
-                print *, 'CODE OR DATA ERROR: action point does not match link indexes'
+                print *, 'CODE ERROR action point does not match link indexes'
                 call util_crashpoint(398743)
             end if
         end do
@@ -802,7 +802,7 @@ contains
                         !% --- connect monitor for node to the first element of downstream link
                         Lidx => node%I(Nidx,ni_N_link_d)
                         if (Lidx == nullvalueI) then
-                            print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for link index'
+                            print *, 'CODE ERROR unexpected nullvalue for link index'
                             call util_crashpoint(598723)
                         else
                             eIdx(ii) = link%I(Lidx,li_first_elem_idx)[monitorImage(ii)]
@@ -812,7 +812,7 @@ contains
                         !% --- connect monitor for node to the last element of upstream link
                         Lidx => node%I(Nidx,ni_N_link_u)
                         if (Lidx == nullvalueI) then
-                            print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for link index'
+                            print *, 'CODE ERROR unexpected nullvalue for link index'
                             call util_crashpoint(98273)
                         else
                             eIdx(ii) = link%I(Lidx,li_last_elem_idx)[monitorImage(ii)]
@@ -821,19 +821,19 @@ contains
                     case (nJM,nStorage)
                         NelemIdx = node%I(Nidx,ni_elem_idx)[monitorImage(ii)]
                         if (NelemIdx== nullvalueI) then
-                            print *, 'CODE/SYSTEM ERROR: unexpected nullvalue for node index'
+                            print *, 'CODE ERROR unexpected nullvalue for node index'
                             call util_crashpoint(429933)
                         else
                             eIdx(ii) = NelemIdx
                         end if
 
                     case default
-                        print *, 'CODE ERROR: Unexpected case default, ni_node_type of ',trim(reverseKey(nodeType(Nidx)))
+                        print *, 'CODE ERROR Unexpected case default, ni_node_type of ',trim(reverseKey(nodeType(Nidx)))
                         call util_crashpoint(72109872)
                 end select
 
             case default
-                print *, 'CODE ERROR: Unexpected case default, monitor(:,mi_linknodesimType) unsupported value of ',linknodesimType(ii)
+                print *, 'CODE ERROR Unexpected case default, monitor(:,mi_linknodesimType) unsupported value of ',linknodesimType(ii)
                 call util_crashpoint(58723)
             end select
 

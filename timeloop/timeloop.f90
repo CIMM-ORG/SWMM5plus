@@ -221,7 +221,7 @@ contains
             nextHydraulicsTime = setting%Time%End + onethousandR * dtTol
             !% --- suppress the multi-level hydraulics output (otherwise seg faults)
             setting%Output%Report%suppress_MultiLevel_Output = .true.
-            print *, 'CODE ERROR: SWMM5+ does not operate without hydraulics'
+            print *, 'CODE ERROR SWMM5+ does not operate without hydraulics'
             print *, 'Ensure that setting.Simulation.useHydraulics = .true.'
             call util_crashpoint(268743)
         end if
@@ -485,7 +485,7 @@ contains
             
         if (setting%Simulation%useSpinUp) then
             !% --- HACK hydrology spinup nto supported
-            print *, 'CODE ERROR: setting.simulation.useSpinUp = true is not supported for hydrology at this time'
+            print *, 'CODE ERROR setting.simulation.useSpinUp = true is not supported for hydrology at this time'
             call util_crashpoint(4482333)
         end if
 
@@ -983,7 +983,7 @@ contains
             !% IF HYDRAULICS STEP IS NOT RELATED TO HYDROLOGY TIME
             !%-----------------------------------------------------------------------               
             if (useHydrology) then 
-                print *, 'USER CONFIGURATION ERROR:' 
+                print *, 'USER CONFIGURATION ERROR for hydrology' 
                 print *, 'At this time, useHydrology requires '
                 print *, 'setting%Time%matchHydrologyStep = .true.'
                 print *, 'the setup for non-match has not been tested'

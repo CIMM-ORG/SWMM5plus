@@ -180,7 +180,7 @@ module face
                         faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Pump_Zcrest)
                         faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Pump_dQdHp)
                     case default 
-                        print *, 'CODE ERROR: unexpected case default'
+                        print *, 'CODE ERROR unexpected case default'
                         call util_crashpoint(3111987)
                 end select
                 !% --- check if the elem data has either been pushed 
@@ -540,7 +540,8 @@ module face
                         !% --- Error check, normal depth is infinite for adverse slope
                         !%     Use setting%Eps%Machine so that slope must be greater than precision 
                         if (elemR(eup,er_BottomSlope) .le. onehundredR*setting%Eps%Machine) then
-                            print *, 'USER CONFIGURATION ERROR: a NORMAL OUTFALL must be connected to an...'
+                            print *, 'USER CONFIGURATION ERROR for outfall'
+                            print *, 'A NORMAL OUTFALL must be connected to a...'
                             print *, '...conduit/channel element with non-zero, positive bottom slope.'
                             print *, 'Problem for Outfall ',trim(node%Names(BC%headI(ii,bi_node_idx))%str)
                             print *, 'Connected to element ', eUp
@@ -572,7 +573,7 @@ module face
                         faceR(thisF,fr_Area_d)  = faceR(thisF,fr_Area_u)
 
                     else
-                        print *, 'CODE ERROR: NEED ALGORITHM DESIGN FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
+                        print *, 'CODE ERROR NEED ALGORITHM DESIGN FOR OUTFALL WITH UPSTREAM DIAGNOSTIC ELEMENT'
                         call util_crashpoint(792873)
                         !% for free dnBC, if the upstream link is not CC (i.e. weir, orifice etc)
                         !% the depth in the node is zero
@@ -633,7 +634,7 @@ module face
                     faceR(thisF, fr_Area_d)  = faceR(thisF, fr_Area_u)
 
                 case default
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     if ((nodeIdx < N_node) .and. (nodeIdx > 0)) then
                         print *, 'Unknown downstream boundary condition type for node'  &
                                 // trim(node%Names(nodeIdx)%str)
@@ -690,7 +691,7 @@ module face
                             !% -- backflow not allowed
                             faceR(thisF,fr_Flowrate) = zeroR
                         case default
-                            print *, 'CODE ERROR: unexpected case default'
+                            print *, 'CODE ERROR unexpected case default'
                             call util_crashpoint(61098755)
                     end select
                 else
@@ -974,7 +975,7 @@ module face
             
         !% --- reset all the hydraulic jump interior faces
         if (.not. skipJump) then
-            print *, 'ERROR: need to set up a test case for a hydraulic jump across a shared image'
+            print *, 'CODE ERROR need to set up a test case for a hydraulic jump across a shared image'
             print *, 'need a version of the jump_compute for shared faces'
             call util_crashpoint(7209885)
         end if
@@ -1115,7 +1116,7 @@ module face
                         ) / &
                         ( elemGR(ii,eWup) + elemB%R(ii,eWdn) )
                 else
-                    write(*,*) 'CODE ERROR: unexpected else'
+                    write(*,*) 'CODE ERROR unexpected else'
                     call util_crashpoint( 487874)
                 end if      
             end do
@@ -1184,7 +1185,7 @@ module face
             elseif (isGhostDn) then
                 elemB%R(ii,:) = elemR(eUp,:)
             else
-                write(*,*) 'CODE ERROR: unexpected else'
+                write(*,*) 'CODE ERROR unexpected else'
                 call util_crashpoint( 487874)
             end if     
             !% --- handle special case for volume used by Pump Type 1 when
@@ -1251,7 +1252,7 @@ module face
                 elemGR(ii,:) = elemB[ci]%R(BDnIdx,:)
 
             else
-                write(*,*) 'CODE ERROR: unexpected else'
+                write(*,*) 'CODE ERROR unexpected else'
                 call util_crashpoint(487874)
 
             end if        
@@ -1625,7 +1626,7 @@ module face
                 faceR(thisP,fr_Area_d) = setting%ZeroValue%Area
                 
             case default
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(619873)
         end select
 
@@ -1733,7 +1734,7 @@ module face
                     faceR(thisP,fr_Area_d) = setting%ZeroValue%Area
 
                 case default
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     call util_crashpoint(2548712)
 
             end select
@@ -1796,7 +1797,7 @@ module face
                 faceR(thisP,fr_Velocity_u) = zeroR
 
             case default
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(619873)
         end select
 
@@ -1890,7 +1891,7 @@ module face
                     faceR(thisP,fr_Velocity_u) = zeroR
 
                 case default
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     call util_crashpoint(6198732)
             end select        
         end do

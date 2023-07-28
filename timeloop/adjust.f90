@@ -75,7 +75,7 @@ module adjust
             case (JM)
                 call adjust_limit_velocity_max (JM) 
             case default
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(2250983)
         end select
 
@@ -221,7 +221,7 @@ module adjust
                     !% --- suppress v-shape over face/element/face
                     call adjust_Vshaped_flowrate (thisP)
                 case default
-                    print *, 'CODE ERROR: unknown setting.Adjust.Flowrate.Approach #',setting%Adjust%Flowrate%Approach
+                    print *, 'CODE ERROR unknown setting.Adjust.Flowrate.Approach #',setting%Adjust%Flowrate%Approach
                     print *, 'which has key ',trim(reverseKey(setting%Adjust%Flowrate%Approach))
                     !stop 
                     call util_crashpoint( 4973)
@@ -242,7 +242,7 @@ module adjust
                 case (vshape_surcharge_CC)
                     call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.true.)
                 case default
-                    print *,  'CODE ERROR: unknown setting.Adjust.Head.Approach #',setting%Adjust%Head%Approach
+                    print *,  'CODE ERROR unknown setting.Adjust.Head.Approach #',setting%Adjust%Head%Approach
                     print *, 'which has key ',trim(reverseKey(setting%Adjust%Head%Approach))
                     !stop 
                     call util_crashpoint( 9073)

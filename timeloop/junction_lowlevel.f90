@@ -374,7 +374,7 @@ module junction_lowlevel
                 end if
 
             else 
-                print *, 'CODE ERROR: Unexpected else'
+                print *, 'CODE ERROR Unexpected else'
                 call util_crashpoint(140987112)
             end if
 
@@ -668,7 +668,7 @@ module junction_lowlevel
                     case (PondedOrifice)
                         AinPonded =  -OverFlowDepth * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length)
                     case default 
-                        print *, 'CODE ERROR: unexpected case default: Overflow with No overflow Type'
+                        print *, 'CODE ERROR unexpected case default: Overflow with No overflow Type'
                         print *, 'JMidx ',JMIdx, ' ',trim(node%Names(elemI(JMidx,ei_node_Gidx_Bipquick))%str)
                         print *, 'Qoverflow ', Qoverflow 
                         print *, 'Head      ', elemR(JMidx,er_Head)
@@ -684,7 +684,7 @@ module junction_lowlevel
                     case (OverflowOrifice, PondedOrifice)
                         AoutOverflow = OverFlowDepth * elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length)
                     case default 
-                        print *, 'CODE ERROR: unexpected case default'
+                        print *, 'CODE ERROR unexpected case default'
                         call util_crashpoint(7722366)
                 end select
                 AinPonded = zeroR
@@ -726,7 +726,7 @@ module junction_lowlevel
                 !% --- note, should not reach here unles bFix == .true.
 
                 if (bcount < 1) then 
-                    print *, 'CODE ERROR: bcount = 0; should not have reached this point '
+                    print *, 'CODE ERROR bcount = 0; should not have reached this point '
                     call util_crashpoint(6209873)
                 end if
 
@@ -755,7 +755,7 @@ module junction_lowlevel
                 end do
 
                 if (bcount < 1) then 
-                    print *, 'CODE ERROR: Mass residual in an unexpected condition'
+                    print *, 'CODE ERROR Mass residual in an unexpected condition'
                     call util_crashpoint(2298522)
                 endif
             else
@@ -781,7 +781,7 @@ module junction_lowlevel
 
             if ((Ain < setting%ZeroValue%Area) .and. (Aout < setting%ZeroValue%Area)) then 
                 !% degenerate condition 
-                print *, 'CODE ERROR: unexpected junction condition '
+                print *, 'CODE ERROR unexpected junction condition '
                 print *, 'JMidx ',JMidx
                 print *, Ain, Aout, setting%ZeroValue%Area
                 call util_crashpoint(629784)
@@ -872,7 +872,7 @@ module junction_lowlevel
             end if
             print *, 'on solution step ',setting%Time%Step
             print *, 'at time ',setting%Time%Now / (3600.d0), ' hours'
-            print *, 'CODE ERROR: unexpected flowrate residual'
+            print *, 'CODE ERROR unexpected flowrate residual'
             call util_crashpoint(6109873)
             return 
         end if
@@ -1134,7 +1134,7 @@ module junction_lowlevel
                 !% no action
             case default
                 print *, elemSI(JMidx,esi_JunctionMain_OverflowType), trim(reverseKey(elemSI(JMidx,esi_JunctionMain_OverflowType)))
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(397894)
         end select
 
@@ -1212,8 +1212,7 @@ module junction_lowlevel
 
             case default
                 !% --- should not reach here.
-                print *, 'CODE ERROR'
-                print *, 'unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(1209874)
 
         end select 
@@ -1240,7 +1239,7 @@ module junction_lowlevel
 
         if (elemSI(JMidx,esi_JunctionMain_Type) .eq. NoStorage) then
             !% --- no storage rate for implied storage junctions is not finished
-            print *, 'CODE ERROR: NoStorage junction type is not supported'
+            print *, 'CODE ERROR NoStorage junction type is not supported'
             call util_crashpoint(11001093)
             lljunction_main_dQdHstorage = zeroR
             return
@@ -1489,7 +1488,7 @@ module junction_lowlevel
                                     * ((PondedHead - MinHeadForOverflow)**threehalfR)
 
                         case default 
-                            print *, 'CODE ERROR: unexpected case default'
+                            print *, 'CODE ERROR unexpected case default'
                             call util_crashpoint(7298723)
                     end select
 
@@ -1668,8 +1667,7 @@ module junction_lowlevel
                 !% --- should not reach here.
                 !%     for debugging, change to impure function and uncomment
                 !%     the following
-                print *, 'CODE ERROR'
-                print *, 'unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(6209874)
         end select
 
@@ -1747,7 +1745,7 @@ module junction_lowlevel
                 elemR(JMidx,er_VolumePonded)   = -Qoverflow * dt * crk
 
             case default
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(711345)
         end select
 
@@ -1809,14 +1807,14 @@ module junction_lowlevel
 
                 else 
                     !% should not be possible
-                    print *, 'CODE ERROR: unexpected else'
+                    print *, 'CODE ERROR unexpected else'
                     call util_crashpoint(6209874)
                     return
                 end if
 
             case default
                 lljunction_main_update_storage_rate = zeroR
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(8852783)
                 return
 

@@ -310,7 +310,7 @@ module geometry
                 end do
 
             case default
-                print *, 'CODE ERROR: Unexpected case default'
+                print *, 'CODE ERROR Unexpected case default'
                 call util_crashpoint(5298733)
         end select
 
@@ -455,7 +455,7 @@ module geometry
                     end if                                                                         
                 end do
             case default
-                print *, 'CODE ERROR: Unexpected case default'
+                print *, 'CODE ERROR Unexpected case default'
                 call util_crashpoint(5298722)
         end select
 
@@ -564,7 +564,7 @@ module geometry
                 case (utd_Qcrit_area_nonuniform)
                     utr_Max = utr_AreaMax
                 case default
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     call util_crashpoint(6209873)
             end select
         !%------------------------------------------------------------------
@@ -956,7 +956,7 @@ module geometry
                     print *, 'CUSTOM CROSS-SECTION NOT COMPLETE'
                     call util_crashpoint(52498767)
                 case default
-                    print *, 'CODE ERROR: Unexpected case default'
+                    print *, 'CODE ERROR Unexpected case default'
                     call util_crashpoint(7209874)
             end select
 
@@ -1591,7 +1591,7 @@ module geometry
                                 ellDepth(tB)  = max(ellDepth(tB),setting%ZeroValue%Depth*0.99d0)
                         
                             case default
-                                print *, 'CODE ERROR: geometry type unknown for # ', elemI(tB,ei_geometryType)
+                                print *, 'CODE ERROR geometry type unknown for # ', elemI(tB,ei_geometryType)
                                 print *, 'which has key ',trim(reverseKey(elemI(tB,ei_geometryType)))
                                 print *, 'in ',trim(subroutine_name)
                                 call util_crashpoint(399848)
@@ -2030,7 +2030,7 @@ module geometry
                         print *, 'CUSTOM CROSS-SECTION NOT COMPLETE'
                         call util_crashpoint(52498767)
                     case default
-                        print *, 'CODE ERROR: Unexpected case default'
+                        print *, 'CODE ERROR Unexpected case default'
                         call util_crashpoint(7209874)
                 end select
     
@@ -2540,7 +2540,7 @@ module geometry
                     print *, 'CUSTOM CROSS-SECTION NOT COMPLETE'
                     call util_crashpoint(52498767)
                 case default
-                    print *, 'CODE ERROR: Unexpected case default'
+                    print *, 'CODE ERROR Unexpected case default'
                     call util_crashpoint(7209874)
             end select
 
@@ -2724,18 +2724,18 @@ module geometry
             outvalue = llgeo_rectangular_triangular_area_from_depth_singular (idx, indepth, ZeroValueArea)
 
         case (custom)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(332341)
 
         case (force_main)
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'in ',trim(subroutine_name)   
             print *, 'This should never be reached as a force_main is not a valid geometryType'
             call util_crashpoint(332342)
 
         case default
-            print *, 'CODE ERROR: area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR area for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(332343)
 
@@ -2813,7 +2813,7 @@ module geometry
             outvalue = max(outvalue,ZeroValueTopWidth)
 
         case (power_function)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
 
@@ -2863,18 +2863,18 @@ module geometry
             outvalue = llgeo_rectangular_triangular_topwidth_from_depth_singular  (idx, indepth, ZeroValueTopwidth)
         
         case (custom)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
 
         case (force_main)
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'in ',trim(subroutine_name)   
             print *, 'This should never be reached as a force_main is not a valid geometryType'
             call util_crashpoint(4498734)
 
         case default
-            print *, 'CODE ERROR: topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR topwidth for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(4498734)
         end select
@@ -2981,7 +2981,7 @@ module geometry
             !outvalue = parabolic_perimeter_from_depth_singular (idx, indepth)
 
         case (power_function)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(338234)    
 
@@ -3049,16 +3049,16 @@ module geometry
             outvalue =llgeo_rectangular_triangular_perimeter_from_depth_singular (idx, indepth, ZeroValuePerimeter)
         
         case (custom)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(338234)
         case (force_main)
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'in ',trim(subroutine_name)   
             print *, 'This should never be reached as a force_main is not a valid geometryType' 
             call util_crashpoint(338234)
         case default
-            print *, 'CODE ERROR: perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
+            print *, 'CODE ERROR perimeter for cross-section ',trim(reverseKey(elemI(idx,ei_geometryType)))
             print *, 'has not been implemented in ',trim(subroutine_name)
             call util_crashpoint(332344)
         end select

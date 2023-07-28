@@ -108,7 +108,7 @@ module pump_elements
         !% --- error check
         !%     EPA-SWMM allows the pump setting to be only 0.0 or 1.0
         if (.not. ((elemR(eIdx,er_Setting) == 0.0) .or. (elemR(eIdx,er_Setting) == 1.0))) then
-            print *, 'CODE ERROR: pump element has er_Setting that is not 0.0 or 1.0'
+            print *, 'CODE ERROR pump element has er_Setting that is not 0.0 or 1.0'
             call util_crashpoint(668723)
         end if
 

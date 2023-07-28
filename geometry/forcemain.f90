@@ -119,7 +119,7 @@ module forcemain
             manningsN(thisP) = ( ((Afull(thisP) / Pfull(thisP)))**DWhydradExp ) &
                 * sqrt( Ffactor(thisP) / (eightR * grav) )
         case default
-            print *, 'CODE ERROR: unexpected case default'
+            print *, 'CODE ERROR unexpected case default'
             call util_crashpoint(779834)
         end select
 

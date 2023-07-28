@@ -129,7 +129,7 @@ module orifice_elements
         !% --- error check
         !%     EPA-SWMM allows the orifice setting to be between 0.0 and 1.0
         if (.not. ((CurrentSetting .ge. zeroR) .and. (CurrentSetting .le. oneR))) then
-            print *, 'CODE ERROR: orifice element has er_Setting that is not between 0.0 and 1.0'
+            print *, 'CODE ERROR orifice element has er_Setting that is not between 0.0 and 1.0'
             call util_crashpoint(623943)
         end if
 
@@ -223,7 +223,7 @@ module orifice_elements
                     end if
                 case default
                     print *, 'In ', trim(subroutine_name)
-                    print *, 'CODE ERROR: unknown orifice type, ', SpecificOrificeType,'  in network'
+                    print *, 'CODE ERROR unknown orifice type, ', SpecificOrificeType,'  in network'
                     print *, 'which has key ',trim(reverseKey(SpecificOrificeType))
                     call util_crashpoint(7298734)
             end select
@@ -271,7 +271,7 @@ module orifice_elements
                 FractionCritDepth = min(((Head - Zcrest) / EffectiveFullDepth), oneR)
             case default
                 print *, 'In ', trim(subroutine_name)
-                print *, 'CODE ERROR: unknown orifice type, ', SpecificOrificeType,'  in network'
+                print *, 'CODE ERROR unknown orifice type, ', SpecificOrificeType,'  in network'
                 print *, 'which has key ',trim(reverseKey(SpecificOrificeType))
                 call util_crashpoint(9298734)
         end select

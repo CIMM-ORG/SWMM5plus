@@ -80,7 +80,7 @@ module diagnostic_elements
                     elemR(eIdx,er_Flowrate)      = faceR(fdn(eIdx),fr_Flowrate)
                     faceR(fup(eIdx),fr_Flowrate) = faceR(fdn(eIdx),fr_Flowrate)
                 else
-                    print *, 'CODE ERROR: unexpected else'
+                    print *, 'CODE ERROR unexpected else'
                     call util_crashpoint(219874)
                 end if
             end if

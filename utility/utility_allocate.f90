@@ -869,7 +869,7 @@ module utility_allocate
         !%------------------------------------------------------------------
         !% --- bug check
         if (N_OutTypeElem < 1) then
-            write(*,"(A)") 'CODE ERROR: the N_OutTypeElem is less than 1 (i.e. no output types selected)'
+            write(*,"(A)") 'CODE ERROR the N_OutTypeElem is less than 1 (i.e. no output types selected)'
             write(*,"(A)") '... which should have caused Output.ElementsExist_glboal = .false.'
             write(*,"(A,i8)") '... setting%Output%N_OutTypeElem      ', N_OutTypeElem
             write(*,"(A,i8)") '... etting%Output%ElementsExist_glboal ', setting%Output%ElementsExist_global
@@ -1058,7 +1058,7 @@ module utility_allocate
         !%-------------------------------------------------------------------
         !% --- bug check
         if (N_OutTypeFace < 1) then
-            write(*,"(A)") 'CODE ERROR: the N_OutTypeFace is less than 1 (i.e. no output types selected)'
+            write(*,"(A)") 'CODE ERROR the N_OutTypeFace is less than 1 (i.e. no output types selected)'
                 write(*,"(A)") '... which should have caused Output.ElementsExist_global = .false.'
                 write(*,"(A,i8)") '... setting%Output%N_OutTypeFace      ', N_OutTypeFace
                 write(*,"(A,i8)") '... etting%Output%ElementsExist_byImage ', setting%Output%FacesExist_global
@@ -1129,7 +1129,7 @@ module utility_allocate
 
         !% --- bug check
         if (nLevel < 1) then
-            write(*,"(A)") 'CODE ERROR: the Output.StoredLevels is less than 1...'
+            write(*,"(A)") 'CODE ERROR the Output.StoredLevels is less than 1...'
             write(*,"(A)") '... which should have caused Output.Report.suppress_Multilevel_Output = .true.'
             write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels
             write(*,"(A,i8)") '... etting%Output%Report%suppress_MultiLevel_Output ', setting%Output%Report%suppress_MultiLevel_Output
@@ -1170,7 +1170,7 @@ module utility_allocate
 
         !% --- bug check
         if (nLevel < 1) then
-            write(*,"(A)") 'CODE ERROR: the Output.StoredLevels is less than 1...'
+            write(*,"(A)") 'CODE ERROR the Output.StoredLevels is less than 1...'
             write(*,"(A)") '... which should have caused Output.Report.suppress_Multilevel_Output = .true.'
             write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels
             write(*,"(A,i8)") '... etting%Output%Report%suppress_MultiLevel_Output ', setting%Output%Report%suppress_MultiLevel_Output
@@ -1238,7 +1238,7 @@ module utility_allocate
 
         !% --- bug check
         if (nLevel < 1) then
-            write(*,"(A)") 'CODE ERROR: the Output.StoredLevels is less than 1...'
+            write(*,"(A)") 'CODE ERROR the Output.StoredLevels is less than 1...'
             write(*,"(A)") '... which should have caused Output.Report.suppress_Multilevel_Output = .true.'
             write(*,"(A,i8)") '... setting%Output%StoredLevels              ', setting%Output%StoredLevels
             write(*,"(A,i8)") '... etting%Output%Report%suppress_MultiLevel_Output=', setting%Output%Report%suppress_MultiLevel_Output
@@ -1252,7 +1252,7 @@ module utility_allocate
 
             !% --- bug check
             if (nTypeElem < 1) then
-                write(*,"(A)") 'CODE ERROR: the N_OutTypeElem is less than 1 (i.e. no output types selected)'
+                write(*,"(A)") 'CODE ERROR the N_OutTypeElem is less than 1 (i.e. no output types selected)'
                 write(*,"(A)") '... which requires Output.ElementsExist_global = .false.'
                 write(*,"(A,i8)") '... setting%Output%N_OutTypeElem       ', N_OutTypeElem
                 write(*,"(A,L)") '... setting%Output%sElementsExist_global =', setting%Output%ElementsExist_global
@@ -1264,7 +1264,7 @@ module utility_allocate
 
             !% --- bug check
             if (nMaxElem < 1) then
-                write(*,"(A)") 'CODE ERROR: the maximum number of elements output from an image, ...'
+                write(*,"(A)") 'CODE ERROR the maximum number of elements output from an image, ...'
                 write(*,"(A)") '... maxval(N_OutElem(images)), is less than 1...'
                 write(*,"(A)") '... which should have caused Output.ElementsExist_global = .false.'
                 write(*,"(A,L)") '... setting%Output%ElementsExist_byImage =', setting%Output%ElementsExist_global
@@ -1274,7 +1274,7 @@ module utility_allocate
             end if
 
             if (int(nMaxElem,8) * int(nTypeElem,8) * int(nLevel,8) > setting%Output%MemoryStorageMax) then
-                print *, 'USER CONFIGURATION ERROR: the output stored is probably too large'
+                print *, 'USER CONFIGURATION ERROR the output stored is probably too large'
                 print *, '  based on the value in setting.Output.MemoryStorageMax.'
                 print *, 'The number of time levels stored before writing (nLevel) is ',nLevel
                 print *, '  which is set in setting.Output.StoredLevels of JSON file. '
@@ -1326,7 +1326,7 @@ module utility_allocate
 
             !% --- bug check
             if (nTypeFace < 1) then
-                write(*,"(A)") 'CODE ERROR: the N_OutTypeFace is less than 1 (i.e. no output types selected)'
+                write(*,"(A)") 'CODE ERROR the N_OutTypeFace is less than 1 (i.e. no output types selected)'
                 write(*,"(A)") '... which should have caused Output.OutputFacseExist_global = .false.'
                 write(*,"(A,i8)") '... setting%Output%N_OutTypeNFaces     ', N_OutTypeFace
                 write(*,"(A,L)") '... setting%Output%FacesExist_global =', setting%Output%FacesExist_global
@@ -1338,7 +1338,7 @@ module utility_allocate
 
             !% --- bug check
             if (nMaxFace < 1) then
-                write(*,"(A)") 'CODE ERROR: the maximum number of faces output from an image, ...'
+                write(*,"(A)") 'CODE ERROR the maximum number of faces output from an image, ...'
                 write(*,"(A)") '... maxval(N_OutFace(images)), is less than 1...'
                 write(*,"(A)") '... which should have caused Output.FacesExist_global = .false.'
                 write(*,"(A,L)") '... setting%Output%FacesExist_byImage =', setting%Output%FacesExist_global
@@ -2037,7 +2037,7 @@ module utility_allocate
         !%-----------------------------------------------------------------
 
         if (curve_idx > size(curve)) then 
-            print *, 'CODE ERROR: in ',trim(subroutine_name)
+            print *, 'CODE ERROR in ',trim(subroutine_name)
             print *, 'trying to read more curves than the number of allocated curves'
             print *, 'allocated curves: ',size(curve)
             print *, 'this curve index  ',curve_idx

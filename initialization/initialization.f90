@@ -213,7 +213,7 @@ contains
         !% --- error checking
         if (.not. setting%Simulation%useHydraulics) then 
             if (this_image() == 1) then
-                write(*,*) 'USER CONFIGUREATION ERROR: setting.Simulation.useHydraulics == .false.'
+                write(*,*) 'USER CONFIGURATION ERROR setting.Simulation.useHydraulics == .false.'
                 write(*,*) '...this presently is not supported in SWMM5+'
             end if
             call util_crashpoint(8815)
@@ -321,7 +321,7 @@ contains
                 call outputML_setup ()
             else 
                 if (this_image() == 1) then
-                    write(*,*) 'USER ERROR: setting.Simulation.useHydraulics == .false.'
+                    write(*,*) 'USER CONFIGURATION ERROR setting.Simulation.useHydraulics == .false.'
                     write(*,*) '...this presently is not supported in SWMM5+'
                 end if
                 call util_crashpoint(487587)  
@@ -485,7 +485,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
             if (.not. api_is_initialized) then
-                print *, "ERROR: API is not initialized"
+                print *, "CODE ERROR API is not initialized"
                 call util_crashpoint(39873)
             end if
         !%-----------------------------------------------------------------------------
@@ -660,7 +660,7 @@ contains
                     link%I(ii,li_RoadSurface) = Gravel
                 else
                     if (this_image() == 1) then
-                        write(*,*) 'USER CONFIGURATION ERROR:'
+                        write(*,*) 'USER CONFIGURATION ERROR for roadway weir'
                         write(*,"(A,i4,A)") 'A roadway weir does not have an allowed road surface type'
                         write(*,"(A)")      'Allowed types are NOSURFACE, PAVED, GRAVEL'
                         write(*,"(A,i4)")   'Failure at link ',link%I(ii,li_idx)
@@ -728,7 +728,7 @@ contains
         do ii = 1,N_node
             if (node%I(ii, ni_N_link_u) > max_up_branch_per_node) then
                 if (this_image() == 1) then
-                    write(*,*) 'USER CONFIGURATION ERROR'
+                    write(*,*) 'USER CONFIGURATION ERROR for node connections'
                     write(*,"(A,i4,A)") 'One or more nodes have more than ',max_up_branch_per_node,' upstream connections'
                     write(*,*) 'Unfortunately, this connection limit is a hard-coded limit of SWMM5+ an cannot be exceeded.'
                     write(*,*) 'First error found at node ',ii
@@ -739,7 +739,7 @@ contains
 
             if (node%I(ii, ni_N_link_d) > max_dn_branch_per_node) then
                 if (this_image() == 1) then
-                    write(*,*) 'USER CONFIGURATION ERROR'
+                    write(*,*) 'USER CONFIGURATION ERROR for node connections'
                     write(*,"(A,i4,A)") 'One or more nodes have more than ',max_dn_branch_per_node,' downstream connections'
                     write(*,*) 'Unfortunately, this connection limit is a hard-coded limit of SWMM5+ an cannot be exceeded.'
                     write(*,*) 'First error found at at node ',ii
@@ -791,7 +791,7 @@ contains
 
             !% error check
             if (node%R(ii,nr_InitialDepth) < zeroR) then
-                print *, 'USER CONFIGURATION ERROR OR CODE ERROR'
+                print *, 'USER CONFIGURATION ERROR OR CODE ERROR for node depth and invert'
                 print *, 'The initial depth at a node is less than the invert elevation'
                 print *, 'This may occur if the user provided an input of depth at an '
                 print *, 'outfall rather than stage elevation.  Otherwise, this is'
@@ -858,7 +858,7 @@ contains
                      ) then
                     !% correct value found
                 else
-                    print *, 'CODE ERROR: unexpected value for ni_routeTo'
+                    print *, 'CODE ERROR unexpected value for ni_routeTo'
                     print *, 'value obtained is ',node%I(ii,ni_routeTo)
                     print *, 'allowable values are -1 or > 0 but less than number of subcatchments'
                     print *, 'number of subcatchments is ',setting%SWMMinput%N_subcatch
@@ -1177,7 +1177,7 @@ contains
         do ii = 1,N_node
             if (node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d) == zeroI) then
                 noerrorfound = .false.
-                print *, 'USER CONFIGURATION ERROR: disconnected node.'
+                print *, 'USER CONFIGURATION ERROR disconnected node.'
                 print *, 'A node has been found that does not connect to any links.'
                 print *, 'It must be commented out in the input file.'
                 print *, 'Node name is ',trim(node%Names(ii)%str)
@@ -1192,14 +1192,14 @@ contains
             if (interface_get_nodef_attribute(ii, api_nodef_type) == API_OUTFALL) then
                 !% --- check if outfall has more than one upstream connection
                 if( node%I(ii, ni_N_link_u) > 1) then
-                    write(*,*) 'USER CONFIGURATION ERROR'
+                    write(*,*) 'USER CONFIGURATION ERROR for outfall'
                     write(*,*) 'Outfall has more than 1 upstream link, which is not supported by SWMM5+'
                     write(*,"(A,A)") 'Node name in file is ',trim(node%Names(ii)%str)
                     call util_crashpoint(99374)
                 endif
                 !% --- check if outfall has a downstream connection
                 if ( node%I(ii, ni_N_link_d) > 0) then
-                    write(*,*) 'USER CONFIGURATION ERROR'
+                    write(*,*) 'USER CONFIGURATION ERROR for outfall'
                     write(*,*) 'Outfall has a downstream connection, which is not supported by SWMM5+'
                     write(*,"(A,A)") 'Node name iin file is ',trim(node%Names(ii)%str)
                     call util_crashpoint(847822)
@@ -1495,7 +1495,7 @@ contains
 
                     !% --- count the number of routed elements to each catchment
                     if (subRunon > setting%SWMMinput%N_subcatch) then
-                        print *, 'CODE ERROR: mismatch in subcatchment count'
+                        print *, 'CODE ERROR mismatch in subcatchment count'
                         call util_crashpoint(609873)
                     else
                         !% --- increment the counter of runons to each subcatchment
@@ -1546,7 +1546,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
             if (.not. api_is_initialized) then
-                print *, "ERROR: API is not initialized"
+                print *, "CODE ERROR API is not initialized"
                 call util_crashpoint(84785)
             end if
         !%------------------------------------------------------------------
@@ -1671,7 +1671,7 @@ contains
         !% --- check that file exists
         inquire(unit=thisUnit,EXIST=doesExist)
         if (.not. doesExist) then 
-            write(*,"(A)")   'USER OR CODE ERROR: trying to open *.inp file that does not exist'
+            write(*,"(A)")   'USER CONFIGURATION ERROR OR CODE ERROR trying to open *.inp file that does not exist'
             write(*,"(A,A)") 'Filename: ',trim(setting%File%inp_file)
             call util_crashpoint(5509877)
         end if
@@ -1679,7 +1679,7 @@ contains
         !% --- file should NOT be open at this time, if not there is a code error
         inquire(FILE=trim(setting%File%inp_file),OPENED=isOpen)
         if (isOpen) then 
-            write(*,"(A)") 'CODE ERROR: input file should not be open when processing profiles'
+            write(*,"(A)") 'CODE ERROR input file should not be open when processing profiles'
             write(*,"(A,A)") 'Filename: ',trim(setting%File%inp_file)
             call util_crashpoint(3385782)
         end if
@@ -1960,7 +1960,7 @@ contains
                     iprof = iprof+1
                     !% --- check profile counter
                     if (iprof > size(output_profile_link_names,1)) then 
-                        print *, 'CODE ERROR: profile counter is too small'
+                        print *, 'CODE ERROR profile counter is too small'
                         print *, 'storage is ',size(output_profile_link_names,1)
                         print *, 'iprof = ',iprof
                         call util_crashpoint(71197)
@@ -1974,7 +1974,7 @@ contains
                     if (len_trim(this_name) .le. stringLength_HDF5) then
                         output_profile_names(iprof) = trim(this_name)
                     else
-                        print *, 'CONFIGURATION ERROR: profile name is too long'
+                        print *, 'USER CONFIGURATION ERROR profile name is too long'
                         print *, 'SWMM5+ value for stringLength_HDF5 is ',stringLength_HDF5 
                         print *, 'profile has name ',trim(this_name)
                         print *, 'which is of length ',len_trim(this_name)
@@ -1993,7 +1993,7 @@ contains
                     jlink = jlink + 1
                     !% --- check link counter
                     if (jlink > size(output_profile_link_names,2)) then 
-                        print *, 'CODE ERROR: profile link counter is too small'
+                        print *, 'CODE ERROR profile link counter is too small'
                         print *, 'storage is ',size(output_profile_link_names,2)
                         print *, 'jlink = ',jlink 
                         call util_crashpoint(71197)
@@ -2005,7 +2005,7 @@ contains
                     if (len_trim(this_link) .le. stringLength_HDF5) then 
                         output_profile_link_names(iprof,jlink) = trim(this_link)
                     else
-                        print *, 'USER CONFIGURATION ERROR: link name is too long'
+                        print *, 'USER CONFIGURATION ERROR link name is too long'
                         print *, 'link name in profile exceeded the SWMM5+ '
                         print *, 'value for stringLength_HDF5 of ',stringLength_HDF5 
                         print *, 'link with name ',trim(this_name)
@@ -2027,7 +2027,7 @@ contains
             end do
 
         else
-            print *, 'CODE ERROR: misalignment of PROFILE reading'
+            print *, 'CODE ERROR misalignment of PROFILE reading'
             call util_crashpoint(7209873)
             return
         end if
@@ -2078,7 +2078,7 @@ contains
                     .and.                                                        &
                     (output_profile_link_idx(pp,mm) .eq. nullvalueI)) then 
                     !% --- profile name not found
-                    print *, 'USER CONFIGURATION ERROR: Profile link name not found'
+                    print *, 'USER CONFIGURATION ERROR Profile link name not found'
                     print *, 'The profile includes link name ', trim(output_profile_link_names(pp,mm))
                     print *, 'which was not found in the system links of the *.inp file '
                     call util_crashpoint(2297445)
@@ -2205,7 +2205,7 @@ contains
         do pp = 1,N_profiles
             do mm = 1,N_links_in_profile
                 if (any(output_profile_node_names(pp,:) .eq. trim(output_profile_link_names(pp,mm)))) then 
-                    print *, 'USER CONFIGURATION ERROR: found link and node with identical names'
+                    print *, 'USER CONFIGURATION ERROR found link and node with identical names'
                     print *, 'To prevent confusion, SWMM5+ requires links and nodes to have '
                     print *, 'unique names in profiles. Problem found with '
                     print *, 'link and node named:', trim(output_profile_link_names(pp,mm))
@@ -2240,7 +2240,7 @@ contains
             if (N_link == 0) then
                 if (this_image() == 1) then
                     write(*,*) '******************************************************'
-                    write(*,*) '*                    FATAL ERROR                     *'
+                    write(*,*) '*          USER CONFIGURATION ERROR                  *'
                     write(*,*) '* The SWMM input file does not include any links.    *'
                     write(*,*) '* The SWMM5+ code requires at least one link to run. *'
                     write(*,*) '* This run was stopped without any output.           *'
@@ -2362,7 +2362,7 @@ contains
                                         !% --- use the downstream JM
                                         elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
                                     case default
-                                        print *, 'USER CONFIGURATION ERROR: a subcatchment input was defined'
+                                        print *, 'USER CONFIGURATION ERROR a subcatchment input was defined'
                                         print *, 'to a node without storage, which is an nJ2 face.'
                                         print *, 'The upstream and downstream elements from the face'
                                         print *, 'are diagnostic elements, which cannot take a subcatchment'
@@ -2397,7 +2397,7 @@ contains
                                     !% --- use the associated JM element
                                     elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
                                 case default
-                                    print *, 'USER CONFIGURATION ERROR: a subcatchment input was defined'
+                                    print *, 'USER CONFIGURATION ERROR a subcatchment input was defined'
                                     print *, 'to an upstream (inflow) BC node but the downstream'
                                     print *, 'elements from the node are diagnostic elements, which' 
                                     print *, 'cannot take a subcatchment inflow.'
@@ -2431,7 +2431,7 @@ contains
                                     !% --- use the associated JM element
                                     elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
                                 case default
-                                    print *, 'USER CONFIGURATION ERROR: a subcatchment input was defined'
+                                    print *, 'USER CONFIGURATION ERROR a subcatchment input was defined'
                                     print *, 'to an downstream (head) BC node but the upstream'
                                     print *, 'elements from the node are diagnostic elements, which' 
                                     print *, 'cannot take a subcatchment inflow.'
@@ -2453,7 +2453,7 @@ contains
 
                     case default 
                         print *, ii, nodeIdx(ii)
-                        write(*,*) 'CODE ERROR: unexpected case default in '//trim(subroutine_name)
+                        write(*,*) 'CODE ERROR unexpected case default in '//trim(subroutine_name)
                         print *, 'node index ',nodeIdx(ii)
                         print *, 'ID ', trim(node%Names(nodeIdx(ii))%str)
                         print *, 'Node Type # of ',nodeType(nodeIdx(ii))
@@ -2883,11 +2883,11 @@ contains
                 !% save the position of the boundary array index in the faceI array
                 faceI(fIdx,fi_BoundaryElem_uL) = ii
             else if (faceYN(fIdx,fYN_isUpGhost) .and. faceYN(fIdx,fYN_isDnGhost)) then
-                print *, 'CODE ERROR' 
+                print *, 'CODE ERROR unexpected else' 
                 print *, 'Unexpected ELSE IF condition for single element with two shared faces'
                 call util_crashpoint(914744)
             else
-                print *, 'CODE ERROR' 
+                print *, 'CODE ERROR unexpected else' 
                 print *, 'Unexpected ELSE condition for shared faces'
                 call util_crashpoint(54673)
             end if
@@ -3196,7 +3196,7 @@ contains
             .and. (temperature .le. 70.d0)   ) then
                 viscosity = util_kinematic_viscosity_from_temperature(temperature)
         else
-            print *, 'USER CONFIGURATION ERROR:'
+            print *, 'USER CONFIGURATION ERROR water temperature'
             print *, 'Water temperature outside valid range of -8C < T < 70 C,'
             print *, 'which is the valid range for computation of viscosity'
             print *, 'Value in setting.Constant.water_temperature is ',temperature
@@ -3232,7 +3232,7 @@ contains
                 !% --- inconsistent between using force main and
                 !%     setting all to closed conduits
                 if (this_image() == 1) then
-                    print *, 'USER CONFIGURATION ERROR: Inconsistency in settings.'
+                    print *, 'USER CONFIGURATION ERROR Inconsistency in settings.'
                     print *, 'setting.Solver.ForceMain.AllowForceMainTF is false '
                     print *, 'setting.Solver.ForceMain.FMallClosedConduitsTF is true.'
                     print *, 'If you want to use Force main with all closed conduits then set '

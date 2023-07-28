@@ -72,7 +72,7 @@ contains
         delta  = oneR / real(nItems-oneI,8)
 
         if (yValue > table(nItems)) then 
-            print *, 'CODE OR CONFIGURATION ERROR:'
+            print *, 'CODE ERROR OR USER CONFIGURATION ERROR in table'
             print *, 'yValue input into xsect_find_x_matching_y is larger than'
             print *, 'the maximum value in the table. This may be a failure to'
             print *, 'normalize the input.'
@@ -117,7 +117,7 @@ contains
                             !% -- guess is smaller than value
                             yAdj = xsect_table_lookup_singular(xGuess+dx,table)
                             if (yAdj == yValue) then 
-                                print *, 'CODE ERROR: unexpected result in table interpolation'
+                                print *, 'CODE ERROR unexpected result in table interpolation'
                                 call util_crashpoint(698732)
                             end if
                             if (yAdj == yValue) then 
@@ -136,7 +136,7 @@ contains
                             !% --- guess is larger than value
                             yAdj = xsect_table_lookup_singular(xGuess-dx,table)
                             if (yAdj == yValue) then 
-                                print *, 'CODE ERROR: unexpected result in table interpolation'
+                                print *, 'CODE ERROR unexpected result in table interpolation'
                                 call util_crashpoint(698733)
                             end if
                             if (yAdj == yValue) then 
@@ -170,8 +170,7 @@ contains
         end do
 
         if (.not. isfinished) then 
-            print *, 'CODE ERROR:'
-            print *, 'failed to find interpolated value from table'
+            print *, 'CODE ERROR failed to find interpolated value from table'
             call util_crashpoint(3395872)
         end if
 
@@ -420,18 +419,18 @@ contains
             if (isFirstCall) then
                 !% --- check the table sizes
                 if (nItems .le. 2) then
-                    print *, 'CODE OR INPUT ERROR: table size of at least 3 is required'
+                    print *, 'CODE ERROR OR USER CONFIGURATION ERROR table size of at least 3 is required'
                     call util_crashpoint(443823)
                 end if
                 if (size(tableIn) .ne. size(tableOut)) then
-                    print *, 'CODE ERROR: mismatch in table sizes in ',trim(subroutine_name)
+                    print *, 'CODE ERROR mismatch in table sizes in ',trim(subroutine_name)
                     call util_crashpoint(223874)
                     return
                 end if        
                 !% --- check that tableIn index is uniformly increasing
                 do ii=1,nItems-1    
                     if ((tableIn(ii+1) - tableIn(ii)).le. zeroR) then
-                        print *, 'CODE ERROR: table input is not uniformly increasing'
+                        print *, 'CODE ERROR table input is not uniformly increasing'
                         call util_crashpoint(442873)
                         return
                     end if

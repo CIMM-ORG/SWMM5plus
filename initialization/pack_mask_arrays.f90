@@ -2000,8 +2000,7 @@ contains
                 end if
                 
             case default 
-                print *, 'CODE ERROR:'
-                print *, 'unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(5598723)
         end select
 
@@ -2675,7 +2674,7 @@ contains
                             !% --- not a down ghoste
                         end if
                     else 
-                        print *, 'CODE ERROR: unexpected else'
+                        print *, 'CODE ERROR unexpected else'
                         call util_crashpoint(340112)
                     end if
                 end do
@@ -2733,7 +2732,7 @@ contains
                             !% --- not a down ghost
                         end if
                     else 
-                        print *, 'CODE ERROR: unexpected else'
+                        print *, 'CODE ERROR unexpected else'
                         call util_crashpoint(62098711)
                     end if
                 end do
@@ -2790,7 +2789,7 @@ contains
                             !% --- not a down ghost
                         end if
                     else 
-                        print *, 'CODE ERROR: unexpected else'
+                        print *, 'CODE ERROR unexpected else'
                         call util_crashpoint(510987)
                     end if
                 end do
@@ -3006,7 +3005,7 @@ contains
                     !% --- no zero depth element found
                     end if
                 else 
-                    print *, 'CODE ERROR: unexpected else'
+                    print *, 'CODE ERROR unexpected else'
                     call util_crashpoint(798723)
                 end if
             
@@ -3117,7 +3116,7 @@ contains
                     !% --- no zero depth element found
                     end if
                 else 
-                    print *, 'CODE ERROR: unexpected else'
+                    print *, 'CODE ERROR unexpected else'
                     call util_crashpoint(798723)
                 end if
             end do

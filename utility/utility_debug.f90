@@ -144,7 +144,7 @@ contains
 
     else
 
-       print *, "ERROR, INCORRECT NUMVER OF FACES ON IMAGE ::", this_image()
+       print *, "CODE ERROR, INCORRECT NUMBER OF FACES ON IMAGE ::", this_image()
        print *, "total_faces = ", total_faces
        print *, "N_face(this_image()) =", N_face(this_image())
     end if

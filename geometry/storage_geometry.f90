@@ -335,7 +335,7 @@ module storage_geometry
                 outvalue = storage_functional_volume_from_depth_singular(idx, indepth)
 
             case default
-                print *, 'CODE ERROR: unexpected case default for storage '
+                print *, 'CODE ERROR unexpected case default for storage '
                 print *, 'problem in (elemSI(idx,esi_JunctionMain_Type) '
                 print *, 'element index (idx)= ',idx
                 print *, 'junction main type of ',(elemSI(idx,esi_JunctionMain_Type))

@@ -304,7 +304,7 @@ module culvert_elements
                 case (custom)
                     !Atable => A
                     !Ttable => T
-                    print *, 'CODE ERROR: Custom conduit cross sections not completed'
+                    print *, 'CODE ERROR Custom conduit cross sections not completed'
                     call util_crashpoint(6229873)
 
                 case (eggshaped)
@@ -336,7 +336,7 @@ module culvert_elements
                     Ttable => TVertEllip
 
                 case default
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     call util_crashpoint(7298733)
                 end select
 
@@ -366,7 +366,7 @@ module culvert_elements
                 Ttable => TCirc  !% Dummy to prevent unallcoated pointer
 
             case default
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(6098723)
 
         end select
@@ -656,7 +656,7 @@ module culvert_elements
         if ( resid(1) * resid(2) > zeroR ) then 
             outvalue = nullvalueR  !% failure
             print *, resid(1), resid(2)
-            print *, 'CODE ERROR: failure of residual constraint in culvert_Psi_unsubmerged_form1 '
+            print *, 'CODE ERROR failure of residual constraint in culvert_Psi_unsubmerged_form1 '
             call util_crashpoint(62987662)
         end if
 
@@ -712,7 +712,7 @@ module culvert_elements
             else
                 !% FAILURE -- should not reach this point
                 outvalue = nullvalueR ! 
-                print *, 'CODE ERROR: diverging solution in culvert'
+                print *, 'CODE ERROR diverging solution in culvert'
                 call util_crashpoint(598734)
             end if
 
@@ -727,7 +727,7 @@ module culvert_elements
             elseif ((abs(Psi(1)- Psi(2)) > Delta)) then
                 !% FAILURE -- diverging solution
                 outvalue = nullvalueR
-                print *, 'CODE ERROR: Diverging solution in culvert'
+                print *, 'CODE ERROR Diverging solution in culvert'
                 call util_crashpoint(7798743)
             else 
                 Delta = abs(Psi(1) - Psi(2))
@@ -804,7 +804,7 @@ module culvert_elements
                         outvalue = sqrt( grav * (Avalue**3) / Tvalue )
 
                     case default
-                        print *, 'CODE ERROR: unexpected case default'
+                        print *, 'CODE ERROR unexpected case default'
                         call util_crashpoint(5098723)
                     end select
                 end if
@@ -814,7 +814,7 @@ module culvert_elements
                 outvalue = culvert_QIC_unsubmerged_form2 (eIn, Dinlet)
 
             case default     
-                print *, 'CODE ERROR: unexpected default case'  
+                print *, 'CODE ERROR unexpected default case'  
                 call util_crashpoint(598723) 
         end select
 
@@ -931,7 +931,7 @@ end function culvert_QIC_transition
                     Omega = Atemp / Ttemp
 
                 case default
-                    print *, 'CODE ERROR: Unexpected case default'
+                    print *, 'CODE ERROR Unexpected case default'
                     call util_crashpoint(55098723)
             end select
         end if

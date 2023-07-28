@@ -174,7 +174,7 @@ contains
                         partition_threshold, max_weight, ideal_exists)
 
                 else
-                    print *, 'CODE ERROR'
+                    print *, 'CODE ERROR in BIPquick'
                     print*, "Something has gone wrong in BIPquick Case 3, there is no ideal or spanning link"
                     print*, "Suggestion: Use a different number of processors"
                     call util_crashpoint(233874)
@@ -1185,7 +1185,7 @@ contains
         B_nodeR(effective_root, totalweight) - total_clipped_weight
 
         if ( total_clipped_weight <= zeroR ) then
-            print*, "CODE ERROR: BIPquick Case 3: Haven't removed any weight"
+            print*, "CODE ERROR BIPquick Case 3: Haven't removed any weight"
             call util_crashpoint(557324)
         end if
 

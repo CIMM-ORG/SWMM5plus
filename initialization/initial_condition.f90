@@ -713,7 +713,7 @@ contains
         !% --- error checking, the upstream should be the first element in the pack
         firstidx = findloc(elemI(pElem,ei_link_Pos),1)
         if (firstidx(1) .ne. 1) then
-            print *, 'CODE ERROR'
+            print *, 'CODE ERROR in link ordering'
             print *, 'Possible problem in element ordering in a link'
             print *, 'error with link ',trim(link%Names(thisLink)%str)
             print *, elemI(pElem,ei_link_Pos)
@@ -777,30 +777,37 @@ contains
 
         elseif ((DepthDn > setting%ZeroValue%Depth) .and. &
                 (DepthUp .le. setting%ZeroValue%Depth)) then
-            !% --- downstream depth provides uniform head over the entire link
-            if (HeadDn .le. zLinkUp) then 
-                eHead(pElem) = HeadDn
-                eDepth(pElem) = eHead(pElem) - eZbottom(pElem)
-            else
-                !% --- implied reverse gradient is not allowed
-                print *, '!==============================================!'
-                print *, '! Inconsistent free surface initial conditions !'
-                print *, '!==============================================!'
-                print *, 'for link:            ',trim(link%Names(thisLink)%str) 
-                print *, 'with upstream node:  ',trim(node%Names(nup)%str)
-                print *, 'and downstream node: ',trim(node%Names(ndn)%str)
-                print *, 'Depth at upstream node has negative free surface gradient'
-                print *, 'to downstream node. This would cause a backwards wave'
-                print *, 'surge at the start, which is not allowed by SWMM5+.'
-                print *, 'Increasing the upstream node depth is required. Note that'
-                print *, 'fixing this node may cause further upstream nodes to  '
-                print *, 'violate this initial condition. Each upstream node initial'
-                print *, 'depth must be adjusted to ensure the initial water surface'
-                print *, 'gradient is flat or in the downstream direction.'
-                print *, 'Min depth for this Upstream Node: ',HeadDn - zLinkUp,' meters'
-                print *, 'or ',(HeadDn - zLinkUp)*3.28084d0,'feet'
-                print *, ' '
-                call util_crashpoint(40187339)
+            !% --- downstream depth provides uniform head over the entire link   
+            eHead(pElem) = HeadDn
+            eDepth(pElem) = eHead(pElem) - eZbottom(pElem)
+
+            !% --- check for reverse gradient conditions
+            if (.not. setting.Simulation.AllowReverseGradientInitialConditionsTF) then
+                if (HeadDn > zLinkUp) then 
+           
+                    !% --- implied reverse gradient is not allowed
+                    print *, '!=================================================!'
+                    print *, '! USER CONFIGURATION ERROR for initial conditions !'
+                    print *, '! Inconsistent free surface                       !'
+                    print *, '!=================================================!'
+                    print *, 'for link:            ',trim(link%Names(thisLink)%str) 
+                    print *, 'with upstream node:  ',trim(node%Names(nup)%str)
+                    print *, 'and downstream node: ',trim(node%Names(ndn)%str)
+                    print *, 'Depth at upstream node has negative free surface gradient'
+                    print *, 'to downstream node. This would cause a backwards wave'
+                    print *, 'surge at the start, which is not allowed by SWMM5+.'
+                    print *, 'Increasing the upstream node depth is required. Note that'
+                    print *, 'fixing this node may cause further upstream nodes to  '
+                    print *, 'violate this initial condition. Each upstream node initial'
+                    print *, 'depth must be adjusted to ensure the initial water surface'
+                    print *, 'gradient is flat or in the downstream direction.'
+                    print *, 'Min depth for this Upstream Node: ',HeadDn - zLinkUp,' meters'
+                    print *, 'or ',(HeadDn - zLinkUp)*3.28084d0,'feet'
+                    print *, ' '
+                    call util_crashpoint(40187339)
+                else 
+                    !% --- OK, no action
+                end if
             end if
 
         elseif ((DepthDn .le. setting%ZeroValue%Depth) .and. &
@@ -809,7 +816,7 @@ contains
             eDepth(pElem) = setting%ZeroValue%Depth  * 0.99d0 
             eHead (pElem) = eZBottom(pElem) + setting%ZeroValue%Depth  * 0.99d0        
         else 
-            print *, 'CODE ERROR: unexpected else.'
+            print *, 'CODE ERROR unexpected else.'
             print *, 'code should not have reached this point'
             call util_crashpoint(8898723)
         end if
@@ -867,7 +874,7 @@ contains
             
         !     case default
         !         print *, 'In ', subroutine_name
-        !         print *, 'CODE ERROR: unexpected initial depth type #', LdepthType,'  in link, ', thisLink
+        !         print *, 'CODE ERROR unexpected initial depth type #', LdepthType,'  in link, ', thisLink
         !         print *, 'which has key ',trim(reverseKey(LdepthType)) 
         !         !stop 
         !         call util_crashpoint(83753)
@@ -1039,7 +1046,7 @@ contains
 
             case default
                 print *, 'in ', trim(subroutine_name)
-                print *, 'CODE ERROR: unexpected link type, ', linkType,'  in the network'
+                print *, 'CODE ERROR unexpected link type, ', linkType,'  in the network'
                 if ((linkType > 0) .and. (linkType < size(reverseKey))) then
                     print *, 'which has key number ',trim(reverseKey(linkType))
                 else 
@@ -1171,7 +1178,7 @@ contains
                 elemSI(firstE:lastE,esi_Conduit_Forcemain_Method) = DarcyWeisbach
                 elemSR(firstE:lastE,esr_Conduit_ForceMain_Coef)   = setting%Solver%ForceMain%Default_DarcyWeisbach_roughness_mm
             case default 
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(7729873)
             end select
         end if
@@ -1183,7 +1190,7 @@ contains
             if (elemSI(firstE,esi_Conduit_Forcemain_Method) .eq. HazenWilliams) then 
                 !% --- for Hazen Williams Force main
                 if (elemSR(firstE,esr_Conduit_ForceMain_Coef) < 90.0) then
-                    print *, 'USER CONFIGURATION ERROR: Force Main Coefficients'
+                    print *, 'USER CONFIGURATION ERROR Force Main Coefficients'
                     print *, 'The Hazen-Williams equation for Force Mains is invoked '
                     print *, '   however the HW roughness coefficient seems small for'
                     print *, '   an HW solution.' 
@@ -1200,7 +1207,7 @@ contains
             else
                 !% --- for Darcy-Weisbach Force Main
                 if (elemSR(firstE,esr_Conduit_ForceMain_Coef)*1000.d0 > 60) then 
-                    print *, 'USER CONFIGURATION ERROR: Force Main Coefficients'
+                    print *, 'USER CONFIGURATION ERROR Force Main Coefficients'
                     print *, 'The Darcy-Weisbach equation for Force Mains is invoked '
                     print *, '   however the DW roughness coefficient seems large for'
                     print *, '   a DW solution.' 
@@ -1252,7 +1259,7 @@ contains
                 (link%I(thislink,li_culvertCode) <= NculvertTypes)) then
             elemYN(firstE:lastE,eYN_isCulvert) = .true.
         else
-            print *, 'USER CONFIGURATION ERROR'
+            print *, 'USER CONFIGURATION ERROR in culverts'
             print *, 'Culvert Code found with value of ',link%I(thisLink,li_culvertCode)
             print *, 'for link # ',thisLink
             print *, 'which is the link named ',trim(link%Names(thisLink)%str)
@@ -1293,7 +1300,7 @@ contains
             elseif (culvertValue(thisC,1) == 2.d0) then   
                 elemSI(firstE:lastE,esi_Conduit_Culvert_EquationForm) = twoI
             else 
-                print *, 'CODE ERROR: unexpected else'
+                print *, 'CODE ERROR unexpected else'
                 call util_crashpoint(739874)
             end if
 
@@ -1306,7 +1313,7 @@ contains
 
         else 
             !% --- error: culvert not allowed for non-conduit elements
-            print *, 'USER CONFIGURATION ERROR'
+            print *, 'USER CONFIGURATION ERROR in culverts'
             print *, 'A culvert code has been found for a link that'
             print *, 'is not a closed conduit.  Only closed conduits'
             print *, 'can be culverts'
@@ -1365,7 +1372,7 @@ contains
 
             case (lOutlet)
                 !% get geometry data for link outlets
-                ! print *, 'CODE ERROR:  an outlet link in the SWMM input file was found.'
+                ! print *, 'CODE ERROR  an outlet link in the SWMM input file was found.'
                 ! print *, 'This feature is not yet available in SWMM5+'
                 ! call util_crashpoint(4409872)
                 call init_IC_get_outlet_geometry (thisLink)
@@ -1373,7 +1380,7 @@ contains
             case default
 
                 print *, 'In ', subroutine_name
-                print *, 'CODE ERROR: unexpected link type, ', linkType,'  in the network'
+                print *, 'CODE ERROR unexpected link type, ', linkType,'  in the network'
                 print *, 'which has key ',trim(reverseKey(linkType))
                 call util_crashpoint(99834)
 
@@ -1497,7 +1504,7 @@ contains
             !% --- error checking
             if ((link%R(thisLink,lr_FullDepth) .le. zeroR) .or. &
                 (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in parabolic cross-section'
                 print *, 'Parabolic cross section has zero specified for Full Height or Top Width'
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -1540,7 +1547,7 @@ contains
             endwhere
 
         case (lPower_function)
-            print *, 'CODE ERROR and USER CONFIGURATION ERROR: power function cross-sections not supported in SWMM5+'
+            print *, 'CODE ERROR and USER CONFIGURATION ERROR power function cross-sections not supported in SWMM5+'
             call util_crashpoint(4589723)
 
         case (lRectangular)
@@ -1554,7 +1561,7 @@ contains
             !% --- error checking
             if ((link%R(thisLink,lr_FullDepth) .le. zeroR) .or. &
                 (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in rectangular open cross section'
                 print *, 'Rectangular open cross section has zero specified for Full Height or Top Width'
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -1612,7 +1619,7 @@ contains
                 (link%R(thisLink,lr_LeftSlope)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_RightSlope)   .le. zeroR) .or. &
                 (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in trapezoidal cross section'
                 print *, 'Trapezoidal open cross section has zero specified for Full Height,'
                 print *, 'Base Width, Left Slope, or Right Slope. Note that a base width of '
                 print *, 'zero should use a triangular cross section. Left/Right slopes of '
@@ -1664,7 +1671,7 @@ contains
             
         case (lTriangular)
 
-            print *, 'CODE ERROR AND USER CONFIGURATION ERROR'
+            print *, 'CODE ERROR AND USER CONFIGURATION ERROR in triangular open cross-section'
             print *, 'Triangular open-channel cross section to supported in SWMM5+'
             call util_crashpoint(6697843)
             return
@@ -1681,7 +1688,7 @@ contains
             !% --- error checking
             if ((link%R(thisLink,lr_FullDepth)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in triangular open cross section'
                 print *, 'Triangular open cross section has zero specified for Full Height or Top Width,'
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -1832,7 +1839,7 @@ contains
             !% --- error checking
             if ((link%R(thisLink,lr_FullDepth)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in arch cross section'
                 print *, 'Arch cross section has zero specified for Full Height or Top Width,'
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -1850,7 +1857,7 @@ contains
 
             !% --- error checking
             if ((link%R(thisLink,lr_BreadthScale) .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in baskethandle cross section'
                 print *, 'BasketHandle cross section has zero specified for Full Height'
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -1868,7 +1875,7 @@ contains
 
             !% --- error checking
             if ((link%R(thisLink,lr_FullDepth)    .le. zeroR) ) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in catenary cross section'
                 print *, 'Catenary cross section has zero specified for Full Height ,'
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -1912,7 +1919,7 @@ contains
 
             !% --- error checking
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in circular cross section'
                 print *, 'Circular cross section has zero specified for Diameter ,'
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -1922,7 +1929,7 @@ contains
             call geo_common_initialize (thisP, circular, ACirc, TCirc, RCirc, dummyA)   
          
         case (lCustom)  !% TABULAR
-            print *, 'CODE/CONFIGURATION ERROR: Custom conduit cross-sections not supported in SWMM5+'
+            print *, 'CODE ERROR AND USER CONFIGURATION ERROR Custom conduit cross-sections not supported in SWMM5+'
             call util_crashpoint(77987231)
 
         case (lEggshaped)  !% TABULAR
@@ -1934,7 +1941,7 @@ contains
 
             !% --- error checking
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in eggshaped cross section'
                 print *, 'Eggshaped cross section has zero specified for FullHeight ,'
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -1956,7 +1963,7 @@ contains
             !% --- error checking
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_BottomDepth)      <  zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in filled circular cross section'
                 print *, 'Filled circular cross section has zero specified for FullHeight '
                 print *, 'or less than zero for sediment depth,'
                 print *, 'Problem with link # ',thisLink
@@ -2065,7 +2072,7 @@ contains
 
             !% --- error checking
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in gothic cross section'
                 print *, 'Gothic cross section has zero specified for FullHeight '
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -2084,7 +2091,7 @@ contains
             !% --- error checking
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_FullDepth)       .le. zeroR) ) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in horiz ellipse cross section'
                 print *, 'Horiz Ellipse cross section has zero specified for FullHeight or Max width'
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -2102,7 +2109,7 @@ contains
 
             !% --- error checking
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in horseshoe cross section'
                 print *, 'Horseshoe cross section has zero specified for FullHeight '
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -2113,7 +2120,7 @@ contains
 
         case (lIrregular) !% ERROR
             print *, 'In ', trim(subroutine_name)
-            print *, 'USER ERROR Irregular cross-section geometry not allowed for closed conduits (open-channel only) in SWMM5+'
+            print *, 'USER CONFIGURATION ERROR Irregular cross-section geometry not allowed for closed conduits (open-channel only) in SWMM5+'
             call util_crashpoint(4409874)    
 
         case (lMod_basket)  !% ANALYTICAL
@@ -2140,7 +2147,7 @@ contains
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_BottomRadius)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_FullDepth)       .le. zeroR)  ) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in mod basket cross section'
                 print *, 'Mod Basket cross section has zero specified for FullHeight, Base width, '
                 print *, 'or Top Radius'
                 print *, 'Problem with link # ',thisLink
@@ -2161,7 +2168,7 @@ contains
                 !% --- error checking
                 if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
                     (link%R(thisLink,lr_FullDepth)       .le. zeroR)  ) then 
-                    print *, 'USER CONFIGURATION ERROR'
+                    print *, 'USER CONFIGURATION ERROR in rectangular closed cross section'
                     print *, 'Rectangular Closed cross section has zero specified for FullHeight or Top width, '
                     print *, 'Problem with link # ',thisLink
                     print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -2184,7 +2191,7 @@ contains
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_BottomRadius)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_FullDepth)       .le. zeroR)  ) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in rectangular round cross section'
                 print *, 'Rectangular Round cross section has zero specified for FullHeight or Top width, '
                 print *, 'or bottom radius.'
                 print *, 'Problem with link # ',thisLink
@@ -2218,7 +2225,7 @@ contains
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_BottomDepth)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_FullDepth)       .le. zeroR)  ) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION  in rectangular triangular cross section'
                 print *, 'Rectangular triangular cross section has zero specified for FullHeight or Top width, '
                 print *, 'or triangle height.'
                 print *, 'Problem with link # ',thisLink
@@ -2243,7 +2250,7 @@ contains
             elemR(thisP,er_DepthAtBreadthMax) = 0.19d0 * elemR(thisP,er_FullDepth)
 
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in semi circular cross section'
                 print *, 'Semi Circular cross section has zero specified for FullHeight '
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)   
@@ -2265,7 +2272,7 @@ contains
             !% --- error checking
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_FullDepth)       .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in semi elliptical cross section'
                 print *, 'Semi Elliptical cross section has zero specified for FullHeight or Max WIdth '
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -2281,7 +2288,7 @@ contains
 
             if ((link%R(thisLink,lr_BreadthScale)    .le. zeroR) .or. &
                 (link%R(thisLink,lr_FullDepth)       .le. zeroR)) then 
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR in vertical elliptical cross section'
                 print *, 'Vertical Elliptical cross section has zero specified for FullHeight or Max Width'
                 print *, 'Problem with link # ',thisLink
                 print *, 'which is named ',trim(link%Names(thisLink)%str)
@@ -2476,7 +2483,7 @@ contains
 
             case default
                 print *, 'In ', trim(subroutine_name)
-                print *, 'CODE ERROR: unknown weir type, ', specificWeirType,'  in network'
+                print *, 'CODE ERROR unknown weir type, ', specificWeirType,'  in network'
                 print *, 'which has key ',trim(reverseKey(specificWeirType)) 
                 call util_crashpoint(99834)
         end select
@@ -2540,7 +2547,7 @@ contains
                 endwhere
             case default
                 print *, 'In ', subroutine_name
-                print *, 'CODE ERROR: unknown orifice type, ', specificOrificeType,'  in network'
+                print *, 'CODE ERROR unknown orifice type, ', specificOrificeType,'  in network'
                 print *, 'which has key ',trim(reverseKey(specificOrificeType))
 
                 call util_crashpoint(8863411)
@@ -2602,7 +2609,7 @@ contains
 
             case default
                 print *, 'In ', subroutine_name
-                print *, 'CODE ERROR: unknown orifice geometry type, ', OrificeGeometryType,'  in network'
+                print *, 'CODE ERROR unknown orifice geometry type, ', OrificeGeometryType,'  in network'
                 print *, 'which has key ',trim(reverseKey(OrificeGeometryType))
                 call util_crashpoint(8345553)
         end select
@@ -2670,7 +2677,7 @@ contains
 
                 if ((elemSR(ii,esr_Pump_yOff) > elemSR(ii,esr_Pump_yOn)) &
                     .and. (elemSR(ii,esr_Pump_yOff) > zeroR)) then 
-                    print *, 'USER CONFIGURATION ERROR:'
+                    print *, 'USER CONFIGURATION ERROR for pump'
                     print *, 'depth/head at which pumps shuts off is larger than'
                     print *, 'the depth/head at which pumps turns on, which provides'
                     print *, 'illogical behavior.'
@@ -2713,7 +2720,7 @@ contains
                         elemSI(ii,esi_Pump_SpecificType) = type4_Pump
                     else
                         print *, 'In ', subroutine_name
-                        print *, 'CODE ERROR: unknown pump type, ', specificPumpType,'  in network'
+                        print *, 'CODE ERROR unknown pump type, ', specificPumpType,'  in network'
                         print *, 'which has key ',trim(reverseKey(specificPumpType))
                         call util_crashpoint(8863411)
                     end if
@@ -2782,7 +2789,7 @@ contains
                     Curve(curveID)%ElemIdx              = ii
                 else
                     print*, 'In ', subroutine_name
-                    print*, 'CODE ERROR: unknown outlet type, ', specificOutletType,'  in network'
+                    print*, 'CODE ERROR unknown outlet type, ', specificOutletType,'  in network'
                     print *, 'which has key ',trim(reverseKey(specificOutletType))
                     call util_crashpoint(82564)
                 end if
@@ -2826,7 +2833,7 @@ contains
                 geoType = rectangular_closed
                 canSurcharge = .true.
             case default
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(5582366)
         end select    
 
@@ -2930,8 +2937,8 @@ contains
                     !%     for pumps, but fail for outlets
                     if (elemI(thisP,ei_elementType) == outlet) then
                         !% --- outlets are required to have upstream CC
-                        print *, 'USER CONFIGURATION ERROR'
-                        print *, 'An outlet requires at least one upstream link that is a'
+                        print *, 'USER CONFIGURATION ERROR for outlet'
+                        print *, 'An outlet requires exactly one upstream link that is a'
                         print *, 'conduit or channel. This condition violated for'
                         print *, 'outlet with name ',trim(link%Names(linkIdx)%str)
                         call util_crashpoint(92873)
@@ -2942,7 +2949,7 @@ contains
                     (elemI(Aidx,ei_elementType)[Ci] == JB)      ) then
                     call init_IC_set_implied_geometry (thisP, Aidx, Ci) 
                 else
-                    print *, 'CODE ERROR, unexpected else'
+                    print *, 'CODE ERROR unexpected else'
                     print *, 'Diagnostic geometry adjacent to element that is not CC OR JB'
                     print *, 'This situation should not occur'
                     call util_crashpoint(77200981)
@@ -2983,7 +2990,7 @@ contains
 
                     !     !% --- pumps do not have default channel geometry, so they must
                     !     !%     have a CC element upstream or downstream.
-                    !     print *, 'USER SYSTEM CONFIGURATION ERROR'
+                    !     print *, 'USER SYSTEM CONFIGURATION ERROR for pump'
                     !     print *, 'A pump requires at least one upstream or downstream link that is a'
                     !     print *, 'conduit or channel or junction. This condition violated for'
                     !     print *, 'pump with name ',trim(link%Names(linkIdx)%str)
@@ -3066,7 +3073,7 @@ contains
 
                     end if
                 else
-                    print *, 'CODE ERROR: unexpected else '
+                    print *, 'CODE ERROR unexpected else '
                     call util_crashpoint(99187333)
                 end if
             else 
@@ -3159,7 +3166,7 @@ contains
                         !% no action
                     end if
                 else
-                    print *, 'CODE ERROR: unexpected else '
+                    print *, 'CODE ERROR unexpected else '
                     call util_crashpoint(99187333)
                 end if
             else 
@@ -3641,7 +3648,7 @@ contains
                 !% --- no storage
                 elemSI(JMidx,esi_JunctionMain_Type)    = NoStorage
                 setting%Junction%PlanArea%AreaMinimum   = zeroR
-                print *, 'CODE ERROR: no storage junctions are not implemented'
+                print *, 'CODE ERROR no storage junctions are not implemented'
                 call util_crashpoint(66987231)
             end if
             elemI (JMidx,ei_geometryType)          = rectangular
@@ -3683,7 +3690,7 @@ contains
 
         !% --- check for initialization of surcharge extra depth
         if (node%R(thisJunctionNode,nr_OverflowHeightAboveCrown) == nullvalueR) then 
-            print *, 'ERROR: Surcharge Extra Depth at a junction not initialized'
+            print *, 'CODE ERROR Surcharge Extra Depth at a junction not initialized'
             print *, 'This should not happen! Likely problem forinitialization code'
             call util_crashpoint(8838723)
         end if
@@ -3959,14 +3966,14 @@ contains
 
                 case (undefinedKey)
                     print *, 'in ',trim(subroutine_name)
-                    print *, 'CODE ERROR: undefinedKey for ei_geometryType for junction'
+                    print *, 'CODE ERROR undefinedKey for ei_geometryType for junction'
                     print *, 'at JBidx ',JBidx
                     print * , ' '
                     call util_crashpoint (23374)
 
                 case default
                     print *, 'in ',trim(subroutine_name)
-                    print *, 'CODE ERROR: unknown geometry type ',elemI(JBidx,ei_geometryType)
+                    print *, 'CODE ERROR unknown geometry type ',elemI(JBidx,ei_geometryType)
                     print *, 'which has key ',trim(reverseKey(elemI(JBidx,ei_geometryType)))
                     call util_crashpoint (4473)
 
@@ -4028,7 +4035,7 @@ contains
         !% --- get junction geometry
         select case (JmType)
             case (NoStorage)
-                print *, 'CODE ERROR: junction type NoStorage not supported'
+                print *, 'CODE ERROR junction type NoStorage not supported'
                 call util_crashpoint(62098734)
 
             case (ImpliedStorage)
@@ -4070,7 +4077,7 @@ contains
                 elemR (JMidx,er_Area)               = elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area))
              
             case default 
-                print *, 'CODE ERROR: Unexpected case default'
+                print *, 'CODE ERROR Unexpected case default'
                 call util_crashpoint(6098734)
         end select
 
@@ -4224,7 +4231,7 @@ contains
 
         !% --- check for error remaining:
         if ((Ci == nullvalueI) .or. (Aidx == nullvalueI)) then
-            print *, 'USER CONFIGURATION ERROR'
+            print *, 'USER CONFIGURATION ERROR for junction'
             print *, 'located at node index ',thisJunctionNode,' named: ',trim(node%Names(thisJunctionNode)%str)
             if (isupstream) then 
                 print *, 'with the upstream link index   ',adjLink,' named: ',trim(link%Names(adjLink)%str)
@@ -4701,7 +4708,7 @@ contains
                 theta = radius - MomentumDepthCutoff
             end where
             if (any(theta < zeroR)) then
-                print *, 'FATAL ERROR'
+                print *, 'CODE ERROR for small volume'
                 print *, 'Small Volume depth cutoff ',MomentumDepthCutoff
                 print *, 'is larger or equal to radius of the smallest pipe '
                 print *, 'Small Volume depth cutoff must be smaller than the radius.'
@@ -4775,7 +4782,7 @@ contains
         tPack(:,1) = zeroI
         npack = count(geoType == power_function)
         if (npack > 0) then
-            print *, 'CODE ERROR: power function not completed'
+            print *, 'CODE ERROR power function not completed'
             call util_crashpoint(66987232)
             tPack(1:npack,1) = pack(eIdx,geoType == power_function)
             !smallvolume(tPack(1:npack)) = llgeo_powerfunction_area_from_depth_pure(tPack(1:npack)) * length(tPack(1:npack))
@@ -4884,7 +4891,7 @@ contains
         npack = count(geoType == custom)
         if (npack > 0) then
             tPack(1:npack,1) = pack(eIdx,geoType == custom)
-            print *, 'CODE ERROR: custom conduit not supported'
+            print *, 'CODE ERROR custom conduit not supported'
             call util_crashpoint(6298738)
         end if
 
@@ -5241,7 +5248,7 @@ contains
                         case (nJ1)
                             !% --- dead end without BCup
                             BC%flowI(ii, bi_category) = BClat
-                            print *, 'CODE ERROR:'
+                            print *, 'CODE ERROR for BC'
                             print *, 'CODE NEEDS TESTING: BClat inflow for dead-end nJ1 node has not been tested'
                             call util_crashpoint(5586688)
                         case (nJ2) 
@@ -5273,7 +5280,7 @@ contains
                     end if
 
                 else
-                    print *, "CODE ERROR: unexpected else."
+                    print *, "CODE ERROR unexpected else."
                     print *, "Only nodes with extInflow or dwfInflow can have inflow BC"
                     call util_crashpoint(826549)
 
@@ -5296,8 +5303,8 @@ contains
                     case (nBCdn)
                         BC%headI(ii, bi_category) = BCdn
                     case default
-                        print *, "USER CONFIGURATION OR POSSIBLE CODE ERROR: a head boundary condition is "
-                        print *, "designated on something other than an nBCdn node, which is not allowed"
+                        print *, "USER CONFIGURATION ERROR OR CODE ERROR for head boundary condition "
+                        print *, "Head BC is designated on something other than an nBCdn node, which is not allowed"
                         print *, "node index is ",nidx
                         print *, "node name is  ", trim(node%Names(nidx)%str) 
                         if (ntype < (keys_lastplusone-1)) then
@@ -5337,7 +5344,7 @@ contains
                         BC%headYN(ii, bYN_read_input_series) = .true.
 
                     case default
-                        print *, 'CODE ERROR: unexpected case default'
+                        print *, 'CODE ERROR unexpected case default'
                         call util_crashpoint(33875)
                 end select
 
@@ -5527,7 +5534,7 @@ contains
                     !print *, 'nonuniform area'
                 NUtype = AreaData
             case default
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(6629873)
         end select
     
@@ -5542,7 +5549,7 @@ contains
                 Utype = QcriticalData
                 utr_max = utr_QcritMax
             case default
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(3609433)
         end select
 
@@ -5555,7 +5562,7 @@ contains
         !%     Note: We ALWAYS step through in depth
         deltaDepth = uniformTableR(UT_idx,utr_DepthMax) / real(1000*(N_uniformTableData_items-1),8)
         if (deltaDepth < setting%Eps%Machine) then
-            print *, 'USER CONFIGURATION OR POSSIBLE CODE ERROR: too small of a depth step in ',trim(subroutine_name)
+            print *, 'USER CONFIGURATION OR CODE ERROR too small of a depth step in ',trim(subroutine_name)
             call util_crashpoint(71119873)
         end if
 
@@ -5594,7 +5601,7 @@ contains
                     case (QcriticalData)
                         testUvalue    = geo_Qcritical_from_depth_singular (eIdx, testDepth, zeroR)
                     case default
-                        print *, 'CODE ERROR: unexpected case default'
+                        print *, 'CODE ERROR unexpected case default'
                         call util_crashpoint(608723)
                 end select
 
@@ -5626,7 +5633,7 @@ contains
                 case (AreaData)
                     uniformTableDataR(UT_idx,jj,utd_nonU) = thisArea  / uniformTableR(UT_idx,utr_AreaMax)
                 case default
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     call util_crashpoint(2398542)
             end select
 
@@ -5639,7 +5646,7 @@ contains
                 case (QcriticalData)
                     testUvalue    = geo_Qcritical_from_depth_singular (eIdx, thisDepth, ZeroR)
                 case default
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     call util_crashpoint(79981783)
             end select
             !% --- relative error
@@ -5813,7 +5820,7 @@ contains
 
         !% --- depth zero is used as set by json file
         if (depth0 .le. onethousandR * setting%Eps%Machine) then
-            print *, 'USER CONFIGURATION ERROR: setting.ZeroValue.Depth is too small '
+            print *, 'USER CONFIGURATION ERROR setting.ZeroValue.Depth is too small '
             print *, 'selected value is   ',depth0
             print *, 'minimum required is ', onethousandR * setting%Eps%Machine
             call util_crashpoint(798523)
@@ -5822,7 +5829,7 @@ contains
 
         !% --- slope zero is used as set by json file
         if (slope0 .le. onethousandR *setting%Eps%Machine) then
-            print *, 'USER CONFIGURATION ERROR: setting.ZeroValue.Slope is too small '
+            print *, 'USER CONFIGURATION ERROR setting.ZeroValue.Slope is too small '
             print *, 'selected value is   ',slope0
             print *, 'minimum required is ', onethousandR * setting%Eps%Machine
             call util_crashpoint(7985237)
@@ -5853,7 +5860,7 @@ contains
                     !% HACK DOES NOT INCLUDE SURCHARGE VOLUME IN SLOT
                     elemR(thisP,er_Temp03) = storage_volume_from_depth_singular(thisP,depth0)
                 case default
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     print *, 'element type not handeled for type # ',elemI(thisP,ei_elementType)
                     print *, 'at element index ',thisP
                     print *, trim(reverseKey(elemI(thisP,ei_elementType)))
@@ -5991,7 +5998,7 @@ contains
             outDepth = min(thisDepth, setting%Link%OpenChannelFullDepth)
         else
             if (thisDepth .eq. nullvalueR) then 
-                print *, 'USER CONFIGURATOIN ERROR: Unexpected initialization error: '
+                print *, 'USER CONFIGURATION ERROR Unexpected initialization error: '
                 print *, 'The maximum depth in link # ',thisLink
                 print *, 'is set to the nullvalueR ',nullvalueR
                 print *, 'Problem in SWMM link name ',trim(link%Names(thisLink)%str)
@@ -6042,7 +6049,7 @@ contains
             select case (elemSI(JMidx,esi_JunctionMain_Type))
 
                 case (NoStorage)
-                    print *, 'CODE ERROR: NoStorage not implemented'
+                    print *, 'CODE ERROR NoStorage not implemented'
                     call util_crashpoint(6629873)
 
                 case (ImpliedStorage)
@@ -6074,7 +6081,7 @@ contains
                     elemSR(JMidx,esr_Storage_Plan_Area) = AreaStore    
 
                 case default 
-                    print *, 'CODE ERROR: Unexpected case default'
+                    print *, 'CODE ERROR Unexpected case default'
             end select
 
             !% --- minimum area required is a circle of diameter PondLength
@@ -6082,7 +6089,7 @@ contains
 
             if (elemSR(JMidx,esr_JunctionMain_PondedArea) < PondAreaMin) then 
                 print *, ' '
-                print *, 'USER CONFIGURATION ERROR'
+                print *, 'USER CONFIGURATION ERROR for ponded area'
                 print *, 'The user-supplied ponded area for a junction is less than required.'
                 print *, 'Junction node index is ',elemI(JMidx,ei_node_Gidx_Bipquick)
                 print *, 'Junction name is       ',trim(node%Names(elemI(JMidx,ei_node_Gidx_Bipquick))%str)
@@ -6159,7 +6166,7 @@ contains
                                     setting%ZeroValue%Topwidth)
 
                             case default 
-                                print *, 'CODE ERROR: unexpected case default'
+                                print *, 'CODE ERROR unexpected case default'
                                 call util_crashpoint(7722444)
                         end select
                         !% --- use the largest breadth connected to this junction
@@ -6234,13 +6241,13 @@ contains
                     eUp => faceI(fUp,fi_Melem_uL)
 
                     if (elemI(eUp,ei_elementType) .ne. JB) then 
-                        print *, 'CODE ERROR: upstream of a type1 pump should be JB'
+                        print *, 'CODE ERROR upstream of a type1 pump should be JB'
                         call util_crashpoint(4429873)
                     else
                         ! print *, elemSI(eUp,esi_JunctionBranch_Main_Index)
                         JMidx => elemSI(eUp,esi_JunctionBranch_Main_Index)
                         if (elemSI(JMidx,esi_JunctionMain_Type) == NoStorage) then 
-                            print *, 'USER CONFIGURATION ERROR'
+                            print *, 'USER CONFIGURATION ERROR for pump'
                             print *, 'NoStorage found for Pump Type 1 node.'
                             print *, 'Change node to tabular storage or functional storage, or '
                             print *, 'use setting%Junction%ForceStorage == true to get implied storage'

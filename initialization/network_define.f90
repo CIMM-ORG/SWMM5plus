@@ -362,7 +362,7 @@ contains
 
         !     do ii = 1,N_elem(this_image())
         !         if ((elementType(ii) == CC) .and. (elementLength(ii) < zeroR)) then
-        !             print *, 'CODE ERROR: negative element length at element ',elementIdx(ii)
+        !             print *, 'CODE ERROR negative element length at element ',elementIdx(ii)
         !             write(*,"(A,f12.3,A,f12.3)") '       element length = ', elementLength(ii)
         !             write(*,"(A,i8)")            '       This element is in SWMM link ',elemI(elementIdx(ii),ei_link_Gidx_SWMM)
         !             write(*,"(A,A)")             '       This link name is            ',trim(link%Names(elemI(elementIdx(ii),ei_link_Gidx_SWMM))%str)
@@ -392,7 +392,7 @@ contains
 
         ! case default
         !     print*, 'In, ', subroutine_name
-        !     print *, 'CODE ERROR: AdjustType unknown for # ',AdjustType 
+        !     print *, 'CODE ERROR AdjustType unknown for # ',AdjustType 
         !     print *, 'which has key ',trim(reverseKey(AdjustType))
         !     !stop 
         !     call util_crashpoint(89537)
@@ -583,7 +583,7 @@ contains
                     call init_network_map_nJ2 (image, thisJunctionNode)
 
                 case default    
-                    write(*,*) 'CODE ERROR: unexpected case default in ',trim(subroutine_name)
+                    write(*,*) 'CODE ERROR unexpected case default in ',trim(subroutine_name)
                     print *, 'Node Type # of ',nodeType
                     print *, 'which has key of ',trim(reverseKey(nodeType))
                     call util_crashpoint(39705)
@@ -641,21 +641,21 @@ contains
                     call init_network_map_shared_nJm_nodes (image, fLidx, nIdx)
                 
                 case (nBCup)
-                    write(*,*) 'CODE ERROR: Shared UP BC detected node in ',trim(subroutine_name)
+                    write(*,*) 'CODE ERROR Shared UP BC detected node in ',trim(subroutine_name)
                     print *,   'Node ', node%Names(nIdx)%str, ' which has key of ',trim(reverseKey(nodeType))
                     write(*,*) 'Shared boundary nodes are not handeled currently'
                     
                     call util_crashpoint(55937)
 
                 case (nBCdn)
-                    write(*,*) 'CODE ERROR: Shared DN BC detected node in ',trim(subroutine_name)
+                    write(*,*) 'CODE ERROR Shared DN BC detected node in ',trim(subroutine_name)
                     print *,   'Node ', node%Names(nIdx)%str, ' which has key of ',trim(reverseKey(nodeType))
                     write(*,*) 'Shared boundary nodes are not handeled currently'
                     
                     call util_crashpoint(55932)
 
                 case default    
-                    write(*,*) 'CODE ERROR: unexpected case default in ',trim(subroutine_name)
+                    write(*,*) 'CODE ERROR unexpected case default in ',trim(subroutine_name)
                     print *, 'Node Type # of ',nodeType, 'Node name ', node%Names(nIdx)%str
                     print *, 'which has key of ',trim(reverseKey(nodeType))
                     call util_crashpoint(55934)
@@ -829,7 +829,7 @@ contains
                     end if
 
                 case default    
-                    write(*,*) 'CODE ERROR: unexpected case default in ',trim(subroutine_name)
+                    write(*,*) 'CODE ERROR unexpected case default in ',trim(subroutine_name)
                     print*, 'error: node ' // node%Names(thisNode)%str // &
                             ' has an unexpected nodeType', nodeType
                     print *, 'which has key of ',trim(reverseKey(nodeType))
@@ -1173,7 +1173,7 @@ contains
 
                     print *
                     print *, 'In ', subroutine_name
-                    print *, 'CODE ERROR: node ' // node%Names(thisNode)%str // &
+                    print *, 'CODE ERROR at node ' // node%Names(thisNode)%str // &
                             ' has an unexpected nodeType', nodeType
                     call util_crashpoint(398704)
 
@@ -1482,7 +1482,7 @@ contains
                     end if
 
                 case default
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     print *, 'unsupported value for mod(ii,2) of ',mod(ii,2)
                     call util_crashpoint(65874)
             end select
@@ -1622,7 +1622,7 @@ contains
                         end if
 
                     case default
-                        print *, 'CODE ERROR: unexpected case default'
+                        print *, 'CODE ERROR unexpected case default'
                         print *, 'Unsupported value for mod(ii,2) of ',mod(ii,2)
                         call util_crashpoint(99374)    
                 end select

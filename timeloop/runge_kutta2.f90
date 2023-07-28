@@ -339,7 +339,7 @@ module runge_kutta2
                     faceR(thisF,fr_Flowrate_Conservative) = faceR(thisF,fr_Flowrate)
                 end if
             case default
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(8802772)
         end select
 

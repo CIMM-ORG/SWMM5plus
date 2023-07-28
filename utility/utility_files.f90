@@ -92,7 +92,7 @@ contains
                     argtype = '-i'  !% the type is the input file
                 else
                     !% --- all other arguments are in pairs beginning with a flag
-                    write(*,"(A,i3,A)") 'ERROR (USER): command line argument ',ii,' is '//argtype
+                    write(*,"(A,i3,A)") 'USER CONFIGURATION ERROR command line argument ',ii,' is '//argtype
                     write(*,"(A)") 'Expected a flag (e.g.), -i, -p, -s as the first of a pair: -flag string'
                     call util_crashpoint(2298755)
                 end if
@@ -111,12 +111,12 @@ contains
                         need2arg = .true.
                     case ('-t')  !% hard coded test cases
                         need2arg = .true.
-                        print *, 'ERROR (USER/CODE): hard coded test cases (-t option) are not available or need to be revised'
+                        print *, 'CODE ERROR  hard coded test cases (-t option) are not available or need to be revised'
                         call util_crashpoint(63897)
                     case ('-R','-v','-von','-voff','-w','-won','-woff')  ! single argument settings
                         need2arg = .false.
                     case default
-                        write(*,"(A,i3,A)") 'ERROR (USER): unknown command line argument of '//argtype
+                        write(*,"(A,i3,A)") 'USER CONFIGURATION ERROR unknown command line argument of '//argtype
                         call util_crashpoint(87895)
                 end select
             end if
@@ -126,7 +126,7 @@ contains
                 ii = ii+1
                 call getarg(ii,argstring)
                 if (argstring(:1) .eq. '-') then
-                    write(*,"(A,i3,A)") 'ERROR (USER): command line argument ',ii,' is '//argstring
+                    write(*,"(A,i3,A)") 'USER CONFIGURATION ERROR command line argument ',ii,' is '//argstring
                     write(*,"(A)") 'Expected a string (e.g.), as the second of a pair: -flag string'
                     call util_crashpoint(7210987)
                 end if
@@ -159,7 +159,7 @@ contains
                 case ('-woff')  ! setting.Verbose  off
                     setting%Output%Warning = .false.
                 case default
-                    write(*,"(A,i3,A)") 'ERROR (USER): unknown command line argument of '//argtype
+                    write(*,"(A,i3,A)") 'USER CONFIGURATION ERROR unknown command line argument of '//argtype
                     call util_crashpoint(3897483)
             end select
             ii = ii+1
@@ -197,7 +197,7 @@ contains
         ierr = getcwd(setting%File%base_folder)
 
         if (ierr /= 0) then
-            write(*,"(A,i5)") 'ERROR (SYSTEM): getcwd() call at start returned error code', ierr
+            write(*,"(A,i5)") 'CODE ERROR getcwd() call at start returned error code', ierr
             write(*,"(A)") 'Unexpected system error, location 3799812'
             call util_crashpoint(88029873)
         end if
@@ -404,7 +404,7 @@ contains
                 end do
                 !% --- if all 26 letters don't work, there's something strange going on, so stop execution.
                 if (isfolder) then
-                    write(*,"(A)") "ERROR (operational) -- code must create a unique time-stamp output folder,..."
+                    write(*,"(A)") "CODE ERROR OR USER CONFIGURATION ERROR -- code must create a unique time-stamp output folder,..."
                     write(*,"(A)") "...but folder already exists. Either delete folder or wait one minute"
                     write(*,"(A)") "...to get a unique time stamp."
                     write(*,"(A)") "...Last folder code attempted to create was..."
@@ -426,7 +426,7 @@ contains
                 cmdstat=istat, cmdmsg=cmsg)
 
             if (istat /= 0) then
-                write(*,"(A)") 'ERROR (user, code, or machine) -- attempting to make directory (mkdir)...'
+                write(*,"(A)") 'CODE ERROR OR USER CONFIGURATION ERROR -- attempting to make directory (mkdir)...'
                 write(*,"(A)") '...for storing output files in directory...'
                 write(*,"(A)") trim(setting%File%output_timestamp_subfolder)
                 write(*,"(A)") '...system returned an error message of...'
@@ -452,7 +452,7 @@ contains
             call execute_command_line (('mkdir '//trim(setting%File%output_temp_subfolder)), &
                 cmdstat=istat, cmdmsg=cmsg)
             if (istat /= 0) then
-                    write(*,"(A)") 'ERROR (user, code, or machine) -- attempting to make directory (mkdir)...'
+                    write(*,"(A)") 'CODE ERROR OR USE CONFIGURATION ERROR -- attempting to make directory (mkdir)...'
                     write(*,"(A)") '...for storing output files in directory...'
                     write(*,"(A)") trim(setting%File%output_temp_subfolder)
                     write(*,"(A)") '...system returned an error message of...'
@@ -541,7 +541,7 @@ contains
             if (createYN) then
                 call execute_command_line( ('mkdir '//trim(newfolder)) )
             else
-                print *, 'CODE ERROR: need to create the tmp file before getting filenames'
+                print *, 'CODE ERROR need to create the tmp file before getting filenames'
                 call util_crashpoint(449872)
             end if
         end if
@@ -616,7 +616,7 @@ contains
         if (num_images() > 99999) then
             !% --- the maximum number of images must be consistent with the formatting
             !%      in setting the newfilename
-            print *, 'USER/CODE ERROR: The number of images (',num_images(),') exceeds the'
+            print *, 'USER CONFIGURATION ERROR OR CODE ERROR The number of images (',num_images(),') exceeds the'
             print *, 'format size used for setting up input files. '
             print *, 'The quick fix is to limit the number of images to ',99999
             call util_crashpoint(31937)
@@ -646,7 +646,7 @@ contains
         if (project_path .eq. "") then
             ierr = getcwd(project_path)
             if (ierr /= 0) then
-                write(*,"(A,i5)") 'ERROR (SYSTEM): getcwd() call at start returned error code', ierr
+                write(*,"(A,i5)") 'CODE ERROR getcwd() call at start returned error code', ierr
                 write(*,"(A)") 'Unexpected system error, location 654632'
                 call util_crashpoint(88133387)
             end if
@@ -711,7 +711,7 @@ contains
                             write(*,"(A)") '...Likely problem is that base directory does not exist and cannot be created.'
                             write(*,"(A)") '...Folder purpose is: '//this_purpose
                             if (thisfolder(:1) == '/') then
-                                write(*,"(A)") 'ERROR (user): the directory (see WARNING above) was an absolute directory...'
+                                write(*,"(A)") 'USER CONFIGURATION ERROR the directory (see WARNING above) was an absolute directory...'
                                 write(*,"(A)") '... so code must stop here.'
                                 call util_crashpoint(559228)
                             else
@@ -720,7 +720,7 @@ contains
                         end if
                     end if
                 else
-                    write(*,"(A,i3)") 'ERROR (user):  a required folder does not exist...'
+                    write(*,"(A,i3)") 'USER CONFIGURATION ERROR  a required folder does not exist...'
                     write(*,"(A)") '... It is likely that the path does not exist and must be created by user.'
                     write(*,"(A)") '...Required folder entered as: '
                     write(*,"(A)") trim(thisfolder)
@@ -729,7 +729,7 @@ contains
                 end if
             else
                 ireturn = 2
-                write(*,"(A,i3)") 'ERROR (USER): a required folder does not exist...'
+                write(*,"(A,i3)") 'USER CONFIGURATION ERROR a required folder does not exist...'
                 write(*,"(A)") '...It is likely that the path does not exist and must be created by user.'
                 write(*,"(A)") '...Required folder entered as: '
                 write(*,"(A)") trim(thisfolder)
@@ -773,7 +773,7 @@ contains
 
         if (.not. file_exist) then
             if (ireturn == 0) then
-                write(*,"(A)") 'ERROR (USER) file not found. Path or filename may be wrong'
+                write(*,"(A)") 'USER CONFIGURATION ERROR file not found. Path or filename may be wrong'
                 write(*,"(A)") 'Looking for file '//trim(thisfilename)
                 write(*,"(A)") 'File purpose is '//trim(thispurpose)
                 write(*,"(A)") 'File should have extension '//trim(fext)

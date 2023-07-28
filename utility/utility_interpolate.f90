@@ -102,7 +102,7 @@ contains
                     !% --- interpolation: set output by interpolating towards zero
                     y = (x/x1)*y1
                 case default
-                    print *, 'CODE ERROR: unexpected case default for interpFlag for ',trim(subroutine_name)
+                    print *, 'CODE ERROR unexpected case default for interpFlag for ',trim(subroutine_name)
                     call util_crashpoint(698743)
                 end select
                 return !% output found and stored in y
@@ -144,7 +144,7 @@ contains
                         return !% output found and stored in y
                     end if
                 case default
-                    print *, 'CODE ERROR: Unexpected case default in interpFlag for ',trim(subroutine_name)
+                    print *, 'CODE ERROR Unexpected case default in interpFlag for ',trim(subroutine_name)
                     call util_crashpoint(327768)
             end select
         else
@@ -165,7 +165,7 @@ contains
                             y = util_interpolate_linear(x, x1, x2, y1, y2)
                             return !% answer found and stored in y, so exit subroutine
                         case default
-                            print *, 'CODE ERROR: Unexpected case default in interpFlag for ',trim(subroutine_name)
+                            print *, 'CODE ERROR Unexpected case default in interpFlag for ',trim(subroutine_name)
                             call util_crashpoint(6682093)
                     end select
                 end if
@@ -174,7 +174,7 @@ contains
                 y1 => curve(curveID)%ValueArray(ii,yVal_col)
             end do
             !% --- code should never reach here because we've parsed for x >= upper bound.
-            print *, 'CODE ERROR: unexpected result -- reached end of loop without finding answer'
+            print *, 'CODE ERROR unexpected result -- reached end of loop without finding answer'
             call util_crashpoint(698743)
         end if
 

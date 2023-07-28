@@ -415,7 +415,7 @@ contains
       end do
 
       if (ii /= size(link%I(:, li_idx))) then
-         print *, "ERROR:::: link%I(:,li_idx) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: link%I(:,li_idx) is not unique. This_image ::", this_image()
       else
          print *, "link%I(:,li_idx) is unique. This_image ::", this_image()
       end if
@@ -431,7 +431,7 @@ contains
       end do
 
       if (ii /= size(node%I(:, ni_idx))) then
-         print *, "ERROR:::: node%I(:,ni_idx) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: node%I(:,ni_idx) is not unique. This_image ::", this_image()
       else
          print *, "node%I(:,ni_idx) is unique. This_image ::", this_image()
       end if
@@ -448,7 +448,7 @@ contains
       end do
 
       if (ii /= n_elem(this_image())) then
-         print *, "ERROR:::: elemI(:,ei_Lidx) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: elemI(:,ei_Lidx) is not unique. This_image ::", this_image()
       else
          print *, "elemI(:,ei_Lidx) is unique. This_image ::", this_image()
       end if
@@ -464,7 +464,7 @@ contains
       end do
 
       if (ii /= n_face(this_image())) then
-         print *, "ERROR:::: faceI(:,fi_Lidx) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: faceI(:,fi_Lidx) is not unique. This_image ::", this_image()
       else
          print *, "faceI(:,fi_Lidx) is unique. This_image ::", this_image()
       end if
@@ -480,7 +480,7 @@ contains
       end do
 
       if (ii /= n_face(this_image())) then
-         print *, "ERROR:::: faceI(:,fi_Gidx) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: faceI(:,fi_Gidx) is not unique. This_image ::", this_image()
       else
          print *, "faceI(:,fi_Gidx) is unique. This_image ::", this_image()
       end if
@@ -497,7 +497,7 @@ contains
       end do
 
       if (ii /= N_elem(this_image())) then
-         print *, "ERROR:::: elemI(:,ei_Gidx) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: elemI(:,ei_Gidx) is not unique. This_image ::", this_image()
       else
          print *, "elemI(:,ei_Gidx) is unique. This_image ::", this_image()
       end if
@@ -548,7 +548,7 @@ contains
          print *, "elemP(:,ep_CCJM) is only filled with nullvalueI. This_image ::", this_image()
 
       else if (ii /= npack_elemP(ep_CCJM)) then
-         print *, "ERROR:::: elemP(:,ep_CCJM) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: elemP(:,ep_CCJM) is not unique. This_image ::", this_image()
 
       else
          print *, "elemP(:,ep_CCJM) is unique. This_image ::", this_image()
@@ -573,7 +573,7 @@ contains
          print *, "elemP(:,ep_CC) is only filled with nullvalueI. This_image ::", this_image()
 
       else if (ii /= npack_elemP(ep_CC)) then
-         print *, "ERROR:::: elemP(:,ep_CC) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: elemP(:,ep_CC) is not unique. This_image ::", this_image()
 
       else
          print *, "elemP(:,ep_CC) is unique. This_image ::", this_image()
@@ -598,7 +598,7 @@ contains
          print *, "elemP(:,ep_CC_H) is only filled with nullvalueI. This_image ::", this_image()
 
       else if (ii /= npack_elemP(ep_CC_H)) then
-         print *, "ERROR:::: elemP(:,ep_CC_H) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: elemP(:,ep_CC_H) is not unique. This_image ::", this_image()
 
       else
          print *, "elemP(:,ep_CC_H) is unique. This_image ::", this_image()
@@ -622,7 +622,7 @@ contains
          print *, "elemP(:,ep_CC_Q) is only filled with nullvalueI. This_image ::", this_image()
 
       else if (ii /= npack_elemP(ep_CC_Q)) then
-         print *, "ERROR:::: elemP(:,ep_CC_Q) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: elemP(:,ep_CC_Q) is not unique. This_image ::", this_image()
 
       else
          print *, "elemP(:,ep_CC_Q is unique. This_image ::", this_image()
@@ -646,7 +646,7 @@ contains
          print *, "elemP(:,ep_Diag) is only filled with nullvalueI. This_image ::", this_image()
 
       else if (ii /= npack_elemP(ep_Diag)) then
-         print *, "ERROR:::: elemP(:,ep_Diag) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: elemP(:,ep_Diag) is not unique. This_image ::", this_image()
 
       else
          print *, "elemP(:,ep_Diag) is unique. This_image ::", this_image()
@@ -672,7 +672,7 @@ contains
          print *, "elemPGetm(:,epg_CC_rectangular) is only filled with nullvalueI. This_image ::", this_image()
 
       else if (ii /= npack_elemPGetm(epg_CC_rectangular)) then
-         print *, "ERROR:::: elemPGetm(:,epg_CC_rectangular) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: elemPGetm(:,epg_CC_rectangular) is not unique. This_image ::", this_image()
 
       else
          print *, "elemPGetm(:,epg_CC_rectangular) is unique. This_image ::", this_image()
@@ -697,7 +697,7 @@ contains
          print *, "elemPGetm(:,epg_CC_trapezoidal) is only filled with nullvalueI. This_image ::", this_image()
 
       else if (ii /= npack_elemPGetm(epg_CC_trapezoidal)) then
-         print *, "ERROR:::: elemPGetm(:,epg_CC_trapezoidal) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: elemPGetm(:,epg_CC_trapezoidal) is not unique. This_image ::", this_image()
 
       else
          print *, "elemPGetm(:,epg_CC_trapezoidal) is unique. This_image ::", this_image()
@@ -721,7 +721,7 @@ contains
          print *, "faceP(:,fp_noBC_IorS) is only filled with nullvalueI. This_image ::", this_image()
 
       else if (ii /= npack_faceP(fp_noBC_IorS)) then
-         print *, "ERROR:::: faceP(:,fp_noBC_IorS) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: faceP(:,fp_noBC_IorS) is not unique. This_image ::", this_image()
 
       else
          print *, "faceP(:,fp_noBC_IorS) is unique. This_image ::", this_image()
@@ -745,7 +745,7 @@ contains
          print *, "faceP(:,fp_Diag_IorS) is only filled with nullvalueI. This_image ::", this_image()
 
       else if (ii /= npack_faceP(fp_Diag_IorS)) then
-         print *, "ERROR:::: faceP(:,fp_Diag_IorS) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: faceP(:,fp_Diag_IorS) is not unique. This_image ::", this_image()
 
       else
          print *, "faceP(:,fp_Diag_IorS) is unique. This_image ::", this_image()
@@ -769,7 +769,7 @@ contains
          print *, "faceP(:,fp_JumpDn_IorS) is only filled with nullvalueI. This_image ::", this_image()
 
       else if (ii /= npack_faceP(fp_JumpDn_IorS)) then
-         print *, "ERROR:::: faceP(:,fp_JumpDn_IorS) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: faceP(:,fp_JumpDn_IorS) is not unique. This_image ::", this_image()
 
       else
          print *, "faceP(:,fp_JumpDn_IorS) is unique. This_image ::", this_image()
@@ -793,7 +793,7 @@ contains
          print *, "faceP(:,fp_JumpUp_IorS) is only filled with nullvalueI. This_image ::", this_image()
 
       else if (ii /= npack_faceP(fp_JumpUp_IorS)) then
-         print *, "ERROR:::: faceP(:,fp_JumpUp_IorS) is not unique. This_image ::", this_image()
+         print *, "CODE ERROR::: faceP(:,fp_JumpUp_IorS) is not unique. This_image ::", this_image()
 
       else
          print *, "faceP(:,fp_JumpUp_IorS) is unique. This_image ::", this_image()
@@ -1063,7 +1063,7 @@ contains
          case (    eIsNan_WaveSpeed)
             elemRCol = er_WaveSpeed
          case default
-            print *, 'CODE ERROR: unexpected case value'
+            print *, 'CODE ERROR unexpected case value'
             call util_crashpoint(7288734)
       end select
 
@@ -1135,7 +1135,7 @@ contains
          case (      eIsNan_WaveSpeed)
             colIndexName = 'WaveSpeed'
          case default
-            print *, 'CODE ERROR: unexpected case value'
+            print *, 'CODE ERROR unexpected case value'
             call util_crashpoint(7288734)
       end select
 
@@ -1178,7 +1178,7 @@ end subroutine util_utest_get_elemR_indexName
          case (    fIsNan_Preissmann_Number)
             faceRCol = fr_Preissmann_Number
          case default
-            print *, 'CODE ERROR: unexpected case value'
+            print *, 'CODE ERROR unexpected case value'
             call util_crashpoint(94023)
       end select
 
@@ -1222,7 +1222,7 @@ end subroutine util_utest_get_elemR_indexName
          case (      fIsNan_Preissmann_Number)
             colIndexName = 'Preissmann_Number'
          case default
-            print *, 'CODE ERROR: unexpected case value'
+            print *, 'CODE ERROR unexpected case value'
             call util_crashpoint(6111837)
       end select
 

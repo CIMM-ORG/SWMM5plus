@@ -190,7 +190,7 @@ module junction_elements
                         + elemR(thisP(mm),er_VolumePondedTotal)
 
                 case default
-                    print *, 'CODE ERROR: unexpected case default'
+                    print *, 'CODE ERROR unexpected case default'
                     call util_crashpoint(772223)
             end select
 

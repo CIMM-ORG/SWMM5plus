@@ -942,7 +942,7 @@ contains
        
         if ((N_link == 200) .AND. (N_node == 200)) then
             print *, '********************************************************************'
-            print *, '*                        FATAL ERROR                               *'
+            print *, '*                   USER CONFIGURATION ERROR                       *'
             print *, '* The EPA SWMM code has detected a parse error for the *.inp file. *'
             print *, '* Something appears to be misalligned or missing. This might be    *'
             print *, '* connections between nodes and links that are missing or not      *'
@@ -1455,7 +1455,7 @@ contains
 
                 case default
                     print *, 'in ',trim(subroutine_name)
-                    print *, 'CODE ERROR: this case default that should not be reached'
+                    print *, 'CODE ERROR this case default that should not be reached'
                     print *, 'Link index of ',link_idx
                     print *, 'input attr of ',attr, reverseKey_api(attr)
                     print *, 'unknown link value',ilink_value
@@ -1474,7 +1474,7 @@ contains
       
         elseif (  attr == api_linkf_typeBreak  ) then
             !% --- this should never be called
-            print *, "CODE ERROR: unexpected link attribute value", attr
+            print *, "CODE ERROR unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(98273)        
 
@@ -1732,7 +1732,7 @@ contains
                     end select
 
                 case (API_POWERFUNC)
-                    print *, 'CODE ERROR: API_POWERFUNC geometry not handled yet'
+                    print *, 'CODE ERROR API_POWERFUNC geometry not handled yet'
                     call util_crashpoint(398472)
                     select case (attr)
                         case (api_linkf_geometry)
@@ -2213,7 +2213,7 @@ contains
                     end select
 
                 case (API_CUSTOM)
-                    print *, 'CODE ERROR: API_CUSTOM geometry not handled yet'
+                    print *, 'CODE ERROR API_CUSTOM geometry not handled yet'
                     call util_crashpoint(298733)
                     select case (attr)
                         case (api_linkf_geometry)
@@ -2274,7 +2274,7 @@ contains
           
         else
             !% t--- his should never be reached
-            print *, "CODE ERROR: unexpected link attribute value", attr
+            print *, "CODE ERROR unexpected link attribute value", attr
             print *, trim(reverseKey_api(attr)) 
             call util_crashpoint(878293)    
         
@@ -2515,7 +2515,7 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
         if ((table_idx > setting%SWMMinput%N_curve) .or. (table_idx < 1)) then
-            print *, "CODE ERROR: unexpected table index value", table_idx
+            print *, "CODE ERROR unexpected table index value", table_idx
             call util_crashpoint( 835551)
         end if
 
@@ -2904,7 +2904,7 @@ contains
         select case (BC%headI(bc_idx, bi_subcategory))  
             case (BCH_fixed, BCH_normal, BCH_free) 
                 !% --- these cases should not be here!
-                print *, 'CODE ERROR: unexpected boundary condition case'
+                print *, 'CODE ERROR unexpected boundary condition case'
                 call util_crashpoint(609874)
                 return
             case (BCH_tseries)
@@ -2944,11 +2944,11 @@ contains
                     tnext = setting%Time%End
                 end if
             case (BCH_tidal)
-                print *, 'CODE ERROR: tidal outfall not yet handled'
+                print *, 'CODE ERROR tidal outfall not yet handled'
                 call util_crashpoint(446929)
             case default
                 print *, BC%headI(bc_idx, bi_subcategory), trim(reverseKey(BC%headI(bc_idx, bi_subcategory)))
-                print *, 'CODE ERROR: unexpected case default'
+                print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(44822)
         end select
 
@@ -4386,7 +4386,7 @@ contains
             write(*,*)
             write(*,*)
             write(*,*) "************************************************************"
-            write(*,*) "*   EPA-SWMM USER INPUT FATAL ERROR, SIMULATION STOPPED    *"
+            write(*,*) "*   EPA-SWMM USER CONFIGURATION ERROR, SIMULATION STOPPED  *"
             write(*,*) "************************************************************"
             write(*,*) "EPA-SWMM Error Code: ", error
             write(*,*) "Failure occurred in subroutine: "// trim(subroutine_name)

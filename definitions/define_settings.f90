@@ -75,9 +75,9 @@ module define_settings
         logical :: isAreaOut                = .true.
         logical :: isDepthOut               = .true.
         logical :: isFlowrateOut            = .true.
-        logical :: isFlowrateAvgOut         = .true. 
+        logical :: isFlowrateAvgOut         = .false. 
         logical :: isFluxConsOut            = .false.
-        logical :: isFroudeNumberOut        = .true.
+        logical :: isFroudeNumberOut        = .false.
         logical :: isHeadOut                = .true.
         logical :: isHydRadiusOut           = .false.
         logical :: isPerimeterOut           = .false.
@@ -87,7 +87,7 @@ module define_settings
         logical :: isTopWidthOut            = .false.
         logical :: isVelocityOut            = .true.
         logical :: isVolumeOut              = .true.
-        logical :: isVolumeConsOut          = .true.
+        logical :: isVolumeConsOut          = .false.
         logical :: isVolumeOverflowOut      = .true.
         logical :: isVolumePondedOut        = .true.
         logical :: isWaveSpeedOut           = .false.
@@ -563,6 +563,7 @@ module define_settings
 
     !% setting%Simulation
     type SimulationType
+        logical :: AllowReverseGradientInitialConditionsTF = .false.
         logical :: stopAfterInitializationYN = .false.
         logical :: useHydrology    = .true.
         logical :: useHydraulics   = .true.
@@ -1714,7 +1715,11 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Profile.useYN not found'
 
     !% Simulation. =====================================================================
-        !%                       useHydrology
+        !%                       AllowReverseGradientInitialConditionsTF
+        call json%get('Simulation.AllowReverseGradientInitialConditionsTF', logical_value, found)
+        if (found) setting%Simulation%AllowReverseGradientInitialConditionsTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.AllowReverseGradientInitialConditionsTF not found'
+          !%                       useHydrology
         call json%get('Simulation.useHydrology', logical_value, found)
         if (found) setting%Simulation%useHydrology = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.useHydrology not found'
