@@ -2,7 +2,7 @@ include(FetchContent)
 include(ExternalProject)
 
 cmake_minimum_required(VERSION 3.16.0)
-project(SWMM5Plus VERSION 1.0)
+project(SWMM5Plus VERSION 1.0.2)
 enable_language (Fortran)
 
 
@@ -179,19 +179,19 @@ set_target_properties(swmm5 PROPERTIES LINKER_LANGUAGE C
 CXX_STANDARD 14)
 
 
-add_executable(SWMMp
+add_executable(SWMM5p
     ${SWMM5X_SOURCES}
 )
-target_include_directories(SWMMp PUBLIC
+target_include_directories(SWMM5p PUBLIC
     ${HDF5_INCLUDE_DIR}
 )
-target_link_directories(SWMMp PUBLIC
+target_link_directories(SWMM5p PUBLIC
     ${HDF5_LIB_DIR}
 )
-target_link_libraries(SWMMp PUBLIC
+target_link_libraries(SWMM5p PUBLIC
     ${HDF5_LIBRARIES}
 )
-add_dependencies(SWMMp hdf5)
+add_dependencies(SWMM5p hdf5)
 
 #Testing
 check_python_dependencies(tornado)
@@ -208,8 +208,11 @@ endif()
 
 
 #INSTALLATION
-install(TARGETS SWMMp DESTINATION bin)
+install(TARGETS SWMM5p DESTINATION bin)
 install(TARGETS swmm5 DESTINATION lib)
 
 #cpack
+set(CPACK_PACKAGE_CONTACT "NCIMM")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "NCIMM")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "intel-hpckit")
 include(CPack)
