@@ -83,7 +83,7 @@ cwd = os.getcwd()
 time_now = str(datetime.now())
 time_now = time_now.replace(' ', '_')
 # for general comparison, use 1 processor
-num_processors = 1
+num_processors = 12
 settings_path  = ""
 
 # removes the SWMM5_C code from last comparison run and rebuilds it if needed 
@@ -181,11 +181,11 @@ os.system('cd build \n make ..')
 os.environ["FOR_COARRAY_NUM_IMAGES"] = str(num_processors)
 
 if(settings_path==""):
-    os.system('./build/SWMMp -i ' + inp_path + ' -o ' + output_dir_timestamped)
+    os.system('./build/SWMM5p -i ' + inp_path + ' -o ' + output_dir_timestamped)
 #if(using_batch_output):
 #    os.system('./SWMM -i ' + inp_path + ' -s ' + settings_path + ' -o '+ output_dir)
 else:
-    os.system('./build/SWMMp -i ' + inp_path + ' -s ' + settings_path + ' -o '+ output_dir_timestamped)
+    os.system('./build/SWMM5p -i ' + inp_path + ' -s ' + settings_path + ' -o '+ output_dir_timestamped)
 
 # locating the swmm5_plus output directory inside of the timestamped folder
 # We have to loop because when swmm5_plus runs it also names the output with a timestamped folder so we don't know it before runtime
