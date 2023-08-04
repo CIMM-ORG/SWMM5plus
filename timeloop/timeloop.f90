@@ -1239,11 +1239,11 @@ contains
                     ! write a time counter
                     if (.not. inSpinUpYN) then
                         if (dt > oneR) then
-                            write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.2,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
+                            write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.3,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
                                 'time step = ',step,'; model time = ',thistime, &
                                 ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max
                         else
-                            write(*,"(A12,i8,a17,F9.4,a1,a8,a6,f9.8,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
+                            write(*,"(A12,i8,a17,F9.2,a1,a8,a6,f9.3,a3,a8,f9.2,a11,f9.2,a13,f9.2)") &
                                 'time step = ',step,'; model time = ',thistime, &
                                 ' ',trim(timeunit),'; dt = ',dt,' s', '; cfl = ',cfl_max
                         end if

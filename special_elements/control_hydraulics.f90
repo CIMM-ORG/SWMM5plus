@@ -675,7 +675,11 @@ contains
                     location (kIdx),                             &
                     attribute(kIdx),                             &
                     thisActionLevel, rr, success,isThen)  
-                if (success) kIdx = kIdx +1  
+                    
+                !% when rr = nRules - 1 (last loop), kIdx can be become > npoint
+                !% that causes a subscript  greater than the size of  location and attribute
+                !% arrays and causes segmentation fault at the second do while loop
+                if ((success) .and. (rr < nRules-1)) kIdx = kIdx +1  
             end do    
 
             !% --- get the "else" actions

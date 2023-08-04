@@ -541,9 +541,9 @@ module preissmann_slot
             case (DynamicSlot)
 
                 !% --- initialize dynamic slot
-                dSlotVol          = zeroR
-                dSlotArea         = zeroR
-                dSlotDepth        = zeroR
+                dSlotVol(thisP)   = zeroR
+                dSlotArea(thisP)  = zeroR
+                dSlotDepth(thisP) = zeroR
 
                 !% ---find out the slot volume/ area/ and the faces that are surcharged
                 where (volume(thisP) > fullVolume(thisP))
