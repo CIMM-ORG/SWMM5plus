@@ -36,6 +36,7 @@ module face
     public :: face_interpolate_bc
     public :: face_force_JBelem_to_face
     public :: face_shared_face_sync
+    public :: face_shared_face_sync_single
 
     public :: face_flowrate_for_openclosed_elem
 
@@ -76,6 +77,7 @@ module face
         call face_zeroDepth_geometry_shared(fp_upstream)
         call face_zeroDepth_geometry_shared(fp_bothsides)
 
+        sync all
         !% --- flowrate (interior)
         call face_zeroDepth_flowrates_interior(fp_downstream)
         call face_zeroDepth_flowrates_interior(fp_upstream)
@@ -170,24 +172,39 @@ module face
                     case (weir)
                         faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Weir_Zcrest)
                         faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Weir_dQdHe)
+                        !% --- check if the elem data has either been pushed 
+                        !%     to a shared face. if so then mark that face
+                        if (faceYN(ff,fYN_isSharedFace)) then
+                            faceYN(ff,fYN_isSharedFaceDiverged) = .true.
+                        end if
                     case (orifice)
                         faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Orifice_Zcrest)
                         faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Orifice_dQdHe)
+                        !% --- check if the elem data has either been pushed 
+                        !%     to a shared face. if so then mark that face
+                        if (faceYN(ff,fYN_isSharedFace)) then
+                            faceYN(ff,fYN_isSharedFaceDiverged) = .true.
+                        end if
                     case (outlet)
                         faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Outlet_Zcrest)
                         faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Outlet_dQdHe)
+                        !% --- check if the elem data has either been pushed 
+                        !%     to a shared face. if so then mark that face
+                        if (faceYN(ff,fYN_isSharedFace)) then
+                            faceYN(ff,fYN_isSharedFaceDiverged) = .true.
+                        end if
                     case (pump)
                         faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Pump_Zcrest)
                         faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Pump_dQdHp)
+                        !% --- check if the elem data has either been pushed 
+                        !%     to a shared face. if so then mark that face
+                        if (faceYN(ff,fYN_isSharedFace)) then
+                            faceYN(ff,fYN_isSharedFaceDiverged) = .true.
+                        end if
                     case default 
                         print *, 'CODE ERROR unexpected case default'
                         call util_crashpoint(3111987)
-                end select
-                !% --- check if the elem data has either been pushed 
-                !%     to a shared face. if so then mark that face
-                if (faceYN(ff,fYN_isSharedFace)) then
-                    faceYN(ff,fYN_isSharedFaceDiverged) = .true.
-                end if
+                end select 
             end do
         end do    
 
@@ -1651,12 +1668,13 @@ module face
             integer, intent(in) :: facePcol
             integer, pointer :: npack, thisP, edn, eup, GUp, GDn, ci, Ifidx
             logical, pointer :: isGhostUp, isGhostDn
-            integer :: ii
+            integer :: ii, fGeoSet(6)
         !% -----------------------------------------------------------------
         !% Preliminaries
             npack => npack_facePS(facePCol)
             if (npack < 1) return
         !% -----------------------------------------------------------------
+        fGeoSet = [fr_Head_u,fr_Head_d,fr_Depth_u,fr_Depth_d,fr_Area_u,fr_Area_d]
 
         do ii = 1,Npack
             !%-----------------------------------------------------------------
@@ -1678,7 +1696,6 @@ module face
                         !% --- head is the smaller of the recent value or the downstream element value
                         !%     or the depth upstream applied to the face zbottom
                         faceR(thisP,fr_Head_u) = min(faceR(thisP,fr_Head_u), elemR(eup,er_Head), elemR(eup,er_Depth) + faceR(thisP,fr_Zbottom)) 
-
                         faceR(thisP,fr_Head_d) = faceR(thisP,fr_Head_u)
                         faceR(thisP,fr_Depth_u) = max(faceR(thisP,fr_Head_u) - faceR(thisP,fr_Zbottom), 0.99d0 * setting%ZeroValue%Depth)
                         faceR(thisP,fr_Depth_d) = faceR(thisP,fr_Depth_u)
@@ -1692,8 +1709,8 @@ module face
                         faceR(thisP,fr_Area_d) = faceR(thisP,fr_Area_u) 
 
                         !% --- the face values should be identical apart from the newly adjusted values
-                        !%     transfer the whole data column to the indetical array 
-                        faceR(Ifidx,:)[ci] = faceR(thisP,:)
+                        !%     transfer the geoset data column to the indetical array 
+                        faceR(Ifidx,fGeoSet)[ci] = faceR(thisP,fGeoSet)
                     
                     else 
                         !% --- no action
@@ -1719,8 +1736,8 @@ module face
                         faceR(thisP,fr_Area_u) = faceR(thisP,fr_Area_d)
 
                         !% --- the face values should be identical apart from the newly adjusted values
-                        !%     transfer the whole data column to the indetical array 
-                        faceR(Ifidx,:)[ci] = faceR(thisP,:)
+                        !%     transfer the geoset data column to the indetical array 
+                        faceR(Ifidx,fGeoSet)[ci] = faceR(thisP,fGeoSet)
                     else 
                         !% --- no action
                     end if
@@ -1839,10 +1856,12 @@ module face
             integer, intent(in) :: facePcol
             integer, pointer :: npack, thisP, edn, eup, gUp, gDn, ci, Ifidx
             logical, pointer :: isGhostUp, isGhostDn
-            integer :: ii
+            integer :: ii, fFlowSet(3)
         !% -----------------------------------------------------------------
-            npack => npack_facePS(facePCol)
-            if (npack < 1) return
+        npack => npack_facePS(facePCol)
+        if (npack < 1) return
+
+        fFlowSet = [fr_Flowrate,fr_Velocity_d,fr_Velocity_u]
         
         do ii = 1,Npack
             !%-----------------------------------------------------------------
@@ -1868,6 +1887,22 @@ module face
                         else 
                             faceR(thisP,fr_Flowrate) = zeroR
                         end if
+
+                        !% reset velocities
+                        if (faceR(thisP,fr_Area_d) > setting%ZeroValue%Area) then
+                            faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_Flowrate) /  faceR(thisP,fr_Area_d)
+                        else
+                            faceR(thisP,fr_Velocity_d) = zeroR
+                        end if
+
+                        !% reset velocities
+                        if (faceR(thisP,fr_Area_u) > setting%ZeroValue%Area) then
+                            faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_Flowrate) /  faceR(thisP,fr_Area_u)
+                        else
+                            faceR(thisP,fr_Velocity_u) = zeroR
+                        end if
+
+                        faceR(Ifidx,fFlowSet)[ci] = faceR(thisP,fFlowSet)
                     else 
                         !% --- no action
                     end if
@@ -1881,6 +1916,22 @@ module face
                         else 
                             faceR(thisP,fr_Flowrate) = zeroR
                         end if
+
+                        !% reset velocities
+                        if (faceR(thisP,fr_Area_d) > setting%ZeroValue%Area) then
+                            faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_Flowrate) /  faceR(thisP,fr_Area_d)
+                        else
+                            faceR(thisP,fr_Velocity_d) = zeroR
+                        end if
+
+                        !% reset velocities
+                        if (faceR(thisP,fr_Area_u) > setting%ZeroValue%Area) then
+                            faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_Flowrate) /  faceR(thisP,fr_Area_u)
+                        else
+                            faceR(thisP,fr_Velocity_u) = zeroR
+                        end if
+
+                        faceR(Ifidx,fFlowSet)[ci] = faceR(thisP,fFlowSet)
                     else 
                         !% --- no action
                     end if
@@ -1901,16 +1952,16 @@ module face
 !%========================================================================== 
 !%==========================================================================
 !%
-    subroutine face_shared_face_sync (facePcol)
+    subroutine face_shared_face_sync (facePcol,fColSet)
         !% -----------------------------------------------------------------
         !% Description:
         !% sync data between shared faces
         !% 
         !% -----------------------------------------------------------------
         !% Declarations
-            integer, intent(in) :: facePcol
+            integer, intent(in) :: facePcol, fColSet(:)
             integer, pointer :: npack, thisP, ci, Ifidx
-            logical, pointer :: isDiverged
+            logical, pointer :: isDiverged, isShared
             integer :: ii
         !% -----------------------------------------------------------------
         npack => npack_facePS(facePCol)
@@ -1923,14 +1974,14 @@ module face
                 ci              => faceI(thisP,fi_Connected_image)
                 Ifidx           => faceI(thisP,fi_Identical_Lidx)
                 isDiverged      => faceYN(thisP,fYN_isSharedFaceDiverged)
+                isShared        => faceYN(thisP,fYN_isSharedFace)
             !%----------------------------------------------------------
                 
             !% --- check if the shared face has been diverged
-            if (isDiverged) then
-                !% --- if the face has been diverged, copy the whole shared face 
-                !%     column in the identical face location at the connected image
-                faceR(Ifidx,:)[ci] = faceR(thisP,:)
-
+            if (isShared .and. isDiverged) then
+                !% --- if the face has been diverged, copy the shared face 
+                !%     variables from the parent image to connected image
+                faceR(Ifidx,fColSet)[ci] = faceR(thisP,fColSet)
                 !% --- after the transfer, set the divergence check to false
                 isDiverged = .false.
             end if
@@ -1950,7 +2001,7 @@ module face
         !% Declarations
             integer, intent(in) :: facePcol,col
             integer, pointer :: npack, thisP, ci, Ifidx
-            logical, pointer :: isDiverged
+            logical, pointer :: isDiverged, isShared
             integer :: ii
         !% -----------------------------------------------------------------
         npack => npack_facePS(facePCol)
@@ -1963,10 +2014,11 @@ module face
                 ci              => faceI(thisP,fi_Connected_image)
                 Ifidx           => faceI(thisP,fi_Identical_Lidx)
                 isDiverged      => faceYN(thisP,fYN_isSharedFaceDiverged)
+                isShared        => faceYN(thisP,fYN_isSharedFace)
             !%----------------------------------------------------------
                 
             !% --- check if the shared face has been diverged
-            if (isDiverged) then
+            if (isShared .and. isDiverged) then
                 !% --- if the face has been diverged, copy the whole shared face 
                 !%     column in the identical face location at the connected image
                 faceR(Ifidx,col)[ci] = faceR(thisP,col)

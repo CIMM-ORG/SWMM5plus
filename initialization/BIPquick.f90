@@ -1091,17 +1091,24 @@ contains
 
         !% --- Checks the adjacent nodes that were originally upstream of the downstream node
         upstream_node_list(:) = B_nodeI(downstream_node, :)
+
         do kk = 1, size(upstream_node_list)
+            ! !% --- If the adjacent upstream node is the upstream node from the spanning link
+            ! if ( upstream_node_list(kk) == upstream_node ) then
 
-            !% --- If the adjacent upstream node is the upstream node from the spanning link
-            if ( upstream_node_list(kk) == upstream_node ) then
+            !     !% --- Then replace it with the phantom node in B_nodeI
+            !     B_nodeI(downstream_node, kk) = phantom_node_idx
+            !     !% --- Also replace the downstream node's upstream link with the phantom link
+            !     node%I(downstream_node, ni_idx_base1 + kk) = phantom_link_idx
 
-                !% --- Then replace it with the phantom node in B_nodeI
+            !     print*, 'link connected to this node idx after', node%I(downstream_node, ni_idx_base1 + kk)
+            ! end if
+
+            if (node%I(downstream_node, ni_idx_base1 + kk) == spanning_link) then
+                !% --- Then replace it with the phantom node in B_node
                 B_nodeI(downstream_node, kk) = phantom_node_idx
-
                 !% --- Also replace the downstream node's upstream link with the phantom link
                 node%I(downstream_node, ni_idx_base1 + kk) = phantom_link_idx
-
             end if
         end do
 
@@ -1265,6 +1272,16 @@ contains
                 if ( (link_image /= node%I(ii, ni_P_image)) .and. &
                      (node%I(ii, ni_P_is_boundary) == zeroI)) then
                     node%I(ii, ni_P_is_boundary) = node%I(ii, ni_P_is_boundary) + 1
+                    print*
+                    if (ii <= setting%SWMMinput%N_node) then
+                        print*, '         boundary node ', node%names(ii)%str
+                        write(*,"(A24,i4,A11,i4)") &
+                                '         between image ',link_image,' and image ',node%I(ii, ni_P_image)
+                    else
+                        print*, '         phantom boundary node with index', ii
+                        write(*,"(A24,i4,A11,i4)") &
+                                '         between image ',link_image, ' and image ',node%I(ii, ni_P_image)
+                    end if
                 end if
 
                 !% HACK: Making sure boundary nodes are not isolated in other images

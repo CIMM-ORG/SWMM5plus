@@ -132,7 +132,7 @@ module runge_kutta2
             !%     sync all the images first. then copy over the data between
             !%     shared-identical faces. then sync all images again
             sync all
-            call face_shared_face_sync (fp_noBC_IorS)
+            call face_shared_face_sync_single (fp_Diag_IorS,fr_Flowrate)
             sync all
 
             !% --- update various packs of zeroDepth faces for changes in depths
@@ -167,7 +167,7 @@ module runge_kutta2
             !%     sync all the images first. then copy over the data between
             !%     shared-identical faces. then sync all images again
             sync all
-            call face_shared_face_sync (fp_noBC_IorS)
+            call face_shared_face_sync (fp_noBC_IorS, [fr_flowrate,fr_Velocity_d,fr_Velocity_u])
             sync all
             !% OR CAN face_flowrate_for_openclosed_elem
             !% BE MOVED UPWARDS IN STEPPING SO THAT IT GETS SYNCED?

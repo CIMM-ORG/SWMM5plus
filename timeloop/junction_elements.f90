@@ -82,7 +82,7 @@ module junction_elements
         !%     sync all the images first. then copy over the data between
         !%     shared-identical faces. then sync all images again
         sync all
-        call face_shared_face_sync (fp_noBC_IorS)
+        call face_shared_face_sync (fp_JB_IorS,[fr_Flowrate,fr_Velocity_d])
         sync all
         !% ==============================================================
 
@@ -101,10 +101,31 @@ module junction_elements
             call lljunction_push_adjacent_elemdata_to_face ()
         end if
 
+        !% ==============================================================
+        !% --- face sync
+        !%     sync all the images first. then copy over the data between
+        !%     shared-identical faces. then sync all images again
+        sync all
+        call face_shared_face_sync (fp_JB_IorS,[fr_Head_Adjacent,fr_Topwidth_Adjacent,fr_Length_Adjacent, &
+                                    fr_Zcrest_Adjacent,fr_Velocity_Adjacent,fr_Froude_Adjacent,fr_Depth_Adjacent])
+        sync all
+        !% 
+        !% ==============================================================
+
         !% --- push JB adjacent diag data to faces
         if (npack_elemP(ep_Diag_JBadjacent) > 0) then
             call face_push_diag_adjacent_data_to_face (ep_Diag_JBadjacent)
         end if
+
+         !% ==============================================================
+        !% --- face sync
+        !%     sync all the images first. then copy over the data between
+        !%     shared-identical faces. then sync all images again
+        sync all
+        call face_shared_face_sync (fp_JB_IorS,[fr_Zcrest_Adjacent,fr_dQdH_Adjacent])
+        sync all
+        !% 
+        !% ==============================================================
 
         !% --- JB ENERGY EQUATION compute flows/velocities on JB/CC outflow elements/faces from 
         !%     energy equation (does not affect JB with inflows or diagnostic adjacent )
@@ -123,7 +144,7 @@ module junction_elements
         !%     sync all the images first. then copy over the data between
         !%     shared-identical faces. then sync all images again
         sync all
-        call face_shared_face_sync (fp_noBC_IorS)
+        call face_shared_face_sync (fp_JB_IorS,[fr_Flowrate,fr_Velocity_u,fr_Velocity_d])
         sync all
         !% 
         !% ==============================================================
@@ -246,7 +267,7 @@ module junction_elements
         !%     This ensures faces between JB and adjacent element are
         !%     identical when face is shared between processors
         sync all
-        call face_shared_face_sync (fp_noBC_IorS)
+        call face_shared_face_sync (fp_JB_IorS,[fr_Flowrate,fr_DeltaQ])
         sync all
         !% 
         !% ==============================================================
@@ -272,7 +293,7 @@ module junction_elements
         !%     This ensures faces between JB and adjacent element are
         !%     identical when face is shared between processors
         sync all
-        call face_shared_face_sync (fp_noBC_IorS)
+        call face_shared_face_sync_single (fp_JB_IorS,fr_Flowrate_Conservative)
         sync all
         !% 
         !% ==============================================================
