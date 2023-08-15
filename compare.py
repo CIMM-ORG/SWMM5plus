@@ -83,7 +83,7 @@ cwd = os.getcwd()
 time_now = str(datetime.now())
 time_now = time_now.replace(' ', '_')
 # for general comparison, use 1 processor
-num_processors = 12
+num_processors = 1
 settings_path  = ""
 
 # removes the SWMM5_C code from last comparison run and rebuilds it if needed 

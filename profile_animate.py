@@ -49,7 +49,7 @@ nJm  = 3
 # select what unit to produce the animation to
 unit = 'CMS'
 # save animation
-save_animation = True
+save_animation = False
 #-----------------------------------------------------------------------------------
 # profile name given by arg
 arg_profile_name = ""

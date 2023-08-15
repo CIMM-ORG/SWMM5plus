@@ -1708,10 +1708,10 @@ contains
 
             !% --- time step to hydrology is less than max CFL
             !%     implies one or a few steps required
-            ! if (timeLeftCFL .le. CFL_hi) then 
-                ! call tl_DT_close_to_hydrology_time &
-                    ! (newDT, neededSteps, timeLeft, timeLeftCFL, oldDT, oldCFL)
-            ! else 
+            if (timeLeftCFL .le. CFL_hi) then 
+                call tl_DT_close_to_hydrology_time &
+                    (newDT, neededSteps, timeLeft, timeLeftCFL, oldDT, oldCFL)
+            else 
                 !% --- cannot reach hydrology time step without
                 !%     violating CFL_hi
                 call tl_DT_standard (newDT, oldDT, oldCFL)
@@ -1720,7 +1720,7 @@ contains
                 if (neededSteps < 3) then 
                     newDT = timeLeft / real(neededSteps,8)
                 end if
-            ! end if
+            end if
         else 
             !% --- small time remaining to hydrology, so treat as
             !%     next step

@@ -1210,7 +1210,7 @@ contains
 
             !% --- special condition if a element will be immediate upsteam of a JB
             if (node%I(thisNode,ni_node_type) == nJm) then
-                elemYN(ElemLocalCounter,eYN_isElementUpstreamOfJB) = .true.
+                elemYN(ElemLocalCounter - oneI,eYN_isElementUpstreamOfJB) = .true.
             endif
 
             !% --- logical data
