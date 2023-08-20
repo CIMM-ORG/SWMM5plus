@@ -171,13 +171,6 @@ if not all_attribute_names:
     print("------------------------------------------------------------------------------------") 
     quit()
 
-if(has_arg_profile):
-    if(arg_profile_name.strip() not in all_attribute_names):
-        print("----------------------------- ERROR IN GETTING SPECIFIED PROFILE --------------------------------")
-        print("--------------------------- BELOW IS LIST OF PROFILES IN .H5 FILE -----------------==------------")
-        print(all_attribute_names)
-        quit()
-
 for profile_name_test in all_attribute_names:
     if not all_attribute_names:
         print("----------------------------- ERROR IN GETTING PROFILES --------------------------------")
@@ -193,8 +186,17 @@ for profile_name_test in all_attribute_names:
 
     else:
         # say we have a profile like below from the hdf file
+        if(has_arg_profile):
+            if(arg_profile_name.strip() not in all_attribute_names):
+                print("----------------------------- ERROR IN GETTING SPECIFIED PROFILE --------------------------------")
+                print("--------------------------- BELOW IS LIST OF PROFILES IN .H5 FILE -----------------==------------")
+                print(all_attribute_names)
+                quit()
 
-        profile = h5_file.attrs[profile_name_test][0,:].astype('U')
+            else:
+                profile = h5_file.attrs[arg_profile_name][0,:].astype('U')
+        else:
+            profile = h5_file.attrs[profile_name_test][0,:].astype('U')
 
     # say we have a profile like below from the hdf file
     element_head     = []
@@ -515,7 +517,7 @@ for profile_name_test in all_attribute_names:
     if save_animation:
         # animation file name
         animation_name = output_path+""+test_case+"_"+ profile_name_test+'.gif' 
-        writergif = animation.PillowWriter(fps=10)
+        writergif = animation.PillowWriter(fps=30)
         ani.save(animation_name,writer=writergif)
 
 
@@ -524,5 +526,8 @@ for profile_name_test in all_attribute_names:
     plt.show()
     plt.clf()
     plt.close()
+    # break if a certian profile is animated
+    if (has_arg_profile):
+        break
 else:
     "NO MORE PROFILES TO OUTPUT"

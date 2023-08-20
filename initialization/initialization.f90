@@ -1875,6 +1875,11 @@ contains
             
         end do !% --- outer loop
 
+        !% allocate the number of links per profile
+        allocate(Number_of_links_per_profile(N_Profiles),stat=allocation_status, errmsg= emsg)
+        call util_allocate_check (allocation_status, emsg, 'Number_of_links_per_profile')
+        Number_of_links_per_profile(:) = nullValueI
+
     end subroutine init_profiles_count
 !%
 !%==========================================================================
@@ -1962,6 +1967,8 @@ contains
                     !% --- starting a new profile
                     !%     get the profile name without quotation marks
                     iprof = iprof+1
+                    !% reset the jlink counter
+                    jlink = 0
                     !% --- check profile counter
                     if (iprof > size(output_profile_link_names,1)) then 
                         print *, 'CODE ERROR profile counter is too small'
@@ -1995,12 +2002,14 @@ contains
                 do while (delimiter_loc > 1)
                     !% --- increment link counter
                     jlink = jlink + 1
+                    !% --- update the number of links per profile 
+                    Number_of_links_per_profile(iprof) = jlink
                     !% --- check link counter
                     if (jlink > size(output_profile_link_names,2)) then 
                         print *, 'CODE ERROR profile link counter is too small'
                         print *, 'storage is ',size(output_profile_link_names,2)
                         print *, 'jlink = ',jlink 
-                        call util_crashpoint(71197)
+                        call util_crashpoint(71198)
                         return
                     end if
                     !% --- get this link name
@@ -2077,7 +2086,7 @@ contains
 
         !% --- check for link names that do not exist
         do pp = 1, N_profiles
-            do mm = 1,N_links_in_profile 
+            do mm = 1,Number_of_links_per_profile(pp) 
                 if (( trim(output_profile_link_names(pp,mm)) .ne. "NULL") &
                     .and.                                                        &
                     (output_profile_link_idx(pp,mm) .eq. nullvalueI)) then 
@@ -2151,7 +2160,7 @@ contains
             !% --- store the starting link (item 2)
             output_profile_ids(pp,2) = output_profile_link_idx(pp,1)
             !% --- cycle through the links
-            do mm = 1,N_links_in_profile-1
+            do mm = 1,Number_of_links_per_profile(pp)-1
                 thisLink => output_profile_link_idx(pp,mm)
                 nextLink => output_profile_link_idx(pp,mm+1)
                 !% --- get the downstream node of thisLink
@@ -2207,7 +2216,7 @@ contains
 
         !% --- check for nodes and links that have the same names
         do pp = 1,N_profiles
-            do mm = 1,N_links_in_profile
+            do mm = 1,Number_of_links_per_profile(pp)
                 if (any(output_profile_node_names(pp,:) .eq. trim(output_profile_link_names(pp,mm)))) then 
                     print *, 'USER CONFIGURATION ERROR found link and node with identical names'
                     print *, 'To prevent confusion, SWMM5+ requires links and nodes to have '

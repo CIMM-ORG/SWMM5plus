@@ -255,6 +255,7 @@ module define_globals
     !% --- Profile_Outputs
     integer, allocatable, target :: output_profile_ids(:,:)
     integer, allocatable, target :: output_profile_link_idx(:,:)
+    integer, allocatable, target :: Number_of_links_per_profile(:)
     character(len=stringLength_HDF5), allocatable, target :: output_profile_names(:)
     character(len=stringLength_HDF5), allocatable, target :: output_profile_link_names(:,:)
     character(len=stringLength_HDF5), allocatable, target :: output_profile_node_names(:,:)
