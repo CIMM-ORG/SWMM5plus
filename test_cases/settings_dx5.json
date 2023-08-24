@@ -1,11 +1,34 @@
 {
-    "JSON_FoundFileYN" : true,
-    "JSON_CheckAllInputYN" : false,
-    "CaseName" : {
-        "Long"  : "test",
-        "Short" : "test"
-},
-    "Discretization" : {
-        "NominalElemLength" : 5.00
+        "JSON_FoundFileYN" : true,
+        "JSON_CheckAllInputYN" : false,
+        "CaseName" : {
+            "Long"  : "test",
+            "Short" : "test"
+    },
+        "Discretization" : {
+            "DistributeOpenChannelInflowsTF" : false,
+            "NominalElemLength" : 5.00
+    },
+        "Partitioning" : {
+            "PartitioningMethod" : "bquick",
+            "PhantomLinkAdjust"  : true
+    },    
+    "Output" : {
+        "StoredLevels" : 100,
+        "CommandLine" : {
+            "quietYN" : false,
+            "interval" : 1000
+        }
+    },
+    "Solver" : {
+        "PreissmannSlot" : {
+            "Method"         : "DynamicSlot",
+            "TargetCelerity" : 25.0,
+            "Alpha"          : 2.0,
+            "DecayRate"      : 1.0
+        }
+    },
+    "Junction" : {
+        "ForceNodesJM": false
     }
 }

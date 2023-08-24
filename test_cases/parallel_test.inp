@@ -1,0 +1,163 @@
+[TITLE]
+;;Project Title/Notes
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CMS
+INFILTRATION         HORTON
+FLOW_ROUTING         DYNWAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+ALLOW_PONDING        NO
+SKIP_STEADY_STATE    NO
+
+START_DATE           07/06/2023
+START_TIME           00:00:00
+REPORT_START_DATE    07/06/2023
+REPORT_START_TIME    00:00:00
+END_DATE             07/06/2023
+END_TIME             00:30:00
+SWEEP_START          1/1
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:00:05
+WET_STEP             00:05:00
+DRY_STEP             01:00:00
+ROUTING_STEP         0:00:01 
+RULE_STEP            00:00:00
+
+INERTIAL_DAMPING     NONE
+NORMAL_FLOW_LIMITED  BOTH
+FORCE_MAIN_EQUATION  H-W
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         0
+MAX_TRIALS           0
+HEAD_TOLERANCE       0
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+MINIMUM_STEP         0.5
+THREADS              1
+
+[EVAPORATION]
+;;Data Source    Parameters
+;;-------------- ----------------
+CONSTANT         0.0
+DRY_ONLY         NO
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+;;-------------- ---------- ---------- ---------- ---------- ----------
+J1                0          10         0.5          999       0         
+J2                0          10         0.5          999       0         
+J3                0          10         0.5          999       0         
+J4                0          10         0.5          999       0         
+J5                0          10         0.5          999       0         
+J6                0          10         0.5          999       0         
+J7                0          10         0.5          999       0         
+J8                0          10         0.5          999       0         
+J9                0          10         0.5          999       0         
+J10               0          10         0.5          999       0         
+J11               0          10         0.5          999       0         
+J12               0          10         0.5          999       0         
+J13               0          10         0.5          999       0         
+J14               0          10         0.5          999       0         
+J15               0          10         0.5          999       0   
+J16               0          10         0.5          999       0        
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+;;-------------- ---------- ---------- ---------------- -------- ----------------
+J17               0          FREE                        NO                       
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+1                J1                J2                1000       0.015      0          0          1          0         
+2                J2                J3                1000       0.015      0          0          1          0         
+3                J3                J4                1000       0.015      0          0          1          0         
+4                J4                J5                1000       0.015      0          0          1          0         
+5                J5                J6                1000       0.015      0          0          1          0         
+6                J6                J7                1000       0.015      0          0          1          0         
+7                J7                J8                1000       0.015      0          0          1          0         
+8                J8                J9                1000       0.015      0          0          1          0         
+9                J9                J10               1000       0.015      0          0          1          0         
+10               J10               J11               1000       0.015      0          0          1          0         
+11               J11               J12               1000       0.015      0          0          1          0         
+12               J12               J13               1000       0.015      0          0          1          0         
+13               J13               J14               1000       0.015      0          0          1          0         
+14               J14               J15               1000       0.015      0          0          1          0         
+15               J15               J16               1000       0.015      0          0          1          0  
+16               J16               J17               1000       0.015      0          0          1          0        
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ---------- ----------
+1                CIRCULAR     5               0          0          0          1                    
+2                CIRCULAR     5               0          0          0          1                    
+3                CIRCULAR     5               0          0          0          1                    
+4                CIRCULAR     5               0          0          0          1                    
+5                CIRCULAR     5               0          0          0          1                    
+6                CIRCULAR     5               0          0          0          1                    
+7                CIRCULAR     5               0          0          0          1                    
+8                CIRCULAR     5               0          0          0          1                    
+9                CIRCULAR     5               0          0          0          1                    
+10               CIRCULAR     5               0          0          0          1                    
+11               CIRCULAR     5               0          0          0          1                    
+12               CIRCULAR     5               0          0          0          1                    
+13               CIRCULAR     5               0          0          0          1                    
+14               CIRCULAR     5               0          0          0          1                    
+15               CIRCULAR     5               0          0          0          1   
+16               CIRCULAR     5               0          0          0          1                     
+
+[INFLOWS]
+;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+J1                FLOW             ""               FLOW     1.0      1.0      100       
+     
+
+[REPORT]
+;;Reporting Options
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS -3329.190 0.000 10000.000 10000.000
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+1                -2870.890          7048.917          
+2                -2405.774          7080.994          
+3                -2093.023          7080.994          
+4                -1708.099          7080.994          
+5                -1082.598          7097.033          
+6                -481.155           7080.994          
+7                96.231             7097.033          
+8                1002.406           7056.937          
+9                1684.042           7072.975          
+10               2285.485           7072.975          
+11               3087.410           7097.033          
+12               3953.488           7080.994          
+13               4787.490           7161.187          
+14               5332.799           7201.283          
+15               5757.819           7129.110          
+16               6295.108           7048.917          
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+15               6327.185           7056.937          
+
+[Polygons]
+
+[PROFILES]
+;;Name           Links     
+;;-------------- ----------
+"profile_1       " 1 2 3 4 5
+"profile_1       " 6 7 8 9 10
+"profile_1       " 11 12 13 14 15
