@@ -438,6 +438,9 @@ for profile_name_test in all_attribute_names:
             ax.plot(xval[J_plot_idx], element_zcrown[J_plot_idx],'-k')
             # plot vlines to distinguish nodes
             ax.axvline(x=vline_xval,color='b',linestyle='-',linewidth=0.15)
+            # node labels
+            ax.text(np.average(xval[J_plot_idx]),np.average(element_zbottom[J_plot_idx])+0.5*buffer,feature,
+                rotation=0,ha='center',va='top', fontsize='small')
 
         # plot junction geometry
         elif feature_type[indx] == nJm:
@@ -504,8 +507,9 @@ for profile_name_test in all_attribute_names:
                 ax.axvline(x=xval[J_idx],color='b',linestyle='-',linewidth=0.15)
 
                 # node labels
-    #             ax.text(xval_feature[indx],feature_zbottom[indx]-buffer,feature_name[indx],
-    #                 rotation=90,ha='center',va='top', fontsize='small')
+                ax.text(xval[J_idx],element_zbottom[J_idx]+0.5*buffer,feature,
+                    rotation=0,ha='center',va='top', fontsize='small')
+
  
     # animation line          
     line,  = ax.plot(xval, element_head[x,:], '-o', markersize=1.5, color='xkcd:cerulean',label='SWMM5plus')
@@ -518,7 +522,7 @@ for profile_name_test in all_attribute_names:
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
     # plt.ylim(min_zbottom-buffer,max_head+buffer)
-    # plt.ylim(-80,20)
+    plt.ylim(-65,15)
     plt.legend(loc='lower left')
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 

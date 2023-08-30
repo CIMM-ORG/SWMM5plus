@@ -18,24 +18,31 @@ module air_tracking
     implicit none
 
     private
+
+    
     ! public :: 
 
+contains
     !%    
     !%==========================================================================
     !% PUBLIC
     !%==========================================================================
     !%
-    subroutine air_constricted_links (pCol_Closed) 
+    !%    
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine at_constricted_links (pCol_Closed) 
         !%------------------------------------------------------------------
         !% Description:
         !% Find if a any element in a link is surcharge constricting 
         !% the airflow. 
         !%------------------------------------------------------------------
-        integer, intent(in) :: 
+        integer, intent(in) :: pCol_Closed
         integer          :: ii
         integer, pointer :: thisP(:), npack, fup, fdn, elemLinkIdx(:), linkIdx(:)
         logical, pointer :: isSurcharged(:), linkConstrained(:)
-        character(64) :: subroutine_name = 'air_constricted_links'
+        character(64) :: subroutine_name = 'at_constricted_links'
         !%------------------------------------------------------------------
         npackP  = npack_elemP(pCol_Closed)
         if (npackP < 1) return 
@@ -51,16 +58,86 @@ module air_tracking
         !% element in that link is closed and surcharged
         !% and thus constraining the airflow
         do ii = 1,N_Link
+            !% reset air constriction
+            linkConstrained(ii) = .false.
+            !% if there is a surcharge element of a link, set the link as constricted
             if (any((elemLinkIdx(thisP) == ii) .and. isSurcharged(thisP))) then
                 linkConstrained(ii) = .true.
             end if
         end do
 
-    end subroutine air_constricted_links
+    end subroutine at_constricted_links
     !%    
     !%==========================================================================
     !%==========================================================================
     !%
+    subroutine at_elem_air_volume (pCol_Closed) 
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Find the airvolume from the empty spaces in closed elements
+        !%------------------------------------------------------------------
+        integer, intent(in) :: pCol_Closed
+        integer          :: ii
+        integer, pointer :: thisP(:), npack
+        real(8), pointer :: Volume(:), AirVolume(:), fullVolume(:)
+
+        character(64) :: subroutine_name = 'at_elem_air_volume'
+        !%------------------------------------------------------------------
+        npackP  = npack_elemP(pCol_Closed)
+        if (npackP < 1) return 
+        thisP => elemP(1:npackP,pCol)
+
+        !% Aliases
+        Volume     => elemR(:,er_Volume)
+        AirVolume  => elemR(:,er_Air_volume)
+        fullVomume => elemR(:,er_FullVolume)
+
+        !% assume the empty space will be occupied by air
+        AirVolume(thisP) = fullVolume(thisP) - Volume(thisP)
+
+        where (AirVolume(thisP) <= zeroR)
+            AirVolume(thisP) = zeroR
+        end where
+
+    end subroutine at_elem_air_volume   
+    !%    
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine at_constricted_link_air_volume (pCol_Closed) 
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Find if a any element in a link is surcharge constricting 
+        !% the airflow. 
+        !%------------------------------------------------------------------
+        integer, intent(in) :: pCol_Closed
+        integer          :: ii
+        integer, pointer :: thisP(:), npack, fup, fdn, elemLinkIdx(:), linkIdx(:)
+        real(8), pointer :: linkAirVol(:), elemAirVol
+        logical, pointer :: linkConstrained(:)
+        character(64) :: subroutine_name = 'at_constricted_link_air_volume'
+        !%------------------------------------------------------------------
+        npackP  = npack_elemP(pCol_Closed)
+        if (npackP < 1) return 
+        thisP => elemP(1:npackP,pCol)
+
+        !% Aliases
+        isSurcharged => elemYN(:,eYN_isSurcharged)
+        elemLinkIdx  => elemI(:,ei_link_Gidx_BIPquick)
+        elemAirVol   => elemR(:,er_Air_volume)
+        linkIdx      => link%I(:,li_idx)
+        linkAirVol   => link%R(:,lr_Air_Volume)
+        linkConstrained => link%YN(:,lYN_isConstricted)
+
+        do ii - 1,N_link
+            linkConstrained(ii) = zeroR
+            if (linkConstrained(ii)) then
+                linkConstrained(ii) = sum(elemAirVol(thisP), elemLinkIdx(thisP) == ii)
+            end if
+        end do
+
+
+    end subroutine at_constricted_link_air_volume
     !%    
     !%==========================================================================
     !%==========================================================================
@@ -70,5 +147,5 @@ module air_tracking
     !%==========================================================================
     !%
 
-    contains
+    
 end module air_tracking

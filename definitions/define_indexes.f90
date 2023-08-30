@@ -67,6 +67,7 @@ module define_indexes
     enum, bind(c)
         enumerator :: lr_Length = 1
         enumerator :: lr_AdjustedLength ! length adjustment if multi-link junction is present
+        enumerator :: lr_Air_Volume
         enumerator :: lr_InletOffset    ! Every links should have a inlet and oulet offset
         enumerator :: lr_OutletOffset   ! to make it consistent with SWMM.
         enumerator :: lr_FullArea
@@ -314,7 +315,8 @@ module define_indexes
     !% These are for the full arrays of all reals
     !%-------------------------------------------------------------------------
     enum, bind(c)
-        enumerator :: er_Area = 1                   !% cross-sectional flow area (latest)
+        enumerator :: er_Air_volume = 1
+        enumerator :: er_Area                       !% cross-sectional flow area (latest)
         enumerator :: er_Area_N0                    !% cross-sectional flow area (time N)
         enumerator :: er_Area_N1                    !% cross-sectional flow area (time N-1)
         enumerator :: er_AreaBelowBreadthMax        !% area below the max breadth in a conduit (static)
