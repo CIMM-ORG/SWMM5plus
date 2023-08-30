@@ -15,6 +15,8 @@ module preissmann_slot
     use define_settings, only: setting
     use utility_crash
 
+    ! use utility_unit_testing, only: util_utest_CLprint
+
     implicit none
 
     private
@@ -180,6 +182,8 @@ module preissmann_slot
             SlotMethod => setting%Solver%PreissmannSlot%Method
         !%-----------------------------------------------------------------------------
 
+            ! call util_utest_CLprint('       AAA slot  - - - - - - - - - - ')
+
         !% CC slot adjustment
         select case (SlotMethod)
             case (StaticSlot)
@@ -187,6 +191,8 @@ module preissmann_slot
                     volume(thisP)    = volume(thisP)  + SlotVolume(thisP)
                     head(thisP)      = zbottom(thisP) + fullDepth(thisP) + SlotDepth(thisP)
                 end where 
+
+                ! call util_utest_CLprint('       BBB slot  - - - - - - - - - - ')
 
             case (DynamicSlot)
                 where (isSlot(thisP)) 
@@ -196,6 +202,8 @@ module preissmann_slot
                 elsewhere
                     SlotDepth(thisP)  = zeroR
                 end where 
+
+                ! call util_utest_CLprint('       CCC slot  - - - - - - - - - - ')
             case default 
                 print *, 'CODE ERROR unexpected case default'
                 call util_crashpoint(6552981)

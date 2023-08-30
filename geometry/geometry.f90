@@ -47,6 +47,8 @@ module geometry
     use utility_profiler
     use utility_crash
 
+    ! use utility_unit_testing, only: util_utest_CLprint
+
     implicit none
 
     private
@@ -90,6 +92,7 @@ module geometry
             if (npackP < 1) return
         !%------------------------------------------------------------------
 
+            ! call util_utest_CLprint('       111 geo  - - - - - - - - - - ')
         !% --- PREISSMAN SLOT    
         !% --- Handle Preissmann Slot for closed CC elements
         !%     with this time march type.
@@ -97,14 +100,20 @@ module geometry
             call slot_CC (thisP_Closed)
         end if
 
+        ! call util_utest_CLprint('       222 geo  - - - - - - - - - - ')
+
         !% --- DEPTH
         !%     compute the depth on all elements of CC based on geometry.
         !%     If surcharged, this call returns the full depth of a closed conduit 
         !%     without adding Preissmann Slot depth.
         if (isAllYN) then
             call geo_depth_from_volume_by_type_allCC (elemPGetm, npack_elemPGetm, col_elemPGetm)
+
+            ! call util_utest_CLprint('       333 geo  - - - - - - - - - - ')
         else
             call geo_depth_from_volume_by_element_CC (thisP, npackP)
+
+            ! call util_utest_CLprint('       444 geo  - - - - - - - - - - ')
         end if
 
         !% --- ZERO DEPTH CC
@@ -115,6 +124,8 @@ module geometry
         call adjust_limit_by_zerovalues &
             (er_Depth, setting%ZeroValue%Depth, thisP, .false.)
 
+            ! call util_utest_CLprint('       555 geo  - - - - - - - - - - ')
+
         !% --- PIEZOMETRIC HEAD
         !%     compute the head on all elements of CC
         !%     This sets head consistent with depth computed in geo_depth_from_volume
@@ -122,6 +133,8 @@ module geometry
         !%     include surcharge effects     
         elemR(thisP,er_Head) = llgeo_head_from_depth_pure &
                                     (thisP, elemR(thisP,er_Depth))
+
+            ! call util_utest_CLprint('       666 geo  - - - - - - - - - - ')
 
         !% --- OPEN CHANNEL OVERFLOW
         !%     Compute the overflow lost for CC open channels above
@@ -136,6 +149,8 @@ module geometry
             end if
         end if
 
+        ! call util_utest_CLprint('       777 geo  - - - - - - - - - - ')
+
         !% --- PREISSMAN SLOT VOLUME LIMIT CLOSED CONDUIT CC
         !%     limit the volume in closed element (CC) to the full volume
         !%     Note the excess volume has already been stored in the Preissman Slot
@@ -143,12 +158,16 @@ module geometry
             call geo_volumelimit_closed (thisP_Closed)
         end if
 
+        ! call util_utest_CLprint('       888 geo  - - - - - - - - - - ')
+
         !% --- CROSS-SECTIONAL AREA
         !%     compute area from volume for CC
         !%     For closed conduits this is based on the volume limited by full volume.
         !%     For open channels the volume limit depends on if AllowChanneOverflowTF is false.
         elemR(thisP,er_Area) = llgeo_area_from_volume_pure(thisP,elemR(thisP,er_Volume))
         elemR(thisP,er_Area) = max(elemR(thisP,er_Area),setting%ZeroValue%Area)
+
+        ! call util_utest_CLprint('       999 geo  - - - - - - - - - - ')
 
         !% --- TOPWIDTH CC
         !%     compute topwidth from depth for all CC
@@ -158,6 +177,8 @@ module geometry
         else
             call geo_topwidth_from_depth_by_element_CC (thisP, npackP)
         end if
+
+        ! call util_utest_CLprint('       aaa geo  - - - - - - - - - - ')
 
         !% --- PERIMETER AND HYDRAULIC RADIUS CC
         !%     compute hydraulic radius and perimeter
@@ -170,10 +191,14 @@ module geometry
             call geo_perimeter_and_hydradius_from_depth_by_element_CC (thisP, npackP)
         end if
 
+        ! call util_utest_CLprint('       bbb geo  - - - - - - - - - - ')
+
         !% --- ELLDEPTH MODIFIED HYDRAULIC DEPTH
         !%     the modified hydraulic depth "ell" is used for 
         !%     for Froude number computations on all CC elements
         call geo_elldepth_from_head_CC (thisP)
+
+        ! call util_utest_CLprint('       ccc geo  - - - - - - - - - - ')
 
         !% ---- ADJUST SLOT 
         !%      make adjustments for slots on closed elements only
@@ -181,6 +206,8 @@ module geometry
         if (npackP_Closed > 0) then
             call slot_CC_adjustments (thisP_Closed)
         end if
+
+        ! call util_utest_CLprint('       ddd geo  - - - - - - - - - - ')
 
     end subroutine geometry_toplevel_CC
 !% 

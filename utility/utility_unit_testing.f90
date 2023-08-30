@@ -60,8 +60,9 @@ contains
 
          integer :: ii, jj, kk, mm
 
-         integer, dimension(4) :: iet =     (/1,   2,  3,  4 /)
-         integer, dimension(5) :: ift = (/  1,   2,  3,  4, 5/)
+         !integer, dimension(9) :: iet =     (/133,134,135, 137 , 136 , 138, 147, 148, 149 /)
+         integer, dimension(9) :: iet =     (/135, 137 , 136 , 138, 147, 148, 149, 150, 151 /)
+         !integer, dimension(5) :: ift = (/  1,   2,  3,  4, 5/)
 
 
       !%------------------------------------------------------------------
@@ -79,15 +80,18 @@ contains
 
       !% --- USEFUL HEADER -----------------------------------------------
 
-         !if (setting%Time%Step < 37000) return 
+          if (setting%Time%Step < 22977) return
+          if (setting%Time%Step == 22979) then 
+               stop 7098723
+          end if
+      
+         !if (this_image() == 1) 
+         write(*,"(A,A, e12.5)") ' ',trim(inputstring)     
 
-         ! print *, ' '
-         if (setting%Time%Step < 117) return
-         !if (istep == 1) return
-         !if (this_image() == 1) write(*,"(A,A, e12.5)") ' ',trim(inputstring)     
-         ! write(*,"(A,i7,A, f12.5, A, f12.5, A)") '        step = ',setting%Time%Step ,&
-         ! '; dt = ',setting%Time%Hydraulics%Dt,&
-         ! '; time = ',setting%Time%Now / 60.d0 , 'min'    
+         write(*,"(A,i7,A, f12.5, A, f12.5, A)") '        step = ',setting%Time%Step ,&
+         '; dt = ',setting%Time%Hydraulics%Dt,&
+         '; time = ',setting%Time%Now / 60.d0 , 'min'    
+         print *, ' '
 
          ! do ii=1,N_elem(this_image())
          !    print *, ii, elemI(ii,ei_elementType), trim(reverseKey(elemI(ii,ei_elementType))), elemI(ii,ei_link_Gidx_BIPquick)
@@ -111,13 +115,13 @@ contains
          !    end if
          ! end if
 
-         if (num_images() == 1) then 
-                write(*,"(a,f16.10,7(a,f22.17))") 'H ,',setting%Time%Now ,',',   elemR(38,er_Head),',', faceR(elemI(38,ei_Mface_dL),fr_Head_d),',', elemR(39,er_Head),',', faceR(elemI(39,ei_Mface_dL),fr_Head_d),',',elemR(40,er_Head), ',', faceR(elemI(40,ei_Mface_dL),fr_Head_d)
-         else
-             if (this_image() == 1)  then 
-                write(*,"(a,f16.10,7(a,f22.17))") 'H ,',setting%Time%Now ,',',   elemR(38,er_Head),',', faceR(elemI(38,ei_Mface_dL),fr_Head_d),',', elemR(39,er_Head),',', faceR(elemI(39,ei_Mface_dL),fr_Head_d),',',elemR(40,er_Head), ',', faceR(elemI(40,ei_Mface_dL),fr_Head_d)
-             end if
-         end if
+         ! if (num_images() == 1) then 
+         !        write(*,"(a,f16.10,7(a,f22.17))") 'H ,',setting%Time%Now ,',',   elemR(38,er_Head),',', faceR(elemI(38,ei_Mface_dL),fr_Head_d),',', elemR(39,er_Head),',', faceR(elemI(39,ei_Mface_dL),fr_Head_d),',',elemR(40,er_Head), ',', faceR(elemI(40,ei_Mface_dL),fr_Head_d)
+         ! else
+         !     if (this_image() == 1)  then 
+         !        write(*,"(a,f16.10,7(a,f22.17))") 'H ,',setting%Time%Now ,',',   elemR(38,er_Head),',', faceR(elemI(38,ei_Mface_dL),fr_Head_d),',', elemR(39,er_Head),',', faceR(elemI(39,ei_Mface_dL),fr_Head_d),',',elemR(40,er_Head), ',', faceR(elemI(40,ei_Mface_dL),fr_Head_d)
+         !     end if
+         ! end if
 
          ! if (num_images() == 1) then 
          !       write(*,"(a,f16.10,7(a,f22.17))") 'Vol ,',setting%Time%Now ,',',   elemR(38,er_Volume),',',  elemR(39,er_Volume),',',elemR(40,er_Volume)
@@ -209,6 +213,17 @@ contains
          !    end if
          ! end if
 
+         ! do ii=1,N_elem(1)  
+         !    !if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then
+         !    !   print *, ii, elemI(ii,ei_link_Gidx_SWMM), 'link ', trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
+         !    !end if
+         !    if (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then
+         !       print *, ii, elemI(ii,ei_node_Gidx_SWMM), 'node ', trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
+         !    end if
+         ! end do
+         ! stop 609873
+
+         
 
          ! print *, link%I(1,li_first_elem_idx), link%I(1,li_last_elem_idx)
          ! stop 2309874
@@ -228,6 +243,74 @@ contains
          ! print *, edn(440)
 
          ! stop 7709874
+
+           write(*,"(A,15f12.3)") 'head', &
+            elemR(iet(1),er_Head), &
+            elemR(iet(2),er_Head), &
+            elemR(iet(3),er_Head), &
+            elemR(iet(4),er_Head), &
+            elemR(iet(5),er_Head), &
+            elemR(iet(6),er_Head), &
+            elemR(iet(7),er_Head), &
+            elemR(iet(8),er_Head), &
+            elemR(iet(9),er_Head)
+
+            write(*,"(A,15f12.3)") 'Flow', &
+            elemR(iet(1),er_Flowrate), &
+            elemR(iet(2),er_Flowrate), &
+            elemR(iet(3),er_Flowrate), &
+            elemR(iet(4),er_Flowrate), &
+            elemR(iet(5),er_Flowrate), &
+            elemR(iet(6),er_Flowrate), &
+            elemR(iet(7),er_Flowrate), &
+            elemR(iet(8),er_Flowrate), &
+            elemR(iet(9),er_Flowrate)
+
+            write(*,"(A,15f12.3)") 'Velo', &
+            elemR(iet(1),er_Velocity), &
+            elemR(iet(2),er_Velocity), &
+            elemR(iet(3),er_Velocity), &
+            elemR(iet(4),er_Velocity), &
+            elemR(iet(5),er_Velocity), &
+            elemR(iet(6),er_Velocity), &
+            elemR(iet(7),er_Velocity), &
+            elemR(iet(8),er_Velocity), &
+            elemR(iet(9),er_Velocity)
+
+            write(*,"(A,15f12.3)") 'sVol', &
+            elemR(iet(1),er_SlotVolume), &
+            elemR(iet(2),er_SlotVolume), &
+            elemR(iet(3),er_SlotVolume), &
+            elemR(iet(4),er_SlotVolume), &
+            elemR(iet(5),er_SlotVolume), &
+            elemR(iet(6),er_SlotVolume), &
+            elemR(iet(7),er_SlotVolume), &
+            elemR(iet(8),er_SlotVolume), &
+            elemR(iet(9),er_SlotVolume)
+
+            write(*,"(A,15e12.3)") 'sDep', &
+            elemR(iet(1),er_SlotDepth), &
+            elemR(iet(2),er_SlotDepth), &
+            elemR(iet(3),er_SlotDepth), &
+            elemR(iet(4),er_SlotDepth), &
+            elemR(iet(5),er_SlotDepth), &
+            elemR(iet(6),er_SlotDepth), &
+            elemR(iet(7),er_SlotDepth), &
+            elemR(iet(8),er_SlotDepth), &
+            elemR(iet(9),er_SlotDepth)
+
+            ! write(*,"(A,15f12.3)") 'Nrg ', &
+            ! elemR(iet(1),er_Head) + (elemR(iet(1),er_Velocity)**2) / (twoR*setting%Constant%gravity), &
+            ! elemR(iet(2),er_Head) + (elemR(iet(2),er_Velocity)**2) / (twoR*setting%Constant%gravity), &
+            ! elemR(iet(3),er_Head) + (elemR(iet(3),er_Velocity)**2) / (twoR*setting%Constant%gravity), &
+            ! elemR(iet(4),er_Head) + (elemR(iet(4),er_Velocity)**2) / (twoR*setting%Constant%gravity), &
+            ! elemR(iet(5),er_Head) + (elemR(iet(5),er_Velocity)**2) / (twoR*setting%Constant%gravity), &
+            ! elemR(iet(6),er_Head) + (elemR(iet(6),er_Velocity)**2) / (twoR*setting%Constant%gravity), &
+            ! elemR(iet(7),er_Head) + (elemR(iet(7),er_Velocity)**2) / (twoR*setting%Constant%gravity), &
+            ! elemR(iet(8),er_Head) + (elemR(iet(8),er_Velocity)**2) / (twoR*setting%Constant%gravity), &
+            ! elemR(iet(9),er_Head) + (elemR(iet(9),er_Velocity)**2) / (twoR*setting%Constant%gravity)
+            print *, ' '
+
 
          ! write(*,"(A,15f12.3)") 'head', &
          !       faceR(ift(1),fr_Head_u), &

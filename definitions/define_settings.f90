@@ -472,9 +472,12 @@ module define_settings
                                            !% ONLY SET TRUE FOR ALGORITHM TESTING
         !% NOTE ForceStorage must be true as of 20230507. Future extension may include junction solution that does
         !% not require the minimum surface area of the ImpliedStorage type
-        logical :: ForceStorage = .true.   !% forces nJM junctions without explicit storage to have implied storage
-        integer :: FunStorageN  = 10       !% number of curve entries for functional storage   
-        real(8) :: kFactor      = 0.0      !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
+        logical :: ForceStorage = .true.        !% forces nJM junctions without explicit storage to have implied storage
+        integer :: FunStorageN  = 10            !% number of curve entries for functional storage   
+        real(8) :: kFactor      = 0.5d0         !% default entrance/exit losses at junction branch (use 0.5 )
+        real(8) :: OutflowDampingFactor = 0.5d0 !% 0 to <1, with 0 being strictly energy-based outflow, 1 being strictly extrapolated from neighbor; 0.5 recommended
+        real(8) :: ZeroHeadDiffValue = 1.0d-8   !% Head difference (m) that results in zero outflow in a branch. 
+        real(8) :: ZeroOutflowValue  = 1.0d-8   !% Outflow (m^3/s) that results in zero outflow in a branch
         real(8) :: InfiniteExtraDepthValue = 999.d0  !% Surcharge Depth if this value or higher is treated as impossible to overflow
 
         !% Ponding ScaleFactor is multiplier of junction/storage length scale (sqrt of area) to get minimum length scale of ponding
@@ -1217,6 +1220,11 @@ contains
         call json%get('Junction.kFactor', real_value, found)
         if (found) setting%Junction%kFactor = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.kFactor not found'
+
+        !%                       Junction.OutflowDampingFactor
+        call json%get('Junction.OutflowDampingFactor', real_value, found)
+        if (found) setting%Junction%OutflowDampingFactor = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.OutflowDampingFactor not found'
 
         !%                       Junction.InfiniteExtraDepthValue
         call json%get('Junction.InfiniteExtraDepthValue', real_value, found)

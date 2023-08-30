@@ -120,8 +120,11 @@ module junction_lowlevel
             end if
 
             !% --- head difference from junction main to element
-            deltaH => elemR(:,er_Temp01)
-            deltaH = zeroR
+            !%     note this is positive for any outflow
+            deltaH  => elemR(:,er_Temp01)
+            deltaH  = zeroR
+            energyQ = zeroR
+
             where (elemR(thisJB,er_Depth) > setting%ZeroValue%Depth)
                 where (faceR(fidx(thisJB),frHeadAdj) > faceR(fidx(thisJB),fr_Zbottom))
                     deltaH(thisJB) =  elemR(JMar(thisJB),er_Head) - faceR(fidx(thisJB),frHeadAdj)
@@ -131,30 +134,26 @@ module junction_lowlevel
                 endwhere
             endwhere
 
-            !% --- limit dH if it is more than 1/2 of depth in branch
-            where (deltaH(thisJB) > onehalfR   * elemR(thisJB,er_Depth))
-                deltaH(thisJB)    = onefourthR * elemR(thisJB,er_Depth)
-            end where
-
             !% --- Subcritical outflow junction (super overwrites below)
             !%     Requires more than a trivial deltaH and there must be more than
             !%     a trivial outflowrate
-            where ((deltaH(thisJB) > 1.0d-8)                        &
+            where ((deltaH(thisJB) > setting%Junction%ZeroHeadDiffValue)                        &
                    .and.                                            &
-                   (elemR(thisJB,er_Flowrate) * bsign < -1.0d-8)    &
+                   (elemR(thisJB,er_Flowrate) * bsign < -setting%Junction%ZeroOutflowValue)    &
                    )
                     !% --- outflow from JB  in upstream direction
-                    !% --- or outflow from JB in downstream direction
-                    !%     NOTE: without junction main approach velocity
-                    energyQ(thisJB) = - bsign * faceR(fidx(thisJB),frArea)               &
-                            * sqrt(                                                      &
-                                    (twoR * grav * deltaH(thisJB))                       &
-                                    /(oneR + elemSR(thisJB,esr_JunctionBranch_Kfactor))  &
-                                    )   
+                    !% --- or outflow from JB in downstream direction 
+                    !%     applies junction main approach velocity brh20230829                    
+                    energyQ(thisJB) = - bsign * elemR(thisJB,er_Area)                            &
+                                    * sqrt(                                                      &
+                                            (twoR * grav * deltaH(thisJB) + (elemR(JMar(thisJB),er_Velocity)**2))  &
+                                            /(oneR + elemSR(thisJB,esr_JunctionBranch_Kfactor))  &
+                                            )                 
+                    !% --- DAMPING: Average with existing flowrate
+                    elemR(thisJB,er_Flowrate)  = (oneR - setting%Junction%OutflowDampingFactor) * energyQ(thisJB)  &
+                                                       + setting%Junction%OutflowDampingFactor  * elemR(thisJB,er_Flowrate) 
 
-                    !% Average with old flowrate to handle problems of zero flows
-                    elemR(thisJB,er_Flowrate)  = onehalfR * (energyQ(thisJB) + elemR(thisJB,er_Flowrate) )      
-                          
+                    !% --- handle small depths
                     where (elemR(thisJB,er_Area) > setting%ZeroValue%Area)
                         elemR(thisJB,er_Velocity) = elemR(thisJB,er_Flowrate) / elemR(thisJB,er_Area)
                     elsewhere 
@@ -167,15 +166,21 @@ module junction_lowlevel
                     endwhere       
             endwhere 
 
-            !% --- for a trivial outflow and a trivial dH, set flow to zero
+            !% --- for a trivial outflow with a trivial dH, set flow to zero
             !%     Note -- does not affect inflows or deltaH < zeroR
-            where ((deltaH(thisJB) .ge. zeroR) .and. (deltaH(thisJB) .le. 1.0d-8) .and. (elemR(thisJB,er_Flowrate) * bsign < -1.0d-8))
+            where ((deltaH(thisJB) .ge. zeroR)                                                 &
+                    .and.                                                                      &
+                    (deltaH(thisJB)                   .le. setting%Junction%ZeroHeadDiffValue) &
+                    .and.                                                                      &
+                    (elemR(thisJB,er_Flowrate) * bsign  < -setting%Junction%ZeroOutflowValue)  &
+                   )
                 elemR(thisJB,er_Flowrate) = zeroR
                 elemR(thisJB,er_Velocity) = zeroR
             end where
 
-            !% --- for inflow pressure gradient and outflow
-            where  ((deltaH(thisJB) < -1.0d-8) .and. (elemR(thisJB,er_Flowrate) * bsign .le. -1.0d-8))
+            !% --- for inconsistent inflow pressure gradient with outflow on adjacent element
+            where  (       (deltaH(thisJB)                     <   -setting%Junction%ZeroHeadDiffValue)  &
+                     .and. (elemR(thisJB,er_Flowrate) * bsign .le. -setting%Junction%ZeroOutflowValue) )
                 !% --- inconsistent flow direction and pressure gradient   
                 elemR(thisJB,er_Flowrate) = zeroR
             endwhere
@@ -1839,8 +1844,8 @@ module junction_lowlevel
             integer :: mm, ii, kk, JMidx, nInflow
 
             real(8), dimension(max_branch_per_node) :: inVelocity, inFlow
-            real(8) :: weightedVelocity, junctionVelocity, totalQ
-            real(8) :: inletVelocity
+            real(8) :: weightedVelocity, massVelocity, totalQ
+            real(8) :: junctionVelocity
         !%-----------------------------------------------------------------
         !% Preliminaries
             Npack => npack_elemP(thisColP)
@@ -1869,9 +1874,9 @@ module junction_lowlevel
                 if (mod(ii,2) == 0) then 
                     !% --- downstream branch
                     if (elemR(JMidx+ii,er_Flowrate) < zeroR) then 
-                        !% --- downstream branch inflow
-                        inVelocity(kk) = elemR(JMidx+ii,er_Velocity)
-                        inFlow(kk)     = abs(elemR(JMidx+ii,er_Flowrate))
+                        !% --- downstream branch inflow (do not reverse inflow velocity sign, see note above)
+                        inVelocity(kk) =  elemR(JMidx+ii,er_Velocity)
+                        inFlow(kk)     = -elemR(JMidx+ii,er_Flowrate)
                         kk=kk+1
                     else 
                         !% downstream outflow
@@ -1910,27 +1915,29 @@ module junction_lowlevel
                 !% --- HACK we need some branch reduction factors for more than 1 inflow branch
                 weightedVelocity = sum(inFlow(1:nInflow) * inVelocity(1:nInflow) ) / totalQ
 
-                !% --- junctionVelocity is the velocity for the flow given the junction geometry
-                junctionVelocity = totalQ / ( sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) * elemR(JMidx,er_Depth))
+                !% --- massVelocity is the velocity for the flow given the junction geometry
+                massVelocity = totalQ / ( sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) * elemR(JMidx,er_Depth))
 
                 if (weightedVelocity == zeroR) then
-                    inletVelocity = junctionVelocity
+                    junctionVelocity = massVelocity
                 elseif (weightedVelocity < zeroR) then 
                     !% -- net upstream velocity
-                    inletVelocity = max(weightedVelocity, -junctionVelocity)
+                    !brh20230829 junctionVelocity = max(weightedVelocity, -massVelocity)
+                    junctionVelocity = min(weightedVelocity, -massVelocity)
                 else 
-                    inletVelocity = min(weightedVelocity,junctionVelocity)
+                    !brh20230829 junctionVelocity = min(weightedVelocity,massVelocity)
+                    junctionVelocity = max(weightedVelocity,massVelocity)
                 end if
 
                 !% --- excessive velocites are likely in error, so set to zero
-                if (abs(inletVelocity) > setting%Limiter%Velocity%Maximum) then
-                    inletVelocity = zeroR
+                if (abs(junctionVelocity) > setting%Limiter%Velocity%Maximum) then
+                    junctionVelocity = zeroR
                 end if
 
-                elemR(JMidx,er_Velocity) = inletVelocity
+                elemR(JMidx,er_Velocity) = junctionVelocity
 
-                elemR(JMidx,er_Flowrate)     = inletVelocity * elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area))
-                elemR(JMidx,er_FroudeNumber) = inletVelocity / sqrt(setting%Constant%gravity * elemR(JMidx,er_Depth))
+                elemR(JMidx,er_Flowrate)     = junctionVelocity * elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area))
+                elemR(JMidx,er_FroudeNumber) = junctionVelocity / sqrt(setting%Constant%gravity * elemR(JMidx,er_Depth))
 
             else
                 !% --- no inflows to provide momentum, 
