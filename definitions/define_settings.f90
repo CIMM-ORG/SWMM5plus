@@ -941,11 +941,11 @@ contains
         call json%get('Adjust.Head.Approach', c, found)
         if (found) then 
             call util_lower_case(c)
-            if (c == 'vshape_surcharge_CC') then
+            if (c == 'vshape_surcharge_cc') then
                 setting%Adjust%Head%approach = vshape_all_CC    
-            elseif (c == 'vshape_surcharge_CC') then
+            elseif (c == 'vshape_surcharge_cc') then
                 setting%Adjust%Head%approach = vshape_freesurface_CC 
-            elseif (c == 'vshape_surcharge_CC') then
+            elseif (c == 'vshape_surcharge_cc') then
                     setting%Adjust%Head%approach = vshape_surcharge_CC 
             else
                 write(*,"(A)") 'Error - json file - setting.Adjust.Head.Approach of ',trim(c)

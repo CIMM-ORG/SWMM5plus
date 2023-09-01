@@ -28,6 +28,7 @@ module preissmann_slot
     public :: slot_CC_adjustments
     public :: slot_JM_adjustments
     public :: slot_JB_computation
+    public :: slot_CC_Vshaped_adjust
 
     contains
 !%    
@@ -617,6 +618,92 @@ module preissmann_slot
 !%==========================================================================
 !%==========================================================================
 !%
+    subroutine slot_CC_Vshaped_adjust (thisP, er_VvalueCol)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Adjust the slots where v-shaped head occurs
+        !%------------------------------------------------------------------
+        !% Declarations
+            !integer, intent(in) :: thisCol, Npack
+            integer, intent(in) :: er_VvalueCol, thisP(:)
+            integer, pointer    :: SlotMethod
+            real(8), pointer    :: fullArea(:), fullDepth(:), PNumber(:), PCelerity(:)  
+            real(8), pointer    :: SlotWidth(:), SlotDepth(:), SlotDepth_N0(:), SlotArea(:)
+            real(8), pointer    :: dSlotArea(:), dSlotDepth(:), eHead(:) 
+            real(8), pointer    :: PnumberInitial(:), Vvalue(:), zBottom(:)
+            real(8), pointer    :: TargetPCelerity, grav, Dt
+            logical, pointer    :: isSurcharge(:)
+            character(64) :: subroutine_name = "slot_CC"
+        !%------------------------------------------------------------------
+        !% Preliminaries
+        !% --- exit if not using PS
+        if (.not. setting%Solver%PreissmannSlot%useSlotTF) return
+        !% --- exit if no closed CC elements
+
+        !%------------------------------------------------------------------
+        !% Aliases
+        !% HACK -- many of these aliases are unused. Need to clean up 20220913 brh
+            !% --- elemR data
+            eHead      => elemR(:,er_Head)
+            dSlotArea  => elemR(:,er_dSlotArea)
+            dSlotDepth => elemR(:,er_dSlotDepth)
+            fullDepth  => elemR(:,er_FullDepth)
+            fullArea   => elemR(:,er_FullArea)
+            PNumber    => elemR(:,er_Preissmann_Number)
+            PnumberInitial => elemR(:,er_Preissmann_Number_initial)
+            PCelerity  => elemR(:,er_Preissmann_Celerity)
+            SlotWidth  => elemR(:,er_SlotWidth)
+            SlotDepth  => elemR(:,er_SlotDepth)
+            SlotDepth_N0 => elemR(:,er_SlotDepth_N0)
+            SlotArea   => elemR(:,er_SlotArea)
+            Vvalue     => elemR(:,er_VvalueCol)
+            zBottom    => elemR(:,er_Zbottom)
+            !% --- pointer to elemYN column
+            isSurcharge=> elemYN(:,eYN_isSurcharged)
+            !% --- pointer to necessary settings struct
+            SlotMethod          => setting%Solver%PreissmannSlot%Method
+            TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
+            grav                => setting%Constant%gravity
+
+        
+        !% --- Select the type of slot method
+        select case (SlotMethod)
+            !% --- for a static slot, no furter adjustment is required
+            case (StaticSlot)
+                return
+            !% --- for dynamic slot, slot adjustment is required
+            case (DynamicSlot)
+
+                where ((Vvalue(thisP) > zeroR) .and. isSurcharge(thisP))
+                    !% new slot depth
+                    SlotDepth(thisP) = max(eHead(thisP) - zBottom(thisP) - fullDepth(thisP), zeroR)
+                    !% new dslot depth
+                    dSlotDepth(thisP) = SlotDepth(thisP) - SlotDepth_N0(thisP)
+                    !% find a new slot widht for corresponding slot depth
+                    SlotWidth(thisP) = abs(dSlotDepth(thisP) / dSlotArea(thisP))
+                    !% new preissmann celerity
+                    PCelerity(thisP) = min(sqrt((grav * fullArea(thisP)) / SlotWidth(thisP)), TargetPCelerity)
+                    !% new preissmann number
+                    PNumber(thisP) =  min(TargetPCelerity / PCelerity(thisP), PnumberInitial(thisP))
+                    !% recalculate the preissmann celerity
+                    PCelerity(thisP) = TargetPCelerity / PNumber(thisP)
+                end where
+
+            case default
+                !% --- should not reach this stage
+                print*, 'In ', subroutine_name
+                print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
+                print *, 'which has key ',trim(reverseKey(SlotMethod))
+                call util_crashpoint(668732)
+        end select
+
+
+
+    end subroutine slot_CC_Vshaped_adjust
+!%
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine slot_JM (thisCol, Npack)
         !%------------------------------------------------------------------
         !% Description:
@@ -719,13 +806,13 @@ module preissmann_slot
                 !                         * pAreaSurcharge(thisP)
             end where
         case (DynamicSlot)
-            !% --- initialize dynamic slot
-            dSlotVol          = zeroR
-            dSlotArea         = zeroR
-            dSlotDepth        = zeroR
             !% --- requires cycling through the junctions
             do mm=1,Npack
                 JMidx = thisP(mm)
+                !% --- initialize dynamic slot
+                dSlotVol(JMidx)          = zeroR
+                dSlotArea(JMidx)         = zeroR
+                dSlotDepth(JMidx)        = zeroR
 
                 if ((volume(JMidx) > fullVolume(JMidx)) .and. canSurcharge(JMidx)) then
                     SlotVolume(JMidx) = max(volume(JMidx) - fullVolume(JMidx), zeroR)

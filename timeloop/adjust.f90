@@ -13,6 +13,7 @@ module adjust
     use define_indexes
     use define_settings, only: setting
     use pack_mask_arrays, only: pack_small_or_zero_depth_elements, pack_CC_zeroDepth_interior_faces
+    use preissmann_slot, only: slot_CC_Vshaped_adjust
     use utility
     use utility_crash
 
@@ -1169,7 +1170,7 @@ module adjust
         Vvalue(thisP) =  (util_sign_with_ones_or_zero(fHdn(fUp(thisP)) - eHead(thisP)))      &
                         *(util_sign_with_ones_or_zero(fHup(fDn(thisP)) - eHead(thisP)))      &
                         * Vvalue(thisP)   
-                
+
         !% --- adjust where needed
         where (Vvalue(thisP) > zeroR)    
             !% --- simple linear combination depending on coef
@@ -1187,6 +1188,12 @@ module adjust
 
             !% --- NOTE: volume is NOT adjusted.
         end where
+
+        if (setting%Solver%PreissmannSlot%useSlotTF) then
+            !% adjust v-shaped slots
+            call slot_CC_Vshaped_adjust (thisP,er_Temp01)
+        end if
+
       
     end subroutine adjust_Vshaped_head_CC
 !%    
