@@ -1263,9 +1263,28 @@ module geometry
                     !%     here we need to handle any JB elements that would have
                     !%     Froude =1 overflow
                     if ( head(tM) > (zBtm(tB) + sedimentDepth(tB)) ) then
-                        !% -- no action needed as this is done in junction_calculation
 
-                        head(tB) = head(tM)
+                        !head(tB) = head(tM)
+
+                        !% == test 20230904brh
+
+                        if (isUpBranch) then 
+                            if (fHead_d(fup(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
+                                head(tB) = head(tM) &
+                                    + onehalfR * (fHead_d(fup(tB)) - head(tM))
+                            else 
+                                head(tB) = head(tM) &
+                                    + onehalfR * ((zBtm(tB) + sedimentDepth(tB)) - head(tM))
+                            end if
+                        else
+                            if (fHead_u(fdn(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
+                                head(tB) = head(tM) &
+                                    + onehalfR * (fHead_u(fdn(tB)) - head(tM))
+                            else 
+                                head(tB) = head(tM) &
+                                    + onehalfR * ((zBtm(tB) + sedimentDepth(tB)) - head(tM))
+                            end if
+                        end if
 
                         iswaterfall = .false.
 

@@ -545,7 +545,7 @@ module define_settings
     type PartitioningType
         !% Allowable values: BQquick
         integer :: PartitioningMethod = BQuick
-        logical :: PhantomLinkAdjust  = .false.
+        logical :: PhantomLinkAdjust  = .true.
     endtype PartitioningType
 
     !% setting%Profile
