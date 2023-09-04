@@ -89,6 +89,8 @@ module runge_kutta2
         !%     the faces require synchronizing.
         call junction_preliminaries ()
 
+        ! call util_utest_CLprint('AAA2 RK2=================================')
+
         !%==================================  
         !% --- RK2 SOLUTION
         do istep = 1,2
@@ -121,7 +123,6 @@ module runge_kutta2
                     end if
 
                     ! call util_utest_CLprint('DDDD RK2=================================')
-
                 else if (istep == 2) then 
                     !% --- conservative storage advance for junction, second step
                     call junction_second_step ()
@@ -153,7 +154,6 @@ module runge_kutta2
             end if
 
             ! call util_utest_CLprint('GGGG RK2=================================')
-
             !% --- face sync
             !%     sync all the images first. then copy over the data between
             !%     shared-identical faces. then sync all images again
@@ -244,7 +244,7 @@ module runge_kutta2
 
         end do
 
-        call util_utest_CLprint('ZZZZ RK2=================================')
+        ! call util_utest_CLprint('ZZZZ RK2=================================')
 
         !% RETAIN FOR DEBUGGING
         !% --- overall volume conservation

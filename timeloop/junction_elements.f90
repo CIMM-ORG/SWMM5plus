@@ -93,6 +93,8 @@ module junction_elements
             call face_pull_facedata_to_JBelem (ep_JB, fr_Velocity_d, elemR(:,er_Velocity))
         end if
 
+        ! call util_utest_CLprint ('------- jjj.05 after face_pull_facedata')
+
         !% --- store junction-adjacent element data on face
         !%     QUESTION -- SHOULD THIS BE IN THE RK ITERATION FOR UPDATES?
         !%     ANSWER: NO, as long as the second step junction solution is NOT the backwards euler.
@@ -101,6 +103,7 @@ module junction_elements
             call lljunction_push_adjacent_elemdata_to_face ()
         end if
 
+        ! call util_utest_CLprint ('------- jjj.06 after lljunction_push_adjacent')
         !% ==============================================================
         !% --- face sync
         !%     sync all the images first. then copy over the data between
@@ -117,6 +120,8 @@ module junction_elements
             call face_push_diag_adjacent_data_to_face (ep_Diag_JBadjacent)
         end if
 
+        ! call util_utest_CLprint ('------- jjj.06 after face_push_diag')
+
          !% ==============================================================
         !% --- face sync
         !%     sync all the images first. then copy over the data between
@@ -132,6 +137,7 @@ module junction_elements
         !%     TO BE MOVED TO junction_branch_element_flowrates
         if (N_nJM > 0) then 
             call lljunction_branch_energy_outflow ()
+            ! call util_utest_CLprint ('------- jjj.07 after lljunction_branch_energy_outflow')
         end if
     
         !% AT THIS POINT: We now have JB elements and faces that are consistent. The Diag-adjacent and
