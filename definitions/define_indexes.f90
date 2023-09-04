@@ -674,10 +674,15 @@ module define_indexes
     !% --- JUNCTION MAIN and STORAGE
     enum, bind(c)
         enumerator ::  esr_JunctionMain_PondedArea = 1
+        enumerator ::  esr_JunctionMain_PondedDepth
+        enumerator ::  esr_JunctionMain_PondedHead
+        enumerator ::  esr_JunctionMain_PondedHeadDiff
+        enumerator ::  esr_JunctionMain_MinHeadForOverflowPonding
         enumerator ::  esr_JunctionMain_OverflowHeightAboveCrown
         enumerator ::  esr_JunctionMain_OverflowOrifice_Length
         enumerator ::  esr_JunctionMain_OverflowOrifice_Height
         enumerator ::  esr_JunctionMain_OverflowRate
+        enumerator ::  esr_JunctionMain_OverflowDepth
         enumerator ::  esr_JunctionMain_Surcharge_Plan_Area
         enumerator ::  esr_JunctionMain_StorageRate
         enumerator ::  esr_JunctionBranch_Kfactor

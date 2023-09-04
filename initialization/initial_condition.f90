@@ -3720,6 +3720,7 @@ contains
             !% --- set type to NoOverflow and ponded area to zero
             elemSI(JMidx,esi_JunctionMain_OverflowType) = NoOverflow 
             elemSR(JMidx,esr_JunctionMain_PondedArea)   = zeroR   
+            elemSR(JMidx,esr_JunctionMain_MinHeadForOverflowPonding) = huge(oneR)
         else
             !% --- not infinite depth
             if (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown) .eq. zeroR) then 
@@ -3759,7 +3760,11 @@ contains
                     elemSR(JMidx,esr_Junctionmain_OverflowOrifice_Height) = setting%Junction%Overflow%OrificeHeight
                 end if
             end if
+            elemSR(JMidx,esr_JunctionMain_MinHeadForOverflowPonding) &
+                = elemR(JMidx,er_Zcrown) + elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)
         end if
+
+        
 
         !% JM elements are not solved for momentum.
         elemR(JMidx,er_Flowrate)     = zeroR

@@ -258,8 +258,7 @@ module junction_elements
             call face_force_JBelem_to_face (ep_JM, .true.)
             call face_force_JBelem_to_face (ep_JM, .false.)
 
-        end if
-        
+        end if       
         !% ==============================================================
         !% --- face sync
         !%     sync all the images first. then copy over the data between
@@ -301,10 +300,11 @@ module junction_elements
         !% --- these calls are outside of the if (N_nJM) statement to prevent any race conditions
         !% --- update various packs of zeroDepth faces
         call pack_JB_zeroDepth_interior_faces ()
-        
+
         sync all
         call pack_JB_zeroDepth_shared_faces ()  !% HACK STUB ROUTINE NOT COMPLETE
         sync all
+
         !% --- set face geometry and flowrates where adjacent element is zero
         !%     only applies to faces with JB on one side
         call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &
@@ -375,7 +375,7 @@ module junction_elements
             thisP => elemP(1:Npack, ep_JB)
             call update_Froude_number_element (thisP) 
             call update_wavespeed_element (thisP)
-            call update_interpweights_JB (thisP, Npack, .true.)
+            call update_interpweights_JB (thisP, Npack, .false.)  !% 20230904brh change to FALSE
         end if
 
         !% --- wave speed, Froude number on JM
@@ -455,7 +455,7 @@ module junction_elements
             call adjust_element_toplevel (JB)
             call update_Froude_number_element (thisP) 
             call update_wavespeed_element(thisP)
-            call update_interpweights_JB (thisP, Npack, .true.)       
+            call update_interpweights_JB (thisP, Npack, .false.)    !% 20230904brh change to FALSE
         end if
 
     end subroutine junction_toplevel
@@ -479,10 +479,11 @@ module junction_elements
             integer :: mm, JMidx
 
             real(8), pointer :: Qstorage(:), Qoverflow(:), Qlateral(:)
+            real(8), pointer :: MinHeadForOverflowPonding
 
             real(8) :: Qnet
             real(8) :: dQdHoverflow, dQdHstorage
-            real(8) :: dH, resid, MinHeadForOverflow
+            real(8) :: dH, resid, dHsave, dt1
             real(8), pointer :: dt, crk(:)
 
             real(8), dimension(2) :: Hbound
@@ -498,7 +499,7 @@ module junction_elements
             Qstorage    => elemSR(:,esr_JunctionMain_StorageRate) !% positive is increasing storage
             !% --- note that Qoverflow includes ponding rate
             Qoverflow   => elemSR(:,esr_JunctionMain_OverflowRate) !% negative is outflow
-            Qlateral    => elemR (:,er_FlowrateLateral) !% negative is outflow)
+            Qlateral    => elemR (:,er_FlowrateLateral) !% negative is outflow) 
             dt          => setting%Time%Hydraulics%Dt
             crk         => setting%Solver%crk2
         !%----------------------------------------------------------------- 
@@ -511,6 +512,7 @@ module junction_elements
             isCrossingOutofOverflowOrPonding = .false.
             isOverflow                       = .false.
             isPonding                        = .false.
+            MinHeadForOverflowPonding => elemSR(JMidx,esr_JunctionMain_MinHeadForOverflowPonding)
             
             if (elemSI(JMidx,esi_JunctionMain_OverflowType) == NoOverflow) then 
                 canOverflowOrPond = .false.
@@ -519,135 +521,90 @@ module junction_elements
             end if
 
             call lljunction_main_head_bounds (JMidx, Hbound)
-
+            
             !% --- convert Hbound to a deltaH bound
             Hbound = Hbound - elemR(JMidx,er_Head)
 
-            !% --- get the net flowrate from all sources
-            !%     including branches, overflow/ponding and lateral
-            !%     if no overflow/ponding, logicals are returned as false
-            call lljunction_main_netFlowrate &
-                 (JMidx, Qnet, MinHeadForOverflow, canOverflowOrPond, isOverflow, isPonding)
+            !% --- set the overflow/ponding heads
+            call lljunction_main_overflow_conditions (JMidx)
 
-            !% --- Junction step 1A
+            !% --- get the net flowrate based on n data from all sources
+            !%     including branches, overflow/ponding and lateral
+            !%     if not overflow/ponding at PRESENT HEAD then logicals are returned as false
+            !%     Overflow/ponding flow rates based on PRESENT Overflow/pond head diff,
+            !%     which are zero if no
+            call lljunction_main_netFlowrate &
+                 (JMidx, Qnet, canOverflowOrPond, isOverflow, isPonding)
+
+            !% --- Compute dH
             call lljunction_main_dHcompute &
                 (JMidx, dH, dQdHoverflow,  dQdHstorage, Qnet, Hbound, istep, &
                 isOverflow, isPonding, .false., .false.)
 
-            !% --- truncate dH for crossing into or out of surcharge or
-            !%     overflow or ponding. This sets up for a second step
+            !% --- Limit head increase for cases of in/out of surcharge or overflow
+            !%     This ensures a 2-step process to cross the boundary.
+            !% --- check if crossing in or out of overflow/ponding -- only applies
+            !%     if NOT crossing in/out of surcharge
+            dHsave = dH
             if (canOverflowOrPond) then 
-                !% --- crossing from free surface to overflow/ponding
-                if ((elemR(JMidx,er_Head)    .le. MinHeadForOverflow)        & 
-                    .and.                                                    &
-                    ((elemR(JMidx,er_Head) + dH)  > MinHeadForOverflow)      &
-                ) then
-                    isCrossingIntoOverflowOrPonding  = .true.
-                    isCrossingOutofOverflowOrPonding = .false.
-                else
-                    isCrossingIntoOverflowOrPonding = .false.
-                end if
-                !% --- crossing from overflow/ponding to free surface
-                if ((elemR(JMidx,er_Head)      > MinHeadForOverflow)        & 
-                    .and.                                                   &
-                    ((elemR(JMidx,er_Head) + dH) < MinHeadForOverflow)      &
-                ) then
-                    isCrossingOutofOverflowOrPonding  = .true.
-                    isCrossingIntoOverflowOrPonding   = .false.
-                else
-                    isCrossingOutofOverflowOrPonding = .false.
-                end if
-
-                if (isCrossingintoOverflowOrPonding .or. isCrossingOutofOverflowOrPonding) then 
-                    !% --- limit this dH to the distance to the crown
-                    !%     and set volume, depth to full values
-                    dH = elemR(JMidx,er_Zcrown) - MinHeadForOverflow 
-                end if
+                call lljunction_main_iscrossing_overflow_or_ponding  &
+                    ( JMidx,  dH, isCrossingIntoOverflowOrPonding, isCrossingOutofOverflowOrPonding)
+                if (isCrossingIntoOverflowOrPonding .or. isCrossingOutofOverflowOrPonding) then 
+                    !% --- limit this dH to the distance from the present head to MinHeadForOverflowPonding
+                    !%     the second step is computed later
+                    dH = MinHeadForOverflowPonding - elemR(JMidx,er_Head) 
+                end if       
             else
-                isCrossingIntoOverflowOrPonding    = .false.
-                isCrossingOutofOverflowOrPonding   = .false.
+                !% --- no action, accept defaults
             end if
 
-            !% --- if not overflow/ponding, check for surcharge transition
-            if ((.not. isCrossingIntoOverflowOrPonding)  & 
-                .and.                                    &
-                (.not. isCrossingOutofOverflowOrPonding) &
-            ) then
-
-                if (elemYN(JMidx,eYN_canSurcharge)) then
-                    !% --- if head starts below or at crown we limit
-                    !%     the rise in head during the first part of this
-                    !%     solution and handle any excess in the second part.
-                    !%     Note that this is consistent with using the
-                    !%     standard storage plan area
-                    if ((elemR(JMidx,er_Head)     .le. elemR(JMidx,er_Zcrown))    &
-                        .and.                                                     &
-                       ((elemR(Jmidx,er_Head) + dH) >  elemR(Jmidx,er_Zcrown))    &
-                    ) then
-                        isCrossingIntoSurcharge  = .true.
-                        isCrossingOutofSurcharge = .false.
-                    else  
-                        isCrossingIntoSurcharge = .false.
-                    endif
-                    !% --- if head is above the crown, limit the drop in the
-                    !%     head to exactly the crown during the first part of
-                    !%     this solution, and handl the excess drop in the
-                    !%     second part
-                    !%     Note that this is consistent with using the surcharge
-                    !%     plan area
-                    if ((elemR(JMidx,er_Head)        > elemR(JMidx,er_Zcrown))  &
-                        .and.                                                   &
-                        ((elemR(Jmidx,er_Head) + dH) < elemR(Jmidx,er_Zcrown))  &
-                    ) then
-                         isCrossingOutofSurcharge = .true.
-                         isCrossingIntoSurcharge  = .false.
-                    else
-                        isCrossingOutofSurcharge = .false.
-                    end if
-                    if (isCrossingintoSurcharge .or. isCrossingOutofSurcharge) then 
-                        !% --- limit this dH to the distance to the crown
-                        !%     and set volume, depth to full values
+            !% --- check if crossing in or out of surcharge -- only applies if NOT overflow crossing
+            !%     note that JM with zero for OverflowHeightAboveCrown are given false for
+            !%     eYN_canSurcharge, so they will not use this algorithm
+            if (elemYN(JMidx,eYN_canSurcharge)) then
+                if ((.not. isCrossingIntoOverflowOrPonding ) .and. (.not. isCrossingOutofOverflowOrPonding)) then
+                    call lljunction_main_iscrossing_surcharge &
+                        ( JMidx,  dH, isCrossingIntoSurcharge, isCrossingOutofSurcharge)
+                    if (isCrossingIntoSurcharge .or. isCrossingOutofSurcharge) then 
+                        !% --- limit this dH to the distance from the present head to the crown
                         dH = elemR(JMidx,er_Zcrown) - elemR(JMidx,er_Head) 
                     end if
-                else
-                    isCrossingIntoSurcharge  = .false.
-                    isCrossingOutofSurcharge = .false.
-                end if  
-            else 
-                isCrossingIntoSurcharge  = .false.
-                isCrossingOutofSurcharge = .false.
+                else 
+                    !% --- no action
+                end if
+            else
+                !% --- no action, accept defaults
             end if
 
-            !% --- update values (head, depth, volume and deltaQ) 
-            !%     Note that if not a Crossing... then the dH is used
-            !%     When any Crossing... is true then set to the threshold values
+            !% --- update values (head, depth, volume, Qoverflow, DeltaQ, branch Q, QnetBranches
+            !%     Qstorage) 
+            !%     Note that if not a Crossing... then the dH is used for head, depth, volume.
+            !%     When any Crossing... is true then head, depth, volume values are set to the Full values
             call lljunction_main_update_intermediate &
-                (JMidx, istep, dH, dQdHoverflow, dQdHstorage, MinHeadForOverflow, isOverflow, isPonding, &
+                (JMidx, istep, dH, dQdHoverflow, dQdHstorage, MinHeadForOverflowPonding, isOverflow, isPonding, &
                  isCrossingIntoOverflowOrPonding, isCrossingOutofOverflowOrPonding, &
                  isCrossingIntoSurcharge, isCrossingOutofSurcharge)
 
             !% --- second part: additional dH when crossing surcharge
-            if ((isCrossingIntoSurcharge)         .or. (isCrossingOutofSurcharge) .or.            &
-                (isCrossingIntoOverflowOrPonding) .or. (isCrossingOutofOverflowOrPonding)) then 
+            ! if ((isCrossingIntoSurcharge)         .or. (isCrossingOutofSurcharge) .or.            &
+            !     (isCrossingIntoOverflowOrPonding) .or. (isCrossingOutofOverflowOrPonding)) then 
 
-                call lljunction_main_netFlowrate &
-                 (JMidx, Qnet, MinHeadForOverflow, canOverflowOrPond, isOverflow, isPonding)
+            !     !% --- Additional dH after crossing surcharge/free threshold
+            !     dH = dHsave - dH
+            !     call lljunction_main_dHcompute &
+            !             (JMidx, dH, dQdHoverflow, dQdHstorage, Qnet, Hbound, istep, &
+            !              isOverflow, isPonding, isCrossingIntoSurcharge, isCrossingOutofSurcharge)
 
-                !% --- Compute additional dH after crossing surcharge/free threshold
-                call lljunction_main_dHcompute &
-                        (JMidx, dH, dQdHoverflow, dQdHstorage, Qnet, Hbound, istep, &
-                         isOverflow, isPonding, isCrossingIntoSurcharge, isCrossingOutofSurcharge)
+            !     !% --- update values (head, depth, volume, deltaQ) based on dH
+            !     !%     Use isCrossing... = .false. so that full values are
+            !     !%     note used
+            !     call lljunction_main_update_intermediate &
+            !         (JMidx, istep, dH, dQdHoverflow, dQdHstorage, MinHeadForOverflow, isOverflow, isPonding, &
+            !         .false., .false., .false., .false.)
 
-                !% --- update values (head, depth, volume, deltaQ) based on dH
-                !%     Use isCrossing... = .false. so that full values are
-                !%     note used
-                call lljunction_main_update_intermediate &
-                    (JMidx, istep, dH, dQdHoverflow, dQdHstorage, MinHeadForOverflow, isOverflow, isPonding, &
-                    .false., .false., .false., .false.)
-
-            else
-                !% --- no action
-            end if
+            ! else
+            !     !% --- no action
+            ! end if
             
             call lljunction_main_update_final (JMidx, istep)
 

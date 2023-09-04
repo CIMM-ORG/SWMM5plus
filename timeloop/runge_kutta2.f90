@@ -79,10 +79,10 @@ module runge_kutta2
         !%     for preliminaries
         istep = zeroI
 
-        !print *, ' '
-        !print *, ' -----------------------------------------------------------------------------'
-        !print *, ' '
-        call util_utest_CLprint('AAAA RK2=================================')
+        ! print *, ' '
+        ! print *, ' -----------------------------------------------------------------------------'
+        ! print *, ' '
+        !  call util_utest_CLprint('AAAA RK2=================================')
 
         !% --- Preliminary values for JM/JB elements
         !%     Note, this must be called even if no JM/JB on this image because 
@@ -96,7 +96,7 @@ module runge_kutta2
             !% --- Half-timestep advance on CC for U and UVolume
             call rk2_step_CC (istep)  
 
-            call util_utest_CLprint('BBBB RK2=================================')
+            ! call util_utest_CLprint('BBBB RK2=================================')
 
             !% --- Update all CC aux variables
             !%     Note, these updates CANNOT depend on face values
@@ -105,7 +105,7 @@ module runge_kutta2
                 ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
                 .true., .false., dummyIdx)
 
-                call util_utest_CLprint('CCCC RK2=================================')
+                ! call util_utest_CLprint('CCCC RK2=================================')
 
             !% --- zero and small depth adjustment for elements
             call adjust_element_toplevel (CC)
@@ -113,18 +113,28 @@ module runge_kutta2
             !% --- JUNCTION 1st Step setup, 2nd Step compute
             if (N_nJM > 0) then 
                 if (istep == 1) then
-                    !% --- ensure JB interpweights for Q are forced for JB dominance
+                    !% --- update JB interpweights without forcing
                     Npack => npack_elemP(ep_JB)
                     if (Npack > 0) then 
                         thisP => elemP(1:Npack, ep_JB)
                         call update_interpweights_JB (thisP, Npack, .false.)
                     end if
 
-                    call util_utest_CLprint('DDDD RK2=================================')
+                    ! call util_utest_CLprint('DDDD RK2=================================')
+
                 else if (istep == 2) then 
                     !% --- conservative storage advance for junction, second step
                     call junction_second_step ()
-                    call util_utest_CLprint('EEEE RK2=================================')
+                    ! call util_utest_CLprint('EEEE RK2=================================')
+
+                    ! write(*,"(A,f12.5, 15e12.5)"), 'Junc2 ',elemR(136,er_Head), &
+                    ! faceR(faceI(137,fi_Melem_uL),fr_Flowrate_Conservative), &
+                    ! faceR(faceI(139,fi_Melem_dL),fr_Flowrate_Conservative), &
+                    ! elemSR(136,esr_JunctionMain_StorageRate), &
+                    ! elemR (136,er_FlowrateLateral), &
+                    ! elemSR(136,esr_JunctionMain_OverflowRate)
+                    ! !elemR(137,er_Flowrate), elemR(138,er_Flowrate)
+                    ! print *, ' '
                 end if
             end if
 
@@ -132,7 +142,7 @@ module runge_kutta2
             sync all
             call face_interpolation(fp_noBC_IorS, .true., .true., .true., .false., .true.) 
 
-            call util_utest_CLprint('FFFF RK2=================================')
+            ! call util_utest_CLprint('FFFF RK2=================================')
 
             if (N_diag > 0) then 
                 !% --- update flowrates for aa diagnostic elements
@@ -142,7 +152,8 @@ module runge_kutta2
                 call face_push_elemdata_to_face (ep_Diag, fr_Flowrate, er_Flowrate, elemR, .false.)
             end if
 
-            call util_utest_CLprint('GGGG RK2=================================')
+            ! call util_utest_CLprint('GGGG RK2=================================')
+
             !% --- face sync
             !%     sync all the images first. then copy over the data between
             !%     shared-identical faces. then sync all images again
@@ -156,7 +167,7 @@ module runge_kutta2
                 call pack_JB_zeroDepth_interior_faces ()
             end if
 
-            call util_utest_CLprint('HHHH RK2=================================')
+            ! call util_utest_CLprint('HHHH RK2=================================')
 
             !% --- transfer zero depth faces between images
             sync all 
@@ -169,7 +180,7 @@ module runge_kutta2
             call face_zeroDepth (fp_CC_downstream_is_zero_IorS, &
                 fp_CC_upstream_is_zero_IorS,fp_CC_bothsides_are_zero_IorS)
 
-                call util_utest_CLprint('IIII RK2=================================')
+                ! call util_utest_CLprint('IIII RK2=================================')
 
             if (N_nJM > 0) then
                 !% --- set face geometry and flowrates where adjacent element is zero
@@ -178,13 +189,13 @@ module runge_kutta2
                     fp_JB_upstream_is_zero_IorS,fp_JB_bothsides_are_zero_IorS)
             end if                
 
-            call util_utest_CLprint('JJJJ RK2=================================')
+            ! call util_utest_CLprint('JJJJ RK2=================================')
 
             !% --- enforce open (1) closed (0) "setting" value from EPA-SWMM
             !%     for all CC and Diag elements (not allowed on junctions)
             call face_flowrate_for_openclosed_elem (ep_CCDiag)
 
-            call util_utest_CLprint('KKKK RK2=================================')
+            ! call util_utest_CLprint('KKKK RK2=================================')
 
             !% --- face sync
             !%     sync all the images first. then copy over the data between
@@ -195,31 +206,45 @@ module runge_kutta2
             !% OR CAN face_flowrate_for_openclosed_elem
             !% BE MOVED UPWARDS IN STEPPING SO THAT IT GETS SYNCED?
 
+            ! call util_utest_CLprint('LLLL RK2=================================')
+            !print *, 'out of LLLL'
+
             !% --- JUNCTION -- first step compute
             if (istep == 1) then 
                 !% --- Junction first step RK estimate
                 !%     Note that this must be called in every image, including
                 !%     those that do not have junctions as it contains a sync
                 call junction_first_step ()
-                call util_utest_CLprint('LLLL RK2=================================')
+                !print *, 'out of junction first step'
+                
+                ! write(*,"(A,f12.5, 15e12.5)"), 'Junc1 ',elemR(136,er_Head), &
+                !     faceR(faceI(137,fi_Melem_uL),fr_Flowrate), &
+                !     faceR(faceI(139,fi_Melem_dL),fr_Flowrate), &
+                !     elemSR(136,esr_JunctionMain_StorageRate), &
+                !     elemR (136,er_FlowrateLateral), &
+                !     elemSR(136,esr_JunctionMain_OverflowRate)
+                !     !elemR(137,er_Flowrate), elemR(138,er_Flowrate)
             end if
 
             
+            ! call util_utest_CLprint('MMMM RK2=================================')
 
             !% --- Filter flowrates to remove grid-scale checkerboard
             call adjust_Vfilter_CC ()
 
-            call util_utest_CLprint('MMMM RK2=================================')
+            
 
             if (istep == 1) then 
                 !% -- fluxes at end of first RK2 step are the conservative fluxes enforced
                 !%    in second step
                 call rk2_store_conservative_fluxes (ALL) 
 
-                call util_utest_CLprint('NNNN RK2=================================')
+                ! call util_utest_CLprint('NNNN RK2=================================')
             end if
 
         end do
+
+        call util_utest_CLprint('ZZZZ RK2=================================')
 
         !% RETAIN FOR DEBUGGING
         !% --- overall volume conservation
