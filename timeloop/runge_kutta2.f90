@@ -24,7 +24,7 @@ module runge_kutta2
     use forcemain, only: forcemain_ManningsN
     use junction_elements
     use rk2_lowlevel
-    use culvert_elements, only: culvert_toplevel
+    use culvert_elements, only: culvert_toplevel  !% NOT WORKING AS OF 20230912
     use pack_mask_arrays
     use preissmann_slot
     use adjust
@@ -126,7 +126,8 @@ module runge_kutta2
                 else if (istep == 2) then 
                     !% --- conservative storage advance for junction, second step
                     call junction_second_step ()
-                    ! call util_utest_CLprint('EEEE RK2=================================')
+                   
+                    ! call util_utest_CLprint('OOOO 2nd step RK2=================================')
 
                     ! write(*,"(A,f12.5, 15e12.5)"), 'Junc2 ',elemR(136,er_Head), &
                     ! faceR(faceI(137,fi_Melem_uL),fr_Flowrate_Conservative), &
@@ -207,7 +208,7 @@ module runge_kutta2
             !% BE MOVED UPWARDS IN STEPPING SO THAT IT GETS SYNCED?
 
             ! call util_utest_CLprint('LLLL RK2=================================')
-            !print *, 'out of LLLL'
+
 
             !% --- JUNCTION -- first step compute
             if (istep == 1) then 
@@ -216,6 +217,8 @@ module runge_kutta2
                 !%     those that do not have junctions as it contains a sync
                 call junction_first_step ()
                 !print *, 'out of junction first step'
+
+                ! call util_utest_CLprint('MMMM 1st step only RK2=================================')
                 
                 ! write(*,"(A,f12.5, 15e12.5)"), 'Junc1 ',elemR(136,er_Head), &
                 !     faceR(faceI(137,fi_Melem_uL),fr_Flowrate), &
@@ -226,25 +229,31 @@ module runge_kutta2
                 !     !elemR(137,er_Flowrate), elemR(138,er_Flowrate)
             end if
 
+            ! print *, ' '
+            ! print *, 'before Vfilter'
+            ! write(*,"(A,15f12.5)") 'Hbefore ', elemR(167,er_Head), faceR(152,fr_Head_u), faceR(152,fr_Head_d), elemR(169,er_Head), elemR(170,er_Head)
             
-            ! call util_utest_CLprint('MMMM RK2=================================')
 
             !% --- Filter flowrates to remove grid-scale checkerboard
             call adjust_Vfilter_CC ()
 
-            
+            ! write(*,"(A,15f12.5)") 'Hafter  ',elemR(167,er_Head), faceR(152,fr_Head_u), faceR(152,fr_Head_d), elemR(169,er_Head), elemR(170,er_Head)
+            ! print *, ' '
 
             if (istep == 1) then 
                 !% -- fluxes at end of first RK2 step are the conservative fluxes enforced
                 !%    in second step
                 call rk2_store_conservative_fluxes (ALL) 
 
-                ! call util_utest_CLprint('NNNN RK2=================================')
+                ! call util_utest_CLprint('NNNN 1st step RK2=================================')
+
+            else 
+                ! call util_utest_CLprint('ZZZZ 2nd step RK2=================================')
             end if
 
         end do
 
-        ! call util_utest_CLprint('ZZZZ RK2=================================')
+        
 
         !% RETAIN FOR DEBUGGING
         !% --- overall volume conservation

@@ -328,6 +328,7 @@ module define_indexes
         enumerator :: er_dSlotDepth                 !% change in slot depth
         enumerator :: er_dSlotVolume                !% change in slot volume
         enumerator :: er_EllDepth                        !% the ell (lower case L) modified hydraulic depth
+        enumerator :: er_EnergyHead                 !% total energy head of an element (H + v^2/2g)
         enumerator :: er_Flowrate                   !% flowrate (latest)
         enumerator :: er_FlowrateLimit               !% max flowrate from user.inp file (0 is no limit)
         enumerator :: er_Flowrate_N0                !% flowrate (time N)
@@ -1199,6 +1200,7 @@ module define_indexes
         enumerator :: fr_Head_u                 !% piezometric head on upstream side of face
         enumerator :: fr_Head_d                 !% piezometric head on downstream side of face
         enumerator :: fr_Head_Adjacent          !% head of adjacent upstream or downstream element for JB faces
+        enumerator :: fr_EnergyHead_Adjacent        !% total energy of adjacent upstram or downstram element for JB faces
         enumerator :: fr_Topwidth_Adjacent      !% topwidth of adjacent upstream or downstream element
         enumerator :: fr_Length_Adjacent        !% length of adjacent upstream or downstream element
         enumerator :: fr_Zcrest_Adjacent

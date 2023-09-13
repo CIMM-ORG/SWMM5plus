@@ -30,6 +30,8 @@ module preissmann_slot
     public :: slot_JB_computation
     public :: slot_CC_Vshaped_adjust
 
+    integer :: printJM = 168
+
     contains
 !%    
 !%==========================================================================
@@ -817,7 +819,20 @@ module preissmann_slot
                 if ((volume(JMidx) > fullVolume(JMidx)) .and. canSurcharge(JMidx)) then
                     SlotVolume(JMidx) = max(volume(JMidx) - fullVolume(JMidx), zeroR)
 
+                    ! if (printJM == JMidx) then 
+                    !     print *, ' '
+                    !     print *, 'slot Volume here ',SlotVolume(JMidx)
+                    !     !print *, ' '
+                    ! end if
+
                     SlotArea(JMidx)   = SlotVolume(JMidx) / length(JMidx)  
+
+                    ! if (printJM == JMidx) then 
+                    !     print *, ' '
+                    !     print *, 'slot Area here ',SlotArea(JMidx)
+                    !     !print *, ' '
+                    ! end if
+
                     !% --- logicals
                     isSlot(JMidx)       = .true.
                     isSurcharge(JMidx)  = .true.
@@ -833,17 +848,40 @@ module preissmann_slot
                     end do
 
                     PNumber(JMidx) = max(PNadd/real(bcount,8), oneR)
+
+                    ! if (printJM == JMidx) then 
+                    !     print *, ' '
+                    !     print *, 'PNumber here ',PNumber(JMidx), PNadd, bcount
+                    !     !print *, ' '
+                    ! end if
+
                     PCelerity(JMidx) = min(TargetPCelerity / PNumber(JMidx), TargetPCelerity)
+
+                    ! if (printJM == JMidx) then 
+                    !     print *, ' '
+                    !     print *, 'PCelerity here ',PCelerity(JMidx)
+                    ! end if
+
 
                     !% --- find the change in slot volume
                     dSlotVol(JMidx)   = SlotVolume(JMidx) - SlotVolN0(JMidx)
                     !% --- find the change in slot area
                     dSlotArea(JMidx)  = dSlotVol(JMidx) / length(JMidx)
 
+                    ! if (printJM == JMidx) then 
+                    !     print *, ' '
+                    !     print *, 'dSLotVol here ',dSlotVol(JMidx)
+                    ! end if
+
                     !% --- find the change in slot depth
                     dSlotDepth(JMidx) = (dSlotArea(JMidx) * (PCelerity(JMidx) ** twoI)) &
                                          / (grav * (fullArea(JMidx)))
 
+
+                    ! if (printJM == JMidx) then 
+                    !     print *, ' '
+                    !     print *, 'dSLotDepth here1 ',dSlotDepth(JMidx)
+                    ! end if
 
                     !% --- for case where change in slot depth is negative while the slot volume
                     !%     is still positive
@@ -852,8 +890,18 @@ module preissmann_slot
                                            - SlotDepthN0(JMidx)    
                     end if                 
 
+                    ! if (printJM == JMidx) then 
+                    !     print *, ' '
+                    !     print *, 'dSLotDepth here2 ',dSlotDepth(JMidx)
+                    ! end if
+
                     !% -- update the plan area for surcharging at this level
                     pAreaSurcharge(JMidx) = dSlotVol(JMidx) / dSlotDepth(JMidx)
+
+                    ! if (printJM == JMidx) then 
+                    !     print *, ' '
+                    !     print *, 'pAreaSurcharge here ', pAreaSurcharge(JMidx)
+                    ! end if
        
                     !% --- surcharge time 
                     if (bcount > zeroI) then 
@@ -862,6 +910,10 @@ module preissmann_slot
                         SurchargeTime(JMidx) = zeroR
                     end if               
 
+                    ! if (printJM == JMidx) then 
+                    !     print *, ' '
+                    !     print *, 'surchargeTime here ', SurchargeTime(JMidx)
+                    ! end if
 
                     PNumber(JMidx) = (PnumberInitial(JMidx) - oneR) &
                          * exp((- SurchargeTime(JMidx) * tenR)/ DecayRate) + oneR

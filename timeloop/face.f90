@@ -170,32 +170,36 @@ module face
                 !% --- set the adjacent element value storage on the face
                 select case (elemI(thisP(ii),ei_elementType))
                     case (weir)
-                        faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Weir_Zcrest)
-                        faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Weir_dQdHe)
+                        faceR(ff,fr_EnergyHead_Adjacent) = elemR (thisP(ii),er_EnergyHead)
+                        faceR(ff,fr_Zcrest_Adjacent)     = elemSR(thisP(ii),esr_Weir_Zcrest)
+                        faceR(ff,fr_dQdH_Adjacent)       = elemSR(thisP(ii),esr_Weir_dQdHe)
                         !% --- check if the elem data has either been pushed 
                         !%     to a shared face. if so then mark that face
                         if (faceYN(ff,fYN_isSharedFace)) then
                             faceYN(ff,fYN_isSharedFaceDiverged) = .true.
                         end if
                     case (orifice)
-                        faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Orifice_Zcrest)
-                        faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Orifice_dQdHe)
+                        faceR(ff,fr_EnergyHead_Adjacent) = elemR (thisP(ii),er_EnergyHead)
+                        faceR(ff,fr_Zcrest_Adjacent)     = elemSR(thisP(ii),esr_Orifice_Zcrest)
+                        faceR(ff,fr_dQdH_Adjacent)       = elemSR(thisP(ii),esr_Orifice_dQdHe)
                         !% --- check if the elem data has either been pushed 
                         !%     to a shared face. if so then mark that face
                         if (faceYN(ff,fYN_isSharedFace)) then
                             faceYN(ff,fYN_isSharedFaceDiverged) = .true.
                         end if
                     case (outlet)
-                        faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Outlet_Zcrest)
-                        faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Outlet_dQdHe)
+                        faceR(ff,fr_EnergyHead_Adjacent) = elemR (thisP(ii),er_EnergyHead)
+                        faceR(ff,fr_Zcrest_Adjacent)     = elemSR(thisP(ii),esr_Outlet_Zcrest)
+                        faceR(ff,fr_dQdH_Adjacent)       = elemSR(thisP(ii),esr_Outlet_dQdHe)
                         !% --- check if the elem data has either been pushed 
                         !%     to a shared face. if so then mark that face
                         if (faceYN(ff,fYN_isSharedFace)) then
                             faceYN(ff,fYN_isSharedFaceDiverged) = .true.
                         end if
                     case (pump)
-                        faceR(ff,fr_Zcrest_Adjacent) = elemSR(thisP(ii),esr_Pump_Zcrest)
-                        faceR(ff,fr_dQdH_Adjacent)   = elemSR(thisP(ii),esr_Pump_dQdHp)
+                        faceR(ff,fr_EnergyHead_Adjacent) = elemR (thisP(ii),er_EnergyHead)
+                        faceR(ff,fr_Zcrest_Adjacent)     = elemSR(thisP(ii),esr_Pump_Zcrest)
+                        faceR(ff,fr_dQdH_Adjacent)       = elemSR(thisP(ii),esr_Pump_dQdHp)
                         !% --- check if the elem data has either been pushed 
                         !%     to a shared face. if so then mark that face
                         if (faceYN(ff,fYN_isSharedFace)) then

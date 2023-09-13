@@ -1257,17 +1257,12 @@ module geometry
 
                     if (BranchExists(tB) .ne. oneI) cycle
 
-                    !% only when a branch exists.
-                    !% --- head(tB) has already been updated in junction_calculation
-                    !%     for any element that has head(tM) > bottom + sediment
-                    !%     here we need to handle any JB elements that would have
-                    !%     Froude =1 overflow
                     if ( head(tM) > (zBtm(tB) + sedimentDepth(tB)) ) then
 
                         !head(tB) = head(tM)
 
                         !% == test 20230904brh
-
+                        !% --- head(tB) is linear interp from face value.
                         if (isUpBranch) then 
                             if (fHead_d(fup(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
                                 head(tB) = head(tM) &

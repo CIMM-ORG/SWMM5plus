@@ -135,6 +135,9 @@ module update
 
             ! call util_utest_CLprint('    fff update - - - - - - - - - - ')
 
+            !% --- compute element total energyhead 
+            call update_energyhead_CC(thisP)
+
         end if    
 
     end subroutine update_auxiliary_variables_CC
@@ -392,6 +395,7 @@ module update
         !% computes the interpolation weights on each element for CC
         !% tim-marching elements
         !%------------------------------------------------------------------
+        !% Declarations
             character(64)       :: subroutine_name = 'update_interpweights_CC'
             integer, intent(in) :: thisP(:)
             integer, pointer    :: fUp(:), fDn(:)
@@ -405,6 +409,7 @@ module update
             if (setting%Debug%File%update) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
+        !% Aliases
             Qlateral  => elemR(:,er_FlowrateLateral)
             velocity  => elemR(:,er_Velocity)
             wavespeed => elemR(:,er_WaveSpeed)
@@ -499,6 +504,24 @@ module update
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine update_interpweights_CC
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine update_energyhead_CC (thisP)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% computes the energy head (H + v^2/2g) on each element for CC
+        !% tim-marching elements
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisP(:)
+        !%------------------------------------------------------------------
+
+        elemR(thisP,er_EnergyHead) = elemR(thisP,er_Head) &
+            + (elemR(thisP,er_Velocity)**2) / (twoR * setting%Constant%gravity)    
+
+    end subroutine update_energyhead_CC
 !%
 !%==========================================================================
 !% END OF MODULE

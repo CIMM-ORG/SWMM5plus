@@ -83,6 +83,10 @@ module pump_elements
         !% --- prohibit reverse flow through pump
         if (FlowRate < zeroR) FlowRate = zeroR 
 
+        !% --- compute downstream energy head
+        call common_outflow_energyhead_singular &
+         (eIdx, esr_Pump_NominalDownstreamHead, esi_Pump_FlowDirection)
+
         !%-----------------------------------------------------------------------------
         !% Closing:
             if (setting%Debug%File%pump_elements)  &

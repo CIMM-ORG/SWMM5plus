@@ -39,6 +39,8 @@ module junction_elements
     public :: junction_first_step
     public :: junction_second_step
 
+    integer :: printJM =168
+
     contains
 !%==========================================================================
 !% PUBLIC
@@ -64,6 +66,8 @@ module junction_elements
         if (N_nJM > 0) then
             call lljunction_main_velocity (ep_JM)
                 ! call util_utest_CLprint ('------- jjj.01  after lljunction_main_velocity')
+
+            call lljunction_main_energyhead (ep_JM)
         end if
 
         !% --- push inflows on CC upstream or downstream of JB elem to CC/JB face
@@ -109,8 +113,9 @@ module junction_elements
         !%     sync all the images first. then copy over the data between
         !%     shared-identical faces. then sync all images again
         sync all
-        call face_shared_face_sync (fp_JB_IorS,[fr_Head_Adjacent,fr_Topwidth_Adjacent,fr_Length_Adjacent, &
-                                    fr_Zcrest_Adjacent,fr_Velocity_Adjacent,fr_Froude_Adjacent,fr_Depth_Adjacent])
+        call face_shared_face_sync (fp_JB_IorS,[fr_Head_Adjacent,fr_EnergyHead_Adjacent,         &
+                                    fr_Topwidth_Adjacent,fr_Length_Adjacent, fr_Zcrest_Adjacent, &
+                                    fr_Velocity_Adjacent,fr_Froude_Adjacent,fr_Depth_Adjacent])
         sync all
         !% 
         !% ==============================================================
@@ -127,7 +132,7 @@ module junction_elements
         !%     sync all the images first. then copy over the data between
         !%     shared-identical faces. then sync all images again
         sync all
-        call face_shared_face_sync (fp_JB_IorS,[fr_Zcrest_Adjacent,fr_dQdH_Adjacent])
+        call face_shared_face_sync (fp_JB_IorS,[fr_Zcrest_Adjacent,fr_dQdH_Adjacent,fr_EnergyHead_Adjacent])
         sync all
         !% 
         !% ==============================================================
@@ -248,12 +253,20 @@ module junction_elements
         !% Provides first estimate of junction flows and storage
         !%------------------------------------------------------------------
 
+        ! print *, '  '
+        ! print *, 'AAAA ',elemR(101,er_Flowrate)
+        ! print *, trim(reverseKey(elemI(101,ei_elementType)))
+        ! print *, elemI(101,ei_Mface_dL)
+        ! print *, ' '
+
         if (N_nJM > 0) then 
             !% --- forces JB elem Q to faces (overriding the interpolation)
             !%     computes new JM Volume, Head, JB fluxes, JB DeltaQ
             !%     for conservation and dH change in head 
             !%     assigns new JB and JM aux values
             call junction_toplevel(1)
+
+            ! print *, 'BBBB ',elemR(101,er_Flowrate)
 
             !% --- force the JB element values to the faces for upstream (true)
             !%     and downstream (false) branches.
@@ -263,6 +276,8 @@ module junction_elements
             !%     is the subroutine that requires face syncing afterwards
             call face_force_JBelem_to_face (ep_JM, .true.)
             call face_force_JBelem_to_face (ep_JM, .false.)
+
+            ! print *, 'CCCC ',elemR(101,er_Flowrate)
 
         end if       
         !% ==============================================================
@@ -277,6 +292,8 @@ module junction_elements
         !% 
         !% ==============================================================
 
+        ! print *, 'DDDD ',elemR(101,er_Flowrate)
+
         if (N_nJM > 0) then 
             !% --- Adjust JB-adjacent CC elements using fr_DeltaQ flux changes
             !%     This fixes conservative flowrate, volume, velocity for upstream (true)
@@ -290,6 +307,8 @@ module junction_elements
             !%     on both sides without violating the no-neighbor principle.
 
         end if
+
+        ! print *, 'EEEE ',elemR(101,er_Flowrate)
 
         !% ==============================================================
         !% --- face sync
@@ -315,6 +334,8 @@ module junction_elements
         !%     only applies to faces with JB on one side
         call face_zeroDepth (fp_JB_downstream_is_zero_IorS, &
             fp_JB_upstream_is_zero_IorS,fp_JB_bothsides_are_zero_IorS)
+
+            ! print *, 'FFFF',elemR(101,er_Flowrate)
         
     end subroutine junction_first_step
 !%
@@ -356,17 +377,37 @@ module junction_elements
             !% --- add the Preissmann slot depths back to head 
             call slot_JM_adjustments (ep_JM, Npack)
 
+            ! print *, ' '
+            ! print *, 'SlotDepth after JM adjust ',elemR(printJM,er_SlotDepth)
+            ! print *, 'head                      ',elemR(printJM,er_Head)
+            ! print *, ' '
+
             !% --- adjust JM for small or zero depth
             call adjust_element_toplevel (JM)
+
+            ! print *, 'JB head before'
+            ! print *, elemR(169,er_Head), elemR(170,er_Head)
+            ! print *, ' '
 
             !% --- assign JB values based on new JM head
             call geo_assign_JB_from_head (ep_JM) !% HACK  revise using ep_JB
 
+            ! print *, 'JB head after'
+            ! print *, elemR(169,er_Head), elemR(170,er_Head)
+            ! print *, ' '
+
             !% --- Preissmann slot computations
             call slot_JB_computation (ep_JM)
 
+            ! print *, 'SlotDepth after JB',elemR(169,er_SlotDepth),elemR(170,er_SlotDepth)
+            ! print *, ' '
+
             !% --- adjust JB for small or zero depth
             call adjust_element_toplevel (JB)
+
+            ! print *, 'Head end of 2nd step'
+            ! print *, elemR(169,er_Head), elemR(168,er_Head), elemR(170,er_Head)
+            ! print *, ' '
             
         end if
 
@@ -526,6 +567,7 @@ module junction_elements
                 canOverflowOrPond = .true.
             end if
 
+            !% --- 20230913 -- presently sets large values
             call lljunction_main_head_bounds (JMidx, Hbound)
             
             !% --- convert Hbound to a deltaH bound
@@ -571,6 +613,13 @@ module junction_elements
                 if ((.not. isCrossingIntoOverflowOrPonding ) .and. (.not. isCrossingOutofOverflowOrPonding)) then
                     call lljunction_main_iscrossing_surcharge &
                         ( JMidx,  dH, isCrossingIntoSurcharge, isCrossingOutofSurcharge)
+
+                        ! if (printJM == JMidx) then 
+                        !     print *, ' '
+                        !     print *, 'crossing ',isCrossingIntoSurcharge, isCrossingOutofSurcharge
+                        !     print *, ' '
+                        ! end if
+
                     if (isCrossingIntoSurcharge .or. isCrossingOutofSurcharge) then 
                         !% --- limit this dH to the distance from the present head to the crown
                         dH = elemR(JMidx,er_Zcrown) - elemR(JMidx,er_Head) 
@@ -581,6 +630,12 @@ module junction_elements
             else
                 !% --- no action, accept defaults
             end if
+
+            ! if (printJM == JMidx) then 
+            !     print *, ' '
+            !     print *, 'dH, dHsave ',dH, dHsave
+            !     print *, ' '
+            ! end if
 
             !% --- update values (head, depth, volume, Qoverflow, DeltaQ, branch Q, QnetBranches
             !%     Qstorage) 
