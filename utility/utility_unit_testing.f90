@@ -88,11 +88,15 @@ contains
          !integer, dimension(4) :: ift =    (/    91,  92,            93,  102    /)
 
          !14455.1 - 14450 - 14450.1
-         integer, dimension(7) :: iet =     (/166,167,   169,168,170,     179,180   /)
-         integer, dimension(4) :: ift =    (/    151,  152,            153,  162    /)
+         ! integer, dimension(7) :: iet =     (/166,167,   169,168,170,     179,180   /)
+         ! integer, dimension(4) :: ift =    (/    151,  152,            153,  162    /)
 
          !integer, dimension(7) :: iet =     (/8,9,   11,10,12,     21,22   /)
          !integer, dimension(4) :: ift =    (/  9,  10,         11,   20    /)
+
+         !% mod2, 14458, 14458.1, 86207
+         integer, dimension(7) :: iet =     (/102, 104,    113, 114, 115,   117, 116  /)
+         integer, dimension(4) :: ift =    (/           93,  102, 103,  104         /)
 
       !%------------------------------------------------------------------
       !% Preliminaries:
@@ -111,7 +115,7 @@ contains
 
       !   return
 
-        if (setting%Time%Step < 10600) return
+        if (setting%Time%Step < 106088) return
 
       !   if (setting%Time%Step > 11948) then 
       !    stop 550987
@@ -137,28 +141,28 @@ contains
          !    return
          ! end if
 
-         ! do ii=1,N_elem(1)  
-         !    if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then
-         !      print *, ii, elemI(ii,ei_link_Gidx_SWMM), 'link ', trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
-         !    end if
-         !    if (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then
-         !       print *, ii, elemI(ii,ei_node_Gidx_SWMM), 'node ', trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
-         !    end if
-         ! end do
-         ! stop 609873
-         ! print *, ' '
+      !    do ii=1,N_elem(1)  
+      !       if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then
+      !         print *, ii, elemI(ii,ei_link_Gidx_SWMM), 'link ', trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
+      !       end if
+      !       if (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then
+      !          print *, ii, elemI(ii,ei_node_Gidx_SWMM), 'node ', trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
+      !       end if
+      !    end do
+      !   ! stop 609873
+      !    print *, ' '
 
-         ! do ii =1,7
-         !    write(*,"(12i8.0)"), ii, elemI(iet(ii),ei_Mface_uL),  iet(ii),  elemI(iet(ii),ei_Mface_dL)
-         !    if (elemI(iet(ii),ei_Mface_uL) .ne. 998877) then
-         !       write(*,"(12i8.0)"), ii, faceI(elemI(iet(ii),ei_Mface_uL),fi_Melem_dL), 998877
-         !    end if
-         !    if (elemI(iet(ii),ei_Mface_dL) .ne. 998877) then
-         !       write(*,"(12i8.0)"), ii, 998877, faceI(elemI(iet(ii),ei_Mface_dL),fi_Melem_uL)
-         !    end if
-         !    print *, ' '
-         ! end do
-         ! stop 5098723
+      !    do ii =1,7
+      !       write(*,"(12i8.0)"), ii, elemI(iet(ii),ei_Mface_uL),  iet(ii),  elemI(iet(ii),ei_Mface_dL)
+      !       if (elemI(iet(ii),ei_Mface_uL) .ne. 998877) then
+      !          write(*,"(12i8.0)"), ii, faceI(elemI(iet(ii),ei_Mface_uL),fi_Melem_dL), 998877
+      !       end if
+      !       if (elemI(iet(ii),ei_Mface_dL) .ne. 998877) then
+      !          write(*,"(12i8.0)"), ii, 998877, faceI(elemI(iet(ii),ei_Mface_dL),fi_Melem_uL)
+      !       end if
+      !       print *, ' '
+      !    end do
+      !    stop 5098723
 
          ! do ii=1,N_elem(this_image())
          !    print *, ii, elemI(ii,ei_elementType), trim(reverseKey(elemI(ii,ei_elementType))), elemI(ii,ei_link_Gidx_BIPquick)
@@ -302,6 +306,144 @@ contains
 
          ! stop 7709874
 
+         write(*,"(15A)") '       ', '     JM     ', '     JB     ','    face    ','    elem    ','    face    ','    elem    ','    face    ','    elem    ','    face    ','     JB      ', '    JM      '
+
+         !% nodes with center link
+         write(*,"(A,15f12.3)") 'dept', &
+         elemR(iet(1),er_Depth), &
+         elemR(iet(2),er_Depth), &
+            faceR(ift(1),fr_Depth_d), &
+         elemR(iet(3),er_Depth), &
+            faceR(ift(2),fr_Depth_d), &
+         elemR(iet(4),er_Depth), &
+            faceR(ift(3),fr_Depth_d), &
+         elemR(iet(5),er_Depth), &
+            faceR(ift(4),fr_Depth_d), &
+         elemR(iet(6),er_Depth), &
+         elemR(iet(7),er_Depth)
+
+         write(*,"(A,15f12.3)") 'Zdif', &
+         elemR(iet(1),er_Zcrown) - elemR(iet(1),er_Zbottom), &
+         elemR(iet(2),er_Zcrown) - elemR(iet(2),er_Zbottom), &
+            faceR(ift(1),fr_Zcrown_d) - faceR(ift(1),fr_Zbottom), &
+         elemR(iet(3),er_Zcrown) - elemR(iet(3),er_Zbottom), &
+            faceR(ift(2),fr_Zcrown_d) - faceR(ift(2),fr_Zbottom), &
+         elemR(iet(4),er_Zcrown) - elemR(iet(4),er_Zbottom), &
+            faceR(ift(3),fr_Zcrown_d) - faceR(ift(3),fr_Zbottom), &
+         elemR(iet(5),er_Zcrown) - elemR(iet(5),er_Zbottom), &
+            faceR(ift(4),fr_Zcrown_d) - faceR(ift(4),fr_Zbottom), &
+         elemR(iet(6),er_Zcrown) - elemR(iet(6),er_Zbottom), &
+         elemR(iet(7),er_Zcrown) - elemR(iet(7),er_Zbottom)
+
+         write(*,"(A,15f12.3)") 'head', &
+         elemR(iet(1),er_Head), &
+         elemR(iet(2),er_Head), &
+            faceR(ift(1),fr_Head_d), &
+         elemR(iet(3),er_Head), &
+            faceR(ift(2),fr_Head_d), &
+         elemR(iet(4),er_Head), &
+            faceR(ift(3),fr_Head_d), &
+         elemR(iet(5),er_Head), &
+            faceR(ift(4),fr_Head_d), &
+         elemR(iet(6),er_Head), &
+         elemR(iet(7),er_Head)
+
+            write(*,"(A,15f12.3)") 'Zcrn', &
+            elemR(iet(1),er_Zcrown), &
+            elemR(iet(2),er_Zcrown), &
+               faceR(ift(1),fr_Zcrown_d), &
+            elemR(iet(3),er_Zcrown), &
+               faceR(ift(2),fr_Zcrown_d), &
+            elemR(iet(4),er_Zcrown), &
+               faceR(ift(3),fr_Zcrown_d), &
+            elemR(iet(5),er_Zcrown), &
+               faceR(ift(4),fr_Zcrown_d), &
+            elemR(iet(6),er_Zcrown), &
+            elemR(iet(7),er_Zcrown)
+
+            write(*,"(A,15f12.3)") 'Q   ', &
+            elemR(iet(1),er_Flowrate), &
+            elemR(iet(2),er_Flowrate), &
+               faceR(ift(1),fr_Flowrate), &
+            elemR(iet(3),er_Flowrate), &
+               faceR(ift(2),fr_Flowrate), &
+            elemR(iet(4),er_Flowrate), &
+               faceR(ift(3),fr_Flowrate), &
+            elemR(iet(5),er_Flowrate), &
+               faceR(ift(4),fr_Flowrate), &
+            elemR(iet(6),er_Flowrate), &
+            elemR(iet(7),er_Flowrate)
+
+            write(*,"(A,15f12.3)") 'Qcon', &
+            elemR(iet(1),er_Flowrate), &
+            elemR(iet(2),er_Flowrate), &
+               faceR(ift(1),fr_Flowrate_Conservative), &
+            elemR(iet(3),er_Flowrate), &
+               faceR(ift(2),fr_Flowrate_Conservative), &
+            elemR(iet(4),er_Flowrate), &
+               faceR(ift(3),fr_Flowrate_Conservative), &
+            elemR(iet(5),er_Flowrate), &
+               faceR(ift(4),fr_Flowrate_Conservative), &
+            elemR(iet(6),er_Flowrate), &
+            elemR(iet(7),er_Flowrate)
+
+            write(*,"(A,15f12.3)") 'Vel ', &
+            elemR(iet(1),er_Velocity), &
+            elemR(iet(2),er_Velocity), &
+               faceR(ift(1),fr_Velocity_d), &
+            elemR(iet(3),er_Velocity), &
+               faceR(ift(2),fr_Velocity_d), &
+            elemR(iet(4),er_Velocity), &
+               faceR(ift(3),fr_Velocity_d), &
+            elemR(iet(5),er_Velocity), &
+               faceR(ift(4),fr_Velocity_d), &
+            elemR(iet(6),er_Velocity), &
+            elemR(iet(7),er_Velocity)
+
+            write(*,"(A,15e12.3)") 'Scon', &
+            elemR(iet(1),er_SourceContinuity), &
+            elemR(iet(2),er_SourceContinuity), &
+               0.0, &
+            elemR(iet(3),er_SourceContinuity), &
+               0.0, &
+            elemR(iet(4),er_SourceContinuity), &
+               0.0, &
+            elemR(iet(5),er_SourceContinuity), &
+               0.0, &
+            elemR(iet(6),er_SourceContinuity), &
+            elemR(iet(7),er_SourceContinuity)
+
+
+            write(*,"(A,15e12.3)") 'Volu', &
+            elemR(iet(1),er_Volume)-33.36, &
+            elemR(iet(2),er_Volume)-33.36, &
+               0.0, &
+            elemR(iet(3),er_Volume)-33.36, &
+               0.0, &
+            elemR(iet(4),er_Volume)-33.36, &
+               0.0, &
+            elemR(iet(5),er_Volume)-33.36, &
+               0.0, &
+            elemR(iet(6),er_Volume)-33.36, &
+            elemR(iet(7),er_Volume)-33.36
+
+            ! write(*,"(A,15f12.3)") 'Qlat', &
+            ! elemR(iet(1),er_FlowrateLateral), &
+            ! elemR(iet(2),er_FlowrateLateral), &
+            !    0.0, &
+            ! elemR(iet(3),er_FlowrateLateral), &
+            !    0.0, &
+            ! elemR(iet(4),er_FlowrateLateral), &
+            !    0.0, &
+            ! elemR(iet(5),er_FlowrateLateral), &
+            !    0.0, &
+            ! elemR(iet(6),er_FlowrateLateral), &
+            ! elemR(iet(7),er_FlowrateLateral)
+
+         return
+
+
+         !% -- links with center node
             write(*,"(A,15f12.5)") 'head', &
             elemR(iet(1),er_Head), &
                faceR(ift(1),fr_Head_d), &

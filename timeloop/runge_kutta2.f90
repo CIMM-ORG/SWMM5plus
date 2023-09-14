@@ -82,14 +82,14 @@ module runge_kutta2
         ! print *, ' '
         ! print *, ' -----------------------------------------------------------------------------'
         ! print *, ' '
-        !  call util_utest_CLprint('AAAA RK2=================================')
+         call util_utest_CLprint('AAAA start RK2=================================')
 
         !% --- Preliminary values for JM/JB elements
         !%     Note, this must be called even if no JM/JB on this image because 
         !%     the faces require synchronizing.
         call junction_preliminaries ()
 
-        ! call util_utest_CLprint('AAA2 RK2=================================')
+        call util_utest_CLprint('AAA2 RK2=================================')
 
         !%==================================  
         !% --- RK2 SOLUTION
@@ -98,7 +98,7 @@ module runge_kutta2
             !% --- Half-timestep advance on CC for U and UVolume
             call rk2_step_CC (istep)  
 
-            ! call util_utest_CLprint('BBBB RK2=================================')
+             call util_utest_CLprint('BBBB RK2=================================')
 
             !% --- Update all CC aux variables
             !%     Note, these updates CANNOT depend on face values
@@ -107,7 +107,7 @@ module runge_kutta2
                 ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
                 .true., .false., dummyIdx)
 
-                ! call util_utest_CLprint('CCCC RK2=================================')
+                call util_utest_CLprint('CCCC RK2=================================')
 
             !% --- zero and small depth adjustment for elements
             call adjust_element_toplevel (CC)
@@ -127,7 +127,7 @@ module runge_kutta2
                     !% --- conservative storage advance for junction, second step
                     call junction_second_step ()
                    
-                    ! call util_utest_CLprint('OOOO 2nd step RK2=================================')
+                    call util_utest_CLprint('OOOO 2nd step RK2=================================')
 
                     ! write(*,"(A,f12.5, 15e12.5)"), 'Junc2 ',elemR(136,er_Head), &
                     ! faceR(faceI(137,fi_Melem_uL),fr_Flowrate_Conservative), &
@@ -207,7 +207,7 @@ module runge_kutta2
             !% OR CAN face_flowrate_for_openclosed_elem
             !% BE MOVED UPWARDS IN STEPPING SO THAT IT GETS SYNCED?
 
-            ! call util_utest_CLprint('LLLL RK2=================================')
+            call util_utest_CLprint('LLLL RK2=================================')
 
 
             !% --- JUNCTION -- first step compute
@@ -218,7 +218,7 @@ module runge_kutta2
                 call junction_first_step ()
                 !print *, 'out of junction first step'
 
-                ! call util_utest_CLprint('MMMM 1st step only RK2=================================')
+                call util_utest_CLprint('MMMM 1st step only RK2=================================')
                 
                 ! write(*,"(A,f12.5, 15e12.5)"), 'Junc1 ',elemR(136,er_Head), &
                 !     faceR(faceI(137,fi_Melem_uL),fr_Flowrate), &
@@ -245,13 +245,22 @@ module runge_kutta2
                 !%    in second step
                 call rk2_store_conservative_fluxes (ALL) 
 
-                ! call util_utest_CLprint('NNNN 1st step RK2=================================')
+                call util_utest_CLprint('NNNN 1st step RK2=================================')
 
             else 
-                ! call util_utest_CLprint('ZZZZ 2nd step RK2=================================')
+                call util_utest_CLprint('ZZZZ 2nd step RK2=================================')
             end if
 
         end do
+
+        if  ( ((elemR(113,er_Volume) - elemR(113,er_FullVolume)) > zeroR) .and. &
+              ((elemR(113,er_Head)   - elemR(113,er_Zcrown))     < zeroR)) then
+                print *, ' '
+                print *, 'stopping on inconsistency, step ', setting%Time%Step
+                print *, elemR(113,er_Volume), elemR(113,er_FullVolume)
+                print *, elemR(113,er_Head), elemR(113,er_Zcrown)
+                stop 6609873
+        end if
 
         
 
@@ -308,8 +317,12 @@ module runge_kutta2
             !% --- Compute net flowrates for CC as source termo
             call ll_continuity_netflowrate_CC (er_SourceContinuity, thisPackCol, Npack)
 
+            call util_utest_CLprint('inside aaaa --------------------')
+
             !% --- Solve for new volume
             call ll_continuity_volume_CC (er_Volume, thisPackCol, Npack, istep)
+
+            call util_utest_CLprint('inside bbbb --------------------')
 
             !% --- adjust extremely small volumes that might be been introduced
             call adjust_limit_by_zerovalues &
@@ -363,6 +376,8 @@ module runge_kutta2
             call ll_enforce_zerodepth_velocity (er_Velocity, thisPackCol, Npack)
 
         end if
+
+        call util_utest_CLprint('inside cccc --------------------')
         
     end subroutine rk2_step_CC
 !%

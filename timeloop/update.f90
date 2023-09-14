@@ -22,7 +22,7 @@ module update
     use utility_profiler
     use utility_crash
 
-    ! use utility_unit_testing, only: util_utest_CLprint
+    use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -105,35 +105,35 @@ module update
             end if
         !%------------------------------------------------------------------
 
-            ! call util_utest_CLprint('    aaa update - - - - - - - - - - ')
+            if (.not. isSingularYN) call util_utest_CLprint('    aaa update - - - - - - - - - - ')
 
         !% --- update the head (non-surcharged) and geometry
         call geometry_toplevel_CC ( &
             thisP, npackP, thisP_Open, npackP_Open, thisP_Closed, npackP_Closed, &
              isSingularYN, isAllYN)
 
-            !  call util_utest_CLprint('    bbb update - - - - - - - - - - ')
+             if (.not. isSingularYN)  call util_utest_CLprint('    bbb update - - - - - - - - - - ')
         
         if (npackP > 0) then
             !% --- Compute the flowrate on CC.
             call update_flowrate_CC (thisP)
 
-            ! call util_utest_CLprint('    ccc update - - - - - - - - - - ')
+            ! if (.not. isSingularYN)  call util_utest_CLprint('    ccc update - - - - - - - - - - ')
 
             !% --- compute element Froude numbers for CC
             call update_Froude_number_element (thisP)
 
-            ! call util_utest_CLprint('    ddd update - - - - - - - - - - ')
+            ! if (.not. isSingularYN) call util_utest_CLprint('    ddd update - - - - - - - - - - ')
 
             !% --- compute the wave speeds
             call update_wavespeed_element(thisP)
 
-            ! call util_utest_CLprint('    eee update - - - - - - - - - - ')
+            ! if (.not. isSingularYN)  call util_utest_CLprint('    eee update - - - - - - - - - - ')
 
             !% --- compute element-face interpolation weights on CC
             call update_interpweights_CC(thisP)
 
-            ! call util_utest_CLprint('    fff update - - - - - - - - - - ')
+            ! if (.not. isSingularYN) call util_utest_CLprint('    fff update - - - - - - - - - - ')
 
             !% --- compute element total energyhead 
             call update_energyhead_CC(thisP)
