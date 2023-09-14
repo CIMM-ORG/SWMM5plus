@@ -885,10 +885,10 @@ module preissmann_slot
 
                     !% --- for case where change in slot depth is negative while the slot volume
                     !%     is still positive
-                    if (dSlotDepth(JMidx) < SlotDepthN0(JMidx)) then 
-                        dSlotDepth(JMidx) = (SlotVolume(JMidx) / elemSR(JMidx,esr_Storage_Plan_Area)) &
-                                           - SlotDepthN0(JMidx)    
-                    end if                 
+                    ! if (dSlotDepth(JMidx) < SlotDepthN0(JMidx)) then 
+                    !     dSlotDepth(JMidx) = (SlotVolume(JMidx) / elemSR(JMidx,esr_Storage_Plan_Area)) &
+                    !                        - SlotDepthN0(JMidx)    
+                    ! end if                 
 
                     ! if (printJM == JMidx) then 
                     !     print *, ' '
