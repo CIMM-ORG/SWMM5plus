@@ -574,9 +574,10 @@ module preissmann_slot
                     dSlotVol(thisP)   = SlotVolume(thisP) - SlotVolN0(thisP)
                     !% --- find the change in slot area
                     dSlotArea(thisP)  = dSlotVol(thisP) / length(thisP)
-
                     !% --- find the change in slot depth
                     dSlotDepth(thisP) = (dSlotArea(thisP)  * (PCelerity(thisP) ** twoI)) / (grav * (fullArea(thisP)))
+                    !% --- find the slot width
+                    SlotWidth(thisP) =  dSlotArea(thisP) / dSlotDepth(thisP) 
                 end where
 
                 !% --- reset isfSlot to find ventilated positions
@@ -628,13 +629,13 @@ module preissmann_slot
         !% Declarations
             !integer, intent(in) :: thisCol, Npack
             integer, intent(in) :: er_VvalueCol, thisP(:)
-            integer, pointer    :: SlotMethod
+            integer, pointer    :: SlotMethod, fUp(:), fDn(:)
             real(8), pointer    :: fullArea(:), fullDepth(:), PNumber(:), PCelerity(:)  
             real(8), pointer    :: SlotWidth(:), SlotDepth(:), SlotDepth_N0(:), SlotArea(:)
             real(8), pointer    :: dSlotArea(:), dSlotDepth(:), eHead(:) 
-            real(8), pointer    :: PnumberInitial(:), Vvalue(:), zBottom(:)
+            real(8), pointer    :: PnumberInitial(:), Vvalue(:), zCrown(:)
             real(8), pointer    :: TargetPCelerity, grav, Dt
-            logical, pointer    :: isSurcharge(:)
+            logical, pointer    :: isSurcharge(:), isfSlot(:)
             character(64) :: subroutine_name = "slot_CC"
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -659,9 +660,13 @@ module preissmann_slot
             SlotDepth_N0 => elemR(:,er_SlotDepth_N0)
             SlotArea   => elemR(:,er_SlotArea)
             Vvalue     => elemR(:,er_VvalueCol)
-            zBottom    => elemR(:,er_Zbottom)
+            zCrown     => elemR(:,er_Zcrown)
             !% --- pointer to elemYN column
             isSurcharge=> elemYN(:,eYN_isSurcharged)
+            isfSlot    => faceYN(:,fYN_isPSsurcharged)
+            !% --- pointers to elemI columns
+            fUp        => elemI(:,ei_Mface_uL)
+            fDn        => elemI(:,ei_Mface_dL)
             !% --- pointer to necessary settings struct
             SlotMethod          => setting%Solver%PreissmannSlot%Method
             TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
@@ -675,22 +680,31 @@ module preissmann_slot
                 return
             !% --- for dynamic slot, slot adjustment is required
             case (DynamicSlot)
-
+                     
                 where ((Vvalue(thisP) > zeroR) .and. isSurcharge(thisP))
-                    !% new slot depth
-                    SlotDepth(thisP) = max(eHead(thisP) - zBottom(thisP) - fullDepth(thisP), zeroR)
-                    !% new dslot depth
-                    dSlotDepth(thisP) = SlotDepth(thisP) - SlotDepth_N0(thisP)
-                    !% find a new slot widht for corresponding slot depth
-                    SlotWidth(thisP) = abs(dSlotDepth(thisP) / dSlotArea(thisP))
-                    !% new preissmann celerity
-                    PCelerity(thisP) = min(sqrt((grav * fullArea(thisP)) / SlotWidth(thisP)), TargetPCelerity)
-                    !% new preissmann number
-                    PNumber(thisP) =  min(TargetPCelerity / PCelerity(thisP), PnumberInitial(thisP))
-                    !% recalculate the preissmann celerity
-                    PCelerity(thisP) = TargetPCelerity / PNumber(thisP)
-                end where
+                
+                    !% only the slot if the upstream and downstream faces are surcharged
+                    where (isfSlot(fUP(thisP)) .and. isfSlot(fDn(thisP)))
+                        !% new slot depth
+                        SlotDepth(thisP) = max(eHead(thisP) - zCrown(thisP), zeroR)
+                        !% new dslot depth
+                        dSlotDepth(thisP) = SlotDepth(thisP) - SlotDepth_N0(thisP)
+                        !% find a new slot widht for corresponding slot depth
+                        SlotWidth(thisP) = abs(dSlotArea(thisP) / dSlotDepth(thisP))
+                        !% new preissmann celerity
+                        PCelerity(thisP) = min(sqrt((grav * fullArea(thisP)) / SlotWidth(thisP)), TargetPCelerity)
+                        !% new preissmann number
+                        PNumber(thisP) =  min(TargetPCelerity / PCelerity(thisP), PnumberInitial(thisP))
+                        !% recalculate the preissmann celerity
+                        PCelerity(thisP) = TargetPCelerity / PNumber(thisP)
 
+                    !% reset the v-shaped head adjustment where the upstream and downstream ends are not surcharged
+                    elsewhere 
+                        eHead(thisP) = zCrown(thisP) + SlotDepth(thisP)
+                    end where
+
+                end where
+                
             case default
                 !% --- should not reach this stage
                 print*, 'In ', subroutine_name

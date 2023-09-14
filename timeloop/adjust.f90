@@ -1189,6 +1189,8 @@ module adjust
             !% --- NOTE: volume is NOT adjusted.
         end where
 
+        !% HACK: the subroutine below will not work if heads of both
+        !%       surcharged and non-surcharged elemnts are adjusted
         if (setting%Solver%PreissmannSlot%useSlotTF) then
             !% adjust v-shaped slots
             call slot_CC_Vshaped_adjust (thisP,er_Temp01)
