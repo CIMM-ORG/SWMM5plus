@@ -635,7 +635,7 @@ module preissmann_slot
             real(8), pointer    :: dSlotArea(:), dSlotDepth(:), eHead(:) 
             real(8), pointer    :: PnumberInitial(:), Vvalue(:), zCrown(:)
             real(8), pointer    :: TargetPCelerity, grav, Dt
-            logical, pointer    :: isSurcharge(:), isfSlot(:)
+            logical, pointer    :: isSurcharge(:), isfSlot(:), isJBup(:), isJBdn(:)
             character(64) :: subroutine_name = "slot_CC"
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -664,6 +664,8 @@ module preissmann_slot
             !% --- pointer to elemYN column
             isSurcharge=> elemYN(:,eYN_isSurcharged)
             isfSlot    => faceYN(:,fYN_isPSsurcharged)
+            isJBup     => faceYN(:,fYN_isUpstreamJBFace)
+            isJBdn     => faceYN(:,fYN_isDownstreamJBFace)
             !% --- pointers to elemI columns
             fUp        => elemI(:,ei_Mface_uL)
             fDn        => elemI(:,ei_Mface_dL)
@@ -684,7 +686,7 @@ module preissmann_slot
                 where ((Vvalue(thisP) > zeroR) .and. isSurcharge(thisP))
                 
                     !% only the slot if the upstream and downstream faces are surcharged
-                    where (isfSlot(fUP(thisP)) .and. isfSlot(fDn(thisP)))
+                    where ((isfSlot(fUP(thisP)) .and. isfSlot(fDn(thisP))) .and. (.not. isJBup(fUP(thisP))) .and. (.not. isJBdn(fDn(thisP))))
                         !% new slot depth
                         SlotDepth(thisP) = max(eHead(thisP) - zCrown(thisP), zeroR)
                         !% new dslot depth
