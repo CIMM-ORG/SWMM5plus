@@ -1698,7 +1698,7 @@ contains
 
         !% --- exit if no profiles were found
         if (N_Profiles == 0) then
-            print *, "...no profiles found"
+            print *, "... no profiles found"
             return
         endif
 

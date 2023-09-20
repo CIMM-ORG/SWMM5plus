@@ -735,8 +735,8 @@ module define_indexes
 
     !% --- PUMP
     enum, bind(c)
-        enumerator ::  esr_Pump_EffectiveHeadDelta = 1     !% effective head delta across outlet
-        enumerator ::  esr_Pump_NominalDownstreamHead      !% nominal downstream head for outlet
+        enumerator ::  esr_Pump_EffectiveHeadDelta = 1     !% effective head delta across pump
+        enumerator ::  esr_Pump_NominalDownstreamHead      !% nominal downstream head for pump
         enumerator ::  esr_Pump_yOn                        !% pump startup depth
         enumerator ::  esr_Pump_yOff                       !% pump shutoff depth
         enumerator ::  esr_Pump_xMin                       !% minimum pt. on pump curve 
