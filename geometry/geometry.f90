@@ -47,7 +47,7 @@ module geometry
     use utility_profiler
     use utility_crash
 
-    use utility_unit_testing, only: util_utest_CLprint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -94,14 +94,14 @@ module geometry
 
             !if (.not. isSingularYN) call util_utest_CLprint('       111 geo  - - - - - - - - - - ')
 
-            if ((.not. isSingularYN) .and. (setting%Time%Step > 102057) ) then 
-                print *,' '
-                print *,'geo 111 step ',setting%Time%Step ,'=============================='
-                print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
-                print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
-                print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
-                print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
-            end if
+            ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102057) ) then 
+            !     print *,' '
+            !     print *,'geo 111 step ',setting%Time%Step ,'=============================='
+            !     print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
+            !     print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
+            !     print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
+            !     print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
+            ! end if
         !% --- PREISSMAN SLOT    
         !% --- Handle Preissmann Slot for closed CC elements
         !%     with this time march type.
@@ -112,14 +112,14 @@ module geometry
         !if (.not. isSingularYN) call util_utest_CLprint('       222 geo  - - - - - - - - - - ')
         ! if (.not. isSingularYN) print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
 
-        if ((.not. isSingularYN) .and. (setting%Time%Step > 102057) ) then 
-            print *,' '
-            print *,'geo 222'
-            print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
-            print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
-            print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
-            print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
-        end if
+        ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102057) ) then 
+        !     print *,' '
+        !     print *,'geo 222'
+        !     print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
+        !     print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
+        !     print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
+        !     print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
+        ! end if
         !% --- DEPTH
         !%     compute the depth on all elements of CC based on geometry.
         !%     If surcharged, this call returns the full depth of a closed conduit 
@@ -134,14 +134,14 @@ module geometry
             ! if (.not. isSingularYN) call util_utest_CLprint('       444 geo  - - - - - - - - - - ')
         end if
 
-        if ((.not. isSingularYN) .and. (setting%Time%Step > 102057)) then 
-            print *,' '
-            print *,'geo 444'
-            print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
-            print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
-            print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
-            print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
-        end if
+        ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102057)) then 
+        !     print *,' '
+        !     print *,'geo 444'
+        !     print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
+        !     print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
+        !     print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
+        !     print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
+        ! end if
 
         !% --- ZERO DEPTH CC
         !%     reset all zero or near-zero depths in CC
@@ -152,14 +152,14 @@ module geometry
             (er_Depth, setting%ZeroValue%Depth, thisP, .false.)
 
             ! if (.not. isSingularYN) call util_utest_CLprint('       555 geo  - - - - - - - - - - ')
-            if ((.not. isSingularYN) .and. (setting%Time%Step > 102057) ) then 
-                print *,' '
-                print *,'geo 555'
-                print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
-                print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
-                print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
-                print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
-            end if
+            ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102057) ) then 
+            !     print *,' '
+            !     print *,'geo 555'
+            !     print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
+            !     print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
+            !     print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
+            !     print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
+            ! end if
 
         !% --- PIEZOMETRIC HEAD
         !%     compute the head on all elements of CC
@@ -171,14 +171,14 @@ module geometry
 
             ! if (.not. isSingularYN) call util_utest_CLprint('       666 geo  - - - - - - - - - - ')
 
-            if ((.not. isSingularYN) .and. (setting%Time%Step > 102058) ) then 
-                print *,' '
-                print *,'geo 666'
-                print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
-                print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
-                print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
-                print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
-            end if
+            ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102058) ) then 
+            !     print *,' '
+            !     print *,'geo 666'
+            !     print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
+            !     print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
+            !     print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
+            !     print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
+            ! end if
         !% --- OPEN CHANNEL OVERFLOW
         !%     Compute the overflow lost for CC open channels above
         !%     their maximum volume (no ponding allowed from open CC). 

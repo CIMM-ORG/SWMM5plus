@@ -22,7 +22,7 @@ module update
     use utility_profiler
     use utility_crash
 
-    use utility_unit_testing, only: util_utest_CLprint
+    ! use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -105,14 +105,14 @@ module update
             end if
         !%------------------------------------------------------------------
 
-            if (.not. isSingularYN) call util_utest_CLprint('    aaa update - - - - - - - - - - ')
+            ! if (.not. isSingularYN) call util_utest_CLprint('    aaa update - - - - - - - - - - ')
 
         !% --- update the head (non-surcharged) and geometry
         call geometry_toplevel_CC ( &
             thisP, npackP, thisP_Open, npackP_Open, thisP_Closed, npackP_Closed, &
              isSingularYN, isAllYN)
 
-             if (.not. isSingularYN)  call util_utest_CLprint('    bbb update - - - - - - - - - - ')
+            !  if (.not. isSingularYN)  call util_utest_CLprint('    bbb update - - - - - - - - - - ')
         
         if (npackP > 0) then
             !% --- Compute the flowrate on CC.
