@@ -127,7 +127,7 @@ contains
 
       !   return
 
-        if (setting%Time%Step < 53677) return
+        if (setting%Time%Step < 53676) return
 
         if (setting%Time%Step == 53679) then 
          stop 880984
@@ -342,7 +342,20 @@ contains
             faceR(ift(4),fr_Head_d), &
          elemR(iet(7),er_Head)
 
-         write(*,"(A,15f12.3)") 'Flow', &
+         write(*,"(A,15f12.3)") 'Zcrn', &
+         elemR(iet(1),er_Zcrown), &
+         elemR(iet(2),er_Zcrown), &
+         elemR(iet(3),er_Zcrown), &
+            faceR(ift(1),fr_Zcrown_d), &
+         elemR(iet(4),er_Zcrown), &
+            faceR(ift(2),fr_Zcrown_d), &
+         elemR(iet(5),er_Zcrown), &
+            faceR(ift(3),fr_Zcrown_d), &
+         elemR(iet(6),er_Zcrown), &
+            faceR(ift(4),fr_Zcrown_d), &
+         elemR(iet(7),er_Zcrown)
+
+         write(*,"(A,15e12.3)") 'Flow', &
          elemR(iet(1),er_Flowrate), &
          elemR(iet(2),er_Flowrate), &
          elemR(iet(3),er_Flowrate), &
@@ -355,7 +368,20 @@ contains
             faceR(ift(4),fr_Flowrate), &
          elemR(iet(7),er_Flowrate)
 
-         write(*,"(A,15f12.3)") 'Vol ', &
+         write(*,"(A,15e12.3)") 'Fcon', &
+         0.0, &
+         0.0, &
+         0.0, &
+            faceR(ift(1),fr_Flowrate_Conservative), &
+         0.0, &
+            faceR(ift(2),fr_Flowrate_Conservative), &
+         0.0, &
+            faceR(ift(3),fr_Flowrate_Conservative), &
+         0.0, &
+            faceR(ift(4),fr_Flowrate_Conservative), &
+         0.0
+
+         write(*,"(A,15e12.3)") 'Vol ', &
          elemR(iet(1),er_Volume), &
          elemR(iet(2),er_Volume), &
          elemR(iet(3),er_Volume), &
@@ -368,7 +394,7 @@ contains
             0.0, &
          elemR(iet(7),er_Volume)
 
-         write(*,"(A,15f12.3)") 'Vol ', &
+         write(*,"(A,15e12.3)") 'SVol', &
          elemR(iet(1),er_SlotVolume), &
          elemR(iet(2),er_SlotVolume), &
          elemR(iet(3),er_SlotVolume), &
@@ -381,7 +407,24 @@ contains
             0.0, &
          elemR(iet(7),er_SlotVolume)
 
+         write(*,"(A,15e12.3)") 'SDep', &
+         elemR(iet(1),er_SlotDepth), &
+         elemR(iet(2),er_SlotDepth), &
+         elemR(iet(3),er_SlotDepth), &
+         0.0, &
+         elemR(iet(4),er_SlotDepth), &
+         0.0, &
+         elemR(iet(5),er_SlotDepth), &
+         0.0, &
+         elemR(iet(6),er_SlotDepth), &
+            0.0, &
+         elemR(iet(7),er_SlotDepth)
          return
+
+
+
+
+
 
          !% all 1 link, starting with faces
 
@@ -452,7 +495,7 @@ contains
                elemR(iet(5),er_Volume), &   
             0.0
 
-            write(*,"(A,15f12.3)") 'Svol', &
+            write(*,"(A,15e12.3)") 'Svol', &
             0.0, &
                elemR(iet(1),er_SlotVolume), &
             0.0, &

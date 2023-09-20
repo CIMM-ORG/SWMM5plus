@@ -47,7 +47,7 @@ module geometry
     use utility_profiler
     use utility_crash
 
-    ! use utility_unit_testing, only: util_utest_CLprint
+    use utility_unit_testing, only: util_utest_CLprint
 
     implicit none
 
@@ -92,7 +92,7 @@ module geometry
             if (npackP < 1) return
         !%------------------------------------------------------------------
 
-            !if (.not. isSingularYN) call util_utest_CLprint('       111 geo  - - - - - - - - - - ')
+            if (.not. isSingularYN) call util_utest_CLprint('       111 geo  - - - - - - - - - - ')
 
             ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102057) ) then 
             !     print *,' '
@@ -109,7 +109,7 @@ module geometry
             call slot_CC (thisP_Closed)
         end if
 
-        !if (.not. isSingularYN) call util_utest_CLprint('       222 geo  - - - - - - - - - - ')
+        if (.not. isSingularYN) call util_utest_CLprint('       222 geo  - - - - - - - - - - ')
         ! if (.not. isSingularYN) print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
 
         ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102057) ) then 
@@ -127,11 +127,11 @@ module geometry
         if (isAllYN) then
             call geo_depth_from_volume_by_type_allCC (elemPGetm, npack_elemPGetm, col_elemPGetm)
 
-            ! if (.not. isSingularYN)  call util_utest_CLprint('       333 geo  - - - - - - - - - - ')
+            if (.not. isSingularYN)  call util_utest_CLprint('       333 geo  - - - - - - - - - - ')
         else
             call geo_depth_from_volume_by_element_CC (thisP, npackP)
 
-            ! if (.not. isSingularYN) call util_utest_CLprint('       444 geo  - - - - - - - - - - ')
+            if (.not. isSingularYN) call util_utest_CLprint('       444 geo  - - - - - - - - - - ')
         end if
 
         ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102057)) then 
@@ -151,7 +151,7 @@ module geometry
         call adjust_limit_by_zerovalues &
             (er_Depth, setting%ZeroValue%Depth, thisP, .false.)
 
-            ! if (.not. isSingularYN) call util_utest_CLprint('       555 geo  - - - - - - - - - - ')
+            if (.not. isSingularYN) call util_utest_CLprint('       555 geo  - - - - - - - - - - ')
             ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102057) ) then 
             !     print *,' '
             !     print *,'geo 555'
@@ -169,7 +169,7 @@ module geometry
         elemR(thisP,er_Head) = llgeo_head_from_depth_pure &
                                     (thisP, elemR(thisP,er_Depth))
 
-            ! if (.not. isSingularYN) call util_utest_CLprint('       666 geo  - - - - - - - - - - ')
+            if (.not. isSingularYN) call util_utest_CLprint('       666 geo  - - - - - - - - - - ')
 
             ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102058) ) then 
             !     print *,' '
@@ -192,7 +192,7 @@ module geometry
             end if
         end if
 
-        ! if (.not. isSingularYN) call util_utest_CLprint('       777 geo  - - - - - - - - - - ')
+        if (.not. isSingularYN) call util_utest_CLprint('       777 geo  - - - - - - - - - - ')
 
         !% --- PREISSMAN SLOT VOLUME LIMIT CLOSED CONDUIT CC
         !%     limit the volume in closed element (CC) to the full volume
@@ -201,7 +201,7 @@ module geometry
             call geo_volumelimit_closed (thisP_Closed)
         end if
 
-        ! if (.not. isSingularYN)  call util_utest_CLprint('       888 geo  - - - - - - - - - - ')
+        if (.not. isSingularYN)  call util_utest_CLprint('       888 geo  - - - - - - - - - - ')
 
         !% --- CROSS-SECTIONAL AREA
         !%     compute area from volume for CC
@@ -210,7 +210,7 @@ module geometry
         elemR(thisP,er_Area) = llgeo_area_from_volume_pure(thisP,elemR(thisP,er_Volume))
         elemR(thisP,er_Area) = max(elemR(thisP,er_Area),setting%ZeroValue%Area)
 
-        ! if (.not. isSingularYN) call util_utest_CLprint('       999 geo  - - - - - - - - - - ')
+        if (.not. isSingularYN) call util_utest_CLprint('       999 geo  - - - - - - - - - - ')
 
         !% --- TOPWIDTH CC
         !%     compute topwidth from depth for all CC
@@ -221,7 +221,7 @@ module geometry
             call geo_topwidth_from_depth_by_element_CC (thisP, npackP)
         end if
 
-        ! if (.not. isSingularYN) call util_utest_CLprint('       aaa geo  - - - - - - - - - - ')
+        if (.not. isSingularYN) call util_utest_CLprint('       aaa geo  - - - - - - - - - - ')
 
         !% --- PERIMETER AND HYDRAULIC RADIUS CC
         !%     compute hydraulic radius and perimeter
@@ -234,14 +234,14 @@ module geometry
             call geo_perimeter_and_hydradius_from_depth_by_element_CC (thisP, npackP)
         end if
 
-        ! if (.not. isSingularYN) call util_utest_CLprint('       bbb geo  - - - - - - - - - - ')
+        if (.not. isSingularYN) call util_utest_CLprint('       bbb geo  - - - - - - - - - - ')
 
         !% --- ELLDEPTH MODIFIED HYDRAULIC DEPTH
         !%     the modified hydraulic depth "ell" is used for 
         !%     for Froude number computations on all CC elements
         call geo_elldepth_from_head_CC (thisP)
 
-        ! if (.not. isSingularYN) call util_utest_CLprint('       ccc geo  - - - - - - - - - - ')
+        if (.not. isSingularYN) call util_utest_CLprint('       ccc geo  - - - - - - - - - - ')
 
         !% ---- ADJUST SLOT 
         !%      make adjustments for slots on closed elements only
@@ -250,7 +250,7 @@ module geometry
             call slot_CC_adjustments (thisP_Closed)
         end if
 
-        ! if (.not. isSingularYN)  call util_utest_CLprint('       ddd geo  - - - - - - - - - - ')
+        if (.not. isSingularYN)  call util_utest_CLprint('       ddd geo  - - - - - - - - - - ')
 
     end subroutine geometry_toplevel_CC
 !% 

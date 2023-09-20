@@ -107,7 +107,7 @@ module runge_kutta2
                 ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
                 .true., .false., dummyIdx)
 
-                ! call util_utest_CLprint('CCCC RK2=================================')
+             call util_utest_CLprint('CCCC RK2=================================')
 
             !% --- zero and small depth adjustment for elements
             call adjust_element_toplevel (CC)
@@ -127,7 +127,7 @@ module runge_kutta2
                     !% --- conservative storage advance for junction, second step
                     call junction_second_step ()
                    
-                    ! call util_utest_CLprint('OOOO 2nd step RK2=================================')
+                    call util_utest_CLprint('OOOO 2nd step RK2=================================')
 
                     ! write(*,"(A,f12.5, 15e12.5)"), 'Junc2 ',elemR(136,er_Head), &
                     ! faceR(faceI(137,fi_Melem_uL),fr_Flowrate_Conservative), &
@@ -207,7 +207,7 @@ module runge_kutta2
             !% OR CAN face_flowrate_for_openclosed_elem
             !% BE MOVED UPWARDS IN STEPPING SO THAT IT GETS SYNCED?
 
-            ! call util_utest_CLprint('LLLL RK2=================================')
+            call util_utest_CLprint('LLLL RK2=================================')
 
 
             !% --- JUNCTION -- first step compute
@@ -218,7 +218,7 @@ module runge_kutta2
                 call junction_first_step ()
                 !print *, 'out of junction first step'
 
-                ! call util_utest_CLprint('MMMM 1st step only RK2=================================')
+                call util_utest_CLprint('MMMM 1st step only RK2=================================')
                 
                 ! write(*,"(A,f12.5, 15e12.5)"), 'Junc1 ',elemR(136,er_Head), &
                 !     faceR(faceI(137,fi_Melem_uL),fr_Flowrate), &
@@ -245,10 +245,10 @@ module runge_kutta2
                 !%    in second step
                 call rk2_store_conservative_fluxes (ALL) 
 
-                ! call util_utest_CLprint('NNNN 1st step RK2=================================')
+                call util_utest_CLprint('NNNN 1st step RK2=================================')
 
             else 
-                ! call util_utest_CLprint('ZZZZ 2nd step RK2=================================')
+                call util_utest_CLprint('ZZZZ 2nd step RK2=================================')
             end if
 
         end do
