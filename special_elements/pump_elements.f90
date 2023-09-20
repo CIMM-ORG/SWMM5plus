@@ -57,7 +57,11 @@ module pump_elements
             FlowRate => elemR(eIdx,er_Flowrate)
             PSetting => elemR(eIdx,er_Setting)
         !%-------------------------------------------------------------------
-   
+        !% -- get the head and flow direction through pumps
+        call common_head_and_flowdirection_singular &
+            (eIdx, esr_Pump_Zcrest, esr_Pump_NominalDownstreamHead, esi_Pump_FlowDirection)
+
+
         select case (PumpType)
 
             case (type1_Pump)

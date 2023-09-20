@@ -355,7 +355,7 @@ contains
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
         call diagnostic_by_type (ep_Diag, 1)
         !% reset any face values affected
-        call face_interpolation (ep_Diag,.true.,.true.,.true.,.true.,.true.)
+        call face_interpolation (fp_Diag_IorS,.true.,.true.,.true.,.true.,.true.)
 
         Npack => npack_elemP(ep_JM)
         if (Npack > 0) then

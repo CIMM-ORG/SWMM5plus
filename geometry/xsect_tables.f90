@@ -313,7 +313,7 @@ contains
         !% --- use quadratic interpolation for small values
         do concurrent (ii=1:size(thisP))
             kk = thisP(ii)
-            if (position(kk) .LE. twoI) then
+            if ((position(kk) .GT. zeroI) .and. (position(kk) .LE. twoI)) then
                 inoutArray(kk) = max(zeroR,                                            &
                     inoutArray(kk)                                                     & 
                     + (  (normalizedInput(kk) - real((position(kk) - oneI),8) * delta) &
@@ -378,7 +378,7 @@ contains
         end if
 
         !% --- quadratic interpolation for low value of normalizedInput
-        if (position .LE. twoI) then
+        if ((position .GT. zeroI) .and. (position .LE. twoI)) then
             outvalue = max(zeroR,                                           &
                     outvalue                                                &
                     + ( (normalizedInput - real((position - oneI),8)*delta) &
