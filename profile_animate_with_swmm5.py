@@ -47,13 +47,13 @@ nJm  = 3
 #-----------------------------------------------------------------------------------
 # USER SETTING CONTROL
 # select what unit to produce the animation to
-unit = 'CMS'
+unit = 'CFS'
 # save animation
-save_animation = False
+save_animation = True
 #-----------------------------------------------------------------------------------
 # profile name given by arg
 arg_profile_name = ""
-has_arg_profile = False
+has_arg_profile = True
 
 # Getting current working directory and time when the script is ran so that we can create a new folder
 cwd = os.getcwd()
@@ -87,8 +87,7 @@ else:
 
 # output h5 file
 output_file = output_path+'/output.h5'
-
-
+swmm5_output_path = output_path+'/'+test_case+'.out'
 
 if os.path.isfile(output_file):
     # now we have the location of the h5 file, and the list of all the datasets in the h5 file
@@ -171,6 +170,7 @@ if not all_attribute_names:
     print("------------------------------------------------------------------------------------") 
     quit()
 
+
 for profile_name_test in all_attribute_names:
     if not all_attribute_names:
         print("----------------------------- ERROR IN GETTING PROFILES --------------------------------")
@@ -200,6 +200,7 @@ for profile_name_test in all_attribute_names:
 
     # say we have a profile like below from the hdf file
     element_head     = []
+    swmm_node_head   = []
     element_length   = []
     element_zbottom  = []
     element_zcrown   = []
@@ -210,7 +211,7 @@ for profile_name_test in all_attribute_names:
     feature_length   = []
 
     nFeatures = 0
-
+    nNode = 0
     for feature_no,feature in enumerate(profile):
 
         if(feature_no % 2 == 0):
@@ -220,7 +221,7 @@ for profile_name_test in all_attribute_names:
             # find the index of the feature in the nodelist
             # to find the node type
             nidx = node_name.index(feature)
-
+            nNode = nNode + 1
             if node_type[nidx] == 'nJ2':
                 # find the head of the nJ2 face
                 node_data_set = 'node_face_'+feature
@@ -230,6 +231,9 @@ for profile_name_test in all_attribute_names:
                 node_face_heads = 0.5 * (node_data[:,index_1] + node_data[:,index_2])
                 # append the nJ2 heads to a compined list
                 element_head.append(node_face_heads)
+                # get swmm5c head data
+                nodal_head = swmmtoolbox.extract(swmm5_output_path,"node,"+feature+',Hydraulic_head').to_numpy().ravel()
+                swmm_node_head.append(nodal_head)
                 # append rest of the geometry as zero (updated later)
                 element_zbottom.append(0)
                 element_zcrown.append(0)
@@ -251,6 +255,9 @@ for profile_name_test in all_attribute_names:
                 node_elem_heads = h5_file[node_data_set][:,1]
                 # append the nJm heads to a compined list
                 element_head.append(node_elem_heads)
+                # get swmm5c head data
+                nodal_head = swmmtoolbox.extract(swmm5_output_path,"node,"+feature+',Hydraulic_head').to_numpy().ravel()
+                swmm_node_head.append(nodal_head)
                 # now retrieve static dataset for geometry
                 # find the name of the static file in the hdf5 dataset
                 static_data_set = 'nodeFV_static_'+feature
@@ -317,6 +324,7 @@ for profile_name_test in all_attribute_names:
 
     # combine and stack all the lists in to numpy arrays
     element_head    = np.column_stack(element_head) * Yf
+    swmm_node_head  = np.column_stack(swmm_node_head)
     element_zbottom = np.hstack(element_zbottom) * Yf
     element_zcrown  = np.hstack(element_zcrown) * Yf 
     element_length  = np.hstack(element_length) * Yf
@@ -331,13 +339,18 @@ for profile_name_test in all_attribute_names:
 
     # find the x val to plot heads
     xval = np.zeros(nelem, dtype=np.float64)
+    node_xval = np.zeros(nNode, dtype=np.float64)
     length_counter = 0
-
+    node_counter = 0
     for idx,item in enumerate(element_length):
 
         if element_type[idx] == nJ2:
             # xval is for the head plot 
             xval[idx] = length_counter
+
+            # swmmC node xval data
+            node_xval[node_counter] = xval[idx]
+            node_counter = node_counter + 1
 
         elif element_type[idx] == nJm:
             # xval is for the head plot
@@ -345,12 +358,16 @@ for profile_name_test in all_attribute_names:
             # advance for the next element        
             length_counter = length_counter + item 
 
+            # swmmC node xval data   
+            node_xval[node_counter] = xval[idx] 
+            node_counter = node_counter + 1
+
         elif element_type[idx] == CC:
             # xval is for the head plot
             xval[idx] = length_counter + item * 0.5
             # advance for the next element        
             length_counter = length_counter + item 
-
+    
     # set the location of link node labels
     xval_feature = np.zeros(feature_length.shape[0], dtype=np.float64) 
     length = 0
@@ -362,14 +379,14 @@ for profile_name_test in all_attribute_names:
 
 
     # animation plot
-    plt.rcParams['figure.figsize'] = [10, 4]
+    plt.rcParams['figure.figsize'] = [15, 6]
     plt.rcParams.update({'font.size': 11})
     fig, ax = plt.subplots()
     fig.tight_layout(pad=2)
     x = 0
     # take 10% of the gradient difference as buffer for plotting
     max_zrown = max(element_zcrown)
-    max_head  = np.amax(element_head)
+    max_head  = max(np.amax(element_head), np.amax(swmm_node_head))
     if np.all(element_zbottom == 0):
         min_zbottom = 0
     else:
@@ -396,8 +413,8 @@ for profile_name_test in all_attribute_names:
             feature_zbottom = 0.5 * (min(element_zbottom[element_rank==indx])
                                     +max(element_zbottom[element_rank==indx]))
             # link labels
-            ax.text(xval_feature[indx],feature_zbottom-0.5*buffer,feature,
-                    rotation=90,ha='center',va='top', fontsize='small')
+            # ax.text(xval_feature[indx],feature_zbottom+0.5*buffer,feature,
+            #         rotation=0,ha='center',va='top', fontsize='small')
 
         elif feature_type[indx] == nJ2:
             # find the index of the J2 face
@@ -421,6 +438,9 @@ for profile_name_test in all_attribute_names:
             ax.plot(xval[J_plot_idx], element_zcrown[J_plot_idx],'-k')
             # plot vlines to distinguish nodes
             ax.axvline(x=vline_xval,color='b',linestyle='-',linewidth=0.15)
+            # node labels
+            # ax.text(np.average(xval[J_plot_idx]),np.average(element_zbottom[J_plot_idx])+0.5*buffer,feature,
+            #     rotation=0,ha='center',va='top', fontsize='small')
 
         # plot junction geometry
         elif feature_type[indx] == nJm:
@@ -487,37 +507,41 @@ for profile_name_test in all_attribute_names:
                 ax.axvline(x=xval[J_idx],color='b',linestyle='-',linewidth=0.15)
 
                 # node labels
-    #             ax.text(xval_feature[indx],feature_zbottom[indx]-buffer,feature_name[indx],
-    #                 rotation=90,ha='center',va='top', fontsize='small')
+                # ax.text(xval[J_idx],element_zbottom[J_idx]+0.5*buffer,feature,
+                #     rotation=0,ha='center',va='top', fontsize='small')
 
+ 
     # animation line          
-    line,  = ax.plot(xval, element_head[x,:], '-o', markersize=2.0, color='xkcd:cerulean')
+    line,  = ax.plot(xval, element_head[x,:], '-o', markersize=1.5, color='xkcd:cerulean',label='SWMM5plus')
+    line1, = ax.plot(node_xval,swmm_node_head[x,:], ':o', markersize=4.0, color='xkcd:blue',label='SWMM5-C')
     time_text = ax.text(0.98, 0.95,'',ha='right',va='top',transform=plt.gca().transAxes,fontsize='small')
 
     #labeling the plots, using profile name and units for length and head
-    plt.title(profile_name_test)
+    plt.title('Test case profile: '+arg_profile_name)
     plt.xlabel('Length along the profile '+Yunit)
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
     plt.ylim(min_zbottom-buffer,max_head+buffer)
+    plt.legend(loc='lower left')
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
     plt.tight_layout()
 
     def animate(ii):
         line.set_ydata(element_head[x+ii,:])  # update the data.
+        line1.set_ydata(swmm_node_head[x+ii,:])
         time_text.set_text('Time = %.1f hr.' %(sim_time[ii]))
-        return line,
+        return line, line1
 
 
-    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=50, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps-1, interval=30, blit=False)
 
     #saving the animation before showing it
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY
     if save_animation:
         # animation file name
         animation_name = output_path+""+test_case+"_"+ profile_name_test+'.gif' 
-        writergif = animation.PillowWriter(fps=30)
+        writergif = animation.PillowWriter(fps=20)
         ani.save(animation_name,writer=writergif)
 
 
@@ -526,6 +550,7 @@ for profile_name_test in all_attribute_names:
     plt.show()
     plt.clf()
     plt.close()
+
     # break if a certian profile is animated
     if (has_arg_profile):
         break
