@@ -691,7 +691,7 @@ module preissmann_slot
                 where ((Vvalue(thisP) > zeroR) .and. isSurcharge(thisP))
                 
                     !% only the slot if the upstream and downstream faces are surcharged
-                    where ((isfSlot(fUP(thisP)) .and. isfSlot(fDn(thisP))) .and. (.not. isJBup(fUP(thisP))) .and. (.not. isJBdn(fDn(thisP))))
+                    where ((isfSlot(fUP(thisP)) .and. isfSlot(fDn(thisP))) .and. (.not. isJBup(fDn(thisP))) .and. (.not. isJBdn(fUp(thisP))))
                         !% new slot depth
                         SlotDepth(thisP) = max(eHead(thisP) - zCrown(thisP), zeroR)
                         !% new dslot depth
@@ -711,7 +711,7 @@ module preissmann_slot
                     end where
 
                 end where
-                
+
             case default
                 !% --- should not reach this stage
                 print*, 'In ', subroutine_name
