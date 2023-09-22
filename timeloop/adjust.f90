@@ -215,6 +215,11 @@ module adjust
             vMax       => setting%Limiter%Velocity%Maximum
         !%------------------------------------------------------------------
 
+            if (setting%Time%Step > 60485) then 
+                print *, ' '
+                print *, 'ADJUST HEAD A',elemR(120,er_Head)
+            end if
+
         !% --- ad hoc adjustments to flowrate 
         if (setting%Adjust%Flowrate%ApplyYN) then   
             select case (setting%Adjust%Flowrate%Approach)
@@ -230,6 +235,11 @@ module adjust
             end select
         else 
             !% --- no flow adjustment
+        end if
+
+        if (setting%Time%Step > 60485) then 
+            print *, ' '
+            print *, 'ADJUST HEAD B',elemR(120,er_Head), trim(reverseKey(setting%Adjust%Head%Approach))
         end if
 
         !% --- ad hoc adjustments to head
@@ -251,6 +261,11 @@ module adjust
             end select
         else 
             !% --- nohead adjustment
+        end if
+
+        if (setting%Time%Step > 60485) then 
+            print *, ' '
+            print *, 'ADJUST HEAD C',elemR(120,er_Head)
         end if
  
         !%------------------------------------------------------------------
@@ -1188,6 +1203,12 @@ module adjust
 
             !% --- NOTE: volume is NOT adjusted.
         end where
+
+        if (setting%Time%Step > 60485) then 
+            print *, ' '
+            print *, 'Vvalue ',Vvalue(120),eHead(120)
+            print *, 'other head ',elemR(120,er_Zcrown) + elemR(120,er_SlotDepth)
+        end if
 
         !% HACK: the subroutine below will not work if heads of both
         !%       surcharged and non-surcharged elemnts are adjusted

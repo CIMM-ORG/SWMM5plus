@@ -210,6 +210,10 @@ module junction_lowlevel
             eFlowrate = - bsign * sign(oneR,VelHead) * sqrt(abs(VelHead) * twoR * grav) &
                             * elemR(JBidx,er_Area)
 
+            if ((JBidx == 111) .and. (setting%Time%Step > 60484) ) then
+                print *, 'EFLOW ',eFlowrate, elemR(JBidx,er_Flowrate)
+            end if
+
             !% --- apply only on outflows 
             !% NOTE THE ABOVE COMPUTES ALL THE ENERGY FLOWRATES, BUT WE ONLY USE IT
             !% FOR OUTFLOWS. FUTURE -- simplify what is done above.
@@ -219,8 +223,14 @@ module junction_lowlevel
 
                 !% --- combine the energy flow rate with the prior flowrate
                 elemR(JBidx,er_Flowrate) =  (oneR - DampingFactor) * eFlowrate                &
-                                                    + DampingFactor  * elemR(JBidx,er_Flowrate)                
+                                                   + DampingFactor  * elemR(JBidx,er_Flowrate)                
 
+                ! if (eFlowrate .le. zeroR) then 
+                !     elemR(JBidx,er_Flowrate) = min(elemR(JBidx,er_Flowrate),eFlowrate)
+                ! else
+                !     elemR(JBidx,er_Flowrate) = max(elemR(JBidx,er_Flowrate),eFlowrate)
+                ! end if
+                
                 !% --- compute the velocity
                 if (elemR(JBidx,er_Area) > setting%ZeroValue%Area) then
                     elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_Area)

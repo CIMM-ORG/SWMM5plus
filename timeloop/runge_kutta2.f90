@@ -89,7 +89,7 @@ module runge_kutta2
         !%     the faces require synchronizing.
         call junction_preliminaries ()
 
-        ! call util_utest_CLprint('AAA2 RK2=================================')
+        call util_utest_CLprint('AAA2 RK2=================================')
 
         !%==================================  
         !% --- RK2 SOLUTION

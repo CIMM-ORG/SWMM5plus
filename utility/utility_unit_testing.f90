@@ -125,11 +125,11 @@ contains
 
       !% --- USEFUL HEADER -----------------------------------------------
 
-      !   return
+       ! return
 
-        if (setting%Time%Step < 53676) return
+        if (setting%Time%Step < 60485) return
 
-        if (setting%Time%Step == 53679) then 
+        if (setting%Time%Step == 60489) then
          stop 880984
         end if
 
@@ -355,7 +355,7 @@ contains
             faceR(ift(4),fr_Zcrown_d), &
          elemR(iet(7),er_Zcrown)
 
-         write(*,"(A,15e12.3)") 'Flow', &
+         write(*,"(A,15e12.4)") 'Flow', &
          elemR(iet(1),er_Flowrate), &
          elemR(iet(2),er_Flowrate), &
          elemR(iet(3),er_Flowrate), &
@@ -368,7 +368,7 @@ contains
             faceR(ift(4),fr_Flowrate), &
          elemR(iet(7),er_Flowrate)
 
-         write(*,"(A,15e12.3)") 'Fcon', &
+         write(*,"(A,15e12.4)") 'Fcon', &
          0.0, &
          0.0, &
          0.0, &
@@ -381,20 +381,20 @@ contains
             faceR(ift(4),fr_Flowrate_Conservative), &
          0.0
 
-         write(*,"(A,15e12.3)") 'Vol ', &
-         elemR(iet(1),er_Volume), &
-         elemR(iet(2),er_Volume), &
-         elemR(iet(3),er_Volume), &
+         write(*,"(A,15e12.3)") 'V-Vf', &
+            elemR(iet(1),er_Volume) - elemR(iet(1),er_FullVolume), &
+            elemR(iet(2),er_Volume) - elemR(iet(2),er_FullVolume), &
+            elemR(iet(3),er_Volume) - elemR(iet(3),er_FullVolume), &
          0.0, &
-         elemR(iet(4),er_Volume), &
+            elemR(iet(4),er_Volume) - elemR(iet(4),er_FullVolume), &
          0.0, &
-         elemR(iet(5),er_Volume), &
+            elemR(iet(5),er_Volume) - elemR(iet(5),er_FullVolume), &   
          0.0, &
-         elemR(iet(6),er_Volume), &
-            0.0, &
-         elemR(iet(7),er_Volume)
+            elemR(iet(6),er_Volume) - elemR(iet(6),er_FullVolume), &
+         0.0, &
+            elemR(iet(7),er_Volume) - elemR(iet(7),er_FullVolume)
 
-         write(*,"(A,15e12.3)") 'SVol', &
+         write(*,"(A,15e12.4)") 'SVol', &
          elemR(iet(1),er_SlotVolume), &
          elemR(iet(2),er_SlotVolume), &
          elemR(iet(3),er_SlotVolume), &
@@ -407,7 +407,20 @@ contains
             0.0, &
          elemR(iet(7),er_SlotVolume)
 
-         write(*,"(A,15e12.3)") 'SDep', &
+         write(*,"(A,15e12.4)") 'dSVo', &
+         elemR(iet(1),er_dSlotVolume), &
+         elemR(iet(2),er_dSlotVolume), &
+         elemR(iet(3),er_dSlotVolume), &
+         0.0, &
+         elemR(iet(4),er_dSlotVolume), &
+         0.0, &
+         elemR(iet(5),er_dSlotVolume), &
+         0.0, &
+         elemR(iet(6),er_dSlotVolume), &
+            0.0, &
+         elemR(iet(7),er_dSlotVolume)
+
+         write(*,"(A,15e12.4)") 'SDep', &
          elemR(iet(1),er_SlotDepth), &
          elemR(iet(2),er_SlotDepth), &
          elemR(iet(3),er_SlotDepth), &
@@ -419,6 +432,60 @@ contains
          elemR(iet(6),er_SlotDepth), &
             0.0, &
          elemR(iet(7),er_SlotDepth)
+
+         write(*,"(A,15e12.4)") 'dSD ', &
+         elemR(iet(1),er_dSlotDepth), &
+         elemR(iet(2),er_dSlotDepth), &
+         elemR(iet(3),er_dSlotDepth), &
+         0.0, &
+         elemR(iet(4),er_dSlotDepth), &
+         0.0, &
+         elemR(iet(5),er_dSlotDepth), &
+         0.0, &
+         elemR(iet(6),er_dSlotDepth), &
+            0.0, &
+         elemR(iet(7),er_dSlotDepth)
+
+         write(*,"(A,15e12.4)") 'SWid', &
+         elemR(iet(1),er_SlotWidth), &
+         elemR(iet(2),er_SlotWidth), &
+         elemR(iet(3),er_SlotWidth), &
+         0.0, &
+         elemR(iet(4),er_SlotWidth), &
+         0.0, &
+         elemR(iet(5),er_SlotWidth), &
+         0.0, &
+         elemR(iet(6),er_SlotWidth), &
+            0.0, &
+         elemR(iet(7),er_SlotWidth)
+
+
+         ! write(*,"(A,15e12.4)") 'PCel', &
+         ! elemR(iet(1),er_Preissmann_Celerity), &
+         ! elemR(iet(2),er_Preissmann_Celerity), &
+         ! elemR(iet(3),er_Preissmann_Celerity), &
+         ! 0.0, &
+         ! elemR(iet(4),er_Preissmann_Celerity), &
+         ! 0.0, &
+         ! elemR(iet(5),er_Preissmann_Celerity), &
+         ! 0.0, &
+         ! elemR(iet(6),er_Preissmann_Celerity), &
+         !    0.0, &
+         ! elemR(iet(7),er_Preissmann_Celerity)
+
+
+         ! write(*,"(A,15f12.3)") 'PN  ', &
+         ! elemR(iet(1),er_Preissmann_Number), &
+         ! elemR(iet(2),er_Preissmann_Number), &
+         ! elemR(iet(3),er_Preissmann_Number), &
+         !    faceR(ift(1),fr_Preissmann_Number), &
+         ! elemR(iet(4),er_Preissmann_Number), &
+         !    faceR(ift(2),fr_Preissmann_Number), &
+         ! elemR(iet(5),er_Preissmann_Number), &
+         !    faceR(ift(3),fr_Preissmann_Number), &
+         ! elemR(iet(6),er_Preissmann_Number), &
+         !    faceR(ift(4),fr_Preissmann_Number), &
+         ! elemR(iet(7),er_Preissmann_Number)
          return
 
 
@@ -482,17 +549,17 @@ contains
                elemR(iet(5),er_Flowrate), &   
             faceR(ift(6),fr_Flowrate)
 
-            write(*,"(A,15f12.3)") 'Vol ', &
+            write(*,"(A,15f12.3)") 'V-Vf', &
             0.0, &
-               elemR(iet(1),er_Volume), &
+               elemR(iet(1),er_Volume) - elemR(iet(1),er_FullVolume), &
             0.0, &
-               elemR(iet(2),er_Volume), &
+               elemR(iet(2),er_Volume) - elemR(iet(2),er_FullVolume), &
             0.0, &
-               elemR(iet(3),er_Volume), &
+               elemR(iet(3),er_Volume) - elemR(iet(3),er_FullVolume), &
             0.0, &
-               elemR(iet(4),er_Volume), &
+               elemR(iet(4),er_Volume) - elemR(iet(4),er_FullVolume), &
             0.0, &
-               elemR(iet(5),er_Volume), &   
+               elemR(iet(5),er_Volume) - elemR(iet(5),er_FullVolume), &   
             0.0
 
             write(*,"(A,15e12.3)") 'Svol', &

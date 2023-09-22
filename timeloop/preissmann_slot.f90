@@ -449,7 +449,7 @@ module preissmann_slot
 !% PRIVATE
 !%==========================================================================
 !%    
-    subroutine slot_CC (thisP)
+    subroutine slot_CC (thisP, isSingularYN)
         !%------------------------------------------------------------------
         !% Description:
         !% Compute Preissmann slot for conduits in ETM methods
@@ -460,6 +460,7 @@ module preissmann_slot
         !% Declarations
             !integer, intent(in) :: thisCol, Npack
             integer, intent(in) :: thisP(:)
+            logical, intent(in) :: isSingularYN
             integer, pointer    :: SlotMethod, fUp(:), fDn(:)
             real(8), pointer    :: fullarea(:), PNumberOld(:) !, ellMax(:)
             real(8), pointer    :: fullVolume(:), length(:), PNumber(:), PCelerity(:) 
@@ -555,6 +556,10 @@ module preissmann_slot
                 dSlotVol(thisP)   = zeroR
                 dSlotArea(thisP)  = zeroR
                 dSlotDepth(thisP) = zeroR
+
+                ! if ((setting%Time%Step > 60486) .and. (.not. isSingularYN)) then 
+                !     print *, 'VOLUME HERE ',volume(120)- fullVolume(120)
+                ! end if
 
                 !% ---find out the slot volume/ area/ and the faces that are surcharged
                 where (volume(thisP) > fullVolume(thisP))
