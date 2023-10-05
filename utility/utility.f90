@@ -44,6 +44,9 @@ module utility
 
     public :: util_kinematic_viscosity_from_temperature
 
+    integer :: printJM =261
+    integer :: stepCut = 76116
+
     contains
 !%
 !%==========================================================================
@@ -300,7 +303,7 @@ module utility
             fup     => elemI(:,ei_Mface_uL)
             fdn     => elemI(:,ei_Mface_dL)
             dt      => setting%Time%Hydraulics%Dt
-            BranchExists => elemSI(:,esi_JunctionBranch_Exists)
+            BranchExists => elemSI(:,esi_JB_Exists)
         !%------------------------------------------------------------------
 
         !% --- for the CC elements
@@ -383,7 +386,7 @@ module utility
                 Qbranches = zeroR
                 do kk=1,max_branch_per_node
 
-                    if (elemSI(mm+kk,esi_JunctionBranch_Exists) .ne. oneI) cycle
+                    if (elemSI(mm+kk,esi_JB_Exists) .ne. oneI) cycle
 
                     if (mod(kk,2) == 0) then 
                         !% --- downstream branch
@@ -399,6 +402,12 @@ module utility
                 end do
 
                 tempCons(mm) = tempCons(mm) + Qbranches
+
+                ! if ((setting%Time%Step > stepCut) .and. (mm == printJM))  then 
+                !     print *, ' '
+                !     print *, 'CONS printJM ',tempCons(mm)
+                !     print *, ' '
+                ! end if
                 
                 if ((abs(tempCons(mm)) > 1.d-4) .and. (elemR(mm,er_Depth) > twoR * setting%ZeroValue%Depth)) then
                 ! if (abs(tempCons(mm)) > 1.d-4) then    
@@ -427,7 +436,7 @@ module utility
             ! ! print *, 'tempCons 00',tempCons(thisP) 
 
             ! !% --- volume and lateral flux terms on JM
-            ! where (elemSI(thisP,esi_JunctionMain_Type) .ne. NoStorage)
+            ! where (elemSI(thisP,esi_JM_Type) .ne. NoStorage)
             !     tempCons(thisP) =  tempCons(thisP) - (VolNew(thisP) - VolOld(thisP))
             ! endwhere
 
@@ -439,11 +448,11 @@ module utility
 
             ! !% --- get fluxes on branches for JM
             ! do ii=1,max_branch_per_node,2
-            !     where ((fup(thisP+ii) /= nullvalueI) .and. (elemSI(thisP+ii,esi_JunctionBranch_Exists) .eq. oneI))
+            !     where ((fup(thisP+ii) /= nullvalueI) .and. (elemSI(thisP+ii,esi_JB_Exists) .eq. oneI))
             !         tempCons(thisP) = tempCons(thisP)                                                                                &
             !             + dt * real(BranchExists(thisP+ii  ),8) * fQ(fup(thisP+ii  )) * real(fBarrels(fup(thisP+ii  )),8)  
             !     endwhere
-            !     where ((fdn((thisP+ii+1)) /= nullvalueI)  .and. (elemSI(thisP+ii+1,esi_JunctionBranch_Exists) .eq. oneI))
+            !     where ((fdn((thisP+ii+1)) /= nullvalueI)  .and. (elemSI(thisP+ii+1,esi_JB_Exists) .eq. oneI))
             !         tempCons(thisP) = tempCons(thisP)                                                                                  &
             !             - dt * real(BranchExists(thisP+ii+1),8) * fQ(fdn(thisP+ii+1)) * real(fBarrels(fdn(thisP+ii+1)),8)    
             !     endwhere                         
@@ -472,7 +481,7 @@ module utility
             !             print *,  'node # ',elemI(thisP(ii),ei_node_Gidx_SWMM)
             !             print *,  'node name ',trim(node%Names(elemI(thisP(ii),ei_node_Gidx_SWMM))%str)
             !             do kk = 1,max_branch_per_node,2
-            !                 if (elemSI(thisP(ii)+kk,esi_JunctionBranch_Exists)) then
+            !                 if (elemSI(thisP(ii)+kk,esi_JB_Exists)) then
             !                     if (fup(thisP(ii)+kk) /= nullvalueI) then
             !                         print *, 'branch Q Fup',fup(thisP(ii)+kk),   fQ(fup(thisP(ii)+kk  )) * real(BranchExists(thisP(ii)+kk  ),8)  * real(fBarrels(fup(thisP(ii)+kk  )),8)
             !                     end if
@@ -746,7 +755,7 @@ module utility
 
         nUpBranch = 0
         do ii=1,max_branch_per_node,2
-            if (elemSI(eIdx+ii,esi_JunctionBranch_Exists) .eq. oneI) then
+            if (elemSI(eIdx+ii,esi_JB_Exists) .eq. oneI) then
                 nUpBranch = nUpBranch + 1
                 eIdx_BranchUp(nUpBranch) = eIdx + ii
                 ifaceUp(nUpBranch) = elemI(eIdx_BranchUp(nUpBranch),ei_Mface_uL)
@@ -756,7 +765,7 @@ module utility
 
         nDnBranch = 0
         do ii=2,max_branch_per_node,2
-            if (elemSI(eIdx+ii,esi_JunctionBranch_Exists) .eq. oneI) then
+            if (elemSI(eIdx+ii,esi_JB_Exists) .eq. oneI) then
                 nDnBranch = nDnBranch + 1
                 eIdx_BranchDn(nDnBranch) = eIdx + ii
                 ifaceDn(nDnBranch) = elemI(eIdx_BranchDn(nDnBranch),ei_Mface_dL)

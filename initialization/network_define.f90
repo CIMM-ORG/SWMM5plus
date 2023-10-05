@@ -1280,7 +1280,7 @@ contains
         !% --- a JM node will never be a phantom node. Thus, the BQuick and SWMM idx will be the same
         elemI(ElemLocalCounter,ei_node_Gidx_SWMM)       = thisNode
         !% --- save the number total number of real branches connected to a junction main
-        elemSI(ElemLocalCounter,esi_JunctionMain_Total_Branches) = node%I(thisNode,ni_N_link_u) + node%I(thisNode,ni_N_link_d) 
+        elemSI(ElemLocalCounter,esi_JM_Total_Branches) = node%I(thisNode,ni_N_link_u) + node%I(thisNode,ni_N_link_d) 
         !% --- Assign junction main element to node
         node%I(thisNode,ni_elem_idx)                    = ElemLocalCounter
         !% --- a JM node is connected to faces through multipol JB branches, so the node face index is null
@@ -1351,8 +1351,8 @@ contains
                     !% --- real branches
                     if (upBranchIdx /= nullvalueI) then
                         !% --- integer data
-                        elemSI(ElemLocalCounter,esi_JunctionBranch_Exists)           = oneI
-                        elemSI(ElemLocalCounter,esi_JunctionBranch_Link_Connection)  = upBranchIdx
+                        elemSI(ElemLocalCounter,esi_JB_Exists)           = oneI
+                        elemSI(ElemLocalCounter,esi_JB_Link_Connection)  = upBranchIdx
                         elemR(ElemLocalCounter,er_Length) = setting%Discretization%NominalElemLength
                         elemYN(ElemLocalCounter,eYN_isElementUpstreamOfJB) = .true.
                         faceI(FaceLocalCounter,fi_link_idx_BIPquick) = upBranchIdx
@@ -1430,8 +1430,8 @@ contains
                     !% --- Check 3: if the branch is a valid branch
                     if (dnBranchIdx /= nullvalueI) then
                         !% --- integer data
-                        elemSI(ElemLocalCounter,esi_JunctionBranch_Exists)          = oneI
-                        elemSI(ElemLocalCounter,esi_JunctionBranch_Link_Connection) = dnBranchIdx
+                        elemSI(ElemLocalCounter,esi_JB_Exists)          = oneI
+                        elemSI(ElemLocalCounter,esi_JB_Link_Connection) = dnBranchIdx
                         elemR(ElemLocalCounter,er_Length) = setting%Discretization%NominalElemLength
                         elemYN(ElemLocalCounter,eYN_isElementDownstreamOfJB) = .true.
                         faceI(FacelocalCounter,fi_link_idx_BIPquick) = dnBranchIdx
@@ -1959,7 +1959,7 @@ subroutine init_network_map_shared_nBCdn_nodes (image, fLidx, nIdx)
         elemR(ElemIdx,:)                            = zeroR
         elemSR(ElemIdx,:)                           = zeroR
         elemSGR(ElemIdx,:)                          = zeroR
-        elemSI(ElemIdx,esi_JunctionBranch_Exists)   = zeroI
+        elemSI(ElemIdx,esi_JB_Exists)   = zeroI
         faceR(FaceIdx,:)                            = zeroR
         faceYN(FaceIdx,fYN_isnull)                  = .true.
         elemYN(ElemIdx,eYN_isDummy)                 = .true.

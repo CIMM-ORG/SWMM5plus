@@ -225,7 +225,7 @@ module update
             jB = thisP(mm)
         
             !% --- cycle if not valid
-            if (elemSI(jB,esi_JunctionBranch_Exists) .ne. oneI) cycle
+            if (elemSI(jB,esi_JB_Exists) .ne. oneI) cycle
 
             !% --- if zero depth, then JB is maximum for all interp
             if (depth(jB) .le. setting%ZeroValue%Depth) then 
@@ -362,22 +362,25 @@ module update
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: thisP(:)
-            real(8), pointer    :: flowrate(:), velocity(:), area(:), Qmax(:)
+            real(8), pointer    :: flowrate(:), velocity(:), area(:), QSWMMmax(:)
             character(64) :: subroutine_name = 'update_element_flowrate'
         !%------------------------------------------------------------------
         !% Aliases
-            flowrate => elemR(:,er_Flowrate)
-            velocity => elemR(:,er_Velocity)
-            area     => elemR(:,er_Area)
-            Qmax     => elemR(:,er_FlowrateLimit)
+            flowrate    => elemR(:,er_Flowrate)
+            velocity    => elemR(:,er_Velocity)
+            area        => elemR(:,er_Area)
+            QSWMMmax    => elemR(:,er_FlowrateLimit)
         !%------------------------------------------------------------------
- 
+
         flowrate(thisP) = area(thisP) * velocity(thisP)
 
-        !% --- limit flowrate by the full value (if it exists)
-        where ((Qmax(thisP) > zeroR) .and. (abs(flowrate(thisP)) > Qmax(thisP)))
-            flowrate(thisP) = sign(Qmax(thisP), flowrate(thisP))
-        end where
+        !% --- apply SWMM input file hard limit (not recommended)
+        if (setting%Limiter%Flowrate%UseSWMMlinkValueYN) then
+            !% --- limit flowrate by the full value (if it exists)
+            where ((QSWMMmax(thisP) > zeroR) .and. (abs(flowrate(thisP)) > QSWMMmax(thisP)))
+                flowrate(thisP) = sign(QSWMMmax(thisP), flowrate(thisP))
+            end where
+        end if
         
         !% --- small values are set to zero
         where ((flowrate(thisP) < 1.0d-10) .and. (flowrate(thisP) > -1.0d-10))

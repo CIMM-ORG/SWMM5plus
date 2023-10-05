@@ -46,6 +46,7 @@ module timeloop
 
     public  :: timeloop_toplevel
 
+    integer :: printIdx = 49
 
 contains
 !%
@@ -1262,6 +1263,9 @@ contains
                         write(*,"(A9,F10.2,A1,A3,A)") 'estimate ',thistime,' ',timeunit,' wall clock time until completion'
                         !write(*,"(A9,F6.2,A1,A3,A)") 'execution time ',thistime,' ',timeunit,' wall clock time thus far'
                     end if    
+                    if (setting%Debug%isGlobalVolumeBalance) then 
+                        print *,'Global volume balance: ',setting%Debug%GlobalVolumeBalance
+                    end if
                     print *, ' '
                 endif
             endif

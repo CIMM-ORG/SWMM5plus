@@ -27,14 +27,15 @@ module face
 
     implicit none
 
-    private
+    private 
 
     public :: face_pull_facedata_to_JBelem
+    public :: face_push_JBelem_to_face
     public :: face_push_elemdata_to_face
     public :: face_push_diag_adjacent_data_to_face
+    public :: face_make_up_dn_identical
     public :: face_interpolation
     public :: face_interpolate_bc
-    public :: face_force_JBelem_to_face
     public :: face_shared_face_sync
     public :: face_shared_face_sync_single
 
@@ -42,6 +43,10 @@ module face
 
     public :: face_zeroDepth
 
+    public :: face_update_velocities
+
+    integer :: printIdx = 49
+    integer :: stepcut = 73594
 
     contains
 !%==========================================================================
@@ -102,7 +107,7 @@ module face
         !% Description
         !% pushes one column (erCol) of elemXR(:,:) array to one fr_.. column for the
         !% elemP packed column. If UpstreamFaceTF is true the push is to the
-        !% upstream face, otherwise to downstream 
+        !% upstream face from the element, otherwise to downstream 
         !% NOTE this can give a segmentation fault if the face map for the
         !% any of the packed elements gives a nullvalueI. To prevent this from
         !% happening, make sure that calls to this including JB elements are
@@ -217,32 +222,8 @@ module face
 !%==========================================================================    
 !%==========================================================================
 !%    
-    subroutine face_pull_facedata_to_JBelem (thisPcol, frCol, eDataOut)
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Pulls data from faceR(:,frCol) to eDataOut for the elements
-        !% in elemP(:,thisPcol). eDataOut should be (e.g.) elemR(:,er_Flowrate)
-        !%------------------------------------------------------------------
-        !% Declarations
-            integer, intent(in)    :: thisPcol, frCol
-            real(8), intent(inout) :: eDataOut(:)
-            integer, pointer       :: NPack, thisP(:)
-        !%------------------------------------------------------------------
-        !% Preliminaries
-            Npack => npack_elemP(thisPcol)
-            if (Npack < 1) return 
-            thisP => elemP(1:Npack,thisPcol)
-        !%------------------------------------------------------------------
-
-        where (elemSI(thisP,esi_JunctionBranch_IsUpstream) == oneI)
-            !% --- upstream JB branch
-            eDataOut(thisP) = faceR(elemI(thisP,ei_Mface_uL),frCol)
-        elsewhere
-            !% --- downstream JB branch
-            eDataOut(thisP) = faceR(elemI(thisP,ei_Mface_dL),frCol)
-        endwhere
-
-    end subroutine face_pull_facedata_to_JBelem    
+ !% reorganized -- moved face_pull_facedata_to_JBelem to a different location to 
+    !% replace  face_force_JBelem_to_face
 !%
 !%==========================================================================    
 !%==========================================================================
@@ -322,14 +303,48 @@ module face
 !%    
 !%==========================================================================    
 !%==========================================================================
+!%      
+    subroutine face_pull_facedata_to_JBelem &
+        (thisColP, thisFaceCol, thisElemCol, isJBupstreamYN)
+        !%------------------------------------------------------------------
+        !% Description
+        !% Forces JB to face values without interpolation
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: thisColP, thisFaceCol, thisElemCol
+            logical, intent(in) :: IsJBupstreamYN !% true if JB is upstream of JM
+            integer, pointer    :: thisJM(:), Npack
+            integer :: mm, ei_Mface, kstart
+        !%------------------------------------------------------------------
+        !% Preliminaries:
+            Npack => npack_elemP(thisColP)
+            if (Npack < 1) return
+            thisJM => elemP(1:Npack,thisColP) 
+            if (isJBupstreamYN) then 
+                ei_Mface = ei_Mface_uL
+                kstart = oneI !% JB upstream of JM
+            else
+                ei_Mface = ei_Mface_dL
+                kstart = twoI !% JB downstream of JM
+            end if
+        !%------------------------------------------------------------------
+        do mm=1,Npack
+            call face_pull_facevalue_to_JB (thisFaceCol, thisElemCol, ei_Mface, thisJM(mm), kstart) 
+        end do
+    
+    end subroutine face_pull_facedata_to_JBelem 
 !%    
-    subroutine face_force_JBelem_to_face (thisColP, isJBupstreamYN)
+!%==========================================================================    
+!%==========================================================================
+!%    
+    subroutine face_push_JBelem_to_face &
+        (thisColP, thisFaceCol, thisElemCol, isJBupstreamYN)
         !%------------------------------------------------------------------
         !% Description
         !% Forces faces adjacent to JB to JB values without interpolation
         !%------------------------------------------------------------------
         !% Declarations:
-            integer, intent(in) :: thisColP
+            integer, intent(in) :: thisColP, thisFaceCol, thisElemCol
             logical, intent(in) :: IsJBupstreamYN !% true if JB is upstream of JM
             integer, pointer    :: thisJM(:), Npack
             integer :: mm, ei_Mface, kstart
@@ -348,14 +363,38 @@ module face
         !%------------------------------------------------------------------
 
         do mm=1,Npack
-            !% --- push junction JB flowrate values back to faces  
-            call face_force_JBvalues (fr_Flowrate, er_Flowrate, ei_Mface, thisJM(mm), kstart) 
+            call face_push_JBvalue_to_face (thisFaceCol, thisElemCol, ei_Mface, thisJM(mm), kstart) 
+            ! !% --- push junction JB flowrate values back to faces  
+            ! call face_force_JBvalues (fr_Flowrate, er_Flowrate, ei_Mface, thisJM(mm), kstart) 
 
-            !% ---add junction JB Delta Q values to face value caused by interpolation
-            call face_force_JBvalues (fr_DeltaQ, er_DeltaQ, ei_Mface, thisJM(mm), kstart) 
+            ! !% ---add junction JB Delta Q values to face value caused by interpolation
+            ! call face_force_JBvalues (fr_DeltaQ, er_DeltaQ, ei_Mface, thisJM(mm), kstart) 
         end do
 
-    end subroutine face_force_JBelem_to_face
+    end subroutine face_push_JBelem_to_face
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine face_make_up_dn_identical (faceColP, fr_Keep, fr_Overwrite)
+        !%------------------------------------------------------------------
+        !% Description
+        !% for face variables that have separate up and dn values, set them
+        !% identical.  Use the fr_Keep on the fr_Overwrite column
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: faceColP, fr_Keep, fr_Overwrite
+            integer, pointer    :: npack, thisP(:)
+        !%------------------------------------------------------------------
+        !% Aliases
+            npack => npack_faceP(faceColP)
+            if (npack < 1) return 
+            thisP => faceP(1:npack,faceColP)
+        !%------------------------------------------------------------------
+
+        faceR(thisP,fr_Overwrite) = faceR(thisP, fr_Keep)
+
+    end subroutine face_make_up_dn_identical    
 !%    
 !%==========================================================================    
 !% PRIVATE
@@ -882,11 +921,14 @@ module face
             call face_interp_interior_set &
                 (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
 
+            if (setting%Limiter%Flowrate%UseLocalVolumeYN) then
+                !% --- compute volume-based limits on flowrate
+                call face_flowrate_limits_interior (facePackCol)
+            end if
+
             !% --- calculate the velocity in faces and put limiter
             call face_velocities (facePackCol, .true.)
-            
-            !% --- compute volume-based limits on flowrate
-            call face_flowrate_limits_interior (facePackCol)
+             
         end if
 
         !% --- reset all the hydraulic jump interior faces
@@ -988,10 +1030,14 @@ module face
             call face_interp_shared_set &
                 (fFlowSet, eFlowSet, er_InterpWeight_dQ, er_InterpWeight_uQ, facePackCol, Npack)
 
+            if (setting%Limiter%Flowrate%UseLocalVolumeYN) then
+                !% --- compute volume-based limits on flowrate
+                call face_flowrate_limits_shared (facePackCol)
+            end if
+
             call face_velocities (facePackCol, .false.)
 
-            !% --- compute volume-based limits on flowrate
-            call face_flowrate_limits_shared (facePackCol)
+            
         end if
             
         !% --- reset all the hydraulic jump interior faces
@@ -1212,7 +1258,7 @@ module face
             !% --- handle special case for volume used by Pump Type 1 when
             !%     the upstream element is a JB
             if ((isGhostUp) .and. (elemI(eUp,ei_elementType) == JB)) then
-                JMidx => elemSI(eup,esi_JunctionBranch_Main_Index)
+                JMidx => elemSI(eup,esi_JB_Main_Index)
                 elemB%R(ii,er_Volume) = elemR(JMidx,er_Volume)
             end if
         end do
@@ -1464,18 +1510,22 @@ module face
         !% Declarations:
             integer, intent(in) :: facePackCol
             integer, pointer :: Npack
-            integer, pointer :: thisP(:), eup(:), edn(:)
+            integer, pointer :: thisF(:), eup(:), edn(:)
             integer, pointer :: idx_fBCdn(:), idx_fBCup(:)
-            real(8), pointer :: dt, eVolume(:)
+            real(8), pointer :: dt, eVolume(:), eFlowLat(:), fFlow(:)
+            real(8), pointer :: LocalVolumeFactor
         !%------------------------------------------------------------------
         !% Aliases
             Npack => npack_faceP(facePackCol)
             if (Npack < 1) return
-            thisP   => faceP(1:Npack,facePackCol)
+            thisF   => faceP(1:Npack,facePackCol)
             eup     => faceI(:,fi_Melem_uL)
             edn     => faceI(:,fi_Melem_dL)
-            eVolume => elemR(:,er_Volume)
+            eVolume => elemR(:,er_Volume_N0) !% --- must use N0 to ensure no negative volumes
+            eFlowLat=> elemR(:,er_FlowrateLateral)
+            fFlow   => faceR(:,fr_Flowrate)
             dt      => setting%Time%Hydraulics%Dt
+            LocalVolumeFactor => setting%Limiter%Flowrate%LocalVolumeFactor
 
             !% --- downstream BC on faces
             idx_fBCdn       => faceP(1:npack_faceP(fp_BCdn),fp_BCdn)
@@ -1483,14 +1533,27 @@ module face
             idx_fBCup       => faceP(1:npack_faceP(fp_BCup),fp_BCup)
         !%------------------------------------------------------------------ 
 
-        faceR(thisP,fr_FlowrateMax) =  eVolume(eup(thisP)) / dt
-        faceR(thisP,fr_FlowrateMin) = -eVolume(edn(thisP)) / dt
+        !% --- compute maximum flowrates from adjacent element volumes and inflow rates
+        !%     MaxDownstream is the max Q in downstream direction from upstream element
+        !%     MaxUpstream is the max Q in upstream direction from downstream element
+        faceR(thisF,fr_FlowrateMaxDownstream) = LocalVolumeFactor * (eFlowLat(eup(thisF)) + eVolume(eup(thisF)) / dt)
+        faceR(thisF,fr_FlowrateMaxUpstream)   = LocalVolumeFactor * (eFlowLat(edn(thisF)) + eVolume(edn(thisF)) / dt)
 
         !% --- set downstream BC to allow any level of inflow
-        faceR(idx_fBCdn,fr_FlowrateMin) = -nullvalueR
+        faceR(idx_fBCdn,fr_FlowrateMaxUpstream)  = nullvalueR
 
         !% --- set upstream BC face to allow any level of inflow
-        faceR(idx_fBCup,fr_FlowrateMax) = nullvalueR
+        faceR(idx_fBCup,fr_FlowrateMaxDownstream) = nullvalueR
+
+        !% --- limit the flowrates
+        where (fFlow(thisF) > faceR(thisF,fr_FlowrateMaxDownstream))
+            fFlow(thisF) = faceR(thisF,fr_FlowrateMaxDownstream)
+        endwhere
+
+        where (fFlow(thisF) < - faceR(thisF,fr_FlowrateMaxUpstream))
+            fFLow(thisF) = -faceR(thisF,fr_FlowrateMaxUpstream)
+        endwhere
+
 
     end subroutine face_flowrate_limits_interior
 !%
@@ -1510,13 +1573,15 @@ module face
             integer, intent(in) :: facePackCol  !% Column in faceP array for needed pack
             integer, pointer    :: Npack        !% expected number of packed rows in faceP.
             integer, pointer    :: thisP, eup, edn, BUpIdx, BDnIdx
-            real(8), pointer    :: dt
+            real(8), pointer    :: dt, fFlow, LocalVolumeFactor
+            real(8), pointer    :: eFlowLat(:)
             logical, pointer    :: isGhostUp, isGhostDn
         !%-------------------------------------------------------------------
         !% Preliminaries   
             Npack => npack_facePS(facePackCol)
             if (Npack < 1) return
             dt => setting%Time%Hydraulics%Dt
+            LocalVolumeFactor => setting%Limiter%Flowrate%LocalVolumeFactor
     
         !%-------------------------------------------------------------------   
         do ii=1,Npack
@@ -1529,23 +1594,60 @@ module face
                 BDnIdx          => faceI(thisP,fi_BoundaryElem_dL)
                 isGhostUp       => faceYN(thisP,fYN_isUpGhost)
                 isGhostDn       => faceYN(thisP,fYN_isDnGhost)
+                fFlow           => faceR(thisP,fr_Flowrate)
             !%---------------------------------------------------------------
 
+            !% ---- compute the maximum flowrates based on adjacent element volumes and inflow rates
             if (isGhostUp) then 
-                faceR(thisP,fr_FlowrateMax) =  elemGR(ii,er_Volume) / dt
+                faceR(thisP,fr_FlowrateMaxDownstream)  &
+                    =  LocalVolumeFactor * (elemGR(ii,er_FlowrateLateral) + elemGR(ii,er_Volume) / dt)
             elseif (isGhostDn) then 
-                faceR(thisP,fr_FlowrateMin) = -elemGR(ii,er_Volume) / dt 
+                faceR(thisP,fr_FlowrateMaxUpstream)   &
+                    =  LocalVolumeFactor * (elemGR(ii,er_FlowrateLateral) + elemGR(ii,er_Volume) / dt)
+            end if
+
+            !% ---- limit the flowrates
+            if (fFlow > faceR(thisP,fr_FlowrateMaxDownstream)) then
+                fFlow = faceR(thisP,fr_FlowrateMaxDownstream)
+            end if
+
+            if (fFlow < -faceR(thisP,fr_FlowrateMaxUpstream)) then
+                fFLow = -faceR(thisP,fr_FlowrateMaxUpstream)
             end if
 
         end do
 
 
     end subroutine face_flowrate_limits_shared
+!%    
+!%==========================================================================  
+!%==========================================================================
+!%   
+    subroutine face_pull_facevalue_to_JB (frCol, erCol, fiIdx, JMidx, kstart)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Forces the face value onto the JB element
+        !%------------------------------------------------------------------
+        integer, intent(in) :: frCol  !% column in faceR array for output
+        integer, intent(in) :: erCol  !% column in elemR array for input
+        integer, intent(in) :: fiIdx  !% face index column for up/dn map
+        integer, intent(in) :: JMidx  !% junction main index
+        integer, intent(in) :: kstart !% =1 for upstream, 2 for downstream
+        integer :: kk
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        do kk=kstart,max_branch_per_node,2
+            if (elemSI(JMidx+kk,esi_JB_Exists).ne. oneI) cycle
+            elemR(JMidx+kk,erCol) = faceR(elemI(JMidx+kk,fiIdx),frCol)
+        end do
+
+    end subroutine face_pull_facevalue_to_JB
 !%
 !%==========================================================================
 !%==========================================================================
 !% 
-    subroutine face_force_JBvalues (frCol, erCol, fiIdx, JMidx, kstart)
+    subroutine face_push_JBvalue_to_face (frCol, erCol, fiIdx, JMidx, kstart)
         !%------------------------------------------------------------------
         !% Description:
         !% Forces the JB element value to the adjacent face
@@ -1560,7 +1662,7 @@ module face
         !%------------------------------------------------------------------
 
         do kk=kstart,max_branch_per_node,2
-            if (elemSI(JMidx+kk,esi_JunctionBranch_Exists).ne. oneI) cycle
+            if (elemSI(JMidx+kk,esi_JB_Exists).ne. oneI) cycle
 
             faceR(elemI(JMidx+kk,fiIdx),frCol) = elemR(JMidx+kk,erCol)
             !% --- set the shared face diverge to true
@@ -1569,7 +1671,7 @@ module face
             end if
         end do
     
-    end subroutine face_force_JBvalues
+    end subroutine face_push_JBvalue_to_face
 !%    
 !%==========================================================================  
 !%==========================================================================
@@ -2063,6 +2165,32 @@ module face
         endwhere
    
        end subroutine face_flowrate_for_openclosed_elem    
+!%  
+!%========================================================================== 
+!%==========================================================================  
+!% 
+    subroutine face_update_velocities (faceColP)
+        !%------------------------------------------------------------------
+        !% Description
+        !% updates velocities for a new flowrate and/or area
+        !%------------------------------------------------------------------
+            integer, intent(in) :: faceColP  !% packed column of faceP
+            integer, pointer    :: npack, thisP(:)
+        !%------------------------------------------------------------------
+            npack => npack_faceP(faceColP)
+            if (npack < 1) return 
+            thisP => faceP(1:npack,faceColP)
+        !%------------------------------------------------------------------
+
+        where (faceR(thisP,fr_Area_d) > setting%ZeroValue%Area)
+            faceR(thisP,fr_Velocity_d) = faceR(thisP,fr_Flowrate) / faceR(thisP,fr_Area_d) 
+        endwhere    
+
+        where (faceR(thisP,fr_Area_u) > setting%ZeroValue%Area)
+            faceR(thisP,fr_Velocity_u) = faceR(thisP,fr_Flowrate) / faceR(thisP,fr_Area_u) 
+        endwhere  
+
+    end subroutine face_update_velocities       
 !%
 !%==========================================================================
 !% END OF MODULE

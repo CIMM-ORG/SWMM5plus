@@ -104,7 +104,7 @@ module utility_key_default
 
         !% --- keylist must match the number of KEY columns for esi_JunctionMain indexes
         allocate(keylist(1))  
-        keylist(1) = esi_JunctionMain_Type 
+        keylist(1) = esi_JM_Type 
         elemSI(:,keylist) = undefinedKey
         deallocate(keylist)
 

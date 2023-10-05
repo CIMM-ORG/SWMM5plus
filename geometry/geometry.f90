@@ -1263,8 +1263,8 @@ module geometry
             fullTopWidth  => elemR(:,er_FullTopWidth)
             fullhydradius => elemR(:,er_FullHydRadius)
             fullperimeter => elemR(:,er_FullPerimeter)
-            Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
-            BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
+            Kfac          => elemSR(:,esr_JB_Kfactor)
+            BranchExists  => elemSI(:,esi_JB_Exists)
             thisSolve     => elemI(:,ei_tmType)
 
             fVel_d        => faceR(:,fr_velocity_d)

@@ -198,7 +198,7 @@ module define_indexes
         enumerator :: nr_Volume
         enumerator :: nr_Flooding
         enumerator :: nr_UpLinksFullVolume
-        enumerator :: nr_JunctionBranch_Kfactor
+        enumerator :: nr_JB_Kfactor
         enumerator :: nr_lastplusone !% must be last enum item
     end enum
     integer, parameter :: nr_idx_base1 = nr_lastplusone-1
@@ -439,7 +439,8 @@ module define_indexes
         enumerator :: eYN_isOutput                      !% TRUE if the element is an output element
         enumerator :: eYN_isPSsurcharged                !% TRUE if Preissmann slot is present for this cell
         enumerator :: eYN_isSmallDepth                  !% TRUE is use small volume algorithm
-        enumerator :: eYN_isSurcharged                 !% TRUE is a surcharged closed conduit, FALSE if non-surcharged 
+        enumerator :: eYN_isSurcharged                 !% TRUE is a surcharged closed conduit, FALSE if non-surcharged
+        enumerator :: eYN_isSurchargeHeadAdjusted       !% TRUE if surcharge head is V-shape adjusted. 
         enumerator :: eYN_isZeroDepth                   !% TRUE if volume qualifies as "near zero"
         enumerator :: eYN_Temp01                        !% temporary logical space
         enumerator :: eYN_lastplusone !% must be last enum item
@@ -585,21 +586,21 @@ module define_indexes
         !% --- define the column indexes for elemSI(:,:) junction branch elements
         !%     Note that esi_JunctionMain, esi_JunctionBranch, and (if needed) esi_Storage will
         !%     share the same column sets.
-        enumerator ::  esi_JunctionMain_Type       = 1             !% KEY junction main type
-        enumerator ::  esi_JunctionMain_Curve_ID                   !% id of the junction storage cure if exists
-        enumerator ::  esi_JunctionMain_Total_Branches             !% total number of branches connected to the junction main
-        enumerator ::  esi_JunctionMain_OverflowType               !% NoOverflow, Ponding, OverflowWeir
-        enumerator ::  esi_JunctionMain_HeadLimit                  !% assigned 1 if upper limit on head, -1 if lower limit, 0 if none
-        enumerator ::  esi_JunctionBranch_Exists                   !% assigned 1 if branch exists
-        enumerator ::  esi_JunctionBranch_CC_adjacent              !% assigned 1 if CC is adjacent element
-        enumerator ::  esi_JunctionBranch_Diag_adjacent            !% assigned 1 if Diagnostic is adjacent element
-        enumerator ::  esi_JunctionBranch_CanModifyQ               !% assigned 1 if junction mass residual can modifyQ
-        enumerator ::  esi_JunctionBranch_Link_Connection          !% the link index connected to that junction branch
-        enumerator ::  esi_JunctionBranch_Main_Index               !% elem idx of the junction main for this branch
-        enumerator ::  esi_JunctionBranch_IsUpstream               !% 1 if this is an upstream branch, 0 if downstream
-        enumerator ::  esi_JunctionBranch_lastplusone !% must be last enum item
+        enumerator ::  esi_JM_Type       = 1             !% KEY junction main type
+        enumerator ::  esi_JM_Curve_ID                   !% id of the junction storage cure if exists
+        enumerator ::  esi_JM_Total_Branches             !% total number of branches connected to the junction main
+        enumerator ::  esi_JM_OverflowType               !% NoOverflow, Ponding, OverflowWeir
+        enumerator ::  esi_JM_HeadLimit                  !% assigned 1 if upper limit on head, -1 if lower limit, 0 if none
+        enumerator ::  esi_JB_Exists                   !% assigned 1 if branch exists
+        enumerator ::  esi_JB_CC_adjacent              !% assigned 1 if CC is adjacent element
+        enumerator ::  esi_JB_Diag_adjacent            !% assigned 1 if Diagnostic is adjacent element
+        enumerator ::  esi_JB_CanModifyQ               !% assigned 1 if junction mass residual can modifyQ
+        enumerator ::  esi_JB_Link_Connection          !% the link index connected to that junction branch
+        enumerator ::  esi_JB_Main_Index               !% elem idx of the junction main for this branch
+        enumerator ::  esi_JB_IsUpstream               !% 1 if this is an upstream branch, 0 if downstream
+        enumerator ::  esi_JB_lastplusone !% must be last enum item
     end enum
-    integer, parameter :: Ncol_elemSI_junction = esi_JunctionBranch_lastplusone-1
+    integer, parameter :: Ncol_elemSI_junction = esi_JB_lastplusone-1
 
     enum, bind(c)
         !% --- define the column indexes for elemSi(:,:) weir elements
@@ -674,22 +675,23 @@ module define_indexes
    
     !% --- JUNCTION MAIN and STORAGE
     enum, bind(c)
-        enumerator ::  esr_JunctionMain_PondedArea = 1
-        enumerator ::  esr_JunctionMain_PondedDepth
-        enumerator ::  esr_JunctionMain_PondedHead
-        enumerator ::  esr_JunctionMain_PondedHeadDiff
-        enumerator ::  esr_JunctionMain_MinHeadForOverflowPonding
-        enumerator ::  esr_JunctionMain_OverflowHeightAboveCrown
-        enumerator ::  esr_JunctionMain_OverflowOrifice_Length
-        enumerator ::  esr_JunctionMain_OverflowOrifice_Height
-        enumerator ::  esr_JunctionMain_OverflowRate
-        enumerator ::  esr_JunctionMain_OverflowDepth
-        enumerator ::  esr_JunctionMain_Surcharge_Plan_Area
-        enumerator ::  esr_JunctionMain_StorageRate
-        enumerator ::  esr_JunctionBranch_Kfactor
-        enumerator ::  esr_JunctionBranch_fa !% constant factor in dQdH
-        enumerator ::  esr_JunctionBranch_fb !% linear factor in dQdH
-        enumerator ::  esr_JunctionBranch_dQdH !% rate of change of Q with H in JM
+        enumerator ::  esr_JM_ExternalPondedArea = 1
+        enumerator ::  esr_JM_ExternalPondedDepth
+        enumerator ::  esr_JM_ExternalPondedHead
+        enumerator ::  esr_JM_ExternalPondedHeadDiff
+        enumerator ::  esr_JM_PondedVolumeTotal
+        enumerator ::  esr_JM_MinHeadForOverflowPonding
+        enumerator ::  esr_JM_OverflowHeightAboveCrown
+        enumerator ::  esr_JM_OverflowOrifice_Length
+        enumerator ::  esr_JM_OverflowOrifice_Height
+        enumerator ::  esr_JM_OverflowPondingRate
+        enumerator ::  esr_JM_OverflowDepth
+        enumerator ::  esr_JM_Present_PlanArea
+        enumerator ::  esr_JM_StorageRate
+        enumerator ::  esr_JB_Kfactor
+        enumerator ::  esr_JB_fa !% constant factor in dQdH
+        enumerator ::  esr_JB_fb !% linear factor in dQdH
+        enumerator ::  esr_JB_dQdH !% rate of change of Q with H in JM
         enumerator ::  esr_Storage_Constant
         enumerator ::  esr_Storage_Coefficient
         enumerator ::  esr_Storage_Exponent
@@ -1192,8 +1194,8 @@ module define_indexes
         enumerator :: fr_Flowrate               !% flowrate through face (latest)
         enumerator :: fr_Flowrate_N0            !% flowrate through face (time N)    enumerator :: fr_Head_d  !% Piezometric head on downstream side of face
         enumerator :: fr_Flowrate_Conservative  !% the effective flow rate over the time step N to N+1
-        enumerator :: fr_FlowrateMax            !% maximum flowrate based on upstream volume/timestep
-        enumerator :: fr_FlowrateMin            !% minimum flowrate (negative maximum) based on downstream volume/timestep
+        enumerator :: fr_FlowrateMaxDownstream            !% maximum flowrate based on upstream volume/timestep
+        enumerator :: fr_FlowrateMaxUpstream            !% minimum flowrate (negative maximum) based on downstream volume/timestep
         enumerator :: fr_FroudeNumber_d            !% EXPERIMENTAL 20230428
         enumerator :: fr_FroudeNumber_u            !% EXPERIMENTAL 20230428
         enumerator :: fr_GammaM                 !% gamma momentum source term

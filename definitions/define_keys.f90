@@ -204,6 +204,7 @@
         enumerator :: T00                   !% type of momentum source
         enumerator :: T10                   !% type of momentum source
         enumerator :: T20                   !% type of momentum source
+        enumerator :: T2L0                  !% type of momentum source
         enumerator :: T10s2                 !% type of momentum source
         enumerator :: TA1                   !% type of momentum source
         enumerator :: TA2                   !% type of momentum source
@@ -222,9 +223,7 @@
         !% MISC keys
         enumerator :: doesnotexist          !% used in various places to indicate something doesn't exist
         enumerator :: vshape                !% type of adjustment
-        enumerator :: vshape_all_CC         !% all CC elements adjusted
-        enumerator :: vshape_freesurface_CC !% only freesurface elements adjusted
-        enumerator :: vshape_surcharge_CC   !% type of adjustment
+        enumerator :: vshape_surcharge      !% type of adjustment
         enumerator :: FroudeNumber          !% data types for limiter BC approachs
 
         ! data types for Partitioing Algorithm type (setting%Partitioning%PartitioningMethod)
@@ -234,6 +233,7 @@
         enumerator :: BLink
         enumerator :: StaticSlot
         enumerator :: DynamicSlot
+        enumerator :: SplitDynamicSlot
 
         !% keys for report time processing
         enumerator :: InSeconds
@@ -485,6 +485,7 @@
         reverseKey(T00) = 'T00'
         reverseKey(T10) = 'T10'
         reverseKey(T20) = 'T20'
+        reverseKey(T2L0) = 'T2L0'
         reverseKey(T10s2) = 'T10s2'
         reverseKey(TA1) = 'TA1'
         reverseKey(TA2) = 'TA2'
@@ -497,9 +498,7 @@
         reverseKey(OverflowOrifice) = 'OverflowOrifice'
         reverseKey(doesnotexist) = 'doesnotexist'
         reverseKey(vshape) = 'vshape'
-        reverseKey(vshape_all_CC) = 'vshape_all_CC'
-        reverseKey(vshape_freesurface_CC) = 'vshape_freesurface_CC'
-        reverseKey(vshape_surcharge_CC) = 'vshape_surcharge_CC'
+        reverseKey(vshape_surcharge) = 'vshape_surcharge'
         reverseKey(FroudeNumber) = 'FroudeNumber'
         reverseKey(Default) = 'Default'
         reverseKey(BQuick) = 'BQuick'
@@ -507,6 +506,7 @@
         reverseKey(BLink) = 'BLink'
         reverseKey(StaticSlot) = 'StaticSlot'
         reverseKey(DynamicSlot) = 'DynamicSlot'
+        reverseKey(SplitDynamicSlot) = 'SplitDynamicSlot'
         reverseKey(InSeconds) = 'InSeconds'
         reverseKey(InMinutes) = 'InMinutes'
         reverseKey(InHours) = 'InHours'
@@ -772,6 +772,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(T00)) , T00
         write(*,'(A," = ",i4)') trim(reverseKey(T10)) , T10
         write(*,'(A," = ",i4)') trim(reverseKey(T20)) , T20
+        write(*,'(A," = ",i4)') trim(reverseKey(T2L0)), T2L0
         write(*,'(A," = ",i4)') trim(reverseKey(T10s2)) , T10s2
         write(*,'(A," = ",i4)') trim(reverseKey(TA1)) , TA1
         write(*,'(A," = ",i4)') trim(reverseKey(TA2)) , TA2
@@ -791,13 +792,12 @@
         write(*,'(A," = ",i4)') trim(reverseKey(undefinedKey)) , undefinedKey
         write(*,'(A," = ",i4)') trim(reverseKey(StaticSlot)) , StaticSlot
         write(*,'(A," = ",i4)') trim(reverseKey(DynamicSlot)) , DynamicSlot
+        write(*,'(A," = ",i4)') trim(reverseKey(SplitDynamicSlot)) , SplitDynamicSlot
         write(*,'(A," = ",i4)') trim(reverseKey(vert_ellipse)) , vert_ellipse
         write(*,'(A," = ",i4)') trim(reverseKey(vnotch_weir)) , vnotch_weir
         write(*,'(A," = ",i4)') trim(reverseKey(VolumeValue)) , VolumeValue
         write(*,'(A," = ",i4)') trim(reverseKey(vshape)) , vshape
-        write(*,'(A," = ",i4)') trim(reverseKey(vshape_all_CC)) , vshape_surcharge_CC
-        write(*,'(A," = ",i4)') trim(reverseKey(vshape_freesurface_CC)) , vshape_freesurface_CC
-        write(*,'(A," = ",i4)') trim(reverseKey(vshape_surcharge_CC)) , vshape_surcharge_CC
+        write(*,'(A," = ",i4)') trim(reverseKey(vshape_surcharge)) , vshape_surcharge
         write(*,'(A," = ",i4)') trim(reverseKey(weir)) , weir
         write(*,'(A," = ",i4)') trim(reverseKey(WeirCurve)) , WeirCurve
         !%------------------------------------------------------------------

@@ -62,7 +62,7 @@ module storage_geometry
             aConst    => elemSR(thisP(ii),esr_Storage_Constant)
             aCoeff    => elemSR(thisP(ii),esr_Storage_Coefficient)
             aExpon    => elemSR(thisP(ii),esr_Storage_Exponent)
-            curveID   => elemSI(thisP(ii),esi_JunctionMain_Curve_ID)
+            curveID   => elemSI(thisP(ii),esi_JM_Curve_ID)
 
             if (aExpon == zeroR) then
                 !% ---- if aExpon =  0, an explicit depth vs volume relation can be retrived
@@ -120,7 +120,7 @@ module storage_geometry
             depth     => elemR(thisP(ii),er_Depth)
             fulldepth => elemR(thisP(ii),er_FullDepth)
             volume    => elemR(thisP(ii),er_Volume)
-            curveID   => elemSI(thisP(ii),esi_JunctionMain_Curve_ID)
+            curveID   => elemSI(thisP(ii),esi_JM_Curve_ID)
 
             !% --- interpolate from the curve
             call util_curve_lookup_singular(curveID, er_Volume, er_Depth, curve_storage_volume, &
@@ -187,11 +187,11 @@ module storage_geometry
             tempPArea => elemR(thisP(ii),er_Temp01)
             volume    => elemR(thisP(ii),er_Volume)
             planArea  => elemSR(thisP(ii),esr_Storage_Plan_Area)
-            curveID   => elemSI(thisP(ii),esi_JunctionMain_Curve_ID)
+            curveID   => elemSI(thisP(ii),esi_JM_Curve_ID)
 
             !% --- plan area is unchanged for implied or no storage
-            if (elemSI(thisP(ii),esi_JunctionMain_type) == ImpliedStorage) return
-            if (elemSI(thisP(ii),esi_JunctionMain_type) == NoStorage) return
+            if (elemSI(thisP(ii),esi_JM_type) == ImpliedStorage) return
+            if (elemSI(thisP(ii),esi_JM_type) == NoStorage) return
            
             !% --- interpolate from the curve created in initial_condition/init_IC_get_junction_data
             !      using storage_create_curve_from_function()
@@ -253,7 +253,7 @@ module storage_geometry
             character(64) :: subroutine_name = 'storage_interpolate_from_curve'
         !%------------------------------------------------------------------
         !% Aliases
-            curveID  => elemSI(StorageIdx,esi_JunctionMain_Curve_ID)
+            curveID  => elemSI(StorageIdx,esi_JM_Curve_ID)
         !%------------------------------------------------------------------
 
         call util_curve_lookup_singular(curveID, er_Depth, er_Volume, curve_storage_depth, &
@@ -277,7 +277,7 @@ module storage_geometry
         !%------------------------------------------------------------------
         !% Aliases
             fullDepth => elemR(StorageIdx,er_FullDepth)
-            CurveID   => elemSI(StorageIdx,esi_JunctionMain_Curve_ID)
+            CurveID   => elemSI(StorageIdx,esi_JM_Curve_ID)
             aConst    => elemSR(StorageIdx,esr_Storage_Constant)
             aCoeff    => elemSR(StorageIdx,esr_Storage_Coefficient)  
             aExpon    => elemSR(StorageIdx,esr_Storage_Exponent)
@@ -320,7 +320,7 @@ module storage_geometry
             real(8), intent(in) :: indepth
         !%------------------------------------------------------------------
 
-        select case(elemSI(idx,esi_JunctionMain_Type))
+        select case(elemSI(idx,esi_JM_Type))
             case (NoStorage)
                 !% --- no storage is assigned
                 outvalue = zeroR   
@@ -336,10 +336,10 @@ module storage_geometry
 
             case default
                 print *, 'CODE ERROR unexpected case default for storage '
-                print *, 'problem in (elemSI(idx,esi_JunctionMain_Type) '
+                print *, 'problem in (elemSI(idx,esi_JM_Type) '
                 print *, 'element index (idx)= ',idx
-                print *, 'junction main type of ',(elemSI(idx,esi_JunctionMain_Type))
-                print *, trim(reverseKey(elemSI(idx,esi_JunctionMain_Type)))
+                print *, 'junction main type of ',(elemSI(idx,esi_JM_Type))
+                print *, trim(reverseKey(elemSI(idx,esi_JM_Type)))
         end select
 
     end function storage_volume_from_depth_singular

@@ -480,7 +480,7 @@ module pump_elements
         !% --- upstream switch Aidx to JM if junction
         if (elemI(Aidx,ei_elementType)[Ci] == JB) then
             !% --- for branches, switch to junction    
-            Aidx   = elemSI(Aidx,esi_JunctionBranch_Main_Index)[Ci]
+            Aidx   = elemSI(Aidx,esi_JB_Main_Index)[Ci]
             Volume =  elemR(Aidx,er_Volume)[Ci] 
         end if
 

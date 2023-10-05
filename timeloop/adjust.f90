@@ -13,7 +13,7 @@ module adjust
     use define_indexes
     use define_settings, only: setting
     use pack_mask_arrays, only: pack_small_or_zero_depth_elements, pack_CC_zeroDepth_interior_faces
-    use preissmann_slot, only: slot_CC_Vshaped_adjust
+    use preissmann_slot, only: slot_Vshaped_adjust
     use utility
     use utility_crash
 
@@ -25,9 +25,16 @@ module adjust
     public :: adjust_face_for_zero_setting_singular
     public :: adjust_limit_by_zerovalues  !% used in geometry
     public :: adjust_limit_by_zerovalues_singular  !% used in geometry   
-    public :: adjust_Vfilter_CC
+    public :: adjust_Vfilter
     public :: adjust_zero_and_small_depth_face    
     public :: adjust_zero_or_small_depth_identify_NEW
+
+    integer :: printJM =261
+    integer :: printJB1 = 262
+    integer :: printJB2 = 263
+    integer :: printUp = 260
+    integer :: printDn = 272
+    integer :: stepCut = 76116
 
     contains
 !%==========================================================================
@@ -193,16 +200,16 @@ module adjust
 !%========================================================================== 
 !%==========================================================================
 !%
-    subroutine adjust_Vfilter_CC ()
+    subroutine adjust_Vfilter (istep)
         !%------------------------------------------------------------------
         !% Description:
         !% Performs ad-hoc adjustments that may be needed for stability
         !%------------------------------------------------------------------
         !% Declarations:
+            integer, intent(in) :: istep
             integer, pointer :: thisP(:), Npack
-            real(8), pointer :: vMax
 
-            character(64)    :: subroutine_name = 'adjust_Vfilter_CC'
+            character(64)    :: subroutine_name = 'adjust_Vfilter'
         !%------------------------------------------------------------------
         !% Preleliminaries
             if (setting%Debug%File%adjust) &
@@ -212,13 +219,8 @@ module adjust
             Npack => npack_elemP(ep_CC)      
             if (Npack < 1) return 
             thisP => elemP(1:Npack,ep_CC)
-            vMax       => setting%Limiter%Velocity%Maximum
-        !%------------------------------------------------------------------
 
-            if (setting%Time%Step > 60485) then 
-                print *, ' '
-                print *, 'ADJUST HEAD A',elemR(120,er_Head)
-            end if
+        !%------------------------------------------------------------------
 
         !% --- ad hoc adjustments to flowrate 
         if (setting%Adjust%Flowrate%ApplyYN) then   
@@ -226,54 +228,50 @@ module adjust
                 case (vshape)
                     !% --- suppress v-shape over face/element/face
                     call adjust_Vshaped_flowrate (thisP)
+                case (doesnotexist)
+                    !% --- skip v-shape flowrate correction
                 case default
-                    print *, 'CODE ERROR unknown setting.Adjust.Flowrate.Approach #',setting%Adjust%Flowrate%Approach
+                    print *,  'CODE ERROR unknown setting.Adjust.Flowrate.Approach #',setting%Adjust%Flowrate%Approach
                     print *, 'which has key ',trim(reverseKey(setting%Adjust%Flowrate%Approach))
-                    !stop 
-                    call util_crashpoint( 4973)
-                    !return
+                    call util_crashpoint( 2073)
             end select
-        else 
-            !% --- no flow adjustment
         end if
 
-        if (setting%Time%Step > 60485) then 
-            print *, ' '
-            print *, 'ADJUST HEAD B',elemR(120,er_Head), trim(reverseKey(setting%Adjust%Head%Approach))
-        end if
-
-        !% --- ad hoc adjustments to head
-        !%     only affects head
-        if (setting%Adjust%Head%ApplyYN) then   
+        !% --- ad hoc adjustment to head
+        if (setting%Adjust%Head%ApplyYN) then
             select case (setting%Adjust%Head%Approach)
-                case (vshape_all_CC)
-                    call adjust_Vshaped_head_CC(thisP,0,.false.)
-                case (vshape_freesurface_CC)
-                    call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.false.)
-                case (vshape_surcharge_CC)
-                    call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.true.)
+                case (vshape_surcharge)
+                    elemYN(:,eYN_isSurchargeHeadAdjusted) = .false.
+
+                    !if (istep == 2) then 
+                        call adjust_Vshaped_head_CC(thisP,eYN_isSurcharged,.true.)
+                    !end if
+
+                    !if (istep == 2) then 
+                        call adjust_Vshaped_head_JM ()
+                    !end if
+
+                    if (setting%Solver%PreissmannSlot%useSlotTF) then
+                        !% --- reset Slot for adjusted head
+                        call slot_Vshaped_adjust ()
+                    end if
+               
+
+                case (doesnotexist)
+                    !% --- skip v-shape head correction
                 case default
                     print *,  'CODE ERROR unknown setting.Adjust.Head.Approach #',setting%Adjust%Head%Approach
                     print *, 'which has key ',trim(reverseKey(setting%Adjust%Head%Approach))
-                    !stop 
-                    call util_crashpoint( 9073)
-                    !return
+                    call util_crashpoint(19073)
             end select
-        else 
-            !% --- nohead adjustment
         end if
 
-        if (setting%Time%Step > 60485) then 
-            print *, ' '
-            print *, 'ADJUST HEAD C',elemR(120,er_Head)
-        end if
- 
         !%------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%adjust) &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
-    end subroutine adjust_Vfilter_CC
+    end subroutine adjust_Vfilter
 !%
 !%========================================================================== 
 !%==========================================================================  
@@ -453,7 +451,7 @@ module adjust
         elemR(thisP,er_Head)         = setting%ZeroValue%Depth*0.99d0 + elemR(thisP,er_Zbottom)
     
         !% --- only reset volume when it gets negative
-        where (elemR(thisP,er_Volume) < zeroR)
+        where (elemR(thisP,er_Volume) .le. zeroR)  !% changed to remove zero volume 20231005 brh
             elemR(thisP,er_Volume) = setting%ZeroValue%Volume 
         end where
     
@@ -681,7 +679,7 @@ module adjust
             thisP => elemP(1:npack,thisCol)
             fup   => elemI(:,ei_Mface_uL)
             fdn   => elemI(:,ei_Mface_dL)
-            isbranch => elemSI(:,esi_JunctionBranch_Exists)
+            isbranch => elemSI(:,esi_JB_Exists)
             fQ    => faceR(:,fr_Flowrate)
             fQCons=> faceR(:,fr_Flowrate_Conservative)
         !%------------------------------------------------------------------
@@ -730,7 +728,7 @@ module adjust
             fQ    => faceR(:,fr_Flowrate)
             fdn   => elemI(:,ei_Mface_dL)
             fup   => elemI(:,ei_Mface_uL)
-            isbranch => elemSI(:,esi_JunctionBranch_Exists)
+            isbranch => elemSI(:,esi_JB_Exists)
         !%------------------------------------------------------------------
         
         !% --- assign the upstream face flux to the JB 
@@ -802,7 +800,7 @@ module adjust
             fVel_d    => faceR(:,fr_Velocity_d)
             
             elemVol   => elemR(:,er_Volume_N0)
-            isbranch  => elemSI(:,esi_JunctionBranch_Exists)
+            isbranch  => elemSI(:,esi_JB_Exists)
             dt        => setting%Time%Hydraulics%Dt
             grav      => setting%constant%gravity
             fdn       => elemI(:,ei_Mface_dL)
@@ -917,7 +915,7 @@ module adjust
             fVel_d    => faceR(:,fr_Velocity_d)
   
             elemVol   => elemR(:,er_Volume_N0)
-            isbranch  => elemSI(:,esi_JunctionBranch_Exists)
+            isbranch  => elemSI(:,esi_JB_Exists)
             dt        => setting%Time%Hydraulics%Dt
             grav      => setting%constant%gravity
             fdn       => elemI(:,ei_Mface_dL)
@@ -1150,6 +1148,7 @@ module adjust
             integer, pointer ::  fUp(:), fDn(:)
             real(8), pointer :: coef, fHup(:), fHdn(:), eHead(:), Vvalue(:)
             real(8), pointer :: fAup(:), fAdn(:), eArea(:)
+            logical, pointer :: isfSlot(:)
         !%-------------------------------------------------------------------
         !% Preliminaries
         !%-------------------------------------------------------------------
@@ -1164,6 +1163,7 @@ module adjust
             eHead    => elemR(:,er_Head)    
             eArea    => elemR(:,er_Area)    
             Vvalue   => elemR(:,er_Temp01)
+            isfSlot    => faceYN(:,fYN_isPSsurcharged)
         !%-------------------------------------------------------------------
 
         !% --- discriminator that determines which cells are adjusted.
@@ -1186,13 +1186,16 @@ module adjust
                         *(util_sign_with_ones_or_zero(fHup(fDn(thisP)) - eHead(thisP)))      &
                         * Vvalue(thisP)   
 
-        !% --- adjust where needed
-        where (Vvalue(thisP) > zeroR)    
+        !% --- adjust only where both faces are surcharged and a V-shape exists
+        where ((Vvalue(thisP) > zeroR) .and. &
+               (isfSlot(fUp(thisP)))   .and. &
+               (isfSlot(fDn(thisP))) )   
             !% --- simple linear combination depending on coef
             !%     note if coef==1 then this becomes the average of the face values
             eHead(thisP)  =  (oneR - coef) * eHead(thisP) &
                + coef * onehalfR * (fHup(fDn(thisP)) + fHdn(fUp(thisP)))
 
+            elemYN(thisP,eYN_isSurchargeHeadAdjusted) = .true.
             !% ARCHIVE METHOD
             !% --- adjust depth
             ! elemR(thisP,er_Depth) = eHead(thisP) - elemR(thisP,er_Zbottom) 
@@ -1202,23 +1205,66 @@ module adjust
             !     + coef * onehalfR * (fAup(fDn(thisP)) + fAdn(fUp(thisP)))
 
             !% --- NOTE: volume is NOT adjusted.
+        elsewhere
+            elemYN(thisP,eYN_isSurchargeHeadAdjusted) = .false.
         end where
-
-        if (setting%Time%Step > 60485) then 
-            print *, ' '
-            print *, 'Vvalue ',Vvalue(120),eHead(120)
-            print *, 'other head ',elemR(120,er_Zcrown) + elemR(120,er_SlotDepth)
-        end if
-
-        !% HACK: the subroutine below will not work if heads of both
-        !%       surcharged and non-surcharged elemnts are adjusted
-        if (setting%Solver%PreissmannSlot%useSlotTF) then
-            !% adjust v-shaped slots
-            call slot_CC_Vshaped_adjust (thisP,er_Temp01)
-        end if
-
       
     end subroutine adjust_Vshaped_head_CC
+!%    
+!%==========================================================================  
+!%==========================================================================  
+!%
+    subroutine adjust_Vshaped_head_JM ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Adjusts head on JM for V-shape if all branches are surcharged
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, pointer :: Npack, thisP(:)
+            real(8), pointer :: Head(:)
+            integer :: mm, kk, branchcount
+            logical :: nonSurchargeFound
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+        !% Aliases:
+            Npack => npack_elemP(ep_JM)      
+            if (Npack < 1) return 
+            thisP => elemP(1:Npack,ep_JM)
+            Head  => elemR(:,er_Head)
+        !%------------------------------------------------------------------
+        
+        !% --- cycle through the JM junction mains
+        do mm=1,Npack 
+            elemYN(thisP(mm),eYN_isSurchargeHeadAdjusted) = .false.
+
+            !% --- ignore non-surcharged JM
+            if (.not. elemYN(thisP(mm),eYN_isSurcharged)) cycle
+            !% --- look for non-surcharged JB
+            nonSurchargeFound = .false.
+            branchcount = zeroI
+            do kk=1,max_branch_per_node
+                if (elemSI(thisP(mm)+kk,esi_JB_Exists) == oneI) then 
+                    branchcount = branchcount+oneI
+                    if (.not. elemYN(thisP(mm)+kk,eYN_isSurcharged)) nonSurchargeFound = .true.
+                end if
+            end do
+            if (nonSurchargeFound) cycle
+
+            !% --- any JM that reaches this point has all JB surcharged
+            !%     accumulate the head of all branches
+            do kk=1,max_branch_per_node
+                if (.not. (elemSI(thisP(mm)+kk,esi_JB_Exists) == oneI)) cycle
+                Head(thisP(mm)) = Head(thisP(mm)) + Head(thisP(mm)+kk)
+            end do
+            !% --- compute the average head
+            Head(thisP(mm)) = Head(thisP(mm)) / (real(branchcount,8) + oneR)
+
+            !% --- set the flag for adjustment
+            elemYN(thisP(mm),eYN_isSurchargeHeadAdjusted) = .true.
+        end do    
+
+
+    end subroutine adjust_Vshaped_head_JM    
 !%    
 !%==========================================================================  
 !%==========================================================================  
@@ -1253,8 +1299,8 @@ module adjust
             faceAd    => faceR(:,fr_Area_d)
             faceDu    => faceR(:,fr_Depth_u)
             faceDd    => faceR(:,fr_Depth_d)
-            faceQmax  => faceR(:,fr_FlowrateMax)
-            faceQmin  => faceR(:,fr_FlowrateMin)
+            faceQmax  => faceR(:,fr_FlowrateMaxDownstream)
+            faceQmin  => faceR(:,fr_FlowrateMaxUpstream)
             elemH     => elemR(:,er_Head)
             elemL     => elemR(:,er_Length)
             

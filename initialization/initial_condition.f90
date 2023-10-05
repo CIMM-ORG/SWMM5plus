@@ -156,7 +156,7 @@ contains
         !         (elemI(ii,ei_geometryType) == undefinedKey)) then
 
         !         if (    ((elemI(ii,ei_elementType) .eq. JB) .and.    &
-        !                   elemSI(ii,esi_JunctionBranch_Exists)     ) &
+        !                   elemSI(ii,esi_JB_Exists)     ) &
         !             .or.                                             &
         !                 (elemI(ii,ei_elementType) .ne. JB) ) then
         !             print *, 'POSSIBLE PROBLEM IN link/node with nullvalue or undefined geometry Type'
@@ -217,7 +217,11 @@ contains
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 2'
         call adjust_element_toplevel (CC)
         call adjust_element_toplevel (JB)
-        !% HACK QUESTION: do we need JM call here?  20230601
+        !% --- adjustments are done to the Volume array, so reset the volume and volume_N0
+        Npack => npack_elemP(ep_CCJM)
+        thisP => elemP(1:Npack,ep_CCJM)
+        call adjust_limit_by_zerovalues(er_Volume, setting%ZeroValue%Volume, thisP, .true.)
+        elemR(:,er_Volume_N0) = elemR(:,er_Volume)
 
         !% --- get the bottom slope
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC bottom slope'
@@ -266,7 +270,6 @@ contains
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin bc_update'
         call bc_update()
         if (crashI==1) return
-
 
         !% --- storing dummy values for branches that are invalid
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch dummy values'
@@ -3218,8 +3221,8 @@ contains
 
                 case (JB)        
                     !% --- JB is diag adjacent depending on upstream or downstream face
-                    if (elemSI(ii,esi_JunctionBranch_Exists) == oneI) then 
-                        if (elemSI(ii,esi_JunctionBranch_IsUpstream)) then 
+                    if (elemSI(ii,esi_JB_Exists) == oneI) then 
+                        if (elemSI(ii,esi_JB_IsUpstream)) then 
                             if (faceYN(elemI(ii,ei_Mface_uL),fYN_isDiag_adjacent_all)) then 
                                 elemYN(ii,eYN_is_DiagAdjacent) = .true.
                             else 
@@ -3262,8 +3265,8 @@ contains
                 case (CC)
                     cycle  !% retain false
                 case (JB)
-                    if (elemSI(ii,esi_JunctionBranch_Exists) == oneI) then 
-                        if (elemSI(ii,esi_JunctionBranch_IsUpstream)) then
+                    if (elemSI(ii,esi_JB_Exists) == oneI) then 
+                        if (elemSI(ii,esi_JB_IsUpstream)) then
                             !% upstream branch
                             if (faceYN(elemI(ii,ei_Mface_uL),fYN_isCC_adjacent_all)) then 
                                 elemYN(ii,eYN_is_CCadjacent_JBorDiag) = .true.
@@ -3325,7 +3328,7 @@ contains
             packIdx = pack(elemI(:,ei_Lidx), (elemI(:,ei_elementType) .eq. JB))
             if (size(packIdx) < 1) return !% no JB found, so not possible
             !% --- initialization to allowing modification
-            elemSI(packIdx(1:size(packIdx)),esi_JunctionBranch_CanModifyQ) = oneI 
+            elemSI(packIdx(1:size(packIdx)),esi_JB_CanModifyQ) = oneI 
 
             deallocate(packIdx)
             
@@ -3372,7 +3375,7 @@ contains
                 !%     during junction computation
                 faceYN(fUp,fYN_isJB_QfrozenByDiag) = .true.  
                 faceYN(fDn,fYN_isJB_QfrozenByDiag) = .true.
-                elemSI(eIdx,esi_JunctionBranch_CanModifyQ) = zeroI
+                elemSI(eIdx,esi_JB_CanModifyQ) = zeroI
             end if
 
         end do
@@ -3624,14 +3627,14 @@ contains
         if (node%YN(thisJunctionNode,nYN_has_storage)) then
             if (node%I(thisJunctionNode,ni_curve_ID) .eq. 0) then
                 !% --- functional storage
-                elemSI(JMidx,esi_JunctionMain_Type)   = FunctionalStorage
+                elemSI(JMidx,esi_JM_Type)   = FunctionalStorage
                 elemSR(JMidx,esr_Storage_Constant)    = node%R(thisJunctionNode,nr_StorageConstant)
                 elemSR(JMidx,esr_Storage_Coefficient) = node%R(thisJunctionNode,nr_StorageCoeff)
                 elemSR(JMidx,esr_Storage_Exponent)    = node%R(thisJunctionNode,nr_StorageExponent)                    
             else
                 !% --- tabular storage
-                elemSI(JMidx,esi_JunctionMain_Type) = TabularStorage
-                elemSI(JMidx,esi_JunctionMain_Curve_ID) = node%I(thisJunctionNode,ni_curve_ID)
+                elemSI(JMidx,esi_JM_Type) = TabularStorage
+                elemSI(JMidx,esi_JM_Curve_ID) = node%I(thisJunctionNode,ni_curve_ID)
             end if
             !% --- common data
             elemSR(JMidx,esr_Storage_FractionEvap)= node%R(thisJunctionNode,nr_StorageFevap)
@@ -3641,12 +3644,12 @@ contains
             !%-----------------------------------------------------------------------
             if (setting%Junction%ForceStorage) then 
                 !% --- implied storage
-                elemSI(JMidx,esi_JunctionMain_Type)     = ImpliedStorage
+                elemSI(JMidx,esi_JM_Type)     = ImpliedStorage
                 setting%Junction%PlanArea%AreaMinimum   = setting%SWMMinput%SurfaceArea_Minimum
-                !print *, 'JMidx ',JMidx, ' ',trim(reverseKey(elemSI(JMidx,esi_JunctionMain_Type)))
+                !print *, 'JMidx ',JMidx, ' ',trim(reverseKey(elemSI(JMidx,esi_JM_Type)))
             else 
                 !% --- no storage
-                elemSI(JMidx,esi_JunctionMain_Type)    = NoStorage
+                elemSI(JMidx,esi_JM_Type)    = NoStorage
                 setting%Junction%PlanArea%AreaMinimum   = zeroR
                 print *, 'CODE ERROR no storage junctions are not implemented'
                 call util_crashpoint(66987231)
@@ -3675,11 +3678,16 @@ contains
 
         !% --- ponded area is stored in elemSR array
         if (setting%SWMMinput%AllowPonding) then
-            elemSR(JMidx,esr_JunctionMain_PondedArea) = node%R(thisJunctionNode,nr_PondedArea)
+            elemSR(JMidx,esr_JM_ExternalPondedArea) = node%R(thisJunctionNode,nr_PondedArea)
         else
-            elemSR(JMidx,esr_JunctionMain_PondedArea) = zeroR
+            elemSR(JMidx,esr_JM_ExternalPondedArea) = zeroR
         end if
 
+        !% --- Note that volume ponded is in elemR rather than elemSR so that it can
+        !%     be provided an output
+        !%     FUTURE -- possibly revise output to allow output from elemSR arrays.
+        !%     alternative might be to allow ponding for any open-channel element in
+        !%     addition to the junctions.
         elemR(JMidx,er_VolumePonded)      = zeroR
         elemR(JMidx,er_VolumePondedTotal) = zeroR
 
@@ -3696,34 +3704,34 @@ contains
         end if
 
         !% --- Set the extra head above the crown for maximum surcharge at Junction
-        elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)      &
+        elemSR(JMidx,esr_JM_OverflowHeightAboveCrown)      &
             = node%R(thisJunctionNode,nr_OverflowHeightAboveCrown)
 
         !% --- Set the overflow and surcharge conditions
         !% --- check for infinite extra depth 
         !%     if infinite marker (1000) is used, then no oveflow allowed
         !%     applies to both 1000 m and 1000 ft as input.
-        if  ( ( (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)                &
+        if  ( ( (elemSR(JMidx,esr_JM_OverflowHeightAboveCrown)                &
                 .le. 1.001d0 * setting%Junction%InfiniteExtraDepthValue)           &
                 .and.                                                              &
-                (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)                &
+                (elemSR(JMidx,esr_JM_OverflowHeightAboveCrown)                &
                 .ge. 0.999d0 * setting%Junction%InfiniteExtraDepthValue)           &
                 )                                                                  &
             .or.                                                                   &
-                ( (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)              &
+                ( (elemSR(JMidx,esr_JM_OverflowHeightAboveCrown)              &
                 .le. 1.001d0 * setting%Junction%InfiniteExtraDepthValue*0.3048d0)  & 
                 .and.                                                              &
-                (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)                &
+                (elemSR(JMidx,esr_JM_OverflowHeightAboveCrown)                &
                 .ge. 0.999d0 * setting%Junction%InfiniteExtraDepthValue*0.3048d0)  & 
                 )                                                                  &
             ) then 
             !% --- set type to NoOverflow and ponded area to zero
-            elemSI(JMidx,esi_JunctionMain_OverflowType) = NoOverflow 
-            elemSR(JMidx,esr_JunctionMain_PondedArea)   = zeroR   
-            elemSR(JMidx,esr_JunctionMain_MinHeadForOverflowPonding) = huge(oneR)
+            elemSI(JMidx,esi_JM_OverflowType) = NoOverflow 
+            elemSR(JMidx,esr_JM_ExternalPondedArea)   = zeroR   
+            elemSR(JMidx,esr_JM_MinHeadForOverflowPonding) = huge(oneR)
         else
             !% --- not infinite depth
-            if (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown) .eq. zeroR) then 
+            if (elemSR(JMidx,esr_JM_OverflowHeightAboveCrown) .eq. zeroR) then 
                 !% --- treated as open top junction where surcharge provides an overflow or ponding.
                 !%     if esr_OverflowHeightAboveCrown > 0, then it is assumed that the 
                 !%     overflow/ponding is through a curb inlet  whose area is treated as an orfice
@@ -3733,35 +3741,35 @@ contains
                 !%     the junction/storage
 
                 !% --- open storage
-                if (elemSR(JMidx,esr_JunctionMain_PondedArea) == zeroR) then
+                if (elemSR(JMidx,esr_JM_ExternalPondedArea) == zeroR) then
                     !% --- use the overflow weir algorithm
-                    elemSI(JMidx,esi_JunctionMain_OverflowType) = OverflowWeir
+                    elemSI(JMidx,esi_JM_OverflowType) = OverflowWeir
                     !% --- since the junction is open, it can not surcharge
                     elemYN(JMidx,eYN_canSurcharge) = .false.
                 else
                     !% --- use ponded overflow algorithm
-                    elemSI(JMidx,esi_JunctionMain_OverflowType) = PondedWeir 
+                    elemSI(JMidx,esi_JM_OverflowType) = PondedWeir 
                     !% --- since the junction is open, it can not surcharge
                     elemYN(JMidx,eYN_canSurcharge) = .false.
                 end if
             else 
                 !% --- closed conduit overflow
-                if (elemSR(JMidx,esr_JunctionMain_PondedArea) == zeroR) then
+                if (elemSR(JMidx,esr_JM_ExternalPondedArea) == zeroR) then
                     !% --- use oveflow orifice
-                    elemSI(JMidx,esi_JunctionMain_OverflowType) = OverflowOrifice
+                    elemSI(JMidx,esi_JM_OverflowType) = OverflowOrifice
                     !% --- Using default orifice length and height for overflow
                     !%     FUTURE: need user-supplied values in SWMM *.inp file
-                    elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) = setting%Junction%Overflow%OrificeLength
-                    elemSR(JMidx,esr_Junctionmain_OverflowOrifice_Height) = setting%Junction%Overflow%OrificeHeight
+                    elemSR(JMidx,esr_JM_OverflowOrifice_Length) = setting%Junction%Overflow%OrificeLength
+                    elemSR(JMidx,esr_JM_OverflowOrifice_Height) = setting%Junction%Overflow%OrificeHeight
                 else
                     !% --- use ponded overflow
-                    elemSI(JMidx,esi_JunctionMain_OverflowType) = PondedOrifice 
-                    elemSR(JMidx,esr_JunctionMain_OverflowOrifice_Length) = setting%Junction%Overflow%OrificeLength
-                    elemSR(JMidx,esr_Junctionmain_OverflowOrifice_Height) = setting%Junction%Overflow%OrificeHeight
+                    elemSI(JMidx,esi_JM_OverflowType) = PondedOrifice 
+                    elemSR(JMidx,esr_JM_OverflowOrifice_Length) = setting%Junction%Overflow%OrificeLength
+                    elemSR(JMidx,esr_JM_OverflowOrifice_Height) = setting%Junction%Overflow%OrificeHeight
                 end if
             end if
-            elemSR(JMidx,esr_JunctionMain_MinHeadForOverflowPonding) &
-                = elemR(JMidx,er_Zcrown) + elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown)
+            elemSR(JMidx,esr_JM_MinHeadForOverflowPonding) &
+                = elemR(JMidx,er_Zcrown) + elemSR(JMidx,esr_JM_OverflowHeightAboveCrown)
         end if
 
         
@@ -3778,7 +3786,7 @@ contains
         elemR(JMidx,er_FroudeNumber) = zeroR
 
         !% --- self index
-        elemSI(JMidx,esi_JunctionBranch_Main_Index ) = JMidx
+        elemSI(JMidx,esi_JB_Main_Index ) = JMidx
    
         !%................................................................
         !% Junction Branches
@@ -3795,7 +3803,7 @@ contains
             JBidx = JMidx + ii
             
             !% --- main index associated with branch
-            elemSI(JBidx,esi_JunctionBranch_Main_Index) = JMidx
+            elemSI(JBidx,esi_JB_Main_Index) = JMidx
 
             !% --- set the adjacent element id (Aidx) where elemI and elemR data can be extracted
             !%     note that elemSGR etc are not yet assigned
@@ -3803,7 +3811,7 @@ contains
                 Fidx => elemI(JBidx,ei_MFace_dL)
                 !% --- even are downstream branches
                 isupstream = .false.
-                elemSI(JBidx,esi_JunctionBranch_IsUpstream) = zeroI
+                elemSI(JBidx,esi_JB_IsUpstream) = zeroI
                 if (elemYN(JBidx,eYN_isBoundary_dn)) then
                     Ci   = faceI(Fidx,fi_Connected_image)
                     Aidx = faceI(Fidx,fi_GhostElem_dL)
@@ -3814,7 +3822,7 @@ contains
             else
                 !% --- odd are upstream branches
                 isupstream = .true.
-                elemSI(JBidx,esi_JunctionBranch_IsUpstream) = oneI
+                elemSI(JBidx,esi_JB_IsUpstream) = oneI
                 Fidx => elemI(JBidx,ei_MFace_uL)
                 if (elemYN(JBidx,eYN_isBoundary_up)) then
                     Ci   = faceI(Fidx,fi_Connected_image)
@@ -3830,9 +3838,9 @@ contains
 
             !% --- set the geometry for existing branches
             !%     Note that elemSI(,...Exists) is set in init_network_handle_nJm
-            if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
+            if (.not. elemSI(JBidx,esi_JB_Exists) == oneI) cycle
 
-            BranchIdx      => elemSI(JBidx,esi_JunctionBranch_Link_Connection)
+            BranchIdx      => elemSI(JBidx,esi_JB_Link_Connection)
             JBgeometryType => link%I(BranchIdx,li_geometry)
 
             elemI(JBidx,ei_HeqType) = notused !% time_march not applied to JB
@@ -3841,10 +3849,10 @@ contains
             !% ---Junction branch k-factor 
             !%    If the user does not input the K-factor for junction branches entrance/exit loses then
             !%    use default from setting
-            if (node%R(thisJunctionNode,nr_JunctionBranch_Kfactor) .ne. nullvalueR) then
-                elemSR(JBidx,esr_JunctionBranch_Kfactor) = node%R(thisJunctionNode,nr_JunctionBranch_Kfactor)
+            if (node%R(thisJunctionNode,nr_JB_Kfactor) .ne. nullvalueR) then
+                elemSR(JBidx,esr_JB_Kfactor) = node%R(thisJunctionNode,nr_JB_Kfactor)
             else
-                elemSR(JBidx,esr_JunctionBranch_Kfactor) = setting%Junction%kFactor
+                elemSR(JBidx,esr_JB_Kfactor) = setting%Junction%kFactor
             end if
 
             !% --- set the initial head and to the same as the junction main
@@ -3874,9 +3882,9 @@ contains
 
             !% --- check if the connected element is CC
             if (elemI(Aidx,ei_elementType)[ci] == CC) then 
-                elemSI(JBidx,esi_JunctionBranch_CC_adjacent) = oneI
+                elemSI(JBidx,esi_JB_CC_adjacent) = oneI
             else
-                elemSI(JBidx,esi_JunctionBranch_CC_adjacent) = zeroI
+                elemSI(JBidx,esi_JB_CC_adjacent) = zeroI
             end if
 
             !% --- check if the connected element is Diagnostic weir, pump or orifice
@@ -3885,9 +3893,9 @@ contains
                 (elemI(Aidx,ei_elementType)[ci] == pump)    .or. &
                 (elemI(Aidx,ei_elementType)[ci] == outlet)       &
                 ) then 
-                elemSI(JBidx,esi_JunctionBranch_Diag_adjacent) = oneI
+                elemSI(JBidx,esi_JB_Diag_adjacent) = oneI
             else
-                elemSI(JBidx,esi_JunctionBranch_Diag_adjacent) = zeroI
+                elemSI(JBidx,esi_JB_Diag_adjacent) = zeroI
             end if
 
             !% --- handle nullvalue geometry (can occur when adjacent element is diagnostic)
@@ -3933,7 +3941,7 @@ contains
             !%     the head is inherited from the JM. Thus, a JB can have open
             !%     channel flow characteristics but a head based on the associated
             !%     closed JM.
-            if (elemSR(JMidx,esr_JunctionMain_OverflowHeightAboveCrown) > zeroR) then 
+            if (elemSR(JMidx,esr_JM_OverflowHeightAboveCrown) > zeroR) then 
                 !% --- where JM is allowed to surcharge
                 elemYN(JBidx,eYN_canSurcharge) = .true.
             else 
@@ -4009,27 +4017,27 @@ contains
         end do
 
         !% --- set a JM length based on longest branches (20220711brh)
-        LupMax = elemR(JMidx+1,er_Length) * real(elemSI(JMidx+1,esi_JunctionBranch_Exists),8)                              
+        LupMax = elemR(JMidx+1,er_Length) * real(elemSI(JMidx+1,esi_JB_Exists),8)                              
         do ii=2,max_up_branch_per_node
             JBidx = JMidx + 2*ii - 1
-            LupMax = max(elemR(JBidx,er_Length) * real(elemSI(JBidx,esi_JunctionBranch_Exists),8), LupMax)
+            LupMax = max(elemR(JBidx,er_Length) * real(elemSI(JBidx,esi_JB_Exists),8), LupMax)
         end do    
-        LdnMax = elemR(JMidx+2,er_Length) * real(elemSI(JMidx+2,esi_JunctionBranch_Exists),8)  
+        LdnMax = elemR(JMidx+2,er_Length) * real(elemSI(JMidx+2,esi_JB_Exists),8)  
         do ii=2,max_dn_branch_per_node
             JBidx = JMidx + 2*ii
-            LdnMax = max(elemR(JBidx,er_Length) * real(elemSI(JBidx,esi_JunctionBranch_Exists),8), LdnMax)    
+            LdnMax = max(elemR(JBidx,er_Length) * real(elemSI(JBidx,esi_JB_Exists),8), LdnMax)    
         end do
         elemR(JMidx,er_Length) = LupMax + LdnMax   
         
         !% --- get junction main geometry based on type
-        JmType => elemSI(JMidx,esi_JunctionMain_Type)
+        JmType => elemSI(JMidx,esi_JM_Type)
 
         !% --- preliminary curve processing
         if (JmType .eq. FunctionalStorage) then 
             !% --- create a storage curve from the function
             call storage_create_curve_from_function (JMidx)
         elseif (JmType .eq. TabularStorage) then
-            CurveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
+            CurveID => elemSI(JMidx,esi_JM_Curve_ID)
             !% --- set the element index for the curve
             Curve(CurveID)%ElemIdx = JMidx
             !% SWMM5+ needs a volume vs depth relationship thus Trapezoidal rule is used
@@ -4054,7 +4062,7 @@ contains
 
             case (FunctionalStorage,TabularStorage)
                 !% --- the CurveID for this element
-                CurveID => elemSI(JMidx,esi_JunctionMain_Curve_ID)
+                CurveID => elemSI(JMidx,esi_JM_Curve_ID)
                 !% --- set the element index for the curve
                 Curve(CurveID)%ElemIdx = JMidx
 
@@ -4269,7 +4277,7 @@ contains
         !% Declarations:
             integer, intent(in) :: JBidx
         !%------------------------------------------------------------------
-        outvalue = (real(elemSI( JBidx,esi_JunctionBranch_Exists),8) &
+        outvalue = (real(elemSI( JBidx,esi_JB_Exists),8) &
                        * elemR(  JBidx,er_FullArea)) 
 
     end function init_IC_get_branch_fullarea
@@ -4623,7 +4631,7 @@ contains
             npack   => npack_elemP(thisCol)
             if (npack < 1) return
             thisP         => elemP(1:npack,thisCol)
-            BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
+            BranchExists  => elemSI(:,esi_JB_Exists)
         !%------------------------------------------------------------------
 
         do ii=1,max_branch_per_node
@@ -4996,11 +5004,11 @@ contains
             TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
             Alpha               => setting%Solver%PreissmannSlot%Alpha
             grav                => setting%Constant%gravity
-            MinPnumber          => setting%Solver%PreissmannSlot%PNminumum 
+            MinPnumber          => setting%Solver%PreissmannSlot%initPNminimum 
 
             !% parameter check
             if ((any(elemYN(thisP,eYN_canSurcharge))) .and. &
-                (SlotMethod == DynamicSlot)           .and. &
+                ((SlotMethod == DynamicSlot) .or. (SlotMethod == SplitDynamicSlot))  .and. &
                 (Alpha < oneR))                          then
 
                 if (this_image() == 1) then
@@ -5051,7 +5059,7 @@ contains
                             elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
                         end where
                     
-                    case (DynamicSlot)
+                    case (DynamicSlot,SplitDynamicSlot)
 
                         where ((elemI(thisP,ei_elementType) == CC               ) .and. &
                                (elemR(thisP,er_Preissmann_Number_initial) < oneR)       )
@@ -5139,7 +5147,7 @@ contains
             TargetPCelerity     => setting%Solver%PreissmannSlot%TargetCelerity
             Alpha               => setting%Solver%PreissmannSlot%Alpha
             grav                => setting%Constant%gravity
-            MinPnumber          => setting%Solver%PreissmannSlot%PNminumum 
+            MinPnumber          => setting%Solver%PreissmannSlot%initPNminimum 
 
             !% --- initialize slots
             elemR(thisP,er_SlotVolume)            = zeroR
@@ -5175,7 +5183,7 @@ contains
                             elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
                         end where
                     
-                    case (DynamicSlot)
+                    case (DynamicSlot,SplitDynamicSlot)
 
                         !% --- requires cycling through the junctions to get the initial preissmann number
                         do mm=1,Npack
@@ -5187,7 +5195,7 @@ contains
                             PNadd  = zeroR
 
                             do kk=1,max_branch_per_node
-                                if (elemSI(JMidx+kk,esi_JunctionBranch_Exists) .ne. oneI) cycle 
+                                if (elemSI(JMidx+kk,esi_JB_Exists) .ne. oneI) cycle 
 
                                 PNadd = PNadd + elemR(JMidx+kk,er_Preissmann_Number_initial)
                                 bcount = bcount + oneI
@@ -5989,7 +5997,7 @@ contains
                 !% -- upstream branches
                 do ii=1,max_branch_per_node,2
                     JBidx = mm+ii
-                    if (elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) then 
+                    if (elemSI(JBidx,esi_JB_Exists) == oneI) then 
                         Fidx => elemI(JBidx,ei_MFace_uL)
                         if (elemYN(JBidx,eYN_isBoundary_up)) then
                             Ci   = faceI(Fidx,fi_Connected_image)
@@ -6008,7 +6016,7 @@ contains
                 !% --- downstream branches
                 do ii=2,max_branch_per_node,2
                     JBidx = mm+ii
-                    if (elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) then 
+                    if (elemSI(JBidx,esi_JB_Exists) == oneI) then 
                         Fidx => elemI(JBidx,ei_MFace_dL)
                         if (elemYN(JBidx,eYN_isBoundary_dn)) then
                             Ci   = faceI(Fidx,fi_Connected_image)
@@ -6287,10 +6295,10 @@ contains
             JMidx   = thisJM(mm)
 
             !% --- zero ponded area junctions cannot pond, so no error check is needed
-            if (elemSR(JMidx,esr_JunctionMain_PondedArea) == zeroR) cycle
+            if (elemSR(JMidx,esr_JM_ExternalPondedArea) == zeroR) cycle
 
             !% --- baseline ponding length is ScaleFactor times the length scale of the storage/junction
-            select case (elemSI(JMidx,esi_JunctionMain_Type))
+            select case (elemSI(JMidx,esi_JM_Type))
 
                 case (NoStorage)
                     print *, 'CODE ERROR NoStorage not implemented'
@@ -6331,13 +6339,13 @@ contains
             !% --- minimum area required is a circle of diameter PondLength
             PondAreaMin = setting%Constant%Pi * (PondLength**2) / fourR
 
-            if (elemSR(JMidx,esr_JunctionMain_PondedArea) < PondAreaMin) then 
+            if (elemSR(JMidx,esr_JM_ExternalPondedArea) < PondAreaMin) then 
                 print *, ' '
                 print *, 'USER CONFIGURATION ERROR for ponded area'
                 print *, 'The user-supplied ponded area for a junction is less than required.'
                 print *, 'Junction node index is ',elemI(JMidx,ei_node_Gidx_Bipquick)
                 print *, 'Junction name is       ',trim(node%Names(elemI(JMidx,ei_node_Gidx_Bipquick))%str)
-                print *, 'User-supplied ponded area is ',elemSR(JMidx,esr_JunctionMain_PondedArea)
+                print *, 'User-supplied ponded area is ',elemSR(JMidx,esr_JM_ExternalPondedArea)
                 print *, 'Minimum required is          ',PondAreaMin
                 print *, 'The minimum required can be adjusted using setting%Junction%PondingScaleFactor'
                 print *, 'However, caution is required as as small scale factor can result in oscillating'
@@ -6373,7 +6381,7 @@ contains
             JMidx = thisP(mm)
 
             !% --- only applies to ImpliedStorage junctions
-            if (elemSI(JMidx,esi_JunctionMain_Type) .ne. ImpliedStorage) cycle
+            if (elemSI(JMidx,esi_JM_Type) .ne. ImpliedStorage) cycle
 
             !% --- generally the "UseLargeBranchStorageTF" should be true
             if (setting%Junction%PlanArea%UseLargeBranchStorageTF) then
@@ -6384,7 +6392,7 @@ contains
                 !% --- cycle through each possible branch
                 do ii=1,max_branch_per_node
                     JBidx = JMidx+ii
-                    if (.not. elemSI(JBidx,esi_JunctionBranch_Exists) == oneI) cycle
+                    if (.not. elemSI(JBidx,esi_JB_Exists) == oneI) cycle
                     
                     !% --- check if branch zbottom is below the cutoff for
                     !%     considering large branches (i.e., we neglect overflow branches)
@@ -6488,9 +6496,9 @@ contains
                         print *, 'CODE ERROR upstream of a type1 pump should be JB'
                         call util_crashpoint(4429873)
                     else
-                        ! print *, elemSI(eUp,esi_JunctionBranch_Main_Index)
-                        JMidx => elemSI(eUp,esi_JunctionBranch_Main_Index)
-                        if (elemSI(JMidx,esi_JunctionMain_Type) == NoStorage) then 
+                        ! print *, elemSI(eUp,esi_JB_Main_Index)
+                        JMidx => elemSI(eUp,esi_JB_Main_Index)
+                        if (elemSI(JMidx,esi_JM_Type) == NoStorage) then 
                             print *, 'USER CONFIGURATION ERROR for pump'
                             print *, 'NoStorage found for Pump Type 1 node.'
                             print *, 'Change node to tabular storage or functional storage, or '
