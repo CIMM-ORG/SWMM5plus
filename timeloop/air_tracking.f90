@@ -41,7 +41,7 @@ contains
         integer, intent(in) :: pCol_Closed
         integer          :: ii
         integer, pointer :: thisP(:), npack, fup, fdn, elemLinkIdx(:), linkIdx(:)
-        logical, pointer :: isSurcharged(:), linkConstrained(:)
+        logical, pointer :: isSurcharged(:), linkSurcharged(:)
         character(64) :: subroutine_name = 'at_constricted_links'
         !%------------------------------------------------------------------
         npackP  = npack_elemP(pCol_Closed)
@@ -52,17 +52,17 @@ contains
         isSurcharged => elemYN(:,eYN_isSurcharged)
         elemLinkIdx  => elemI(:,ei_link_Gidx_BIPquick)
         linkIdx      => link%I(:,li_idx)
-        linkConstrained => link%YN(:,lYN_isConstricted)
+        linkSurcharged => link%YN(:,lYN_isSurcharged)
 
         !% go through the links and check if any of the 
         !% element in that link is closed and surcharged
         !% and thus constraining the airflow
         do ii = 1,N_Link
             !% reset air constriction
-            linkConstrained(ii) = .false.
+            linkSurcharged(ii) = .false.
             !% if there is a surcharge element of a link, set the link as constricted
             if (any((elemLinkIdx(thisP) == ii) .and. isSurcharged(thisP))) then
-                linkConstrained(ii) = .true.
+                linkSurcharged(ii) = .true.
             end if
         end do
 
@@ -113,8 +113,9 @@ contains
         integer, intent(in) :: pCol_Closed
         integer          :: ii
         integer, pointer :: thisP(:), npack, fup, fdn, elemLinkIdx(:), linkIdx(:)
+        integer, pointer :: linkUpElem(:), linkDnElem(:)
         real(8), pointer :: linkAirVol(:), elemAirVol
-        logical, pointer :: linkConstrained(:)
+        logical, pointer :: linkUpSurcharged(:), linkDnSurcharged(:), linkSurcharged(:)
         character(64) :: subroutine_name = 'at_constricted_link_air_volume'
         !%------------------------------------------------------------------
         npackP  = npack_elemP(pCol_Closed)
@@ -127,12 +128,22 @@ contains
         elemAirVol   => elemR(:,er_Air_volume)
         linkIdx      => link%I(:,li_idx)
         linkAirVol   => link%R(:,lr_Air_Volume)
-        linkConstrained => link%YN(:,lYN_isConstricted)
+        linkUpElem   => link%YN(:,li_first_elem_idx)
+        linkDnElem   => link%YN(:,li_last_elem_idx)
+        linkSurcharged   => link%YN(:,lYN_isSurcharged)
+        linkUpSurcharged => link%YN(:,lYN_isUpSurcharge)
+        linkDnSurcharged => link%YN(:,lYN_isDnSurcharge)
 
         do ii - 1,N_link
-            linkConstrained(ii) = zeroR
-            if (linkConstrained(ii)) then
-                linkConstrained(ii) = sum(elemAirVol(thisP), elemLinkIdx(thisP) == ii)
+            !% reset if the link is surcharged 
+            linkSurcharged(ii) = .false.
+
+
+
+
+
+            if (linkSurcharged(ii)) then
+                linkSurcharged(ii) = sum(elemAirVol(thisP), elemLinkIdx(thisP) == ii)
             end if
         end do
 

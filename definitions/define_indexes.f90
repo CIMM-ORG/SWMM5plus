@@ -118,7 +118,9 @@ module define_indexes
         enumerator :: lYN_isOutput
         enumerator :: lYN_isPhantomLink
         enumerator :: lYN_hasFlapGate
-        enumerator :: lYN_isConstricted
+        enumerator :: lYN_isUpSurcharge
+        enumerator :: lYN_isDnSurcharge
+        enumerator :: lYN_isSurcharged
         enumerator :: lYN_temp1
         enumerator :: lYN_lastplusone !% must be last enum item
     end enum
