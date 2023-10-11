@@ -343,7 +343,7 @@ module junction_elements
         !%     This ensures faces between JB and adjacent element are
         !%     identical when face is shared between processors
         sync all
-        call face_shared_face_sync (fp_JB_IorS,[fr_Flowrate,fr_DeltaQ])
+        call face_shared_face_sync (fp_JB_IorS,[fr_Flowrate,fr_DeltaQ,fr_Head_u,fr_Head_d,fr_Area_u,fr_Area_d])
         sync all
         !% 
         !% ==============================================================
