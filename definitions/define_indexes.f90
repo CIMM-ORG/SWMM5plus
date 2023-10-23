@@ -237,14 +237,17 @@ module define_indexes
     enum, bind(c)
         enumerator :: bi_idx = 1
         enumerator :: bi_node_idx
-        enumerator :: bi_face_idx    ! Index of face nBCup/dn nodes
-        enumerator :: bi_elem_idx    ! Index of element associated with either nJ2 or nJm node with lateral inflow
-        enumerator :: bi_category    ! KEY
-        enumerator :: bi_subcategory ! KEY
-        enumerator :: bi_fetch       ! 1 if BC%xR_timeseries needs to be fetched, 0 otherwise
+        enumerator :: bi_face_idx      !% Index of face nBCup/dn nodes
+        enumerator :: bi_elem_idx      !% Index of element associated with either nJ2 or nJm node with lateral inflow
+        enumerator :: bi_category      !% KEY
+        enumerator :: bi_subcategory   !% KEY
+        enumerator :: bi_BasePatType   !% SWMM key for base pattern type of inflow
+        enumerator :: bi_TimeSeriesIdx !% SWMM ts index number
+        enumerator :: bi_fetch         !% 1 if BC%xR_timeseries needs to be fetched, 0 otherwise
+        enumerator :: bi_TS_duplicate  !% 0 if first use of TS, provide N_flow # of earlier call to TS if duplicate.
         enumerator :: bi_TS_upper_idx  !% index of the current level in the timeseries storage
-        enumerator :: bi_UTidx       !% index in uniform table array associated with this BC.
-        enumerator :: bi_lastplusone !% must be last enum item
+        enumerator :: bi_UTidx         !% index in uniform table array associated with this BC.
+        enumerator :: bi_lastplusone   !% must be last enum item
     end enum
 
     !% --- Column indexes for BC%xYN(:,:)

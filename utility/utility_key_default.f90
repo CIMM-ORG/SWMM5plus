@@ -73,7 +73,8 @@ module utility_key_default
         !% --- keylist must match the number of KEY columns for bi_ indexes
         allocate(keylist(2))  
         keylist = (/    bi_category, &
-                        bi_subcategory /)
+                        bi_subcategory, &
+                        bi_BasePatType /)
 
         BC%headI(:,keylist) = undefinedKey
         BC%flowI(:,keylist) = undefinedKey

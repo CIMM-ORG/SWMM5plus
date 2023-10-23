@@ -5444,7 +5444,7 @@ contains
         !%
         !%---------------------------------------------------------------------
         !% Declarations
-            integer :: ii, nidx, ntype, outfallType
+            integer :: ii, kk, nidx, ntype, outfallType
             integer :: SWMMtseriesIdx, SWMMbasepatType
             character(64) :: subroutine_name = "init_bc"
         !%---------------------------------------------------------------------
@@ -5466,6 +5466,7 @@ contains
             BC%flowR(:, br_timeInterval) = abs(nullvalueR)  !% ensure positive
             BC%flowI(:,bi_fetch) = 1
             BC%flowI(:,bi_TS_upper_idx) = 0  !% latest position of upper bound in flow table
+            BC%flowI(:,bi_TS_duplicate) = 0
         end if
         if (N_headBC > 0) then
             BC%headI = nullvalueI
@@ -5473,6 +5474,7 @@ contains
             BC%headR(:, br_timeInterval) = abs(nullvalueR)  !% ensure positive
             BC%headI(:,bi_fetch) = 1
             BC%headI(:,bi_TS_upper_idx) = 0
+            BC%headI(:,bi_TS_duplicate) = 0
         end if
 
         !% --- Initialize Inflow BCs
@@ -5484,11 +5486,11 @@ contains
                 !% Handle Inflow BCs (BCup and BClat only)
                 if (node%YN(nidx, nYN_has_extInflow) .or. node%YN(nidx, nYN_has_dwfInflow)) then
 
-                    BC%flowI(ii, bi_node_idx) = nidx
-                    BC%flowI(ii, bi_idx)      = ii
-                    BC%flowYN(ii,bYN_read_input_series) = .true.
-                    BC%flowI(ii, bi_face_idx) = node%I(nidx,ni_face_idx)
-                    BC%flowI(ii, bi_elem_idx) = node%I(nidx,ni_elem_idx)
+                    BC%flowI (ii, bi_node_idx)           = nidx
+                    BC%flowI (ii, bi_idx)                = ii
+                    BC%flowYN(ii, bYN_read_input_series) = .true.
+                    BC%flowI (ii, bi_face_idx)           = node%I(nidx,ni_face_idx)
+                    BC%flowI (ii, bi_elem_idx)           = node%I(nidx,ni_elem_idx)
 
                     !% --- assign category and face index
                     select case (ntype)
@@ -5515,19 +5517,36 @@ contains
 
                     !% HACK -- Pattern needs checking 
                     !% --- check whether there is a pattern (-1 is no pattern) for this inflow
-                    SWMMbasepatType = &
+                    BC%flowI(ii,bi_BasePatType) = &
                         interface_get_nodef_attribute(nidx, api_nodef_extInflow_basePat_type)
                     
                     !% check whether there is a time series 
                     !% (-1 is none, >0 is index, API_NULL_VALUE_I is error, which crashes API)
-                    SWMMtseriesIdx = &
+                    BC%flowI(ii,bi_TimeSeriesIdx) = &
                         interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
 
                     !% --- BC does not have fixed value if its associated with dwfInflow
                     !%     or if extInflow has tseries or pattern
                     BC%flowI(ii, bi_subcategory) = BCQ_tseries
+
+                    !% --- check if time series found
+                    if (BC%flowI(ii,bi_TimeSeriesIdx) > 0) then 
+                        !% --- check for and store index of a duplicate when a time series is used more than once.
+                        if (ii > 1) then 
+                            !% --- cycle through all the prior Time Series assignments
+                            do kk = 1,ii-1
+                                if (BC%flowI(kk,bi_TimeSeriesIdx)  == BC%flowI(ii,bi_TimeSeriesIdx)) then
+                                    !% --- store the local time series index that this duplicates
+                                    BC%flowI(ii,bi_TS_duplicate) = kk
+                                    exit !% leave the do loop since the first duplicate was found
+                                end if                                
+                            end do
+                        else
+                            !% --- cannot be duplicate on ii==1
+                        end if
+                    end if
                     
-                    if ((SWMMtseriesIdx == -1) .and. (SWMMbasepatType == -1)) then
+                    if ((BC%flowI(ii,bi_TimeSeriesIdx) == -1) .and. (BC%flowI(ii,bi_BasePatType) == -1)) then
                         BC%flowI(ii, bi_subcategory) = BCQ_fixed
                     end if
 
@@ -5540,7 +5559,7 @@ contains
             end do
         end if
 
-        !% --- Initialize Head BCs
+        !% --- Initialize Head BCs  
         if (N_headBC > 0) then
             do ii = 1, N_headBC
                 nidx =  node%P%have_headBC(ii)
@@ -5571,29 +5590,47 @@ contains
                 outfallType = int(interface_get_nodef_attribute(nidx, api_nodef_outfall_type))
                 select case (outfallType)
                     case (API_FREE_OUTFALL)
-                        !% debug test 20220725brh
                         BC%headI(ii, bi_subcategory) = BCH_free
                         BC%headYN(ii, bYN_read_input_series) = .false.
 
                     case (API_NORMAL_OUTFALL)
-                        !% debug tested 20220729brh
                         BC%headI(ii, bi_subcategory) = BCH_normal
                         BC%headYN(ii, bYN_read_input_series) = .false.
 
                     case (API_FIXED_OUTFALL) 
-                        !% debug tested 20220729brh
                         BC%headI(ii, bi_subcategory) = BCH_fixed
                         BC%headYN(ii, bYN_read_input_series) = .false.
 
                     case (API_TIDAL_OUTFALL)
-                        !% debug tested 20220729brh
                         BC%headI(ii, bi_subcategory) = BCH_tidal
                         BC%headYN(ii, bYN_read_input_series) = .true.
 
                     case (API_TIMESERIES_OUTFALL)
-                        !% debug tested 2020729brh
                         BC%headI(ii, bi_subcategory) = BCH_tseries
                         BC%headYN(ii, bYN_read_input_series) = .true.
+                        BC%headI(ii,bi_TimeSeriesIdx) = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries)
+
+                        if (BC%headI(ii,bi_TimeSeriesIdx) > 0) then 
+                            !% --- check for and stor index of a duplicate when a time series is re-used
+                            if (ii > 1) then 
+                                !% --- cycle through priro time series assignments
+                                do kk = 1,ii-1
+                                    if (BC%headI(kk,bi_TimeSeriesIdx) == BC%headI(ii,bi_TimeSeriesIdx)) then
+                                    !% --- store the local time series index that this duplicates
+                                        BC%headI(ii,bi_TS_duplicate) = kk
+                                        exit !% leave the do loop since the first duplicate was found
+                                    end if  
+                                end do 
+                            else
+                                !% --- cannot be duplicate on ii==1
+                            end if
+                        else
+                            !% --- HACK need handling of external (not file) time series data
+                            print *, 'USER CONFIGURATION ERROR: for head time series at outfall'
+                            print *, 'time series not found for head BC at node ',nidx
+                            print *, 'node name ',trim(node%Names(nidx)%str)
+                            call util_crashpoint(60982734)
+                        end if
 
                     case default
                         print *, 'CODE ERROR unexpected case default'

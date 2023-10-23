@@ -134,7 +134,7 @@ contains
         !% data from the timeseries files and overwrite the timeseries arrays
         !%------------------------------------------------------------------
         !% Declarations
-            integer :: ii, nidx, lidx
+            integer :: ii, kk, nidx, lidx
             integer :: interval_counter
             integer, pointer :: TimeSlotsStored, TS_upper_idx
             real(8), pointer :: tnow, tend, ttime
@@ -156,124 +156,164 @@ contains
             do ii = 1, N_flowBC
                 !% --- get the node index
                 nidx = BC%flowI(ii, bi_node_idx)
-                !% --- get the current location of the upper index in time series
-                TS_upper_idx => BC%flowI(ii,bi_TS_upper_idx)
-                !% --- check that this BC has an input file
-                if (BC%flowYN(ii,bYN_read_input_series)) then
-                    if (TS_upper_idx == 0) then 
-                        !% --- first fetch of data from file
-                        call bc_fetch_flow(ii)
 
-                    else
-                        !% --- get the current upper bound of time interval
-                        ttime => BC%flowTimeseries(ii, TS_upper_idx, brts_time) 
-                        !% --- check to see if we need to move to the next level of the BC data
-                        if (tnow > ttime) then 
-                            if (TS_upper_idx == TimeSlotsStored) then
-                                !% --- if we're at the end, we need to fetch more data from file
-                                call bc_fetch_flow(ii)
-        
-                            elseif (TS_upper_idx < TimeSlotsStored) then
-                                !% --- there's still more stored BC data to cycle through
-                                !% --- create a counter
-                                interval_counter = -1
-                                do while((tnow > ttime) .and. (TS_upper_idx < TimeSlotsStored))
-                                    !% --- increment to the next stored time level
-                                    TS_upper_idx = TS_upper_idx + 1
-                                    !% --- get the time at the next level
-                                    ttime => BC%flowTimeseries(ii, TS_upper_idx, brts_time)
-                                    !% --- if tnow is still too large and we're at the end of storage, then fetch more data
-                                    if ((TS_upper_idx == TimeSlotsStored) .and. (tnow > ttime)) then
-                                        !% --- fetch more data and overwrite old storage
-                                        call bc_fetch_flow(ii)
-                                        !% --- use the new upper bound time value
-                                        ttime => BC%flowTimeseries(ii, TS_upper_idx, brts_time)
-                                    end if
-                                    !% increment the counter
-                                    interval_counter = interval_counter+ 1
-                                end do
-                                !% --- check if we had to go more than a single interval and print warning
-                                if ((interval_counter > 0) .and. setting%Output%Warning) then
-                                    call util_print_warning("Warning (bc_step): The flow boundary condition for node " &
-                                    // trim(node%Names(nidx)%str) // " has smaller time intervals than the present model time step")
-                                end if
-                            else 
-                                print *, 'CODE ERROR unexpected else'
-                                call util_crashpoint(582973)
-                            end if
+                !% --- check if this is not a duplicate, if not, then check that the present
+                !%     time is less than that of the upper index. If not, then step through
+                !%     to find an index time larger than the present time.  If necessary,
+                !%     load more data.
+                if (BC%flowI(ii,bi_TS_duplicate) == 0) then
+                    !% --- get the current location of the upper index in time series
+                    TS_upper_idx => BC%flowI(ii,bi_TS_upper_idx)
+                    !% --- check that this BC has an input file
+                    if (BC%flowYN(ii,bYN_read_input_series)) then
+                        if (TS_upper_idx == 0) then 
+                            !% --- first fetch of data from file is needed
+                            call bc_fetch_flow(ii)
                         else
-                            !% --- no action, update of BC storage not needed   
+                            !% --- get the current upper bound of time interval
+                            ttime => BC%flowTimeseries(ii, TS_upper_idx, brts_time) 
+                            !% --- check to see if we need to move to the next level of the BC data
+                            if (tnow > ttime) then 
+                                if (TS_upper_idx == TimeSlotsStored) then
+                                    !% --- if we're at the end, we need to fetch more data from file
+                                    call bc_fetch_flow(ii)
+            
+                                elseif (TS_upper_idx < TimeSlotsStored) then
+                                    !% --- there's still more stored BC data to cycle through
+                                    !% --- create a counter
+                                    interval_counter = -1
+                                    do while((tnow > ttime) .and. (TS_upper_idx < TimeSlotsStored))
+                                        !% --- increment to the next stored time level
+                                        TS_upper_idx = TS_upper_idx + 1
+                                        !% --- get the time at the next level
+                                        ttime => BC%flowTimeseries(ii, TS_upper_idx, brts_time)
+                                        !% --- if tnow is still too large and we're at the end of storage, then fetch more data
+                                        !%     note that TS_upper_idx is reset in bc_fetch_flow
+                                        if ((TS_upper_idx == TimeSlotsStored) .and. (tnow > ttime)) then
+                                            !% --- fetch more data and overwrite old storage
+                                            call bc_fetch_flow(ii)
+                                            !% --- use the new upper bound time value
+                                            ttime => BC%flowTimeseries(ii, TS_upper_idx, brts_time) !% not needed? HACK brh20231020
+                                        end if
+                                        !% increment the counter
+                                        interval_counter = interval_counter+ 1
+                                    end do
+                                    !% --- check if we had to go more than a single interval and print warning
+                                    if ((interval_counter > 0) .and. setting%Output%Warning) then
+                                        call util_print_warning("Warning (bc_step): The flow boundary condition for node " &
+                                        // trim(node%Names(nidx)%str) // " has smaller time intervals than the present model time step")
+                                    end if
+                                else 
+                                    print *, 'CODE ERROR unexpected else'
+                                    call util_crashpoint(582973)
+                                end if
+                            else
+                                !% --- no action, update of BC storage not needed   
+                            end if
                         end if
-                    end if
-                    !% --- get the size of the time interval
-                    BC%flowR(ii, br_timeInterval) =   BC%flowTimeseries(ii, TS_upper_idx,   brts_time) &
-                                                    - BC%flowTimeseries(ii, TS_upper_idx-1, brts_time)                            
+                        !% --- get the size of the time interval
+                        BC%flowR(ii, br_timeInterval) =   BC%flowTimeseries(ii, TS_upper_idx,   brts_time) &
+                                                        - BC%flowTimeseries(ii, TS_upper_idx-1, brts_time)                            
+                    else
+                        !% --- HACK-future expansions should include getting BC from a data structure
+                        !%     or external code through API
+                        call util_print_warning("Error (bc.f08): The flow boundary condition for node " &
+                        // node%Names(nidx)%str // " should always read from a time series")
+                        call util_crashpoint( 87453)
+                    end if  
                 else
-                    !% --- HACK-future expansions should include getting BC from a data structure
-                    !%     or external code through API
-                    call util_print_warning("Error (bc.f08): The flow boundary condition for node " &
-                    // node%Names(nidx)%str // " should always read from a time series")
-                    call util_crashpoint( 87453)
-                end if                 
+                    !% --- duplicate the TS usage as data has already been read in.
+                    kk = BC%flowI(ii,bi_TS_duplicate)
+                    !% --- check if the flow data needs updating
+                    if (BC%flowTimeSeries(ii,2,brts_time) .ne. BC%flowTimeSeries(kk,2,brts_time)) then 
+                        !% --- store the full time series 
+                        BC%flowTimeSeries(ii,1:TimeSlotsStored,brts_time)  = BC%flowTimeSeries(kk,1:TimeSlotsStored,brts_time)
+                        BC%flowTimeSeries(ii,1:TimeSlotsStored,brts_value) = BC%flowTimeSeries(kk,1:TimeSlotsStored,brts_value)       
+                    else 
+                        !% --- no action required
+                    end if
+                    !% --- store the current time interval and upper index
+                    BC%flowR(ii,br_timeInterval) = BC%flowR(kk, br_timeInterval)
+                    BC%flowI(ii,bi_TS_upper_idx) = BC%flowI(kk,bi_TS_upper_idx)
+                end if    
             end do
         end if
 
-        !% --- Head BC (outfall)
+        !% --- Head BC (outfall)  
         if (N_headBC > 0) then
             !% --- cycle through all the head BC
             do ii = 1, N_headBC
                 !% --- check that this BC has an input file
                 if (BC%headYN(ii,bYN_read_input_series)) then
-                    !% --- get the node index
-                    nidx = BC%headI(ii, bi_node_idx)
-                    !% --- get the upper index of the time series
-                    TS_upper_idx => BC%headI(ii,bi_TS_upper_idx)
-                    if (TS_upper_idx == 0) then 
-                        !% --- first fetch of data from file
-                        call bc_fetch_head(ii)
-                        !%---  HACK - we are assuming that outfalls can only have one link upstream
-                        !%     IMPORTANT -- WE NEED AN ERROR CHECK TO MAKE SURE THIS CONDITION ISN'T VIOLATED.
-                        lidx = node%I(nidx, ni_Mlink_u1)
-                        link%R(lidx, lr_InitialDnstreamDepth) = BC%headTimeseries(ii, 1, brts_value) - node%R(nidx,nr_Zbottom)
-                    else
-                        !% --- get the current upper bound of time interval
-                        ttime => BC%headTimeseries(ii,TS_upper_idx, brts_time)
+                    if (BC%headI(ii,bi_TS_duplicate) == 0) then 
+                        !% --- not a duplicate time series, so read in data
+                        !% --- get the node index
+                        nidx = BC%headI(ii, bi_node_idx)
+                        !% --- get the upper index of the time series
+                        TS_upper_idx => BC%headI(ii,bi_TS_upper_idx)
+                        if (TS_upper_idx == 0) then 
+                            !% --- first fetch of data from file
+                            call bc_fetch_head(ii)
+                            !%---  HACK - we are assuming that outfalls can only have one link upstream
+                            !%     IMPORTANT -- WE NEED AN ERROR CHECK TO MAKE SURE THIS CONDITION ISN'T VIOLATED.
+                            lidx = node%I(nidx, ni_Mlink_u1)
+                            link%R(lidx, lr_InitialDnstreamDepth) = BC%headTimeseries(ii, 1, brts_value) - node%R(nidx,nr_Zbottom)
+                        else
+                            !% --- get the current upper bound of time interval
+                            ttime => BC%headTimeseries(ii,TS_upper_idx, brts_time)
 
-                        !% --- check to see if we need to move to the next level of the BC data
-                        if (tnow > ttime) then 
-                            if (TS_upper_idx == TimeSlotsStored) then
-                                !% --- if we're at the end, we need to fetch more data from file
-                                call bc_fetch_head(ii)
-                            else
-                                !% --- there's still more stored BC data to cycle through
-                                !% --- create a counter
-                                interval_counter = -1
-                                do while((tnow > ttime) .and. (TS_upper_idx < TimeSlotsStored))
-                                    !% --- increment to the next stored time level
-                                    TS_upper_idx = TS_upper_idx + 1
-                                    !% --- use the new upper bound time value
-                                    ttime => BC%headTimeseries(ii, TS_upper_idx, brts_time)
-                                    !% --- if tnow is still too large and we're at the end of storage, then fetch more data
-                                    if ((TS_upper_idx == TimeSlotsStored) .and. (tnow > ttime)) then
-                                        !% --- fetch more data and overwrite old storage
-                                        call bc_fetch_head(ii)
+                            !% --- check to see if we need to move to the next level of the BC data
+                            if (tnow > ttime) then 
+                                if (TS_upper_idx == TimeSlotsStored) then
+                                    !% --- if we're at the end, we need to fetch more data from file
+                                    call bc_fetch_head(ii)
+                                else
+                                    !% --- there's still more stored BC data to cycle through
+                                    !% --- create a counter
+                                    interval_counter = -1
+                                    do while((tnow > ttime) .and. (TS_upper_idx < TimeSlotsStored))
+                                        !% --- increment to the next stored time level
+                                        TS_upper_idx = TS_upper_idx + 1
+                                        !% --- use the new upper bound time value
                                         ttime => BC%headTimeseries(ii, TS_upper_idx, brts_time)
+                                        !% --- if tnow is still too large and we're at the end of storage, then fetch more data
+                                        if ((TS_upper_idx == TimeSlotsStored) .and. (tnow > ttime)) then
+                                            !% --- fetch more data and overwrite old storage
+                                            call bc_fetch_head(ii)
+                                            ttime => BC%headTimeseries(ii, TS_upper_idx, brts_time)
+                                        end if
+                                        !% increment the counter
+                                        interval_counter = interval_counter + 1
+                                    end do
+                                    !% --- check if we had to go more than a single interval and print warning
+                                    if ((interval_counter > 0) .and. setting%Output%Warning) then
+                                        call util_print_warning("Warning (bc_step): The head boundary condition for node " &
+                                        // trim(node%Names(nidx)%str) // " has smaller time intervals than the present model time step")
                                     end if
-                                    !% increment the counter
-                                    interval_counter = interval_counter + 1
-                                end do
-                                !% --- check if we had to go more than a single interval and print warning
-                                if ((interval_counter > 0) .and. setting%Output%Warning) then
-                                    call util_print_warning("Warning (bc_step): The head boundary condition for node " &
-                                    // trim(node%Names(nidx)%str) // " has smaller time intervals than the present model time step")
                                 end if
                             end if
                         end if
-                    end if  
 
-                    !% --- get the size of the time interval
-                    BC%headR(ii, br_timeInterval) =   BC%headTimeseries(ii, TS_upper_idx,   brts_time) &
-                                                    - BC%headTimeseries(ii, TS_upper_idx-1, brts_time)
+                        !% --- get the size of the time interval
+                        BC%headR(ii, br_timeInterval) =   BC%headTimeseries(ii, TS_upper_idx,   brts_time) &
+                                                        - BC%headTimeseries(ii, TS_upper_idx-1, brts_time)
+                    else 
+                        !% --- duplicate time series 
+                        !% --- duplicate the TS usage as data has already been read in.
+                        kk = BC%headI(ii,bi_TS_duplicate)
+                        !% --- check if the head data needs updating
+                        if (BC%headTimeSeries(ii,2,brts_time) .ne. BC%headTimeSeries(kk,2,brts_time)) then 
+                            !% --- store the full time series 
+                            BC%headTimeSeries(ii,1:TimeSlotsStored,brts_time)  = BC%headTimeSeries(kk,1:TimeSlotsStored,brts_time)
+                            BC%headTimeSeries(ii,1:TimeSlotsStored,brts_value) = BC%headTimeSeries(kk,1:TimeSlotsStored,brts_value)       
+                        else 
+                            !% --- no action required
+                        end if
+                        !% --- store the current time interval and upper index
+                        BC%headR(ii,br_timeInterval) = BC%headR(kk, br_timeInterval)
+                        BC%headI(ii,bi_TS_upper_idx) = BC%headI(kk,bi_TS_upper_idx)
+                   
+                    end if
                 else
                     !% --- no BC file for this outfall -- BCH_fixed,..normal...free    
                     !% --- HACK-should have error checking that BC has appropriate setting
@@ -320,6 +360,10 @@ contains
             timeEnd      => setting%Time%End
             timeEndEpoch => setting%Time%EndEpoch
         !%-------------------------------------------------------------------
+
+        !% --- this should only be called if NOT a duplicate use of a time series
+        if (BC%flowI(bc_idx,bi_TS_duplicate) > 0) return    
+
         !% 
         !% --- check to see if this is the first fetch or a subsequent fetch.
         if (bc_level == 0) then 
@@ -355,6 +399,7 @@ contains
         end do
 
         !% set the current location of the upper bound for interpolation to location 2
+        !% so that we start interpolation from the lowest section.
         BC%flowI(bc_idx,bi_TS_upper_idx) = 2
 
         !%-------------------------------------------------------------------
@@ -395,6 +440,9 @@ contains
             timeEndEpoch => setting%Time%EndEpoch
         !%-------------------------------------------------------------------
 
+        !% --- this should only be called if NOT a duplicate use of a time series
+        if (BC%headI(bc_idx,bi_TS_duplicate) > 0) return    
+
         !% --- check to see if this is the first fetch or a subsequent fetch.
         if (bc_level == 0) then 
             !% --- first fetch is always the simulation start time with interpolated value 
@@ -427,6 +475,7 @@ contains
             if (new_head_time == setting%Time%End) exit
         end do
         !% set the current location of the upper bound for interpolation to location 2
+        !% so that we start interpolation from the lowest section.
         BC%headI(bc_idx,bi_TS_upper_idx) = 2
 
         !%-------------------------------------------------------------------
