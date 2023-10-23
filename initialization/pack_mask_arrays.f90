@@ -791,7 +791,7 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == JM) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
+                (elemSI(:,esi_JM_Type) == FunctionalStorage) &
                 .and. &
                 ( elemI(:,ei_tmType) == ETM) &
                 )
@@ -799,7 +799,7 @@ contains
             elemPGetm(1:npack, ptype) = pack(eIdx, &
                 (elemI(:,ei_elementType) == JM) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == FunctionalStorage) &
+                (elemSI(:,esi_JM_Type) == FunctionalStorage) &
                 .and. &
                 ( elemI(:,ei_tmType) == ETM) &
                 )
@@ -811,7 +811,7 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == JM) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
+                (elemSI(:,esi_JM_Type) == TabularStorage) &
                 .and. &
                 (elemI(:,ei_tmType) == ETM) &
                 )
@@ -819,7 +819,7 @@ contains
             elemPGetm(1:npack, ptype) = pack(eIdx, &
                 (elemI(:,ei_elementType) == JM) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == TabularStorage) &
+                (elemSI(:,esi_JM_Type) == TabularStorage) &
                 .and. &  
                 ( elemI(:,ei_tmType) == ETM) &
                 )
@@ -831,7 +831,7 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == JM) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
+                (elemSI(:,esi_JM_Type) == ImpliedStorage) &
                 .and. &
                 ( elemI(:,ei_tmType) == ETM) &
                 )
@@ -839,7 +839,7 @@ contains
             elemPGetm(1:npack, ptype) = pack(eIdx, &
                 (elemI(:,ei_elementType) == JM) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == ImpliedStorage) &
+                (elemSI(:,esi_JM_Type) == ImpliedStorage) &
                 .and. &
                 ( elemI(:,ei_tmType) == ETM) &
                 )
@@ -852,7 +852,7 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == JM) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == NoStorage) &
+                (elemSI(:,esi_JM_Type) == NoStorage) &
                 .and. &
                 ( elemI(:,ei_tmType) == ETM) &
                 )
@@ -860,7 +860,7 @@ contains
             elemPGetm(1:npack, ptype) = pack(eIdx, &
                 (elemI(:,ei_elementType) == JM) &
                 .and. &
-                (elemSI(:,esi_JunctionMain_Type) == NoStorage) &
+                (elemSI(:,esi_JM_Type) == NoStorage) &
                 .and. &
                 ( elemI(:,ei_tmType) == ETM) &
                 )
@@ -932,7 +932,7 @@ contains
                     (                                                &
                         (elemI(:,ei_elementType) == JB)              &
                         .and.                                        &
-                        (elemSI(:,esi_JunctionBranch_Exists)== oneI) &
+                        (elemSI(:,esi_JB_Exists)== oneI) &
                     ))
         if (npack > 0) then
             elemP(1:npack,ptype) = pack( eIdx, &
@@ -941,7 +941,7 @@ contains
                     (                                                &
                         (elemI(:,ei_elementType) == JB)              &
                         .and.                                        &
-                        (elemSI(:,esi_JunctionBranch_Exists)== oneI) &
+                        (elemSI(:,esi_JB_Exists)== oneI) &
                     ))
         end if
 
@@ -954,7 +954,7 @@ contains
                     .or.                                              &
                     (   (elemI(:,ei_elementType) == JB)               &
                         .and.                                         &
-                        (elemSI(:,esi_JunctionBranch_Exists) == oneI) &
+                        (elemSI(:,esi_JB_Exists) == oneI) &
                     )                                                 &
                     .or.                                              &
                     (elemI(:,ei_QeqType)     == diagnostic)           &
@@ -965,7 +965,7 @@ contains
                     .or.                                              &
                     (   (elemI(:,ei_elementType) == JB)               &
                         .and.                                         &
-                        (elemSI(:,esi_JunctionBranch_Exists) == oneI) &
+                        (elemSI(:,esi_JB_Exists) == oneI) &
                     )                                                 &
                     .or.                                              &
                     (elemI(:,ei_QeqType)     == diagnostic)           &
@@ -1110,17 +1110,17 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == JB)                     &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                (elemSI(:,esi_JB_Exists) == oneI)       &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_IsUpstream) .ne. oneI) &
+                (elemSI(:,esi_JB_IsUpstream) .ne. oneI) &
                 )
         if (npack > 0) then
             elemP(1:npack,ptype) = pack( eIdx, &
                 (elemI(:,ei_elementType) == JB)                     &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                (elemSI(:,esi_JB_Exists) == oneI)       &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_IsUpstream) .ne. oneI) &
+                (elemSI(:,esi_JB_IsUpstream) .ne. oneI) &
                 )
         endif
 
@@ -1132,17 +1132,17 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == JB)                     &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                (elemSI(:,esi_JB_Exists) == oneI)       &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_IsUpstream) == oneI) &
+                (elemSI(:,esi_JB_IsUpstream) == oneI) &
                 )
         if (npack > 0) then
             elemP(1:npack,ptype) = pack( eIdx, &
                 (elemI(:,ei_elementType) == JB)                     &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                (elemSI(:,esi_JB_Exists) == oneI)       &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_IsUpstream) == oneI) &
+                (elemSI(:,esi_JB_IsUpstream) == oneI) &
                 )
         endif
 
@@ -1154,7 +1154,7 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == JB)                     &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                (elemSI(:,esi_JB_Exists) == oneI)       &
                 .and.                                               &
                 (elemYN(:,eYN_is_DiagAdjacent))                     &
                  )
@@ -1163,7 +1163,7 @@ contains
             elemP(1:npack,ptype) = pack( eIdx, &
                 (elemI(:,ei_elementType) == JB)                     &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                (elemSI(:,esi_JB_Exists) == oneI)       &
                 .and.                                               &
                 (elemYN(:,eYN_is_DiagAdjacent))                     &
                 )
@@ -1177,7 +1177,7 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == JB)                     &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                (elemSI(:,esi_JB_Exists) == oneI)       &
                 .and.                                               &
                 (elemYN(:,eYN_is_CCadjacent_JBorDiag))                       &
                  )
@@ -1186,7 +1186,7 @@ contains
             elemP(1:npack,ptype) = pack( eIdx, &
                 (elemI(:,ei_elementType) == JB)                     &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                (elemSI(:,esi_JB_Exists) == oneI)       &
                 .and.                                               &
                 (elemYN(:,eYN_is_CCadjacent_JBorDiag))                     &
                 )
@@ -1201,22 +1201,22 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == JB)                     &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                (elemSI(:,esi_JB_Exists) == oneI)       &
                 .and.                                               &
                 (elemYN(:,eYN_is_CCadjacent_JBorDiag))              &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_IsUpstream) == oneI)   &
+                (elemSI(:,esi_JB_IsUpstream) == oneI)   &
                  )
 
         if (npack > 0) then
             elemP(1:npack,ptype) = pack( eIdx, &
                 (elemI(:,ei_elementType) == JB)                     &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                (elemSI(:,esi_JB_Exists) == oneI)       &
                 .and.                                               &
                 (elemYN(:,eYN_is_CCadjacent_JBorDiag))              &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_IsUpstream) == oneI)   &
+                (elemSI(:,esi_JB_IsUpstream) == oneI)   &
                 )
         end if
 
@@ -1228,22 +1228,22 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == JB)                     &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                (elemSI(:,esi_JB_Exists) == oneI)       &
                 .and.                                               &
                 (elemYN(:,eYN_is_CCadjacent_JBorDiag))              &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_IsUpstream) .ne. oneI) &
+                (elemSI(:,esi_JB_IsUpstream) .ne. oneI) &
                  )
 
         if (npack > 0) then
             elemP(1:npack,ptype) = pack( eIdx, &
                 (elemI(:,ei_elementType) == JB)                     &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI)       &
+                (elemSI(:,esi_JB_Exists) == oneI)       &
                 .and.                                               &
                 (elemYN(:,eYN_is_CCadjacent_JBorDiag))              &
                 .and.                                               &
-                (elemSI(:,esi_JunctionBranch_IsUpstream) .ne. oneI) &
+                (elemSI(:,esi_JB_IsUpstream) .ne. oneI) &
                 )
         end if
 
@@ -1535,7 +1535,7 @@ contains
                 ) &
                 .and. &
                 ( &
-                    (elemSI(:,esi_JunctionBranch_Exists) == oneI) &
+                    (elemSI(:,esi_JB_Exists) == oneI) &
                 ) &
                 .and. &
                 ( &
@@ -1573,7 +1573,7 @@ contains
                 ) &
                 .and. &
                 ( &
-                    (elemSI(:,esi_JunctionBranch_Exists) == oneI) &
+                    (elemSI(:,esi_JB_Exists) == oneI) &
                 ) &
                 .and. &
                 ( &
@@ -1793,13 +1793,13 @@ contains
         npack = count( &
                 (elemI(:,ei_elementType) == JB ) &
                 .and. &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI))
+                (elemSI(:,esi_JB_Exists) == oneI))
 
         if (npack > 0) then
             elemP(1:npack,ptype) = pack(eIdx,  &
                 (elemI(:,ei_elementType) == JB ) &
                 .and. &
-                (elemSI(:,esi_JunctionBranch_Exists) == oneI))
+                (elemSI(:,esi_JB_Exists) == oneI))
         end if
 
 

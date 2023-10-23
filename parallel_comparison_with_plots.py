@@ -35,7 +35,7 @@ Q_balance_error_tol = 10.0   # flow balance tolerance error for nodes
 Htolerance = 1.0             # absolute tolerance for head (m)
 recompile_swmmC  = False    # logical for recompiling swmmC
 print_timeseries = True     # logical to print individual swmm5 vs swmm5+ link and node results
-unit             = 'CFS'     # unit of original swmm-c input file. options 'CFS' or 'SI'
+unit             = 'CMS'     # unit of original swmm-c input file. options 'CFS' or 'SI'
 Verbose_output   = False
 print_plots      = True
 #-----------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ print_plots      = True
 cwd = os.getcwd()
 time_now = str(datetime.now())
 time_now = time_now.replace(' ', '_')
-num_processors = [1,3]
+num_processors = [1,2]
 settings_path  = ""
 h5_file_lists = []
 

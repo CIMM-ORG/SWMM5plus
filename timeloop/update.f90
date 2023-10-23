@@ -22,6 +22,8 @@ module update
     use utility_profiler
     use utility_crash
 
+    ! use utility_unit_testing, only: util_utest_CLprint
+
     implicit none
 
     private
@@ -103,23 +105,38 @@ module update
             end if
         !%------------------------------------------------------------------
 
+            ! if (.not. isSingularYN) call util_utest_CLprint('    aaa update - - - - - - - - - - ')
+
         !% --- update the head (non-surcharged) and geometry
         call geometry_toplevel_CC ( &
             thisP, npackP, thisP_Open, npackP_Open, thisP_Closed, npackP_Closed, &
              isSingularYN, isAllYN)
+
+            !  if (.not. isSingularYN)  call util_utest_CLprint('    bbb update - - - - - - - - - - ')
         
         if (npackP > 0) then
             !% --- Compute the flowrate on CC.
             call update_flowrate_CC (thisP)
 
+            ! if (.not. isSingularYN)  call util_utest_CLprint('    ccc update - - - - - - - - - - ')
+
             !% --- compute element Froude numbers for CC
             call update_Froude_number_element (thisP)
+
+            ! if (.not. isSingularYN) call util_utest_CLprint('    ddd update - - - - - - - - - - ')
 
             !% --- compute the wave speeds
             call update_wavespeed_element(thisP)
 
+            ! if (.not. isSingularYN)  call util_utest_CLprint('    eee update - - - - - - - - - - ')
+
             !% --- compute element-face interpolation weights on CC
             call update_interpweights_CC(thisP)
+
+            ! if (.not. isSingularYN) call util_utest_CLprint('    fff update - - - - - - - - - - ')
+
+            !% --- compute element total energyhead 
+            call update_energyhead_CC(thisP)
 
         end if    
 
@@ -208,7 +225,7 @@ module update
             jB = thisP(mm)
         
             !% --- cycle if not valid
-            if (elemSI(jB,esi_JunctionBranch_Exists) .ne. oneI) cycle
+            if (elemSI(jB,esi_JB_Exists) .ne. oneI) cycle
 
             !% --- if zero depth, then JB is maximum for all interp
             if (depth(jB) .le. setting%ZeroValue%Depth) then 
@@ -345,22 +362,25 @@ module update
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: thisP(:)
-            real(8), pointer    :: flowrate(:), velocity(:), area(:), Qmax(:)
+            real(8), pointer    :: flowrate(:), velocity(:), area(:), QSWMMmax(:)
             character(64) :: subroutine_name = 'update_element_flowrate'
         !%------------------------------------------------------------------
         !% Aliases
-            flowrate => elemR(:,er_Flowrate)
-            velocity => elemR(:,er_Velocity)
-            area     => elemR(:,er_Area)
-            Qmax     => elemR(:,er_FlowrateLimit)
+            flowrate    => elemR(:,er_Flowrate)
+            velocity    => elemR(:,er_Velocity)
+            area        => elemR(:,er_Area)
+            QSWMMmax    => elemR(:,er_FlowrateLimit)
         !%------------------------------------------------------------------
- 
+
         flowrate(thisP) = area(thisP) * velocity(thisP)
 
-        !% --- limit flowrate by the full value (if it exists)
-        where ((Qmax(thisP) > zeroR) .and. (abs(flowrate(thisP)) > Qmax(thisP)))
-            flowrate(thisP) = sign(Qmax(thisP), flowrate(thisP))
-        end where
+        !% --- apply SWMM input file hard limit (not recommended)
+        if (setting%Limiter%Flowrate%UseSWMMlinkValueYN) then
+            !% --- limit flowrate by the full value (if it exists)
+            where ((QSWMMmax(thisP) > zeroR) .and. (abs(flowrate(thisP)) > QSWMMmax(thisP)))
+                flowrate(thisP) = sign(QSWMMmax(thisP), flowrate(thisP))
+            end where
+        end if
         
         !% --- small values are set to zero
         where ((flowrate(thisP) < 1.0d-10) .and. (flowrate(thisP) > -1.0d-10))
@@ -378,6 +398,7 @@ module update
         !% computes the interpolation weights on each element for CC
         !% tim-marching elements
         !%------------------------------------------------------------------
+        !% Declarations
             character(64)       :: subroutine_name = 'update_interpweights_CC'
             integer, intent(in) :: thisP(:)
             integer, pointer    :: fUp(:), fDn(:)
@@ -391,6 +412,7 @@ module update
             if (setting%Debug%File%update) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
+        !% Aliases
             Qlateral  => elemR(:,er_FlowrateLateral)
             velocity  => elemR(:,er_Velocity)
             wavespeed => elemR(:,er_WaveSpeed)
@@ -485,6 +507,24 @@ module update
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine update_interpweights_CC
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine update_energyhead_CC (thisP)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% computes the energy head (H + v^2/2g) on each element for CC
+        !% tim-marching elements
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: thisP(:)
+        !%------------------------------------------------------------------
+
+        elemR(thisP,er_EnergyHead) = elemR(thisP,er_Head) &
+            + (elemR(thisP,er_Velocity)**2) / (twoR * setting%Constant%gravity)    
+
+    end subroutine update_energyhead_CC
 !%
 !%==========================================================================
 !% END OF MODULE

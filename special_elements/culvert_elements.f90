@@ -260,6 +260,9 @@ module culvert_elements
                 faceR(fInlet,fr_Flowrate) = QIC
             end if
             
+            !% --- set the downstream energy head
+            print *, 'Need computation of downstream energy head out of culvert'
+            call util_crashpoint(2209873)
         end do
 
     end subroutine culvert_toplevel

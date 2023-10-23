@@ -57,7 +57,11 @@ module pump_elements
             FlowRate => elemR(eIdx,er_Flowrate)
             PSetting => elemR(eIdx,er_Setting)
         !%-------------------------------------------------------------------
-   
+        !% -- get the head and flow direction through pumps
+        call common_head_and_flowdirection_singular &
+            (eIdx, esr_Pump_Zcrest, esr_Pump_NominalDownstreamHead, esi_Pump_FlowDirection)
+
+
         select case (PumpType)
 
             case (type1_Pump)
@@ -82,6 +86,10 @@ module pump_elements
 
         !% --- prohibit reverse flow through pump
         if (FlowRate < zeroR) FlowRate = zeroR 
+
+        !% --- compute downstream energy head
+        call common_outflow_energyhead_singular &
+         (eIdx, esr_Pump_NominalDownstreamHead, esi_Pump_FlowDirection)
 
         !%-----------------------------------------------------------------------------
         !% Closing:
@@ -472,7 +480,7 @@ module pump_elements
         !% --- upstream switch Aidx to JM if junction
         if (elemI(Aidx,ei_elementType)[Ci] == JB) then
             !% --- for branches, switch to junction    
-            Aidx   = elemSI(Aidx,esi_JunctionBranch_Main_Index)[Ci]
+            Aidx   = elemSI(Aidx,esi_JB_Main_Index)[Ci]
             Volume =  elemR(Aidx,er_Volume)[Ci] 
         end if
 

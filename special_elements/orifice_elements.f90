@@ -73,6 +73,10 @@ module orifice_elements
         !% --- update velocity from flowrate and area
         call common_velocity_from_flowrate_singular (eIdx)
 
+        !% --- compute downstream energy head
+        call common_outflow_energyhead_singular &
+         (eIdx, esr_Orifice_NominalDownstreamHead, esi_Orifice_FlowDirection)
+
         !%------------------------------------------------------------------
         !% Closing
         if (setting%Debug%File%orifice_elements)  &

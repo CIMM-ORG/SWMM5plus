@@ -12,6 +12,7 @@ module common_elements
     use define_keys
     use define_indexes
     use define_settings, only: setting
+    use utility_crash, only: util_crashpoint
 
     implicit none
 
@@ -19,6 +20,7 @@ module common_elements
 
     public :: common_velocity_from_flowrate_singular
     public :: common_head_and_flowdirection_singular
+    public :: common_outflow_energyhead_singular
 
     contains
 !%
@@ -94,6 +96,47 @@ module common_elements
         NominalDSHead = min(UpstreamFaceHead, DownstreamFaceHead)
         
     end subroutine common_head_and_flowdirection_singular
+!%      
+!%==========================================================================
+!%==========================================================================    
+!%  
+    subroutine common_outflow_energyhead_singular &
+         (eIdx, NominalDownstreamHeadCol, FlowDirectionCol)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% computes and stores the energyhead available at the outflow
+        !% of a diagnostic element (weir,pump,orifice)
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: eIdx  !% must be a single element ID
+            integer, intent(in) :: NominalDownstreamHeadCol, FlowDirectionCol 
+            integer, pointer :: fadj
+        !%------------------------------------------------------------------
+        !% Aliases
+   
+        !%------------------------------------------------------------------
+        if (elemSI(eIdx,FlowDirectionCol) == oneI) then 
+            !% --- downstream flow
+            !%     pointer to downstream face
+            fadj => elemI(eIdx,ei_Mface_dL)
+            !% --- energy using upstream face values
+            elemR(eIdx,er_EnergyHead) = elemSR(eIdx,NominalDownstreamHeadCol) &
+                 + (faceR(fadj,fr_Velocity_u)**2) / (twoR * setting%Constant%gravity)
+
+        elseif (elemSI(eIdx,FlowDirectionCol) == -oneI) then 
+            !% --- upstream flow
+            !%     pointer to upstream face
+            fadj => elemI(eIdx,ei_Mface_uL)
+            !% --- energy head using downstream face values (note that NominalDownstreamHead)
+            !%     should contain the value at the upstream face.
+            elemR(eIdx,er_EnergyHead) = elemSR(eIdx,NominalDownstreamHeadCol) &
+                 + (faceR(fadj,fr_Velocity_d)**2) / (twoR * setting%Constant%gravity)
+        else
+            print *, 'Unexpected else'
+            call util_crashpoint(710983)
+        end if    
+            
+    end subroutine common_outflow_energyhead_singular    
 !%
 !%==========================================================================
 !% END OF MODULE

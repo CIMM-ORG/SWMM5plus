@@ -24,7 +24,7 @@ module runge_kutta2
     use forcemain, only: forcemain_ManningsN
     use junction_elements
     use rk2_lowlevel
-    use culvert_elements, only: culvert_toplevel
+    use culvert_elements, only: culvert_toplevel  !% NOT WORKING AS OF 20230912
     use pack_mask_arrays
     use preissmann_slot
     use adjust
@@ -38,6 +38,8 @@ module runge_kutta2
 
     public :: rk2_toplevel
 
+    integer :: printIdx = 49
+    integer :: stepcut = 73594
     contains
 !%==========================================================================
 !% PUBLIC
@@ -49,11 +51,12 @@ module runge_kutta2
         !% single RK2 step for explicit time advance of SVE
         !%------------------------------------------------------------------
         !% Declarations:
-            integer          :: istep, ii
+            integer          :: istep, ii, kk
             integer, pointer :: Npack, thisP(:)
             
             real(8), pointer :: grav, dt
             real(8)          :: volume1, volume2, inflowVolume, outflowVolume
+            real(8)          :: totalvolume, sumlocaldiff, localcons
             
             character(64) :: subroutine_name = 'rk2_toplevel_ETM'
         !%------------------------------------------------------------------
@@ -67,27 +70,31 @@ module runge_kutta2
             dt   => setting%Time%Hydraulics%Dt
         !%-----------------------------------------------------------------
 
-        !% --- total volume conservation setup
-        volume1 = zeroR
-        do ii=1,N_elem(1)
-            if ((elemI(ii,ei_elementType) == JM) .or. (elemI(ii,ei_elementType) == CC)) then
-                volume1 = volume1 + elemR(ii,er_Volume)
-            end if
-        end do
+        !% --- debug total volume conservation
+        if (setting%Debug%isGlobalVolumeBalance) then
+            volume1 = zeroR
+            Npack => npack_elemP(ep_CCJM)
+            if (Npack > 0) then 
+                thisP => elemP(1:Npack,ep_CCJM)
+                volume1 = sum(elemR(thisP,er_Volume))
+            endif
+        end if
                     
         !% --- istep is the RK substep counter, initially set to zero
         !%     for preliminaries
         istep = zeroI
 
+            !  call util_utest_CLprint('AAAA start RK2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+
         !% --- Preliminary values for JM/JB elements
         !%     Note, this must be called even if no JM/JB on this image because 
         !%     the faces require synchronizing.
         call junction_preliminaries ()
-
+        
         !%==================================  
         !% --- RK2 SOLUTION
         do istep = 1,2
- 
+
             !% --- Half-timestep advance on CC for U and UVolume
             call rk2_step_CC (istep)  
 
@@ -104,7 +111,7 @@ module runge_kutta2
             !% --- JUNCTION 1st Step setup, 2nd Step compute
             if (N_nJM > 0) then 
                 if (istep == 1) then
-                    !% --- ensure JB interpweights for Q are forced for JB dominance
+                    !% --- update JB interpweights without forcing
                     Npack => npack_elemP(ep_JB)
                     if (Npack > 0) then 
                         thisP => elemP(1:Npack, ep_JB)
@@ -134,6 +141,9 @@ module runge_kutta2
             sync all
             call face_shared_face_sync_single (fp_Diag_IorS,fr_Flowrate)
             sync all
+
+            !% --- update face velocities after sync changes areas and flowrates
+            call face_update_velocities (fp_Diag_IorS)
 
             !% --- update various packs of zeroDepth faces for changes in depths
             call pack_CC_zeroDepth_interior_faces ()
@@ -169,8 +179,6 @@ module runge_kutta2
             sync all
             call face_shared_face_sync (fp_noBC_IorS, [fr_flowrate,fr_Velocity_d,fr_Velocity_u])
             sync all
-            !% OR CAN face_flowrate_for_openclosed_elem
-            !% BE MOVED UPWARDS IN STEPPING SO THAT IT GETS SYNCED?
 
             !% --- JUNCTION -- first step compute
             if (istep == 1) then 
@@ -181,40 +189,108 @@ module runge_kutta2
             end if
 
             !% --- Filter flowrates to remove grid-scale checkerboard
-            call adjust_Vfilter_CC ()
+            call adjust_Vfilter (istep)
 
             if (istep == 1) then 
                 !% -- fluxes at end of first RK2 step are the conservative fluxes enforced
                 !%    in second step
                 call rk2_store_conservative_fluxes (ALL) 
+            else 
+                !%  --- no action 
             end if
 
         end do
 
-        !% RETAIN FOR DEBUGGING
-        !% --- overall volume conservation
-        ! volume2 = zeroR
-        ! do ii=1,N_elem(1)
-        !     if ((elemI(ii,ei_elementType) == JM) .or. (elemI(ii,ei_elementType) == CC)) then
-        !         volume2 = volume2 + elemR(ii,er_Volume)
-        !     end if
-        ! end do
-        ! Npack => npack_faceP(fp_BCup)
-        ! if (Npack > 0) then 
-        !     thisP => faceP(1:Npack,fp_BCup)
-        !     inflowVolume  = sum(faceR(thisP,fr_Flowrate)) * setting%Time%Hydraulics%Dt
-        ! end if
-        ! Npack => npack_faceP(fp_BCdn)
-        ! if (Npack > 0) then 
-        !     thisP => faceP(1:Npack,fp_BCdn)
-        !     outflowVolume  = sum(faceR(thisP,fr_Flowrate)) * setting%Time%Hydraulics%Dt
-        ! end if
-        ! print *, ' '
-        ! VolumeErrorCumulative = VolumeErrorCumulative + volume2 - volume1 - inflowVolume + outflowVolume
-        ! write(*,"(A, i6, 6e12.4)") 'VOLUMES ',setting%Time%Step, volume1, volume2, inflowVolume, outflowVolume, &
-        ! volume2 - volume1 - inflowVolume + outflowVolume, VolumeErrorCumulative
+        !% HACK --- this needs to be setup for multiple images and moved to the utility_debug
+        if (setting%Debug%isGlobalVolumeBalance) then
+            !% --- overall volume conservation
+            !% --- initialization
+            elemR(:,er_Temp01) = zeroR
+            inflowVolume  = zeroR
+            outflowVolume = zeroR
+            sumlocaldiff  = zeroR
+            !% --- get all in-line inflows
+            Npack => npack_faceP(fp_BCup)
+            if (Npack > 0) then 
+                thisP => faceP(1:Npack,fp_BCup)
+                inflowVolume  = inflowVolume + sum(faceR(thisP,fr_Flowrate)) * setting%Time%Hydraulics%Dt
+            end if
+            !% --- get all outfall outflows
+            Npack => npack_faceP(fp_BCdn)
+            if (Npack > 0) then 
+                thisP => faceP(1:Npack,fp_BCdn)
+                outflowVolume  = outflowVolume + sum(faceR(thisP,fr_Flowrate_Conservative)) * setting%Time%Hydraulics%Dt
+            end if
+            !% --- net inflows due to lateral (negatives are outflows)
+            Npack => npack_elemP(ep_CCJM)
+            thisP => elemP(1:Npack,ep_CCJM)
+            volume2 = sum(elemR(thisP,er_Volume))
+            inflowVolume = inflowVolume + sum(elemR(thisP,er_FlowrateLateral)) * setting%Time%Hydraulics%Dt
+            !% --- compute local volume conservation for CC
+            Npack => npack_elemP(ep_CC)
+            thisP => elemP(1:Npack,ep_CC)
+            elemR(thisP,er_Temp01) = setting%Time%Hydraulics%Dt               &
+                * (  elemR(thisP,er_FlowrateLateral)                          &
+                   + faceR(elemI(thisP,ei_Mface_uL),fr_Flowrate_Conservative) &
+                   - faceR(elemI(thisP,ei_Mface_dL),fr_Flowrate_Conservative) &
+                  )                                                           &
+                - (elemR(thisP,er_Volume) - elemR(thisP,er_Volume_N0))
+            sumlocaldiff = sumlocaldiff + sum(elemR(thisP,er_Temp01)) 
+            !% --- compute local volume conservation for JM 
+            !%     start with lateral inflows
+            Npack =>   npack_elemP(ep_JM)
+            thisP => elemP(1:Npack,ep_JM)
+            elemR(thisP,er_Temp01) = elemR(thisP,er_FlowrateLateral) * setting%Time%Hydraulics%Dt &
+                 - (elemR(thisP,er_Volume) - elemR(thisP,er_Volume_N0))
+            !% --- next are branch flows, so we shift the packed array
+            Npack =>   npack_elemP(ep_JB)
+            thisP => elemP(1:Npack,ep_JB)
+            !% --- accumulate flow volumes for upstream JB
+            where ((elemSI(thisP,esi_JB_IsUpstream) .eq. oneI) .and. (elemSI(thisP,esi_JB_Exists) .eq. oneI))
+                elemR  (elemSI(thisP,esi_JB_Main_Index),er_Temp01)     &
+                = elemR(elemSI(thisP,esi_JB_Main_Index),er_Temp01)     &
+                + faceR( elemI(thisP,ei_Mface_uL),fr_Flowrate_Conservative) * setting%Time%Hydraulics%Dt
+            endwhere
+            !% ---- accumulate flow volumes for downstream JB
+            where ((elemSI(thisP,esi_JB_IsUpstream) .eq. zeroI) .and. (elemSI(thisP,esi_JB_Exists) .eq. oneI))
+                elemR  (elemSI(thisP,esi_JB_Main_Index),er_Temp01)       &
+                = elemR(elemSI(thisP,esi_JB_Main_Index),er_Temp01)     &
+                + faceR( elemI(thisP,ei_Mface_dL),fr_Flowrate_Conservative) * setting%Time%Hydraulics%Dt
+            endwhere
+            !% --- create sum for JM
+            Npack =>   npack_elemP(ep_JM)
+            thisP => elemP(1:Npack,ep_JM)
+            sumlocaldiff = sumlocaldiff + sum(elemR(thisP,er_Temp01)) 
+            
+            totalvolume  = max(volume1, volume2)
+            if (totalvolume > oneR) then
+                !% --- use normalized volume for large volumes
+                setting%Debug%GlobalVolumeBalance = setting%Debug%GlobalVolumeBalance & 
+                + (volume2 - volume1 - inflowVolume + outflowVolume)  / totalvolume
+            else
+                !% --- use raw values
+                setting%Debug%GlobalVolumeBalance = setting%Debug%GlobalVolumeBalance & 
+                    + (volume2 - volume1 - inflowVolume + outflowVolume)  
+            end if
 
+            ! !% DEBUG PRINTING DO NOT DELETE
+            !  print *, setting%Time%Step, volume1, volume2, volume2 - volume1, &
+            !       inflowVolume, outflowVolume,                                &
+            !       volume2 - volume1 - inflowVolume + outflowVolume,           &
+            !       setting%Debug%GlobalVolumeBalance 
 
+            ! print *, 'Local conservation'
+            ! localcons = zeroR
+            ! do ii=1,N_elem(this_image())
+            !     if ((elemI(ii,ei_elementType) .eq. CC) .or. (elemI(ii,ei_elementType) .eq. JM)) then
+            !         localcons = localcons + elemR(ii,er_Temp01)
+            !         !print *, ii, elemR(ii,er_Temp01)
+            !         write(*,"(i4,12e12.4)") ii, elemR(ii,er_Volume), elemR(ii,er_Volume_N0), elemR(ii,er_Volume) -elemR(ii,er_Volume_N0)
+            !     end if
+                
+            ! end do   
+            ! print *, 'local cons ',localcons
+        end if
 
 
     end subroutine rk2_toplevel
@@ -246,6 +322,8 @@ module runge_kutta2
 
             !% --- Solve for new volume
             call ll_continuity_volume_CC (er_Volume, thisPackCol, Npack, istep)
+
+            ! call util_utest_CLprint('inside bbbb --------------------')
 
             !% --- adjust extremely small volumes that might be been introduced
             call adjust_limit_by_zerovalues &
@@ -299,6 +377,8 @@ module runge_kutta2
             call ll_enforce_zerodepth_velocity (er_Velocity, thisPackCol, Npack)
 
         end if
+
+        ! call util_utest_CLprint('inside cccc --------------------')
         
     end subroutine rk2_step_CC
 !%

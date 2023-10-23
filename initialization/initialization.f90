@@ -1698,7 +1698,7 @@ contains
 
         !% --- exit if no profiles were found
         if (N_Profiles == 0) then
-            print *, "...no profiles found"
+            print *, "... no profiles found"
             return
         endif
 
@@ -2363,7 +2363,7 @@ contains
                                 !% --- use the elemIdx already computed
                             case (JB)
                                 !% --- use the upstream JM
-                                elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
+                                elemIdx(ii) = elemSI(elemIdx(ii),esi_JB_Main_Index)
                             case default
                                 !% --- switch to the downstream element from the face
                                 elemIdx(ii) = faceI(tface,fi_Melem_uL)
@@ -2373,7 +2373,7 @@ contains
                                         !% --- use the elemIdx already computed
                                     case (JB)
                                         !% --- use the downstream JM
-                                        elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
+                                        elemIdx(ii) = elemSI(elemIdx(ii),esi_JB_Main_Index)
                                     case default
                                         print *, 'USER CONFIGURATION ERROR a subcatchment input was defined'
                                         print *, 'to a node without storage, which is an nJ2 face.'
@@ -2408,7 +2408,7 @@ contains
                                     !% --- use the elemIdx already computed
                                 case (JB)
                                     !% --- use the associated JM element
-                                    elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
+                                    elemIdx(ii) = elemSI(elemIdx(ii),esi_JB_Main_Index)
                                 case default
                                     print *, 'USER CONFIGURATION ERROR a subcatchment input was defined'
                                     print *, 'to an upstream (inflow) BC node but the downstream'
@@ -2442,7 +2442,7 @@ contains
                                     !% --- use the elemIdx already computed
                                 case (JB)
                                     !% --- use the associated JM element
-                                    elemIdx(ii) = elemSI(elemIdx(ii),esi_JunctionBranch_Main_Index)
+                                    elemIdx(ii) = elemSI(elemIdx(ii),esi_JB_Main_Index)
                                 case default
                                     print *, 'USER CONFIGURATION ERROR a subcatchment input was defined'
                                     print *, 'to an downstream (head) BC node but the upstream'

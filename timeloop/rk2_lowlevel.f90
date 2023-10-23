@@ -143,55 +143,60 @@ module rk2_lowlevel
                     +fAup(idn(thisP)) * ( fHdn(iup(thisP)) + fourR * eHead(thisP) )   &
                     -fAdn(iup(thisP)) * ( fHup(idn(thisP)) + fourR * eHead(thisP) ) )
 
-            case (T10s2)   
-                elemR(thisP,outCol) = onehalfR * grav &
-                                    *(+( fAup(idn(thisP)) - fAdn(iup(thisP)) ) * eHead(thisP) &
-                                    -( fHup(idn(thisP)) - fHdn(iup(thisP)) ) * eArea(thisP)   &
-                                    )
-            case (TA1)
-                print *, 'experimental code with Momentum SourceMethod = TA1 should not be used'
-                !% --- note this generally gives a negative source if fAup < fAdn, which is a problem
-                call util_crashpoint(1108744)
-                elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) )   &
-                                    * (                                                &
-                                    -   onefourthR  * fHdn(iup(thisP))                 &
-                                    +   threehalfR  * eHead(thisP)                     &
-                                    -   onefourthR  * fHup(idn(thisP))                 &
-                                    )
-            case (TA2)
-                print *, 'experimental code with Momentum SourceMethod = TA2 should not be used'
-                call util_crashpoint(7119873)
-                !% EXPERIMENTAL, DO NOT USE
-                ! elemR(thisP,outCol) = grav   &
-                !                     * (                                                 &
-                !                     + eArea(thisP) * ( fHdn(iup(thisP)) - eHead(thisP) ) &
-                !                     + fAup(idn(thisP)) * eHead(thisP)                      &
-                !                     - fAdn(iup(thisP)) * fHdn(iup(thisP))                     &
-                !                     )                        
-                ! elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
-                !                     * (                                              &
-                !                     +   onefourthR  * fHdn(iup(thisP))                 &
-                !                     +   onehalfR    * eHead(thisP)                     &
-                !                     +   onefourthR  * fHup(idn(thisP))                 &
-                !                     )
-                ! elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
-                !                     * (                                              &
-                !                     - onehalfR  *  fHdn(iup(thisP))                 &
-                !                     + twoR      * eHead(thisP)                     &
-                !                     - onehalfR  * fHup(idn(thisP))                 &
-                !                     )   
-                !  elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
-                !                     * (                                              &
-                !                     +   onefourthR  * fHdn(iup(thisP))                 &
-                !                     -   threehalfR    * eHead(thisP)                     &
-                !                     +   onefourthR  * fHup(idn(thisP))                 &
-                !                     )                                         
-                ! elemR(thisP,outCol) = onehalfR * grav &
-                !                     *(+( fAup(idn(thisP)) - fAdn(iup(thisP)) ) * eHead(thisP) &
-                !                       -( fHup(idn(thisP)) - fHdn(iup(thisP)) ) * eArea(thisP) &
-                !                       +  fAup(idn(thisP)) * fHup(idn(thisP))                  &
-                !                       -  fAdn(iup(thisP)) * fHdn(iup(thisP))                  &
-                !                     )
+            case (T2L0)
+                elemP(thisP,outCol) = grav * onefourthR * (   &
+                    +fAup(idn(thisP)) * ( fHdn(iup(thisP)) + twoR * eHead(thisP) )   &
+                    -fAdn(iup(thisP)) * ( fHup(idn(thisP)) + twoR * eHead(thisP) ) )       
+
+            ! case (T10s2)   
+            !     elemR(thisP,outCol) = onehalfR * grav &
+            !                         *(+( fAup(idn(thisP)) - fAdn(iup(thisP)) ) * eHead(thisP) &
+            !                         -( fHup(idn(thisP)) - fHdn(iup(thisP)) ) * eArea(thisP)   &
+            !                         )
+            ! case (TA1)
+            !     print *, 'experimental code with Momentum SourceMethod = TA1 should not be used'
+            !     !% --- note this generally gives a negative source if fAup < fAdn, which is a problem
+            !     call util_crashpoint(1108744)
+            !     elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) )   &
+            !                         * (                                                &
+            !                         -   onefourthR  * fHdn(iup(thisP))                 &
+            !                         +   threehalfR  * eHead(thisP)                     &
+            !                         -   onefourthR  * fHup(idn(thisP))                 &
+            !                         )
+            ! case (TA2)
+            !     print *, 'experimental code with Momentum SourceMethod = TA2 should not be used'
+            !     call util_crashpoint(7119873)
+            !     !% EXPERIMENTAL, DO NOT USE
+            !     ! elemR(thisP,outCol) = grav   &
+            !     !                     * (                                                 &
+            !     !                     + eArea(thisP) * ( fHdn(iup(thisP)) - eHead(thisP) ) &
+            !     !                     + fAup(idn(thisP)) * eHead(thisP)                      &
+            !     !                     - fAdn(iup(thisP)) * fHdn(iup(thisP))                     &
+            !     !                     )                        
+            !     ! elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
+            !     !                     * (                                              &
+            !     !                     +   onefourthR  * fHdn(iup(thisP))                 &
+            !     !                     +   onehalfR    * eHead(thisP)                     &
+            !     !                     +   onefourthR  * fHup(idn(thisP))                 &
+            !     !                     )
+            !     ! elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
+            !     !                     * (                                              &
+            !     !                     - onehalfR  *  fHdn(iup(thisP))                 &
+            !     !                     + twoR      * eHead(thisP)                     &
+            !     !                     - onehalfR  * fHup(idn(thisP))                 &
+            !     !                     )   
+            !     !  elemR(thisP,outCol) = grav * ( fAup(idn(thisP)) - fAdn(iup(thisP)) ) &
+            !     !                     * (                                              &
+            !     !                     +   onefourthR  * fHdn(iup(thisP))                 &
+            !     !                     -   threehalfR    * eHead(thisP)                     &
+            !     !                     +   onefourthR  * fHup(idn(thisP))                 &
+            !     !                     )                                         
+            !     ! elemR(thisP,outCol) = onehalfR * grav &
+            !     !                     *(+( fAup(idn(thisP)) - fAdn(iup(thisP)) ) * eHead(thisP) &
+            !     !                       -( fHup(idn(thisP)) - fHdn(iup(thisP)) ) * eArea(thisP) &
+            !     !                       +  fAup(idn(thisP)) * fHup(idn(thisP))                  &
+            !     !                       -  fAdn(iup(thisP)) * fHdn(iup(thisP))                  &
+            !     !                     )
             case default
                 print *, 'CODE ERROR setting.Solver.MomentumSourceMethod type unknown for # ',&
                      setting%Solver%MomentumSourceMethod
@@ -244,6 +249,8 @@ module rk2_lowlevel
                 delta = onehalfR
             case (T20)
                 delta = onesixthR
+            case (T2L0)
+                delta = onefourthR
             case (T10s2)
                 delta = onehalfR
             case (TA1)

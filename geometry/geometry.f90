@@ -47,6 +47,8 @@ module geometry
     use utility_profiler
     use utility_crash
 
+    ! use utility_unit_testing, only: util_utest_CLprint
+
     implicit none
 
     private
@@ -90,22 +92,56 @@ module geometry
             if (npackP < 1) return
         !%------------------------------------------------------------------
 
+            ! if (.not. isSingularYN) call util_utest_CLprint('       111 geo  - - - - - - - - - - ')
+
+            ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102057) ) then 
+            !     print *,' '
+            !     print *,'geo 111 step ',setting%Time%Step ,'=============================='
+            !     print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
+            !     print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
+            !     print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
+            !     print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
+            ! end if
         !% --- PREISSMAN SLOT    
         !% --- Handle Preissmann Slot for closed CC elements
         !%     with this time march type.
         if (npackP_Closed > 0) then
-            call slot_CC (thisP_Closed)
+            call slot_CC (thisP_Closed, isSingularYN)
         end if
 
+        ! if (.not. isSingularYN) call util_utest_CLprint('       222 geo  - - - - - - - - - - ')
+        ! if (.not. isSingularYN) print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
+
+        ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102057) ) then 
+        !     print *,' '
+        !     print *,'geo 222'
+        !     print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
+        !     print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
+        !     print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
+        !     print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
+        ! end if
         !% --- DEPTH
         !%     compute the depth on all elements of CC based on geometry.
         !%     If surcharged, this call returns the full depth of a closed conduit 
         !%     without adding Preissmann Slot depth.
         if (isAllYN) then
             call geo_depth_from_volume_by_type_allCC (elemPGetm, npack_elemPGetm, col_elemPGetm)
+
+            ! if (.not. isSingularYN)  call util_utest_CLprint('       333 geo  - - - - - - - - - - ')
         else
             call geo_depth_from_volume_by_element_CC (thisP, npackP)
+
+            ! if (.not. isSingularYN) call util_utest_CLprint('       444 geo  - - - - - - - - - - ')
         end if
+
+        ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102057)) then 
+        !     print *,' '
+        !     print *,'geo 444'
+        !     print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
+        !     print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
+        !     print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
+        !     print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
+        ! end if
 
         !% --- ZERO DEPTH CC
         !%     reset all zero or near-zero depths in CC
@@ -115,6 +151,16 @@ module geometry
         call adjust_limit_by_zerovalues &
             (er_Depth, setting%ZeroValue%Depth, thisP, .false.)
 
+            ! if (.not. isSingularYN) call util_utest_CLprint('       555 geo  - - - - - - - - - - ')
+            ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102057) ) then 
+            !     print *,' '
+            !     print *,'geo 555'
+            !     print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
+            !     print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
+            !     print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
+            !     print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
+            ! end if
+
         !% --- PIEZOMETRIC HEAD
         !%     compute the head on all elements of CC
         !%     This sets head consistent with depth computed in geo_depth_from_volume
@@ -123,6 +169,16 @@ module geometry
         elemR(thisP,er_Head) = llgeo_head_from_depth_pure &
                                     (thisP, elemR(thisP,er_Depth))
 
+            ! if (.not. isSingularYN) call util_utest_CLprint('       666 geo  - - - - - - - - - - ')
+
+            ! if ((.not. isSingularYN) .and. (setting%Time%Step > 102058) ) then 
+            !     print *,' '
+            !     print *,'geo 666'
+            !     print *, elemR(113,er_Volume), elemR(113,er_Depth), elemR(113,er_Head)
+            !     print *, elemR(113,er_FullVolume), elemR(113,er_FullDepth), elemR(113,er_Head) - elemR(113,er_Zcrown)
+            !     print *, elemR(113,er_SlotVolume), elemR(113,er_SlotDepth), elemR(113,er_SlotWidth)
+            !     print *, elemYN(113,eYN_isPSsurcharged), elemYN(113,eYN_isSurcharged)
+            ! end if
         !% --- OPEN CHANNEL OVERFLOW
         !%     Compute the overflow lost for CC open channels above
         !%     their maximum volume (no ponding allowed from open CC). 
@@ -136,6 +192,8 @@ module geometry
             end if
         end if
 
+        ! if (.not. isSingularYN) call util_utest_CLprint('       777 geo  - - - - - - - - - - ')
+
         !% --- PREISSMAN SLOT VOLUME LIMIT CLOSED CONDUIT CC
         !%     limit the volume in closed element (CC) to the full volume
         !%     Note the excess volume has already been stored in the Preissman Slot
@@ -143,12 +201,16 @@ module geometry
             call geo_volumelimit_closed (thisP_Closed)
         end if
 
+        ! if (.not. isSingularYN)  call util_utest_CLprint('       888 geo  - - - - - - - - - - ')
+
         !% --- CROSS-SECTIONAL AREA
         !%     compute area from volume for CC
         !%     For closed conduits this is based on the volume limited by full volume.
         !%     For open channels the volume limit depends on if AllowChanneOverflowTF is false.
         elemR(thisP,er_Area) = llgeo_area_from_volume_pure(thisP,elemR(thisP,er_Volume))
         elemR(thisP,er_Area) = max(elemR(thisP,er_Area),setting%ZeroValue%Area)
+
+        ! if (.not. isSingularYN) call util_utest_CLprint('       999 geo  - - - - - - - - - - ')
 
         !% --- TOPWIDTH CC
         !%     compute topwidth from depth for all CC
@@ -158,6 +220,8 @@ module geometry
         else
             call geo_topwidth_from_depth_by_element_CC (thisP, npackP)
         end if
+
+        ! if (.not. isSingularYN) call util_utest_CLprint('       aaa geo  - - - - - - - - - - ')
 
         !% --- PERIMETER AND HYDRAULIC RADIUS CC
         !%     compute hydraulic radius and perimeter
@@ -170,10 +234,14 @@ module geometry
             call geo_perimeter_and_hydradius_from_depth_by_element_CC (thisP, npackP)
         end if
 
+        ! if (.not. isSingularYN) call util_utest_CLprint('       bbb geo  - - - - - - - - - - ')
+
         !% --- ELLDEPTH MODIFIED HYDRAULIC DEPTH
         !%     the modified hydraulic depth "ell" is used for 
         !%     for Froude number computations on all CC elements
         call geo_elldepth_from_head_CC (thisP)
+
+        ! if (.not. isSingularYN) call util_utest_CLprint('       ccc geo  - - - - - - - - - - ')
 
         !% ---- ADJUST SLOT 
         !%      make adjustments for slots on closed elements only
@@ -181,6 +249,8 @@ module geometry
         if (npackP_Closed > 0) then
             call slot_CC_adjustments (thisP_Closed)
         end if
+
+        ! if (.not. isSingularYN)  call util_utest_CLprint('       ddd geo  - - - - - - - - - - ')
 
     end subroutine geometry_toplevel_CC
 !% 
@@ -1193,8 +1263,8 @@ module geometry
             fullTopWidth  => elemR(:,er_FullTopWidth)
             fullhydradius => elemR(:,er_FullHydRadius)
             fullperimeter => elemR(:,er_FullPerimeter)
-            Kfac          => elemSR(:,esr_JunctionBranch_Kfactor)
-            BranchExists  => elemSI(:,esi_JunctionBranch_Exists)
+            Kfac          => elemSR(:,esr_JB_Kfactor)
+            BranchExists  => elemSI(:,esi_JB_Exists)
             thisSolve     => elemI(:,ei_tmType)
 
             fVel_d        => faceR(:,fr_velocity_d)
@@ -1230,15 +1300,29 @@ module geometry
 
                     if (BranchExists(tB) .ne. oneI) cycle
 
-                    !% only when a branch exists.
-                    !% --- head(tB) has already been updated in junction_calculation
-                    !%     for any element that has head(tM) > bottom + sediment
-                    !%     here we need to handle any JB elements that would have
-                    !%     Froude =1 overflow
                     if ( head(tM) > (zBtm(tB) + sedimentDepth(tB)) ) then
-                        !% -- no action needed as this is done in junction_calculation
 
-                        head(tB) = head(tM)
+                        !head(tB) = head(tM)
+
+                        !% == test 20230904brh
+                        !% --- head(tB) is linear interp from face value.
+                        if (isUpBranch) then 
+                            if (fHead_d(fup(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
+                                head(tB) = head(tM) &
+                                    + onehalfR * (fHead_d(fup(tB)) - head(tM))
+                            else 
+                                head(tB) = head(tM) &
+                                    + onehalfR * ((zBtm(tB) + sedimentDepth(tB)) - head(tM))
+                            end if
+                        else
+                            if (fHead_u(fdn(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
+                                head(tB) = head(tM) &
+                                    + onehalfR * (fHead_u(fdn(tB)) - head(tM))
+                            else 
+                                head(tB) = head(tM) &
+                                    + onehalfR * ((zBtm(tB) + sedimentDepth(tB)) - head(tM))
+                            end if
+                        end if
 
                         iswaterfall = .false.
 

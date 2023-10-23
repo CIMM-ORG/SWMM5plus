@@ -43,16 +43,16 @@ module define_settings
     !% setting%Adjust%Flowrate
     type AdjustFlowrateType
         logical :: ApplyYN = .true.
-        integer :: Approach = vshape
+        integer :: Approach = vshape !% vshape, doesnotexist
         real(8) :: Coef = 1.0d0
         real(8) :: SmallDepthMultiplier = 3.0d0
     end type AdjustFlowrateType
 
     !% setting%Adjust%Head
     type AdjustHeadType
-        logical :: ApplyYN = .true. !.false.
-        !% --- recommend using vshape_surcharge_CC.  The "all" option leads to larger-scale oscillations
-        integer :: Approach = vshape_surcharge_CC !% doesnotexist  !% options: doesnotexist !%vshape_all_CC  vshape_surcharge_CC, vshape_freesurface_CC
+        logical :: ApplyYN = .false.  !% BUG IN CODE FOR ADJUSTMENT 
+        !% --- only use vshape_surcharge_CC.  
+        integer :: Approach = vshape_surcharge !% vshape_surcharge, doesnotexist
         real(8) :: Coef = 1.0d0
     end type AdjustHeadType
 
@@ -150,6 +150,13 @@ module define_settings
         real(8) :: Minimum = 1.0d-8 ! m/s below this set to zero
     end type LimiterVelocityType
 
+    !% setting%Limiter%Flowrate
+    type LimiterFlowrateType
+        logical :: UseSWMMlinkValueYN = .false. !% --- SWMM input file hard limit (do not use)
+        logical :: UseLocalVolumeYN   = .true.  !% --- limit outflow volumes by local volume factor
+        real(8) :: LocalVolumeFactor  = 0.49d0   !% --- fraction of local volume plus lateral inflow that can exit
+    end type LimiterFlowrateType
+
     !% setting%Solver%ManningsN
     type ManningsNtype
         real(8) :: alpha = 1.0d0
@@ -185,12 +192,12 @@ module define_settings
     !% setting%Solver%PreissmannSlot
     type PreissmannSlotType
         logical :: useSlotTF = .true.
-        !% Allowable values: DynamicSlot, StaticSlot
+        !% Allowable values: DynamicSlot, StaticSlot, SplitDynamicSlot
         integer :: Method = DynamicSlot
         real(8) :: TargetCelerity = 15.0d0
         real(8) :: Alpha = 3.0d0
         real(8) :: DecayRate = 5.0
-        real(8) :: PNminumum = 3.0d0
+        real(8) :: initPNminimum = 3.0d0
     end type PreissmannSlotType
 
     !% setting%Output%Report
@@ -387,7 +394,9 @@ module define_settings
 
     !% setting%Debug
     type DebugType
-        logical :: checkIsNanTF = .true.
+        logical :: isGlobalVolumeBalance = .true. !% conducts global volume balance at each time step
+        real(8) :: GlobalVolumeBalance = 0.d0 !% NOT A USER SETTING
+        logical :: checkIsNanTF = .false. !% only need true if util_utext_checkIsNan is called (not standard)
         !% THESE debugFile WILL BE OBSOLETE
         type(DebugFileYNType) :: File
         !type(DebugFileGroupYNType) :: FileGroup
@@ -472,9 +481,12 @@ module define_settings
                                            !% ONLY SET TRUE FOR ALGORITHM TESTING
         !% NOTE ForceStorage must be true as of 20230507. Future extension may include junction solution that does
         !% not require the minimum surface area of the ImpliedStorage type
-        logical :: ForceStorage = .true.   !% forces nJM junctions without explicit storage to have implied storage
-        integer :: FunStorageN  = 10       !% number of curve entries for functional storage   
-        real(8) :: kFactor      = 0.0      !% default entrance/exit losses at junction branch (use 0.0 as needs debugging)
+        logical :: ForceStorage = .true.        !% forces nJM junctions without explicit storage to have implied storage
+        integer :: FunStorageN  = 10            !% number of curve entries for functional storage   
+        real(8) :: kFactor      = 0.5d0         !% default entrance/exit losses at junction branch (use 0.5 )
+        real(8) :: OutflowDampingFactor = 0.99d0 !% 0 to <1, with 0 being strictly energy-based outflow, 1 being strictly extrapolated from neighbor (fails); 0.99 recommended
+        real(8) :: ZeroHeadDiffValue = 1.0d-8   !% Head difference (m) that results in zero outflow in a branch. 
+        real(8) :: ZeroOutflowValue  = 1.0d-8   !% Outflow (m^3/s) that results in zero outflow in a branch
         real(8) :: InfiniteExtraDepthValue = 999.d0  !% Surcharge Depth if this value or higher is treated as impossible to overflow
 
         !% Ponding ScaleFactor is multiplier of junction/storage length scale (sqrt of area) to get minimum length scale of ponding
@@ -488,6 +500,7 @@ module define_settings
         real(8) :: NormalDepthInfinite   = 1000.d0     ! value used when normal depth would be infinite.
         type(LimiterInterpWeightType) :: InterpWeight
         type(LimiterVelocityType)     :: Velocity
+        type(LimiterFlowrateType)     :: Flowrate
         type(LimiterDtType)           :: Dt
         !% --- limiter%VolumeFractionInTimeStep: limits momentum/velocity in RK solution to a rate consistent with the
         !%     VolumeFractionInTimeStep * volume / dt. This helps prevent oscillations in very small depths.
@@ -542,7 +555,7 @@ module define_settings
     type PartitioningType
         !% Allowable values: BQquick
         integer :: PartitioningMethod = BQuick
-        logical :: PhantomLinkAdjust  = .false.
+        logical :: PhantomLinkAdjust  = .true.
     endtype PartitioningType
 
     !% setting%Profile
@@ -587,7 +600,7 @@ module define_settings
     type SolverType
         !logical :: PreissmannSlot = .true.
         logical :: SubtractReferenceHead = .false.
-        integer :: MomentumSourceMethod = T00  !% only T00 working with junctions as of 20230316
+        integer :: MomentumSourceMethod = T10 
         integer :: SolverSelect = ETM
         real(8) :: SwitchFractionDn = 0.8d0
         real(8) :: SwitchFractionUp = 0.9d0
@@ -827,7 +840,7 @@ contains
     !% --- coef1 used in Q = CLH^{3/2} for broad crested weir where L = 2(pi A)^{1/2}
     setting%Junction%Overflow%coef1 = twoR * setting%Junction%Overflow%CbroadCrestedWeir * sqrt(setting%Constant%pi)
     !% --- coef2 is for dQ/dH = (3/2) C L H^{1/2} = (3/2)(2 C * sqrt(pi)) * sqrt(A) * sqrt(H)
-    setting%Junction%Overflow%coef2 = threehalfR * setting%Junction%Overflow%coef1 
+    setting%Junction%Overflow%coef2 = threehalfR * setting%Junction%Overflow%coef1 * setting%Junction%Overflow%WeirLengthFactor
     setting%Junction%Overflow%coef3 = twothirdR  * sqrt(twoR * setting%Constant%gravity)
     setting%Junction%Overflow%coef4 = sqrt(twoR * setting%Constant%gravity)
 
@@ -938,16 +951,12 @@ contains
         call json%get('Adjust.Head.Approach', c, found)
         if (found) then 
             call util_lower_case(c)
-            if (c == 'vshape_surcharge_CC') then
-                setting%Adjust%Head%approach = vshape_all_CC    
-            elseif (c == 'vshape_surcharge_CC') then
-                setting%Adjust%Head%approach = vshape_freesurface_CC 
-            elseif (c == 'vshape_surcharge_CC') then
-                    setting%Adjust%Head%approach = vshape_surcharge_CC 
+            if (c == 'vshape_surcharge') then
+                    setting%Adjust%Head%approach = vshape_surcharge
             else
                 write(*,"(A)") 'Error - json file - setting.Adjust.Head.Approach of ',trim(c)
                 write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '...vshape_all_CC, vshape_freesurface_CC, vshape_surcharge_CC '
+                write(*,"(A)") '...vshape_surcharge '
                 stop 566339
             end if
         end if
@@ -1218,6 +1227,11 @@ contains
         if (found) setting%Junction%kFactor = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.kFactor not found'
 
+        !%                       Junction.OutflowDampingFactor
+        call json%get('Junction.OutflowDampingFactor', real_value, found)
+        if (found) setting%Junction%OutflowDampingFactor = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.OutflowDampingFactor not found'
+
         !%                       Junction.InfiniteExtraDepthValue
         call json%get('Junction.InfiniteExtraDepthValue', real_value, found)
         if (found) setting%Junction%InfiniteExtraDepthValue = real_value
@@ -1330,7 +1344,21 @@ contains
         if (found) setting%Limiter%VolumeFractionInTimeStep = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.VolumeFractionInTimeStep not found'
 
+        !%                       Limiter.Flowrate.UseSWMMlinkValueYN
+        call json%get('Limiter.Flowrate.UseSWMMlinkValueYN', logical_value, found)
+        if (found) setting%Limiter%Flowrate%UseSWMMlinkValueYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Flowrate.UseSWMMlinkValueYN not found'
 
+        !%                       Limiter.Flowrate.UseLocalVolumeYN
+        call json%get('Limiter.Flowrate.UseLocalVolumeYN', logical_value, found)
+        if (found) setting%Limiter%Flowrate%UseLocalVolumeYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Flowrate.UseLocalVolumeYN not found'
+
+        !%                       Limiter.Flowrate.LocalVolumeFactor
+        call json%get('Limiter.Flowrate.LocalVolumeFactor', real_value, found)
+        if (found) setting%Limiter%Flowrate%LocalVolumeFactor = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Flowrate.LocalVolumeFactornot found'
+        
 
     !% Link. =====================================================================
         !%                      Link.DefaultInitDepthType       
@@ -1793,16 +1821,18 @@ contains
                 setting%Solver%MomentumSourceMethod = T10
             else if (c == 't20') then
                 setting%Solver%MomentumSourceMethod = T20
-            else if (c == 't10s2') then
-                setting%Solver%MomentumSourceMethod = T10s2
-            else if (c == 'ta1') then
-                setting%Solver%MomentumSourceMethod = TA1
-            else if (c == 'ta2') then
-                setting%Solver%MomentumSourceMethod = TA2
+            else if (c == 't2l0') then
+                setting%Solver%MomentumSourceMethod = T2L0
+            ! else if (c == 't10s2') then
+            !     setting%Solver%MomentumSourceMethod = T10s2
+            ! else if (c == 'ta1') then
+            !     setting%Solver%MomentumSourceMethod = TA1
+            ! else if (c == 'ta2') then
+            !     setting%Solver%MomentumSourceMethod = TA2
             else
                 write(*,"(A)") 'Error - json file - setting.Solver.MomentumSourceMethod of ',trim(c)
                 write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '... T00, T10, T20, T10s2, TA1, TA2'
+                write(*,"(A)") '... T00, T10, T20, T2L0'
                 stop 110985
             end if
         end if
@@ -1896,10 +1926,12 @@ contains
                 setting%Solver%PreissmannSlot%Method = StaticSlot
             else if (c == 'dynamicslot') then
                 setting%Solver%PreissmannSlot%Method = DynamicSlot
+            else if (c == 'splitdynamicslot') then
+                setting%Solver%PreissmannSlot%Method = SplitDynamicSlot
             else
                 write(*,"(A)") 'Error - json file - setting.Solver.PreissmannSlot%Method of ',trim(c)
                 write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '... StaticSlot, DynamicSlot'
+                write(*,"(A)") '... StaticSlot, DynamicSlot, SplitDynamicSlot'
                 stop 22496
             end if
         end if
@@ -1921,9 +1953,9 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.DecayRate not found'
 
       !%                      Minimum initial preissmann number
-        call json%get('Solver.PreissmannSlot.PNminumum', real_value, found)
-        if (found) setting%Solver%PreissmannSlot%PNminumum = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.PNminumum not found'
+        call json%get('Solver.PreissmannSlot.initPNminimum', real_value, found)
+        if (found) setting%Solver%PreissmannSlot%initPNminimum = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.PreissmannSlot.initPNminimum not found'
 
 
     !% TestCase.  =====================================================================
@@ -2176,6 +2208,17 @@ contains
 
         !% do not read VolumeResetLevel
 
+    !% Debug. =====================================================================
+        !%                       isGlobalVolumeBalance 
+        call json%get('Debug.isGlobalVolumeBalance', logical_value, found)
+        if (found) setting%Debug%isGlobalVolumeBalance = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.isGlobalVolumeBalance not found'
+        
+        !%                       checkIsNanTF
+        call json%get('Debug.checkIsNanTF', logical_value, found)
+        if (found) setting%Debug%checkIsNanTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Debug.checkIsNanTF not found'
+        
     !% Debug.File =====================================================================
         !%                       
         call json%get('Debug.File.adjust', logical_value, found)
