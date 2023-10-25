@@ -203,6 +203,13 @@ module define_globals
     integer, allocatable :: elem_per_image(:)
     logical, allocatable :: image_full(:)
 
+    !% --- Storage for entrapped air in links
+    integer, allocatable, target :: LinkElemMapsI(:,:,:)      !% 3-d array to store element and face maps to a corresponding links
+    real(8), allocatable, target :: linkAirR(:,:)             !% 2-d array to store reals of entrapped air values link scale
+    real(8), allocatable, target :: elemAirR(:,:)             !% 2-d array to store real entrapped air values element scale
+    logical, allocatable, target :: linkAirYN(:,:)            !% 2-d array to store logicals of entrapped air links scale
+    logical, allocatable, target :: elemAirYN(:,:)            !% 2-d array to store logicals of entrapped air element scale
+
     !% --- link and node output_idx
     integer, allocatable :: link_output_idx(:)
     integer, allocatable :: node_output_idx(:)

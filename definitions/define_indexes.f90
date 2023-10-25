@@ -1632,6 +1632,70 @@ module define_indexes
     end enum
   
     integer, parameter :: Ncol_uniformTableDataR = utd_lastplusone - 1
+
+!%
+!%==========================================================================
+!% Arrays for entrapped air tracking
+!%==========================================================================
+!%  
+    !% --- LinkElemMapsI(:,:,:) 3-d array
+    !% --- plane index for linkAirI
+    integer, parameter :: lmi_linkIdx = 1
+    !% --- column index for linkAirI (mostly element maps)
+    enum, bind(c)
+        enumerator :: lmi_elem_idx = 1
+        enumerator :: lmi_elem_up_face
+        enumerator :: lmi_elem_dn_face
+        enumerator :: lmi_lastplusone
+    end enum
+
+    integer, target :: Ncol_LinkElemMapsI = lmi_lastplusone - 1
+
+    !% --- linkAirR(:,:) 2-d array columns
+    enum, bind(c)
+        enumerator :: lar_air_volume = 1
+        enumerator :: lar_alpha
+        enumerator :: lar_link_air_pressure
+        enumerator :: lar_link_air_pressure_head
+        enumerator :: lar_lastplusone
+    end enum
+
+    integer, target :: Ncol_linkAirR= lar_lastplusone - 1
+
+    !% --- elemAirR(:,:) 2-d array columns
+    enum, bind(c)
+        enumerator :: ear_air_volume = 1
+        enumerator :: ear_flowrate_up
+        enumerator :: ear_flowrate_dn
+        enumerator :: ear_elem_air_pressure
+        enumerator :: ear_elem_air_pressure_head
+        enumerator :: ear_lastplusone
+    end enum
+
+    integer, target :: Ncol_elemAirR = ear_lastplusone - 1
+
+    !% --- linkAirYN(:,:) 2-d logical array columns
+    enum, bind(c)
+        enumerator :: laYN_link_air_pressurized = 1
+        enumerator :: laYN_link_pressurized
+        enumerator :: laYN_link_up_pressurized
+        enumerator :: laYN_link_dn_pressurized
+        enumerator :: laYN_lastplusone
+    end enum
+
+    integer, target :: Ncol_linkAirYN = laYN_lastplusone - 1
+
+    !% --- elemAirYN(:,:) 2-d logical array columns
+    enum, bind(c)
+        enumerator :: eaYN_elem_air_pressurized = 1
+        enumerator :: eaYN_elem_pressurized
+        enumerator :: eaYN_elem_up_face_pressurized
+        enumerator :: eaYN_elem_dn_face_pressurized
+        enumerator :: eaYN_lastplusone
+    end enum
+
+    integer, target :: Ncol_elemAirYN = eaYN_lastplusone - 1
+
 !%
 !%==========================================================================
 !% END OF MODULE

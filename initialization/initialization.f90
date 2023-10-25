@@ -302,6 +302,25 @@ contains
         !% --- allocate other temporary arrays (initialized to null)
         call util_allocate_temporary_arrays()
 
+        !% --- initialize the arrays for tracking entrapped air
+        !%     this must be done after the links are discretized
+        !%     HACK: only work with one processor for now.
+        if (setting%AirTracking%UseAirTrackingYN) then
+            if (num_images() == 1) then
+                call util_allocate_entrapped_air_arrays ()
+            else
+                write(*,*) ' '
+                write(*,*) '********************************************************'
+                write(*,*) '**    Air entrapment tracking is not available for    **'
+                write(*,*) '**     parallel runs. Please use only 1 processor     **' 
+                write(*,*) '**           to run track air entrapment              **'
+                write(*,*) '********************************************************'
+                call util_crashpoint(1321877)
+            end if
+            call util_crashstop(85264)
+        end if
+
+
         !% --- initialize volume conservation storage for debugging
         elemR(:,er_VolumeConservation) = zeroR    
 
@@ -3274,6 +3293,25 @@ contains
         call culvert_parameter_values ()
 
     end subroutine init_culvert
+!% 
+!%==========================================================================
+!%==========================================================================
+!% 
+    subroutine init_entrapped_air_arrays ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Inialize the entrapped air arrays
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer          :: ii, jj
+            character(64)    :: subroutine_name = 'init_entrapped_air_arrays'
+        !-------------------------------------------------------------------
+
+        do ii = 1,N_Link
+            
+        end do
+
+    end subroutine init_entrapped_air_arrays
 !%  
 !%==========================================================================
 !% END OF MODULE

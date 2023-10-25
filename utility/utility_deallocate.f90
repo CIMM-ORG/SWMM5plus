@@ -61,6 +61,9 @@ contains
         ! print *, 'call util_deallocate_bc() ', this_image()
         call util_deallocate_bc()
 
+        ! print *, 'call util_deallocate_entrapped_air_arrays() ', this_image()
+        call util_deallocate_entrapped_air_arrays()
+
         !%-------------------------------------------------------------------
         !% closing
             if (setting%Debug%File%utility_deallocate) &
@@ -374,6 +377,47 @@ contains
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
 
     end subroutine util_deallocate_elemX_faceX
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine util_deallocate_entrapped_air_arrays ()
+        !%-------------------------------------------------------------------
+        ! Description:
+        !   deallocate the entrapped air arrays
+        !%-------------------------------------------------------------------
+        !% Declarations:
+            character(64) :: subroutine_name = 'util_deallocate_entrapped_air_arrays'
+        !%-------------------------------------------------------------------
+        !% Preliminaries   
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !%-------------------------------------------------------------------
+
+        if (setting%AirTracking%UseAirTrackingYN) then
+
+            deallocate(LinkElemMapsI, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'LinkElemMapsI')
+
+            deallocate(linkAirR, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'linkAirR')
+
+            deallocate(elemAirR, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'elemAirR')
+
+            deallocate(linkAirYN, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'linkAirYN')
+
+            deallocate(elemAirYN, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'elemAirYN')
+
+        end if
+
+        !%-------------------------------------------------------------------
+        !% Closing
+            if (setting%Debug%File%utility_deallocate) &
+                write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    end subroutine util_deallocate_entrapped_air_arrays
 !%
 !%==========================================================================
 !%==========================================================================

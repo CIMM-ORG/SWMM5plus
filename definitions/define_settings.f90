@@ -337,6 +337,11 @@ module define_settings
         real(8), dimension(12)     :: Conductivity  !% from SWMM input [ADJUSTMENTS] 
     end type AdjustType
 
+    ! setting%AirTracking
+    type AirTrackingType
+        logical :: UseAirTrackingYN = .false.
+    end type AirTrackingType
+
     ! setting%BC
     type BCPropertiesType
         integer :: TimeSlotsStored        = 1000
@@ -757,6 +762,7 @@ module define_settings
         logical                  :: JSON_FoundFileYN = .false.
         logical                  :: JSON_CheckAllInputYN = .true.
         type(AdjustType)         :: Adjust
+        type(AirTrackingType)    :: AirTracking
         type(BCPropertiesType)   :: BC
         type(CaseNameType)       :: CaseName ! name of case
         type(ClimateType)        :: Climate  ! climate controls
@@ -966,6 +972,13 @@ contains
         call json%get('Adjust.Head.Coef', real_value, found)
         if (found) setting%Adjust%Head%Coef = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Adjust.Head.Coef not found'
+
+    !% AirTracking. ============================================================
+    !% --- AirTracking.UseAirTrackingYN
+        !%                       UseAirTrackingYN
+        call json%get('AirTracking.UseAirTrackingYN', logical_value, found)
+        if (found) setting%AirTracking%UseAirTrackingYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.UseAirTrackingYN not found'
 
     !% BC. =====================================================================
         !%                       BC.TimeSlotsStored
