@@ -764,29 +764,29 @@ module utility_allocate
         call util_allocate_check (allocation_status, emsg, 'LinkElemMapsI')
         LinkElemMapsI(:,:,:) = nullvalueI
 
+        !% --- allocating the elemAirR 3-d array
+        ncol  => Ncol_elemAirR
+        allocate(elemAirR(nPlanes, nRows, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'elemAirR')
+        elemAirR(:,:,:) = nullvalueR
+
+        !% --- allocating the elemAirR 3-d array
+        ncol  => Ncol_elemAirYN
+        allocate(elemAirYN(nPlanes, nRows, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'elemAirYN')
+        elemAirYN(:,:,:) = nullvalueL
+
         !% --- allocating the linkAirR 2-d array
         ncol  => Ncol_linkAirR
         allocate(linkAirR(N_link, ncol), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg, 'linkAirR')
-        linkAirR(:,:) = nullvalueR
-
-        !% --- allocating the elemAirR 2-d array
-        ncol  => Ncol_elemAirR
-        allocate(elemAirR(max_caf_elem_N, ncol), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg, 'elemAirR')
-        elemAirR(:,:) = nullvalueR
+        linkAirR(:,:) = nullvalueR 
 
         !% --- allocating the linkAirYN 2-d array
         ncol  => Ncol_linkAirYN
         allocate(linkAirYN(N_link, ncol), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg, 'linkAirYN')
         linkAirYN(:,:) = nullvalueL
-
-        !% --- allocating the elemAirR 2-d array
-        ncol  => Ncol_elemAirYN
-        allocate(elemAirYN(max_caf_elem_N, ncol), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg, 'elemAirYN')
-        elemAirYN(:,:) = nullvalueL
 
         !%-----------------------------------------------------------------
         !% Closing

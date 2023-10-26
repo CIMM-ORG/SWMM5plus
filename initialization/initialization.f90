@@ -266,6 +266,34 @@ contains
         call util_crashstop(320983)
 
         !%==========================================================================
+        !%                               AIR ENTRAPMENT INIT
+        !%==========================================================================
+        if (setting%AirTracking%UseAirTrackingYN) then
+            if (num_images() == 1) then
+                !% --- allocate the arrays for tracking entrapped air
+                !%     this must be done after the links are discretized
+                !%     HACK: only work with one processor for now.
+                print*, 'going into util_allocate_entrapped_air_arrays'
+                call util_allocate_entrapped_air_arrays ()
+
+                !% --- initialize the arrays for tracking entrapped air
+                !%     this must be done after the links are discretized
+                !%     HACK: only work with one processor for now.
+                print*, 'going into init_entrapped_air_arrays'
+                call init_entrapped_air_arrays ()
+            else
+                write(*,*) ' '
+                write(*,*) '********************************************************'
+                write(*,*) '**    Air entrapment modeling is not available for    **'
+                write(*,*) '**     parallel runs. Please use only 1 processor     **' 
+                write(*,*) '**           to run track air entrapment              **'
+                write(*,*) '********************************************************'
+                call util_crashpoint(1321877)
+            end if
+            call util_crashstop(85264)
+        end if
+
+        !%==========================================================================
         !%                                   OUTPUT SETUP
         !%==========================================================================
         !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
@@ -301,25 +329,6 @@ contains
 
         !% --- allocate other temporary arrays (initialized to null)
         call util_allocate_temporary_arrays()
-
-        !% --- initialize the arrays for tracking entrapped air
-        !%     this must be done after the links are discretized
-        !%     HACK: only work with one processor for now.
-        if (setting%AirTracking%UseAirTrackingYN) then
-            if (num_images() == 1) then
-                call util_allocate_entrapped_air_arrays ()
-            else
-                write(*,*) ' '
-                write(*,*) '********************************************************'
-                write(*,*) '**    Air entrapment tracking is not available for    **'
-                write(*,*) '**     parallel runs. Please use only 1 processor     **' 
-                write(*,*) '**           to run track air entrapment              **'
-                write(*,*) '********************************************************'
-                call util_crashpoint(1321877)
-            end if
-            call util_crashstop(85264)
-        end if
-
 
         !% --- initialize volume conservation storage for debugging
         elemR(:,er_VolumeConservation) = zeroR    
@@ -3304,11 +3313,24 @@ contains
         !%------------------------------------------------------------------
         !% Declarations
             integer          :: ii, jj
+            integer, pointer :: nElem
+            integer, dimension(:), allocatable :: p_elem, p_up_face, p_dn_face
             character(64)    :: subroutine_name = 'init_entrapped_air_arrays'
         !-------------------------------------------------------------------
 
         do ii = 1,N_Link
-            
+            nElem     => link%I(ii,li_N_element)
+            !% pack all the element indexes in the link ii
+            p_elem    = pack(elemI(:,ei_Lidx),     ((elemI(:,ei_link_Gidx_BIPquick) == ii) .and. (elemI(:,ei_ElementType) == CC)))
+            !% pack the upstream face indexes of those corresponding elements
+            p_up_face = pack(elemI(:,ei_Mface_uL), ((elemI(:,ei_link_Gidx_BIPquick) == ii) .and. (elemI(:,ei_ElementType) == CC)))
+            !% pack the downstream face indexes of those corresponding elements
+            p_dn_face = pack(elemI(:,ei_Mface_dL), ((elemI(:,ei_link_Gidx_BIPquick) == ii) .and. (elemI(:,ei_ElementType) == CC)))
+
+            !% store the maps to the 3d elements
+            LinkElemMapsI(ii,1:nElem,lmi_elem_idx)     = p_elem
+            LinkElemMapsI(ii,1:nElem,lmi_elem_up_face) = p_up_face
+            LinkElemMapsI(ii,1:nElem,lmi_elem_dn_face) = p_dn_face
         end do
 
     end subroutine init_entrapped_air_arrays
