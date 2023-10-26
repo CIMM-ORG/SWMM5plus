@@ -371,6 +371,11 @@ contains
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 3'
         call adjust_zero_and_small_depth_face (.false.)
 
+        !% --- set the initial air entrapment volumes
+        if (setting%AirTracking%UseAirTrackingYN) then
+            call init_IC_air_entrapment ()
+        end if
+
         !% ---populate er_ones columns with ones
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
@@ -6507,6 +6512,44 @@ contains
             deallocate(thisP)
 
     end subroutine init_IC_junction_plan_area
+!%
+!%==========================================================================       
+!%==========================================================================
+!%
+    subroutine init_IC_air_entrapment ()
+        !%------------------------------------------------------------------
+        !% Description
+        !% Set initial air entrapment conditions
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer          :: ii 
+            integer, pointer :: nElem, eIdx(:), fUp(:), fDn(:)
+            real(8), pointer :: airVolume(:), volume(:), fullVolume(:)
+            real(8), pointer :: flowUp(:), flowDn(:), faceFlow(:)
+        !%------------------------------------------------------------------
+        !% pointers 
+        fullVolume => elemR(:,er_FullVolume)
+        volume     => elemR(:,er_Volume)
+        faceFlow   => faceR(:,fr_Flowrate)
+
+        !% cycle through the links to find element air volumes
+        do ii = 1,N_link
+            nElem => link%I(ii,li_N_element)
+            eIdx  => LinkElemMapsI(ii,1:nElem,lmi_elem_idx)
+            fUp   => LinkElemMapsI(ii,1:nElem,lmi_elem_up_face)
+            fDn   => LinkElemMapsI(ii,1:nElem,lmi_elem_dn_face)
+            airVolume => elemAirR(ii,1:nElem,ear_air_volume)
+            flowUp    => elemAirR(ii,1:nElem,ear_flowrate_up)
+            flowDn    => elemAirR(ii,1:nElem,ear_flowrate_dn)
+
+            !% find the airvolumes in conduit elements
+            airVolume = max(fullVolume(eIdx) - volume(eIdx), zeroR)
+            flowUp    = faceFlow(fUp)
+            flowDn    = faceFlow(fDn)
+
+        end do
+
+    end subroutine init_IC_air_entrapment
 !%
 !%==========================================================================       
 !%==========================================================================

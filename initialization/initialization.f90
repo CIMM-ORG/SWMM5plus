@@ -268,18 +268,29 @@ contains
         !%==========================================================================
         !%                               AIR ENTRAPMENT INIT
         !%==========================================================================
+
+        !% firstly check if the network has any closed conduits
+        if ((setting%AirTracking%UseAirTrackingYN      ) .and. &
+            (count(link%I(:,li_link_type) == lPipe) < 1)) then
+
+            write(*,*) 'USER CONFIGURATION ERROR : The network does not contain any closed conduits'
+            write(*,*) '... skipping air entrapment in this simulation'
+            !% setting the air tracking off
+            setting%AirTracking%UseAirTrackingYN = .false.
+            return
+
+        end if
+
         if (setting%AirTracking%UseAirTrackingYN) then
             if (num_images() == 1) then
                 !% --- allocate the arrays for tracking entrapped air
                 !%     this must be done after the links are discretized
                 !%     HACK: only work with one processor for now.
-                print*, 'going into util_allocate_entrapped_air_arrays'
                 call util_allocate_entrapped_air_arrays ()
 
                 !% --- initialize the arrays for tracking entrapped air
                 !%     this must be done after the links are discretized
                 !%     HACK: only work with one processor for now.
-                print*, 'going into init_entrapped_air_arrays'
                 call init_entrapped_air_arrays ()
             else
                 write(*,*) ' '
