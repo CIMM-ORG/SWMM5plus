@@ -189,6 +189,11 @@
         enumerator :: BCH_tidal            !% outfall stage given by a table of tide elevation versus time of day
         enumerator :: BCH_tseries          !% outfall stage supplied from a time series of elevations
 
+        !% --- BC node to link distribution
+        enumerator :: BC_AllUpstreamOpenChannels !% distribute node inflows to all upstream open channels
+        enumerator :: BC_AllUpstreamLinks        !% distribute node inflows to all upstream links
+        enumerator :: BC_AllLinks                !% distribute node inflows to all links (NOT IMPLEMENTED)
+
         !% --- Culvert in/out types
         enumerator :: Culvert_Inlet        !% inlet-only element of multi-element culvert
         enumerator :: Culvert_Outlet       !% outlet-only element of multi-element culvert
@@ -277,7 +282,7 @@
         !% keys for initial depth distribution
         enumerator :: LinearlyVaryingDepth
         enumerator :: UniformDepth
-        enumerator :: ExponentialDepth
+        enumerator :: IncreasingDepth
         enumerator :: FixedHead
 
         !% Keys for uniformTable data types
@@ -475,6 +480,9 @@
         reverseKey(BCH_fixed) = 'BCH_fixed'
         reverseKey(BCH_tidal) = 'BCH_tidal'
         reverseKey(BCH_tseries) = 'BCH_tseries'
+        reverseKey(BC_AllUpstreamOpenChannels) = 'BC_AllUpstreamOpenChannels'
+        reverseKey(BC_AllUpstreamLinks) = 'BC_AllUpstreamLinks'
+        reverseKey(BC_AllLinks) = 'BC_AllLinks'
         reverseKey(Culvert_Inlet) = 'Culvert_Inlet'
         reverseKey(Culvert_Outlet) = 'Culvert_Outlet'
         reverseKey(Culvert_InOut) = 'Culvert_InOut'
@@ -535,7 +543,7 @@
         reverseKey(AreaValue)   = 'AreaValue'
         reverseKey(LinearlyVaryingDepth)   = 'LinearlyVaryingDepth'
         reverseKey(UniformDepth)           = 'UniformDepth'
-        reverseKey(ExponentialDepth)       = 'ExponentialDepth'
+        reverseKey(IncreasingDepth)        = 'IncreasingDepth'
         reverseKey(FixedHead)              = 'FixedHead'
         reverseKey(DepthData) = 'DepthData'
         reverseKey(AreaData) = 'AreaData'
@@ -627,6 +635,9 @@
         write(*,'(A," = ",i4)') trim(reverseKey(BCH_normal)) , BCH_normal
         write(*,'(A," = ",i4)') trim(reverseKey(BCH_tidal)) , BCH_tidal
         write(*,'(A," = ",i4)') trim(reverseKey(BCH_tseries)) , BCH_tseries
+        write(*,'(A," = ",i4)') trim(reverseKey(BC_AllUpstreamOpenChannels)), BC_AllUpstreamOpenChannels
+        write(*,'(A," = ",i4)') trim(reverseKey(BC_AllUpstreamLinks)), BC_AllUpstreamLinks
+        write(*,'(A," = ",i4)') trim(reverseKey(BC_AllLinks)), BC_AllLinks
         write(*,'(A," = ",i4)') trim(reverseKey(BCdn)) , BCdn
         write(*,'(A," = ",i4)') trim(reverseKey(BClat)) , BClat
         write(*,'(A," = ",i4)') trim(reverseKey(BCup)) , BCup

@@ -45,7 +45,7 @@ module define_indexes
         enumerator :: li_Mnode_u             ! map to upstream node connecting to link
         enumerator :: li_Mnode_d             ! map to downstram node connecting to link
         enumerator :: li_assigned            ! given 1 when link is assigned
-        enumerator :: li_InitialDepthType    ! KEY UniformDepth, LinearlyVaryingDepth, ExponentialDepth, FixedHead
+        enumerator :: li_InitialDepthType    ! NOT WORKING: KEY UniformDepth, LinearlyVaryingDepth, IncreasingDepth, FixedHead
         enumerator :: li_length_adjusted     ! 1 = length was not adjusted, 2 = one side was adjusted, 3 = both side was adjusted
         enumerator :: li_P_image             ! image number assigned from BIPquick
         enumerator :: li_parent_link         ! A map to the corresponding SWMM link after a BIPquick link-split
@@ -53,6 +53,7 @@ module define_indexes
         enumerator :: li_RoadSurface         ! roadsurface type for roadway weir
         enumerator :: li_curve_id            ! curve id if the link is associated with any curve
         enumerator :: li_lateralInflowNode   ! downstream node from which the lateral inflow is coming from
+        enumerator :: li_lateralInflowBCidx  ! The idx position in the BC%flowX(idx,:) array for lateral inflow
         enumerator :: li_first_elem_idx
         enumerator :: li_last_elem_idx
         enumerator :: li_transect_idx         ! transect index if the link is associated with an irregular geometry transect
@@ -101,7 +102,7 @@ module define_indexes
         enumerator :: lr_Setting               !% the 0 to 1 open/close setting of EPA-SWMM
         enumerator :: lr_TargetSetting         !% target setting of a control action
         enumerator :: lr_TimeLastSet           !% the time (in seconds) the link setting was last changed
-        enumerator :: lr_VolumeFractionMetric  !% a metric to distribute the lateral inflows across a link
+        enumerator :: lr_InflowVolumeFraction    !% fraction of inflow delivered to this link
         enumerator :: lr_ZbottomUp             ! Z bottom of upstream node
         enumerator :: lr_ZbottomDn             ! Z bottom of downstream node
         enumerator :: lr_lastplusone !% must be last enum item
@@ -117,6 +118,7 @@ module define_indexes
         enumerator :: lYN_isOutput
         enumerator :: lYN_isPhantomLink
         enumerator :: lYN_hasFlapGate
+        enumerator :: lYN_hasLateralInflow
         enumerator :: lYN_temp1
         enumerator :: lYN_lastplusone !% must be last enum item
     end enum
@@ -145,6 +147,7 @@ module define_indexes
         enumerator :: ni_pattern_resolution ! minimum resolution of patterns associated with node BC
         enumerator :: ni_routeTo       !% subcatchment indx that node outfall is routed to
         enumerator :: ni_routeFrom     !% subcatchment indx with outlet to this node
+        enumerator :: ni_lateralInflowBCidx !% BC idx on this image for this node lateral inflow
         enumerator :: ni_SWMMoutfallIdx !% Outfall index in EPA SWMM for an outfall node
         enumerator :: ni_lastplusone !% must be last enum item
     end enum
@@ -217,6 +220,7 @@ module define_indexes
         enumerator :: nYN_isOutput
         enumerator :: nYN_is_phantom_node
         enumerator :: nYN_hasFlapGate
+        enumerator :: nYN_isLinkFlow !% inflow is forced to link
         enumerator :: nYN_lastplusone !% must be last enum item
     end enum
     integer, target :: Ncol_nodeYN  = nYN_lastplusone-1
@@ -236,12 +240,13 @@ module define_indexes
     !% --- Column indexes for BC%xI(:,:) where x is head or flow
     enum, bind(c)
         enumerator :: bi_idx = 1
-        enumerator :: bi_node_idx
+        enumerator :: bi_P_image       !% image on which BC appears
+        enumerator :: bi_node_idx      !% node for BC from EPA SWMM
         enumerator :: bi_face_idx      !% Index of face nBCup/dn nodes
-        enumerator :: bi_elem_idx      !% Index of element associated with either nJ2 or nJm node with lateral inflow
+        enumerator :: bi_elem_idx      !% Index of element associated node (e.g., nJM elem or upstream of nJ2)
         enumerator :: bi_category      !% KEY
         enumerator :: bi_subcategory   !% KEY
-        enumerator :: bi_BasePatType   !% SWMM key for base pattern type of inflow
+        enumerator :: bi_BasePatType   !% KEY SWMM key for base pattern type of inflow
         enumerator :: bi_TimeSeriesIdx !% SWMM ts index number
         enumerator :: bi_fetch         !% 1 if BC%xR_timeseries needs to be fetched, 0 otherwise
         enumerator :: bi_TS_duplicate  !% 0 if first use of TS, provide N_flow # of earlier call to TS if duplicate.
@@ -254,6 +259,7 @@ module define_indexes
     enum, bind(c)
         enumerator :: bYN_read_input_series = 1
         enumerator :: bYN_hasFlapGate
+        enumerator :: bYN_isLinkFlow  !% true if node inflow is distributed to link
         enumerator :: bYN_lastplusone !% must be last enum item
     end enum
 
@@ -292,6 +298,7 @@ module define_indexes
          enumerator :: ei_barrels                   !% Integer number of barrels
          enumerator :: ei_HeqType                   !% KEY type of head equation (static)
          enumerator :: ei_lateralInflowNode         !% SWMM node from which the element will get lateral inflow
+         enumerator :: ei_lateralInflowBCidx        !% BC(idx) for the lateral inflow  
          enumerator :: ei_link_Gidx_SWMM            !% link index from global SWMM network  (static)
          enumerator :: ei_link_Gidx_BIPquick        !% link index from global BIPquick network  (static)
          enumerator :: ei_link_pos                  !% position (elem from upstream = 1 to downstream = n) in link
@@ -411,7 +418,7 @@ module define_indexes
         enumerator :: er_VolumePonded               !% volume ponding this time step
         enumerator :: er_VolumePondedTotal          !% Volume ponded total
         enumerator :: er_VolumeStore                !% temporary storage used for adjacent AC and ETM elements
-        enumerator :: er_VolumeFractionMetric       !% metric to distribute lateral inflow across channel/conduit elements
+        enumerator :: er_InflowVolumeFraction       !% metric to distribute lateral inflow across channel/conduit elements
         enumerator :: er_WaveSpeed                  !% wave speed in element
         enumerator :: er_YoverYfull                 !% ratio of depth to full depth for tabular geometry
         enumerator :: er_Zbottom                    !% bottom elevation of element (static)
@@ -430,6 +437,7 @@ module define_indexes
         enumerator :: eYN_canSurcharge = 1              !% TRUE for element that can surcharge, FALSE where it cannot (static)
         enumerator :: eYN_hasSubcatchRunOff             !% TRUE if element connected to one or more subcatchments for Runoff
         enumerator :: eYN_hasFlapGate                   !% TRUE if 1-way flap gate is present
+        enumerator :: eYN_hasLateralInflow              !% TRUE if lateral inflow exists on this element
         enumerator :: eYN_isBoundary_up                 !% TRUE if the element is connected to a shared face upstream thus a boundary element of a partition
         enumerator :: eYN_isBoundary_dn                 !% TRUE if the element is connected to a shared face downstream thus a boundary element of a partition
         enumerator :: eYN_isCulvert                     !% TRUE if CC element is inlet, outlet or culvert barrel
@@ -442,7 +450,7 @@ module define_indexes
         enumerator :: eYN_isOutput                      !% TRUE if the element is an output element
         enumerator :: eYN_isPSsurcharged                !% TRUE if Preissmann slot is present for this cell
         enumerator :: eYN_isSmallDepth                  !% TRUE is use small volume algorithm
-        enumerator :: eYN_isSurcharged                 !% TRUE is a surcharged closed conduit, FALSE if non-surcharged
+        enumerator :: eYN_isSurcharged                  !% TRUE is a surcharged closed conduit, FALSE if non-surcharged
         enumerator :: eYN_isSurchargeHeadAdjusted       !% TRUE if surcharge head is V-shape adjusted. 
         enumerator :: eYN_isZeroDepth                   !% TRUE if volume qualifies as "near zero"
         enumerator :: eYN_Temp01                        !% temporary logical space

@@ -64,10 +64,11 @@ contains
         !%------------------------------------------------------------------
         !% Description:
         !% set up the initial conditions for all the elements
+        !% Called after network has been defined and split up, so the
+        !% links include phantom links
         !%------------------------------------------------------------------
         !% Declarations:
-            integer          :: whichTM
-            integer, pointer :: whichSolver
+            integer          :: ii
             integer, pointer :: Npack, thisP(:)
             character(64)    :: subroutine_name = 'init_IC_toplevel'
         !%-------------------------------------------------------------------
@@ -76,8 +77,6 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
         !% Aliases
-            whichSolver => setting%Solver%SolverSelect
-            whichTM = ETM
         !%-------------------------------------------------------------------    
         !% --- default the TimeLastSet to 0.0 (elapsed) for all elements
         elemR(:,er_TimeLastSet) = zeroR
@@ -108,13 +107,13 @@ contains
         elemR(:,er_SedimentDepth) = zeroR
 
         !% --- get data that can be extracted from links
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_from_linkdata'
         call init_IC_from_linkdata ()
 
         sync all
         !% --- set up background geometry for weir, orifice, etc.
         !%     from adjacent elements
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
         call init_IC_diagnostic_geometry_from_adjacent (.true.)
 
         !% --- sync after all the link data has been extracted
@@ -123,30 +122,30 @@ contains
         sync all
         
         !% --- get data that can be extracted from nodes
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_for_nJM_from_nodedata'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_for_nJM_from_nodedata'
         call init_IC_for_nJm_from_nodedata ()
 
         !% --- second call for diagnostic that was next to JM/JB
         sync all
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_geometry_from_adjacent'
         call init_IC_diagnostic_geometry_from_adjacent (.false.)
 
         !% --- identify all faces adjacent to diagnostic elements
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_diagnostic_adjacent_faces'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_diagnostic_adjacent_faces'
         call init_IC_identify_diagnostic_adjacent_faces ()
 
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_diagnostic_adjacent_elements'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_diagnostic_adjacent_elements'
         call init_IC_identify_diagnostic_adjacent_elements ()
 
         !% --- identify special case diagnostic elements that have JB on either side
         !%     these have the face flowrates frozen in the junction residual computation
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_JB_bounded'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_diagnostic_JB_bounded'
         call init_IC_diagnostic_JB_bounded ()
 
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_CC_adjacent_faces'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_CC_adjacent_faces'
         call init_IC_identify_CC_adjacent_faces ()
 
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_CC_adjacent_nonCC_elements'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_identify_CC_adjacent_nonCC_elements'
         call init_IC_identify_CC_adjacent_nonCC_elements () 
 
         !% --- error checking for nullvalues
@@ -171,7 +170,7 @@ contains
         ! end do
 
         !% --- set up the transect arrays
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_elem_transect...'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_IC_elem_transect...'
         call init_IC_elem_transect_arrays ()
         call init_IC_elem_transect_geometry ()
 
@@ -181,11 +180,11 @@ contains
         !% --- ensure that IC depth and volume are consistent
         call init_IC_depth_volume_consistency ()
 
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_error_check'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_error_check'
         call init_IC_error_check ()
        
         !% --- identify the small and zero depths (must be done before pack)
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth'
         !% --- if not using small depth algorithm, then cuttoff is the same as zero depth
         !%     HACK small depth algorithm is presently not functional 20230601
         if (.not. setting%SmallDepth%useMomentumCutoffYN) setting%SmallDepth%MomentumDepthCutoff = setting%ZeroValue%Depth
@@ -194,15 +193,15 @@ contains
         call adjust_element_toplevel (JM) 
 
         !% ---zero out the lateral inflow column
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_set_zero_lateral_inflow'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin init_set_zero_lateral_inflow'
         call init_IC_set_zero_lateral_inflow ()
 
         !% --- update time marching type
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_solver_select '
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_solver_select '
         call init_IC_solver_select ()
        
         !% --- set up all the static packs and masks
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_mask arrays_all'
         call pack_mask_arrays_all ()
 
         !%----------------------------------------------------------------
@@ -210,11 +209,11 @@ contains
         !%---------------------------------------------------------------
 
         !% --- initialize zerovalues for other than depth (must be done after pack)
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC_Zerovalues'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC_Zerovalues'
         call init_IC_ZeroValues_nondepth ()
 
         !% --- set all the zero and small volumes
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 2'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 2'
         call adjust_element_toplevel (CC)
         call adjust_element_toplevel (JB)
         !% --- adjustments are done to the Volume array, so reset the volume and volume_N0
@@ -224,68 +223,69 @@ contains
         elemR(:,er_Volume_N0) = elemR(:,er_Volume)
 
         !% --- get the bottom slope
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC bottom slope'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin IC bottom slope'
         call init_IC_bottom_slope ()
 
         !% --- set small volume values in elements
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_set_SmallVolumes'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_set_SmallVolumes'
         call init_IC_set_SmallVolumes ()
 
         !% --- initialize Preissmann slots
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_slot'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_slot'
         call init_IC_slot ()
 
         !% --- get the velocity and any other derived data
         !%     These are data needed before bc and aux variables are updated
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_derived_data'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_derived_data'
         call init_IC_derived_data()
 
         !% --- set the reference head (based on Zbottom values)
         !%     this must be called before bc_update() so that
         !%     the timeseries for head begins correctly
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_reference_head'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_reference_head'
         call init_reference_head()
 
         !% --- remove the reference head values from arrays
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_subtract_reference_head'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_subtract_reference_head'
         call init_subtract_reference_head()
 
         !% --- create the packed set of nodes for BC
         !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin pack_nodes'
-        call pack_nodes_BC()
-        call util_allocate_bc()
+        ! call pack_nodes_BC()
+        ! call util_allocate_bc()
+        !% --- moved inside init_bc
 
         !% --- initialize Manning's n for forcemain elements
         if (setting%Solver%ForceMain%AllowForceMainTF) call forcemain_ManningsN ()
 
         !% --- initialize boundary conditions
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_bc'
         call init_bc()
 
         !% --- setup the sectionfactor arrays needed for normal depth computation on outfall BC
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_uniformtable_array"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin init_uniformtable_array"
         call init_uniformtable_array()
 
         !% --- update the BC so that face interpolation works in update_aux...
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin bc_update'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin bc_update'
         call bc_update()
         if (crashI==1) return
 
         !% --- storing dummy values for branches that are invalid
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch dummy values'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch dummy values'
         call init_IC_branch_dummy_values ()
 
         !% --- initialize branch values that need to be zero
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch zero values'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin branch zero values'
         call init_IC_branch_zero_values ()
 
         !% --- set all the auxiliary (dependent) variables
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables CC'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables CC'
         call update_auxiliary_variables_CC (&
             ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
             .true., .false., dummyIdx)
 
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables JM'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables JM'
         Npack => npack_elemP(ep_JM)
         if (Npack > 0) then
             thisP => elemP(1:Npack,ep_JM)
@@ -327,19 +327,19 @@ contains
         !% --- initialize old head 
         !%     HACK - make into a subroutine if more variables need initializing
         !%     after update_aux_var
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin setting old head'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin setting old head'
         elemR(:,er_Head_N0) = elemR(:,er_Head)
 
         !% --- update diagnostic interpolation weights
         !%     (the interpolation weights of diagnostic elements
         !%     stays the same throughout the simulation. Thus, they
         !%     are only needed to be set at the top of the simulation)
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,  'begin init_IC_diagnostic_interpolation_weights'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,  'begin init_IC_diagnostic_interpolation_weights'
         call init_IC_diagnostic_interpolation_weights()
 
         !% --- set small values to diagnostic element interpolation sets
         !%     Needed so that junk values does not mess up the first interpolation
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin  init_IC_small_values_diagnostic_elements'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin  init_IC_small_values_diagnostic_elements'
         call init_IC_small_values_diagnostic_elements
 
         call adjust_element_toplevel(CC)
@@ -347,15 +347,15 @@ contains
         call adjust_element_toplevel(JB) 
 
         !% --- update faces
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
         call face_interpolation (fp_noBC_IorS,.true.,.true.,.true.,.false.,.false.)
 
         !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
         call control_init_monitoring_and_action_from_EPASWMM()
 
         !% --- update the initial condition in all diagnostic elements
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin diagnostic_toplevel'
         call diagnostic_by_type (ep_Diag, 1)
         !% reset any face values affected
         call face_interpolation (fp_Diag_IorS,.true.,.true.,.true.,.true.,.true.)
@@ -368,16 +368,23 @@ contains
         end if
 
         !% --- ensure that small and zero depth faces are correct
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 3'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,'begin adjust small/zero depth 3'
         call adjust_zero_and_small_depth_face (.false.)
 
         !% ---populate er_ones columns with ones
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
         call init_IC_oneVectors ()
     
         !% --- error check for ponding scales 
         call init_IC_ponding_errorcheck ()
    
+        ! do ii=1,N_elem(1)
+        !     print *, ii, elemI(ii,ei_elementType),trim(reverseKey(elemI(ii,ei_elementType)))
+        !     print *, 'connect face: ',elemI(ii,ei_Mface_uL), elemI(ii,ei_Mface_dL)
+        !     if (elemI(ii,ei_Mface_uL) .ne. nullvalueI) print *, faceI(elemI(ii,ei_Mface_uL),fi_Melem_uL)
+        !     if (elemI(ii,ei_Mface_dL) .ne. nullvalueI) print *, faceI(elemI(ii,ei_Mface_dL),fi_Melem_dL)
+        ! end do
+        ! stop 6098723
         !%-------------------------------------------------------------------
         !% Closing
         if (setting%Debug%File%initial_condition) then
@@ -856,7 +863,7 @@ contains
         !             length2Here       = length2Here + onehalfR * eLength(pElem(mm))
         !         end do
 
-        !     case (ExponentialDepth)
+        !     case (IncreasingDepth)
         !         !% --- if the link has exponentially increasing or decreasing depth
 
         !         do mm=1,size(pElem)
@@ -925,8 +932,8 @@ contains
             !% --- distribute minor losses uniformly over all the elements in thi link
             elemR(:,er_Kconduit_MinorLoss)   = link%R(thisLink,lr_Kconduit_MinorLoss) / (real(lastelem - firstelem + oneI,8))
             !% --- distribute volume fraction for lateral inflow across elements
-            elemR(:,er_VolumeFractionMetric) = link%R(thisLink,lr_VolumeFractionMetric) * elemR(:,er_Length) / link%R(thisLink,lr_Length)
-            elemI(:,ei_lateralInflowNode)    = link%I(thisLink,li_lateralInflowNode)
+            ! MOVED TO init_bc elemR(:,er_InflowVolumeFraction) = link%R(thisLink,lr_InflowVolumeFraction) * elemR(:,er_Length) / link%R(thisLink,lr_Length)
+            ! MOVED TO init_bc: elemI(:,ei_lateralInflowNode)    = link%I(thisLink,li_lateralInflowNode)
             elemR(:,er_FlowrateLimit)        = link%R(thisLink,lr_FlowrateLimit)
             elemR(:,er_SeepRate)             = link%R(thisLink,lr_SeepRate)
         endwhere
@@ -5037,81 +5044,79 @@ contains
             elemR(thisP,er_Temp01)                = TargetPCelerity
             OldTargetPCelerity                    = TargetPCelerity
 
-            !% --- only calculate slots for ETM time-march
-            if (setting%Solver%SolverSelect == ETM) then  
-                !% --- initialization where starting condition is surcharged
-                where ((elemR(thisP,er_Head) > elemR(thisP,er_Zcrown)) .and. (elemYN(thisP,eYN_canSurcharge)))
-                    elemYN(thisP,eYN_isPSsurcharged) = .true.
-                    elemR (thisP,er_SlotDepth)      = elemR(thisP,er_Head) - elemR(thisP,er_Zcrown)
-                endwhere
+            !% --- initialization where starting condition is surcharged
+            where ((elemR(thisP,er_Head) > elemR(thisP,er_Zcrown)) .and. (elemYN(thisP,eYN_canSurcharge)))
+                elemYN(thisP,eYN_isPSsurcharged) = .true.
+                elemR (thisP,er_SlotDepth)      = elemR(thisP,er_Head) - elemR(thisP,er_Zcrown)
+            endwhere
 
-                !% --- initialize PS dependent variables
-                select case (SlotMethod)
+            !% --- initialize PS dependent variables
+            select case (SlotMethod)
 
-                    case (StaticSlot)
-                        elemR(thisP,er_Preissmann_Number) = oneR
-                        where (elemYN(thisP,eYN_isPSsurcharged))
-                            elemR(thisP,er_Preissmann_Celerity) = TargetPCelerity / elemR(thisP,er_Preissmann_Number)
-                            elemR(thisP,er_SlotWidth)           = (grav * elemR(thisP,er_FullArea)) / (elemR(thisP,er_Preissmann_Celerity)**2)
-                            elemR(thisP,er_SlotArea)            = elemR(thisP,er_SlotDepth) * elemR(thisP,er_SlotWidth) 
-                            elemR(thisP,er_SlotVolume)          = elemR(thisP,er_SlotArea) * elemR(thisP,er_Length)
-                            !% --- add slot volume to total volume (which was set to full volume)
-                            elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
-                        end where
-                    
-                    case (DynamicSlot,SplitDynamicSlot)
+                case (StaticSlot)
+                    elemR(thisP,er_Preissmann_Number) = oneR
+                    where (elemYN(thisP,eYN_isPSsurcharged))
+                        elemR(thisP,er_Preissmann_Celerity) = TargetPCelerity / elemR(thisP,er_Preissmann_Number)
+                        elemR(thisP,er_SlotWidth)           = (grav * elemR(thisP,er_FullArea)) / (elemR(thisP,er_Preissmann_Celerity)**2)
+                        elemR(thisP,er_SlotArea)            = elemR(thisP,er_SlotDepth) * elemR(thisP,er_SlotWidth) 
+                        elemR(thisP,er_SlotVolume)          = elemR(thisP,er_SlotArea) * elemR(thisP,er_Length)
+                        !% --- add slot volume to total volume (which was set to full volume)
+                        elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
+                    end where
+                
+                case (DynamicSlot,SplitDynamicSlot)
 
-                        where ((elemI(thisP,ei_elementType) == CC               ) .and. &
-                               (elemR(thisP,er_Preissmann_Number_initial) < oneR)       )
-                            !% --- resetting the target celerity only on CC elements, where it may results in a very wide slot
-                            elemR(thisP,er_Temp01) = MinPnumber * Alpha * sqrt(grav * elemR(thisP,er_FullDepth))
-                        endwhere
+                    where ((elemI(thisP,ei_elementType) == CC               ) .and. &
+                            (elemR(thisP,er_Preissmann_Number_initial) < oneR)       )
+                        !% --- resetting the target celerity only on CC elements, where it may results in a very wide slot
+                        elemR(thisP,er_Temp01) = MinPnumber * Alpha * sqrt(grav * elemR(thisP,er_FullDepth))
+                    endwhere
 
-                        !% --- rest the global target preissmann celerity to the new maximum 
-                        TargetPCelerity = maxval(elemR(thisP,er_Temp01))
-                        !% --- boradcast the new target preissmann celerity across images
-                        call co_max(TargetPCelerity)
+                    !% --- rest the global target preissmann celerity to the new maximum 
+                    TargetPCelerity = maxval(elemR(thisP,er_Temp01))
+                    !% --- boradcast the new target preissmann celerity across images
+                    call co_max(TargetPCelerity)
 
-                        !% --- reset the initial preissmann numbers
-                        elemR(thisP,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
-                                                                  * elemR(thisP,er_FullDepth))) 
+                    !% --- reset the initial preissmann numbers
+                    elemR(thisP,er_Preissmann_Number_initial) = TargetPCelerity / (Alpha * sqrt(grav &
+                                                                * elemR(thisP,er_FullDepth))) 
 
-                        if (TargetPCelerity > OldTargetPCelerity) then
-                            if (this_image() == 1) then
-                                Write(*,*) '       '
-                                Write(*,*) 'Warning: User provided setting.Solver.PreissmannSlot.TargetCelerity is too low'
-                                write(*,"(A,F7.2,A,F7.2,A)") ' increasing the Target Preissmann Celerity from ', OldTargetPCelerity, &
-                                    ' to ', TargetPCelerity, ' m/s '
-                                print* 
-                            end if
-                        else if (TargetPCelerity < OldTargetPCelerity) then
+                    if (TargetPCelerity > OldTargetPCelerity) then
+                        if (this_image() == 1) then
                             Write(*,*) '       '
-                            write(*,"(A,F7.2,A)") 'FATAL ERROR: the new TargetCelerity ', TargetPCelerity, ' is lower '
-                            write(*,"(A,F7.2,A)") 'than the user provided TargetCelerity ', OldTargetPCelerity, ' which should not happen'
-                            call util_crashpoint(1134546)
-                        else
-                            !% --- no change is target preissmann celerity, do nothing
+                            Write(*,*) 'Warning: User provided setting.Solver.PreissmannSlot.TargetCelerity is too low'
+                            write(*,"(A,F7.2,A,F7.2,A)") ' increasing the Target Preissmann Celerity from ', OldTargetPCelerity, &
+                                ' to ', TargetPCelerity, ' m/s '
+                            print* 
                         end if
+                    else if (TargetPCelerity < OldTargetPCelerity) then
+                        Write(*,*) '       '
+                        write(*,"(A,F7.2,A)") 'FATAL ERROR: the new TargetCelerity ', TargetPCelerity, ' is lower '
+                        write(*,"(A,F7.2,A)") 'than the user provided TargetCelerity ', OldTargetPCelerity, ' which should not happen'
+                        call util_crashpoint(1134546)
+                    else
+                        !% --- no change is target preissmann celerity, do nothing
+                    end if
 
-                        elemR(thisP,er_Preissmann_Number)     = elemR(thisP,er_Preissmann_Number_initial)
-                        elemR(thisP,er_Preissmann_Number_N0)  = elemR(thisP,er_Preissmann_Number)
-                        where (elemYN(thisP,eYN_isPSsurcharged))
-                            elemR(thisP,er_Preissmann_Celerity) = TargetPCelerity / elemR(thisP,er_Preissmann_Number)
-                            elemR(thisP,er_SlotWidth)           = (grav * elemR(thisP,er_FullArea)) / (elemR(thisP,er_Preissmann_Celerity)**twoI)
-                            elemR(thisP,er_SlotArea)            = elemR(thisP,er_SlotDepth) * elemR(thisP,er_SlotWidth)
-                            elemR(thisP,er_SlotVolume)          = elemR(thisP,er_SlotArea) * elemR(thisP,er_Length)
-                            !% --- add slot volume to total volume (which was set to full volume)
-                            elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
-                        end where
+                    elemR(thisP,er_Preissmann_Number)     = elemR(thisP,er_Preissmann_Number_initial)
+                    elemR(thisP,er_Preissmann_Number_N0)  = elemR(thisP,er_Preissmann_Number)
+                    where (elemYN(thisP,eYN_isPSsurcharged))
+                        elemR(thisP,er_Preissmann_Celerity) = TargetPCelerity / elemR(thisP,er_Preissmann_Number)
+                        elemR(thisP,er_SlotWidth)           = (grav * elemR(thisP,er_FullArea)) / (elemR(thisP,er_Preissmann_Celerity)**twoI)
+                        elemR(thisP,er_SlotArea)            = elemR(thisP,er_SlotDepth) * elemR(thisP,er_SlotWidth)
+                        elemR(thisP,er_SlotVolume)          = elemR(thisP,er_SlotArea) * elemR(thisP,er_Length)
+                        !% --- add slot volume to total volume (which was set to full volume)
+                        elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
+                    end where
 
-                    case default
-                        !% should not reach this stage
-                        print*, 'In ', subroutine_name
-                        print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
-                        print *, 'which has key ',trim(reverseKey(SlotMethod))
-                        call util_crashpoint(71109872)
-                end select
-            end if    
+                case default
+                    !% should not reach this stage
+                    print*, 'In ', subroutine_name
+                    print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
+                    print *, 'which has key ',trim(reverseKey(SlotMethod))
+                    call util_crashpoint(71109872)
+            end select
+
         !%-----------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%initial_condition) &
@@ -5161,68 +5166,66 @@ contains
             elemR(thisP,er_Surcharge_Time)        = zeroR  
             elemR(thisP,er_SlotDepth_N0)          = elemR(thisP,er_SlotDepth)
 
-            !% --- only calculate slots for ETM time-march
-            if (setting%Solver%SolverSelect == ETM) then  
-                !% --- initialization where starting condition is surcharged
-                where ((elemR(thisP,er_Head) > elemR(thisP,er_Zcrown)) .and. (elemYN(thisP,eYN_canSurcharge)))
-                    elemYN(thisP,eYN_isPSsurcharged) = .true.
-                    elemR (thisP,er_SlotDepth)      = elemR(thisP,er_Head) - elemR(thisP,er_Zcrown)
-                endwhere
 
-                !% --- initialize PS dependent variables
-                select case (SlotMethod)
+            !% --- initialization where starting condition is surcharged
+            where ((elemR(thisP,er_Head) > elemR(thisP,er_Zcrown)) .and. (elemYN(thisP,eYN_canSurcharge)))
+                elemYN(thisP,eYN_isPSsurcharged) = .true.
+                elemR (thisP,er_SlotDepth)      = elemR(thisP,er_Head) - elemR(thisP,er_Zcrown)
+            endwhere
 
-                    case (StaticSlot)
-                        elemR(thisP,er_Preissmann_Number) = oneR
-                        where (elemYN(thisP,eYN_isPSsurcharged))
-                            elemR(thisP,er_Preissmann_Celerity) = TargetPCelerity / elemR(thisP,er_Preissmann_Number)
-                            elemR(thisP,er_SlotWidth)           = (grav * elemR(thisP,er_FullArea)) / (elemR(thisP,er_Preissmann_Celerity)**2)
-                            elemR(thisP,er_SlotArea)            = elemR(thisP,er_SlotDepth) * elemR(thisP,er_SlotWidth) 
-                            elemR(thisP,er_SlotVolume)          = elemR(thisP,er_SlotArea) * elemR(thisP,er_Length)
-                            !% --- add slot volume to total volume (which was set to full volume)
-                            elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
-                        end where
-                    
-                    case (DynamicSlot,SplitDynamicSlot)
+            !% --- initialize PS dependent variables
+            select case (SlotMethod)
 
-                        !% --- requires cycling through the junctions to get the initial preissmann number
-                        do mm=1,Npack
-                            JMidx = thisP(mm)
+                case (StaticSlot)
+                    elemR(thisP,er_Preissmann_Number) = oneR
+                    where (elemYN(thisP,eYN_isPSsurcharged))
+                        elemR(thisP,er_Preissmann_Celerity) = TargetPCelerity / elemR(thisP,er_Preissmann_Number)
+                        elemR(thisP,er_SlotWidth)           = (grav * elemR(thisP,er_FullArea)) / (elemR(thisP,er_Preissmann_Celerity)**2)
+                        elemR(thisP,er_SlotArea)            = elemR(thisP,er_SlotDepth) * elemR(thisP,er_SlotWidth) 
+                        elemR(thisP,er_SlotVolume)          = elemR(thisP,er_SlotArea) * elemR(thisP,er_Length)
+                        !% --- add slot volume to total volume (which was set to full volume)
+                        elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
+                    end where
+                
+                case (DynamicSlot,SplitDynamicSlot)
 
-                            !% --- smooth out the initial preissmann number before 
-                            !%     celerity calculation with adjacent branches    
-                            bcount = zeroI
-                            PNadd  = zeroR
+                    !% --- requires cycling through the junctions to get the initial preissmann number
+                    do mm=1,Npack
+                        JMidx = thisP(mm)
 
-                            do kk=1,max_branch_per_node
-                                if (elemSI(JMidx+kk,esi_JB_Exists) .ne. oneI) cycle 
+                        !% --- smooth out the initial preissmann number before 
+                        !%     celerity calculation with adjacent branches    
+                        bcount = zeroI
+                        PNadd  = zeroR
 
-                                PNadd = PNadd + elemR(JMidx+kk,er_Preissmann_Number_initial)
-                                bcount = bcount + oneI
-                            end do
-                            !% the average initial preissmann number from the branches
-                            elemR(JMidx,er_Preissmann_Number_initial) = max(PNadd/real(bcount,8), oneR)
+                        do kk=1,max_branch_per_node
+                            if (elemSI(JMidx+kk,esi_JB_Exists) .ne. oneI) cycle 
+
+                            PNadd = PNadd + elemR(JMidx+kk,er_Preissmann_Number_initial)
+                            bcount = bcount + oneI
                         end do
+                        !% the average initial preissmann number from the branches
+                        elemR(JMidx,er_Preissmann_Number_initial) = max(PNadd/real(bcount,8), oneR)
+                    end do
 
-                        elemR(thisP,er_Preissmann_Number)     = elemR(thisP,er_Preissmann_Number_initial)
-                        elemR(thisP,er_Preissmann_Number_N0)  = elemR(thisP,er_Preissmann_Number)
-                        where (elemYN(thisP,eYN_isPSsurcharged))
-                            elemR(thisP,er_Preissmann_Celerity) = TargetPCelerity / elemR(thisP,er_Preissmann_Number)
-                            elemR(thisP,er_SlotWidth)           = (grav * elemR(thisP,er_FullArea)) / (elemR(thisP,er_Preissmann_Celerity)**twoI)
-                            elemR(thisP,er_SlotArea)            = elemR(thisP,er_SlotDepth) * elemR(thisP,er_SlotWidth)
-                            elemR(thisP,er_SlotVolume)          = elemR(thisP,er_SlotArea) * elemR(thisP,er_Length)
-                            !% --- add slot volume to total volume (which was set to full volume)
-                            elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
-                        end where
+                    elemR(thisP,er_Preissmann_Number)     = elemR(thisP,er_Preissmann_Number_initial)
+                    elemR(thisP,er_Preissmann_Number_N0)  = elemR(thisP,er_Preissmann_Number)
+                    where (elemYN(thisP,eYN_isPSsurcharged))
+                        elemR(thisP,er_Preissmann_Celerity) = TargetPCelerity / elemR(thisP,er_Preissmann_Number)
+                        elemR(thisP,er_SlotWidth)           = (grav * elemR(thisP,er_FullArea)) / (elemR(thisP,er_Preissmann_Celerity)**twoI)
+                        elemR(thisP,er_SlotArea)            = elemR(thisP,er_SlotDepth) * elemR(thisP,er_SlotWidth)
+                        elemR(thisP,er_SlotVolume)          = elemR(thisP,er_SlotArea) * elemR(thisP,er_Length)
+                        !% --- add slot volume to total volume (which was set to full volume)
+                        elemR(thisP,er_Volume)              = elemR(thisP,er_Volume) + elemR(thisP,er_SlotVolume)
+                    end where
 
-                    case default
-                        !% should not reach this stage
-                        print*, 'In ', subroutine_name
-                        print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
-                        print *, 'which has key ',trim(reverseKey(SlotMethod))
-                        call util_crashpoint(71109872)
-                end select
-            end if    
+                case default
+                    !% should not reach this stage
+                    print*, 'In ', subroutine_name
+                    print *, 'CODE ERROR Slot Method type unknown for # ', SlotMethod
+                    print *, 'which has key ',trim(reverseKey(SlotMethod))
+                    call util_crashpoint(71109872)
+            end select 
         !%-----------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%initial_condition) &
@@ -5422,6 +5425,648 @@ contains
 !%
 !%==========================================================================
 !%==========================================================================
+!%   
+    subroutine init_lateral_inflow_links ()
+        !%------------------------------------------------------------------
+        !% Description
+        !% sets of data in link and node arrays for boundary conditions
+        !% This is a precursor to initiating the BC% arrays that is needed
+        !% because the link/node arrays must be agnostic as to the partition
+        !% Goal is to identify the link lateral inflows that are connected
+        !% to inflow nodes.
+        !% Assumes that linkVolumeFraction has been defined and can be 
+        !% used to identify links that require lateral inflows
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer          :: nidx, kk 
+            integer, pointer :: ntype, linkIdx, linkUp, nodeUp
+            real(8)          :: Vol1, Vol2
+        !%------------------------------------------------------------------
+
+        !NOTE node%YN(:,nYN_isLinkFlow) is already set in init_linkInflows
+
+        do nidx = 1,N_node
+            if (node%YN(nidx,nYN_has_extInflow) .or. node%YN(nidx,nYN_has_dwfInflow)) then 
+                ntype => node%I(nidx, ni_node_type)
+
+                !% --- handle different types of nodes
+                select case (ntype)
+                    case (nJm)
+                        if (.not. setting%BC%InflowBC%UseLinkDistributionTF) exit !% exit the select
+
+                        !% --- handle different approaches to link flows
+                        select case (setting%BC%InflowBC%LinkDistributionMethod)
+                            case (BC_AllUpstreamOpenChannels,BC_AllUpstreamLinks)
+                                !% --- note this works over both BC types because
+                                !%     the LinkVolumeFraction is set depending on 
+                                !%     the LinkDistributionMethod
+                                !% --- cycle over the upstream links of the present node
+                                !%     to find links included in lateral inflow
+                                do kk=1,node%I(nidx,ni_N_link_u)
+                                    linkIdx => node%I(nidx,ni_idx_base1 + kk)
+                                    !% --- identify upstream nodes with valid volume fraction
+                                    if (link%R(linkIdx,lr_InflowVolumeFraction) > zeroR) then 
+                                        !% --- true for node if any valid link found
+                                        node%YN  (nidx   ,nYN_isLinkFlow)        = .true.
+                                        link%YN  (linkIdx,lYN_hasLateralInflow)  = .true.  
+                                        link%I   (linkIdx,li_lateralInflowNode)  = nidx    !% connected inflow node
+                                        !% --- check whether this is a phantom link
+                                        !%     if so, then the node inflow is also distributed over the
+                                        !%     next upstream link.  
+                                        !%     Note that volume fractions for phantom and spanning links are taken
+                                        !%     care of in phantom_node_generator of BIPquick
+                                        if (link%YN(linkIdx,lYN_isPhantomLink)) then 
+                                            !% --- inflow is distributed also to upstream link
+                                            !%     get the upstream node
+                                            nodeUp => link%I(linkIdx,li_Mnode_u)
+                                            !% --- Node must be nJ2 or there is a logic problem
+                                            if (node%I(nodeUp,ni_node_type) .ne. nJ2) then 
+                                                print *, 'CODE ERROR: node upstream of phantom link has wrong type '
+                                                call util_crashpoint(6109873)
+                                            end if
+                                            !% --- upstream link of the phantom node
+                                            linkUp => node%I(nodeUp ,ni_Mlink_u1)
+                                            !% --- upstream link should have link volume fraction, or there is a logic problem
+                                            if (link%R(linkUp,lr_InflowVolumeFraction) .eq. zeroR) then 
+                                                print *, 'CODE ERROR: spanning link should have volume fraction for node flow distribution'
+                                                call util_crashpoint(70109873)
+                                            end if
+                                            !% --- assign this upstream link as lateral inflow
+                                            link%YN(linkUp,lYN_hasLateralInflow) = .true.
+                                            !% --- assign the further downstream node as the connected inflow
+                                            !%     This is NOT the nodeUp, which is a phantom nJ2 node and is
+                                            !%     not in the flowBCnode set
+                                            link%I(linkUp,li_lateralInflowNode)  = nidx
+                                        else 
+                                            !% --- if not phantom, no other action
+                                        end if
+                                    else 
+                                        !% --- only set this link to false 
+                                        !%     (other link trues may affect node and BC)
+                                        link%YN(linkIdx,lYN_hasLateralInflow) = .false.
+                                    end if
+                                end do
+
+                            case (BC_AllLinks)
+                                !% --- FUTURE: this could use the base code above, but
+                                !%     also needs to handle downstream, so probably need
+                                !%     to create a function call that works for both upstream
+                                !%     and downstream
+                                print *, 'CODE ERROR: BC_AllLinks not implemented'
+                                call util_crashpoint(1018763)
+                            case default 
+                                print *, 'CODE ERROR: unexpected case default'
+                                call util_crashpoint(7019873)
+                        end select
+
+                    case (nJ1)
+                        print *, 'CODE ERROR: nJ1 not expected in this subroutine'
+                        call util_crashpoint(205874)
+
+                    case (nJ2)
+                        !% --- face node (no storage) with lateral inflow into adjacent upstream element
+                        !%     only one upstream link should exist
+                        !% --- get the upstream link for the lateral inflow
+                        linkIdx => node%I(nidx,ni_Mlink_u1)
+                        !% --- error check
+                        if ((linkIdx < 1) .or. (linkIdx > N_link)) then
+                            print *, 'CODE ERROR: invalid link index '
+                            print *, 'Index value of ',linkIdx 
+                            print *, 'allowable between ',1,' and ',N_link 
+                            call util_crashpoint(109733)
+                        end if
+                        !% --- set the data for the link upstream of the node
+                        node%YN  (nidx   ,nYN_isLinkFlow)       = .true.
+                        link%YN  (linkIdx,lYN_hasLateralInflow) = .true.
+                        link%I   (linkIdx,li_lateralInflowNode) = nidx
+
+                        if (.not. link%YN(linkIdx,lYN_isPhantomLink)) then
+                            !% ----if NOT a phantom link
+                            !%     ensure entire inflow volume goes to upstream link
+                            !%     Requires either channel or conduit
+                            if ((link%I(linkIdx,li_link_type) == lChannel) .or. &
+                                (link%I(linkIdx,li_link_type) == lPipe)       ) then
+                                link%R(linkIdx,lr_InflowVolumeFraction) = oneR
+                            else 
+                                print *, 'CODE ERROR: Unexpected condition.'
+                                print *, 'Inflow into an nJ2 node has an upstream link'
+                                print *, 'that is neither channel nor conduit.'
+                                print *, 'Problem in nJ2/nJm parsing --- nodes with inflows'
+                                print *, 'can only be nJ2 if the upstream link is a conduit'
+                                print *, 'or channel'
+                                call util_crashpoint(2309874)
+                            end if
+                        else 
+                            !% --- handle phantom link upstream of nJ2
+                            !%     get the next upstream (phantom) node
+                            nodeUp => link%I(linkIdx,li_Mnode_u)
+                            if (node%I(nodeUp,ni_node_type) .ne. nJ2) then 
+                                print *, 'CODE ERROR: node upstream of phantom link has wrong type '
+                                call util_crashpoint(6109898)
+                            end if
+                            !% --- upstream link of the phantom node
+                            linkUp => node%I(nodeUp ,ni_Mlink_u1)
+                            !% --- upstream link should have link volume fraction, or there is a logic problem
+                            if (link%R(linkUp,lr_InflowVolumeFraction) .eq. zeroR) then 
+                                print *, 'CODE ERROR: spanning link should have volume fraction for node flow distribution'
+                                call util_crashpoint(7098817)
+                            end if
+                            !% --- set consistent volume fractions over the two links
+                            Vol1 = link%R(linkIdx,lr_FullArea) * link%R(linkIdx,lr_Length)
+                            Vol2 = link%R(linkUp ,lr_FullArea) * link%R(linkUp ,lr_Length)
+                            link%R(linkIdx,lr_InflowVolumeFraction) = Vol1 / (Vol1 + Vol2)
+                            link%R(linkUp ,lr_InflowVolumeFraction) = Vol2 / (Vol1 + Vol2)
+                            !% --- set the spanning link to lateral inflow
+                            link%YN  (linkUp,lYN_hasLateralInflow) = .true.
+                            link%I   (linkUp,li_lateralInflowNode) = nidx
+                        end if
+
+                    case (nBCdn)
+                        !% --- no action
+                    case (nBCup)
+                        !% --- no action
+                    case default
+                        print *, 'CODE ERROR: Unexpected case default '
+                        call util_crashpoint(52109873)
+                    end select
+            else
+                cycle !% no valid inflow
+            end if
+        end do
+
+    end subroutine init_lateral_inflow_links
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_inflow_elem ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% ensures every lateral inflow element (node or link sub-elem) has
+        !% the elemYN(:,eYN_hasLateralInflow) set to true
+        !% Must use the packed link and node arrays to ensure only data
+        !% from this image are used
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer :: ii 
+            integer, pointer :: L1, L2, eidx, lidx, nidx
+        !%------------------------------------------------------------------
+
+        !% -- find all elements that are in links with lateral inflow
+        if (N_flowBCLink > 0) then 
+            do ii=1,N_flowBClink
+                lidx => link%P%have_flowBC(ii)
+                !% --- all the elements in this link
+                L1 => link%I(lidx,li_first_elem_idx)
+                L2 => link%I(lidx,li_last_elem_idx)
+                !% --- check if link is a lateral inflow
+                if (link%YN(lidx,lYN_hasLateralInflow)) then 
+                    elemYN(L1:L2,eYN_hasLateralInflow)  = .true.
+                    elemI (L1:L2,ei_lateralInflowNode)  = link%I(lidx,li_lateralInflowNode)
+                    !% --- set the inflow fraction in each element upstream
+                    elemR (L1:L2,er_InflowVolumeFraction)                          &
+                        = link%R(lidx,lr_InflowVolumeFraction)                     &
+                          * (elemR(L1:L2,er_Length)) / sum(elemR(L1:L2,er_Length))     
+                else
+                    elemYN(L1:L2,eYN_hasLateralInflow) = .false.
+                end if
+            end do
+        end if
+
+        !% --- find all elements that are nJm nodes with lateral inflow
+        if (N_flowBCnode > 0) then 
+            do ii = 1,N_flowBCnode
+                nidx => node%P%have_flowBC(ii)
+                !% --- only nJm nodes have elem inflow (nJ2 are in lateral set)
+                if (node%I(nidx,ni_node_type) == nJm) then
+                    !% --- element index for this node
+                    eidx => node%I(nidx,ni_elem_idx)
+                    !% --- only assign the node as an inflow element if
+                    !%     it is NOT a link inflow
+                    if ((      node%YN(nidx,nYN_has_inflow)) .and. &
+                        (.not. node%YN(nidx,nYN_isLinkFlow))       &
+                        ) then 
+                        elemYN(eidx,eYN_hasLateralInflow)    = .true.
+                        elemI (eidx,ei_lateralInflowNode)    = nidx
+                        elemR (eidx,er_InflowVolumeFraction) = oneR
+                    else 
+                        elemYN(eidx,eYN_hasLateralInflow) = .false.
+                    end if
+                else 
+                    !% --- skip all other node types -- not possible inflows to node.
+                end if
+            end do
+        end if
+
+    end subroutine init_inflow_elem   
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_bc_flow ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% initializes data in the BC%flowX arrays
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer          :: bidx, kk
+            integer, pointer :: nidx, ntype, nodeUp, linkUp, linkIdx
+        !%------------------------------------------------------------------
+
+        !% --- Set most defaults to null 
+        !%     but fetch must be 1 to ensure data is stored
+        !%     and upper index, duplicate must be 0
+        if (N_flowBCnode > 0) then
+            BC%flowI                     = nullvalueI
+            BC%flowR                     = nullvalueR
+            BC%flowTimeseries            = nullValueR
+            BC%flowR(:, br_timeInterval) = abs(nullvalueR)  !% ensure positive
+            BC%flowI(:,bi_fetch)         = oneI
+            BC%flowI(:,bi_TS_upper_idx)  = zeroI  !% latest position of upper bound in flow table
+            BC%flowI(:,bi_TS_duplicate)  = zeroI
+        end if
+
+        link%I(:,li_lateralInflowBCidx) = zeroI !% default
+        node%I(:,ni_lateralInflowBCidx) = zeroI !% default -- 
+
+        !% --- initialize inflow BC for all nodes with BC data sets required by this image
+        if (N_flowBCnode > 0) then
+            do bidx = 1, N_flowBCnode
+                nidx  => node%P%have_flowBC(bidx)
+                ntype => node%I(nidx, ni_node_type)
+            
+                !% Handle Inflow BCs (BCup and BClat only)
+                if (node%YN(nidx, nYN_has_extInflow) .or. node%YN(nidx, nYN_has_dwfInflow)) then
+
+                    BC%flowI (bidx, bi_node_idx)           = nidx
+                    BC%flowI (bidx, bi_idx)                = bidx
+                    BC%flowYN(bidx, bYN_read_input_series) = .true.
+                    BC%flowI (bidx, bi_face_idx)           = nullvalueI  !% default (null for nJm flow)
+                    BC%flowI (bidx, bi_elem_idx)           = nullvalueI  !% default (always NULL for flow)
+
+                    !% --- assign category, face index, whether or not the BC is a link inflow
+                    !%     and (if a link inflow) assign the link the BC(bidx)
+                    select case (ntype)
+                        case (nJm)
+                            !% --- standard junction
+                            BC%flowI (bidx, bi_category)     = BClat
+                            BC%flowYN(bidx,bYN_isLinkFlow)   = .false. !% --- default, evaluated below
+        
+                            !% --- assign TF for BC(:,isLinkFlow) and 
+                            !%     assign BC(bidx) to link%I(:,li_lateralInflowBCidx)
+                            if (.not. setting%BC%InflowBC%UseLinkDistributionTF) then 
+                                !% --- nJm must be a nodal inflow if link distribution not used
+                                BC%flowYN(bidx,bYN_isLinkFlow)        = .false.
+                                node%I   (nidx,ni_lateralInflowBCidx) = bidx
+                            else 
+                                !% --- handle nodes inflows that are pushed to links
+                                select case (setting%BC%InflowBC%LinkDistributionMethod)
+
+                                    case (BC_AllUpstreamOpenChannels,BC_AllUpstreamLinks)
+                                        !% --- cycle over the upstream nodes the present node
+                                        !%     to assign the BC(bidx) associated with the link
+                                        !%     and BC(:,bYN_isLinkFlow) if lateral flow occurs
+                                        do kk=1,node%I(nidx,ni_N_link_u)
+                                            linkIdx => node%I(nidx,ni_idx_base1 + kk)
+                                            !% --- onl consider links with lateral inflow
+                                            if (.not. link%YN(linkIdx,lYN_hasLateralInflow)) cycle 
+                                            !% --- true for node if any valid link found
+                                            BC%flowYN(bidx   ,bYN_isLinkFlow)        = .true.  !% only needs 1 out of all upstream for this to be true
+                                            link%I   (linkIdx,li_lateralInflowBCidx) = bidx    !% BC data set
+                                            !% --- check whether this is a phantom link
+                                            !%     if so, then the node inflow is also distributed over the
+                                            !%     next upstream link.  
+                                            !%     Note that volume fractions for phantom and spanning links are taken
+                                            !%     care of in phantom_node_generator of BIPquick
+                                            if (link%YN(linkIdx,lYN_isPhantomLink)) then 
+                                                !% --- inflow is distributed also to upstream link
+                                                !%     get the upstream node
+                                                nodeUp => link%I(linkIdx,li_Mnode_u)
+                                                !% --- Node must be nJ2 or there is a logic problem
+                                                if (node%I(nodeUp,ni_node_type) .ne. nJ2) then 
+                                                    print *, 'CODE ERROR: node upstream of phantom link has wrong type '
+                                                    call util_crashpoint(6109873)
+                                                end if
+                                                !% --- upstream link of the phantom node
+                                                linkUp => node%I(nodeUp ,ni_Mlink_u1)
+                                                !% --- upstream link should have link volume fraction, or there is a logic problem
+                                                if (link%R(linkUp,lr_InflowVolumeFraction) .eq. zeroR) then 
+                                                    print *, 'CODE ERROR: spanning link should have volume fraction for node flow distribution'
+                                                    call util_crashpoint(70109873)
+                                                end if
+                                                !% --- assign the further downstream node as the connected inflow
+                                                !%     This is NOT the nodeUp, which is a phantom nJ2 node and is
+                                                !%     not in the flowBCnode set
+                                                link%I(linkUp,li_lateralInflowBCidx) = bidx    !% BC data set
+                                                !% --- note that BC%flowYN(:,bYN_isLinkFlow) already set to true
+                                            else 
+                                                !% --- if not phantom then don't do anythin
+                                            end if
+                                        end do
+
+                                    case (BC_AllLinks)
+                                        !% --- FUTURE: this could use the base code above, but
+                                        !%     also needs to handle downstream, so probably need
+                                        !%     to create a function call that works for both upstream
+                                        !%     and downstream
+                                        print *, 'CODE ERROR: BC_AllLinks not implemented'
+                                        call util_crashpoint(1018763)
+                                    case default 
+                                        print *, 'CODE ERROR: unexpected case default'
+                                        call util_crashpoint(7019873)
+                                end select
+                            end if
+
+                        case (nJ1)
+                            !% --- dead end without BCup or BCdn
+                            !BC%flowI(bidx, bi_category) = BClat
+                            print *, 'CODE ERROR for BC'
+                            print *, 'CODE NEEDS TESTING: BClat inflow for dead-end nJ1 node has not been tested'
+                            print *, 'problem at node ',nidx
+                            print *, 'which has input node name ',trim(node%Names(nidx)%str)
+                            call util_crashpoint(5586688)
+
+                        case (nJ2) 
+                            !% --- face node (no storage) with lateral inflow into adjacent element
+                            !%     only one upstream link should exist
+                            BC%flowI(bidx,bi_category) = BClat
+                            BC%flowI(bidx,bi_face_idx) = node%I(nidx,ni_face_idx)
+                            !% ---- set the inflow to the upstream link 
+                            linkIdx => node%I(nidx,ni_Mlink_u1)
+                            !% --- error check
+                            if ((linkIdx < 1) .or. (linkIdx > N_link)) then
+                                print *, 'CODE ERROR: invalid link index '
+                                print *, 'Index value of ',linkIdx 
+                                print *, 'allowable between ',1,' and ',N_link 
+                                call util_crashpoint(109733)
+                            end if
+                            !% --- assign TF for BC(:,isLinkFlow) and 
+                            !%     assign BC(bidx) to link%I(:,li_lateralInflowBCidx)
+                            !% --- set the data for the link upstream of the node
+                            BC%flowYN(bidx,   bYN_isLinkFlow)        = .true.
+                            link%I   (linkIdx,li_lateralInflowBCidx) = bidx
+
+                            if (link%YN(linkIdx,lYN_isPhantomLink)) then
+                                !% --- handle phantom link upstream of nJ2
+                                !%     get the next upstream (phantom) node
+                                nodeUp => link%I(linkIdx,li_Mnode_u)
+                                if (node%I(nodeUp,ni_node_type) .ne. nJ2) then 
+                                    print *, 'CODE ERROR: node upstream of phantom link has wrong type '
+                                    call util_crashpoint(6109898)
+                                end if
+                                !% --- upstream link of the phantom node
+                                linkUp => node%I(nodeUp ,ni_Mlink_u1)
+                                !% --- upstream link should have link volume fraction, or there is a logic problem
+                                if (link%R(linkUp,lr_InflowVolumeFraction) .eq. zeroR) then 
+                                    print *, 'CODE ERROR: spanning link should have volume fraction for node flow distribution'
+                                    call util_crashpoint(7098817)
+                                end if
+                                link%I(linkUp,li_lateralInflowBCidx) = bidx
+                            end if
+
+                        case (nBCdn)
+                            !BC%flowI(bidx, bi_face_idx) = node%I(nidx,ni_face_idx)
+                            print *, 'CONFIGURATION ERROR: Flow BC cannot be used on a downstream node'
+                            print *, 'problem with node ',nidx, 'in SWMM5+'
+                            print *, 'which has input node name ',trim(node%Names(nidx)%str)
+                            call util_crashpoint(829873)
+
+                        case (nBCup)
+                            BC%flowI(bidx, bi_face_idx) = node%I(nidx,ni_face_idx)
+                            BC%flowI(bidx, bi_category) = BCup
+
+                        case default
+                            print *, "CODE ERROR, BC type can't be an inflow BC for node " // trim(node%Names(nidx)%str)
+                            call util_crashpoint(739845)
+
+                    end select
+
+                    !% HACK -- Pattern needs checking 
+                    !% --- check whether there is a pattern (-1 is no pattern) for this inflow
+                    BC%flowI(bidx,bi_BasePatType) = &
+                        interface_get_nodef_attribute(nidx, api_nodef_extInflow_basePat_type)
+                    
+                    !% check whether there is a time series 
+                    !% (-1 is none, >0 is index, API_NULL_VALUE_I is error, which crashes API)
+                    BC%flowI(bidx,bi_TimeSeriesIdx) = &
+                        interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
+
+                    !% --- BC does not have fixed value if its associated with dwfInflow
+                    !%     or if extInflow has tseries or pattern
+                    BC%flowI(bidx, bi_subcategory) = BCQ_tseries
+
+                    !% --- check if time series found
+                    if (BC%flowI(bidx,bi_TimeSeriesIdx) > 0) then 
+                        !% --- check for and store index of a duplicate when a time series is used more than once.
+                        if (bidx > 1) then 
+                            !% --- cycle through all the prior Time Series assignments
+                            do kk = 1,bidx-1
+                                if (BC%flowI(kk,bi_TimeSeriesIdx)  == BC%flowI(bidx,bi_TimeSeriesIdx)) then
+                                    !% --- store the local time series index that this duplicates
+                                    BC%flowI(bidx,bi_TS_duplicate) = kk
+                                    exit !% leave the do loop since the first duplicate was found
+                                end if                                
+                            end do
+                        else
+                            !% --- cannot be duplicate on bidx==1
+                        end if
+                    end if
+                    
+                    if ((BC%flowI(bidx,bi_TimeSeriesIdx) == -1) .and. (BC%flowI(bidx,bi_BasePatType) == -1)) then
+                        BC%flowI(bidx, bi_subcategory) = BCQ_fixed
+                    end if
+
+                else
+                    print *, "CODE ERROR unexpected else."
+                    print *, "Only nodes with extInflow or dwfInflow can have inflow BC"
+                    call util_crashpoint(826549)
+
+                end if
+            end do
+
+            !% --- NOTES
+            !% At this point we have the partitioned system of links/nodes with phantom links/nodes
+            !% inserted.  
+            !% The link%P%have_flowBC provides all links on this image that have a lateral flow BC
+            !% The link array includes the following
+            !%   lYN_hasLateral == inflow for every link index that has a lateral inflow,
+            !%   li_lateralInflowNode == denotes the node from which the lateral inflow is derived
+            !%   li_lateralInflowBCidx == denotes the BC data index for the lateral inflow
+            !%   lr_InflowVolumeFraction == the 0 to 1 value of what fraction of the node inflow goes to a link
+            !% The node%P%have_flowBC provides all the nodes that are required for either node inflows
+            !% or link inflows. This includes nodes that are on another image but have inflows
+            !% across a phantom node to a link on this image.
+        end if
+
+        
+    end subroutine init_bc_flow
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_bc_head ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% initializes data in the BC%flowX arrays
+        !%------------------------------------------------------------------
+        !% Declarations:
+        integer :: bidx, outfalltype, kk
+        integer, pointer :: nidx, ntype
+        !%------------------------------------------------------------------
+
+        !% --- Set most defaults to null 
+        !%     but fetch must be 1 to ensure data is stored
+        !%     and upper index, duplicate must be 0
+        if (N_headBCnode > 0) then
+            BC%headI                     = nullvalueI
+            BC%headTimeseries            = nullValueR
+            BC%headR(:, br_timeInterval) = abs(nullvalueR)  !% ensure positive
+            BC%headI(:,bi_fetch)         = oneI
+            BC%headI(:,bi_TS_upper_idx)  = zeroI
+            BC%headI(:,bi_TS_duplicate)  = zeroI
+        end if
+
+        !% --- Initialize Head BCs  
+        if (N_headBCnode > 0) then
+            do bidx = 1, N_headBCnode
+                nidx  =>  node%P%have_headBC(bidx)
+                ntype => node%I(nidx, ni_node_type)
+
+                BC%headI(bidx, bi_idx)      = bidx
+                BC%headI(bidx, bi_node_idx) = nidx
+                BC%headI(bidx, bi_face_idx) = node%I(nidx, ni_face_idx) 
+                BC%headI(bidx, bi_elem_idx) = node%I(nidx, ni_elem_idx)
+
+                select case (ntype)
+                    case (nBCdn)
+                        BC%headI(bidx, bi_category) = BCdn
+                    case default
+                        print *, "USER CONFIGURATION ERROR OR CODE ERROR for head boundary condition "
+                        print *, "Head BC is designated on something other than an nBCdn node, which is not allowed"
+                        print *, "node index is ",nidx
+                        print *, "node name is  ", trim(node%Names(nidx)%str) 
+                        if (ntype < (keys_lastplusone-1)) then
+                            print *, "node type is ",reverseKey(ntype)
+                        else
+                            print *, "node type # is invalid: ",ntype
+                        end if
+                        call util_crashpoint(57635)
+                end select
+
+                !% --- get the outfall type
+                outfallType = int(interface_get_nodef_attribute(nidx, api_nodef_outfall_type))
+                select case (outfallType)
+                    case (API_FREE_OUTFALL)
+                        BC%headI(bidx, bi_subcategory) = BCH_free
+                        BC%headYN(bidx, bYN_read_input_series) = .false.
+
+                    case (API_NORMAL_OUTFALL)
+                        BC%headI(bidx, bi_subcategory) = BCH_normal
+                        BC%headYN(bidx, bYN_read_input_series) = .false.
+
+                    case (API_FIXED_OUTFALL) 
+                        BC%headI(bidx, bi_subcategory) = BCH_fixed
+                        BC%headYN(bidx, bYN_read_input_series) = .false.
+
+                    case (API_TIDAL_OUTFALL)
+                        BC%headI(bidx, bi_subcategory) = BCH_tidal
+                        BC%headYN(bidx, bYN_read_input_series) = .true.
+
+                    case (API_TIMESERIES_OUTFALL)
+                        BC%headI(bidx, bi_subcategory) = BCH_tseries
+                        BC%headYN(bidx, bYN_read_input_series) = .true.
+                        BC%headI(bidx,bi_TimeSeriesIdx) = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries)
+
+                        if (BC%headI(bidx,bi_TimeSeriesIdx) > 0) then 
+                            !% --- check for and stor index of a duplicate when a time series is re-used
+                            if (bidx > 1) then 
+                                !% --- cycle through priro time series assignments
+                                do kk = 1,bidx-1
+                                    if (BC%headI(kk,bi_TimeSeriesIdx) == BC%headI(bidx,bi_TimeSeriesIdx)) then
+                                    !% --- store the local time series index that this duplicates
+                                        BC%headI(bidx,bi_TS_duplicate) = kk
+                                        exit !% leave the do loop since the first duplicate was found
+                                    end if  
+                                end do 
+                            else
+                                !% --- cannot be duplicate on bidx==1
+                            end if
+                        else
+                            !% --- HACK need handling of external (not file) time series data
+                            print *, 'USER CONFIGURATION ERROR: for head time series at outfall'
+                            print *, 'time series not found for head BC at node ',nidx
+                            print *, 'node name ',trim(node%Names(nidx)%str)
+                            call util_crashpoint(60982734)
+                        end if
+
+                    case default
+                        print *, 'CODE ERROR unexpected case default'
+                        call util_crashpoint(33875)
+                end select
+
+                !% --- check for a flap gate
+                if (interface_get_nodef_attribute(nidx, api_nodef_hasFlapGate) == oneR) then
+                    BC%headYN(bidx,bYN_hasFlapGate) = .true.
+                else
+                    BC%headYN(bidx,bYN_hasFlapGate) = .false.
+                endif
+
+            end do
+        end if
+
+    end subroutine init_bc_head 
+!%
+!%==========================================================================
+!%==========================================================================
+!%   
+    subroutine init_elem_bc_assign ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% assigns the elemI(:,ei_lateralInflowBCidx) to inflow elements
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, pointer :: lidx, nidx, eidx, L1, L2
+            integer :: ii
+        !%------------------------------------------------------------------
+        !% -- find all elements that are in links with lateral inflow
+        if (N_flowBCLink > 0) then 
+            do ii=1,N_flowBClink
+                lidx => link%P%have_flowBC(ii)
+                !% --- all the elements in this link
+                L1 => link%I(lidx,li_first_elem_idx)
+                L2 => link%I(lidx,li_last_elem_idx)
+                !% --- check if link is a lateral inflow
+                if (link%YN(lidx,lYN_hasLateralInflow)) then 
+                    elemI (L1:L2,ei_lateralInflowBCidx)  = link%I(lidx,li_lateralInflowBCidx)
+                end if
+            end do
+        end if
+
+        !% --- find all elements that are nJm nodes with lateral inflow
+        if (N_flowBCnode > 0) then 
+            do ii = 1,N_flowBCnode
+                nidx => node%P%have_flowBC(ii)
+                !% --- only nJm nodes have elem inflow (nJ2 are in lateral set)
+                if (node%I(nidx,ni_node_type) == nJm) then
+                    !% --- element index for this node
+                    eidx => node%I(nidx,ni_elem_idx)
+                    !% --- only assign the node as an inflow element if
+                    !%     it is NOT a link inflow
+                    if ((      node%YN(nidx,nYN_has_inflow)) .and. &
+                        (.not. node%YN(nidx,nYN_isLinkFlow))       &
+                        ) then 
+                        elemI (eidx,ei_lateralInflowBCidx)  = node%I(nidx,ni_lateralInflowBCidx)
+                    end if
+                else 
+                    !% --- skip all other node types -- not possible inflows to node.
+                end if
+            end do
+        end if
+
+    end subroutine init_elem_bc_assign
+!%
+!%==========================================================================
+!%==========================================================================
 !%
     subroutine init_bc()
         !%------------------------------------------------------------------
@@ -5444,8 +6089,11 @@ contains
         !%
         !%---------------------------------------------------------------------
         !% Declarations
-            integer :: ii, kk, nidx, ntype, outfallType
+            integer :: bidx, kk, outfallType
             integer :: SWMMtseriesIdx, SWMMbasepatType
+
+            integer, pointer :: nodeUp, linkIdx, nidx, ntype
+
             character(64) :: subroutine_name = "init_bc"
         !%---------------------------------------------------------------------
         !% Preliminaries
@@ -5458,203 +6106,47 @@ contains
         !% --- set the key values to undefinedKey
         call util_key_default_bc()
 
-        !% --- Set all to null with fetch to 1 and upper index to 0
-        if (N_flowBC > 0) then
-            BC%flowI = nullvalueI
-            BC%flowR = nullvalueR
-            BC%flowTimeseries = nullValueR
-            BC%flowR(:, br_timeInterval) = abs(nullvalueR)  !% ensure positive
-            BC%flowI(:,bi_fetch) = 1
-            BC%flowI(:,bi_TS_upper_idx) = 0  !% latest position of upper bound in flow table
-            BC%flowI(:,bi_TS_duplicate) = 0
-        end if
-        if (N_headBC > 0) then
-            BC%headI = nullvalueI
-            BC%headTimeseries = nullValueR
-            BC%headR(:, br_timeInterval) = abs(nullvalueR)  !% ensure positive
-            BC%headI(:,bi_fetch) = 1
-            BC%headI(:,bi_TS_upper_idx) = 0
-            BC%headI(:,bi_TS_duplicate) = 0
-        end if
+        !% --- set the link/node arrays to identify link lateral inflow connections to nodes
+        ! print *, 'calling init_lateral_inflow_links'
+        call init_lateral_inflow_links ()
 
-        !% --- Initialize Inflow BCs
-        if (N_flowBC > 0) then
-            do ii = 1, N_flowBC
-                nidx  = node%P%have_flowBC(ii)
-                ntype = node%I(nidx, ni_node_type)
+        !% --- get the BC nodes (flow, head) for this image
+        !%     must include nodes that may be formally on a different image but are
+        !%     required for a lateral inflow upstream of a phantom node.
+        ! print *, 'calling pack_BC_nodes_thisImage'
+        call pack_BC_nodes_thisImage ()
 
-                !% Handle Inflow BCs (BCup and BClat only)
-                if (node%YN(nidx, nYN_has_extInflow) .or. node%YN(nidx, nYN_has_dwfInflow)) then
+        !% --- allocate the link%P for the have_flowBC
+        ! print *, 'calling pack_links_haveBC_thisImage'
+        call pack_links_haveBC_thisImage() 
 
-                    BC%flowI (ii, bi_node_idx)           = nidx
-                    BC%flowI (ii, bi_idx)                = ii
-                    BC%flowYN(ii, bYN_read_input_series) = .true.
-                    BC%flowI (ii, bi_face_idx)           = node%I(nidx,ni_face_idx)
-                    BC%flowI (ii, bi_elem_idx)           = node%I(nidx,ni_elem_idx)
+        !% --- set the element arrays to identify all lateral and node inflows
+        ! print *, 'calling init_inflow_elem'
+        call init_inflow_elem ()
 
-                    !% --- assign category and face index
-                    select case (ntype)
-                        case (nJm)
-                            !% --- standard junction
-                            BC%flowI(ii, bi_category) = BClat
-                            BC%flowI(ii, bi_face_idx) = nullvalueI
-                            BC%flowI(ii, bi_elem_idx) = node%I(nidx,ni_elem_idx)
-                        case (nJ1)
-                            !% --- dead end without BCup
-                            BC%flowI(ii, bi_category) = BClat
-                            print *, 'CODE ERROR for BC'
-                            print *, 'CODE NEEDS TESTING: BClat inflow for dead-end nJ1 node has not been tested'
-                            call util_crashpoint(5586688)
-                        case (nJ2) 
-                            !% --- face node (no storage) with lateral inflow into adjacent element
-                            BC%flowI(ii, bi_category) = BClat
-                        case (nBCup)
-                            BC%flowI(ii, bi_category) = BCup
-                        case default
-                            print *, "Error, BC type can't be an inflow BC for node " // node%Names(nidx)%str
-                            call util_crashpoint(739845)
-                    end select
+        !% --- allocate the BC arrays
+        ! print *, 'calling util_allocate_bc'
+        call util_allocate_bc()
 
-                    !% HACK -- Pattern needs checking 
-                    !% --- check whether there is a pattern (-1 is no pattern) for this inflow
-                    BC%flowI(ii,bi_BasePatType) = &
-                        interface_get_nodef_attribute(nidx, api_nodef_extInflow_basePat_type)
-                    
-                    !% check whether there is a time series 
-                    !% (-1 is none, >0 is index, API_NULL_VALUE_I is error, which crashes API)
-                    BC%flowI(ii,bi_TimeSeriesIdx) = &
-                        interface_get_nodef_attribute(nidx, api_nodef_extInflow_tSeries)
-
-                    !% --- BC does not have fixed value if its associated with dwfInflow
-                    !%     or if extInflow has tseries or pattern
-                    BC%flowI(ii, bi_subcategory) = BCQ_tseries
-
-                    !% --- check if time series found
-                    if (BC%flowI(ii,bi_TimeSeriesIdx) > 0) then 
-                        !% --- check for and store index of a duplicate when a time series is used more than once.
-                        if (ii > 1) then 
-                            !% --- cycle through all the prior Time Series assignments
-                            do kk = 1,ii-1
-                                if (BC%flowI(kk,bi_TimeSeriesIdx)  == BC%flowI(ii,bi_TimeSeriesIdx)) then
-                                    !% --- store the local time series index that this duplicates
-                                    BC%flowI(ii,bi_TS_duplicate) = kk
-                                    exit !% leave the do loop since the first duplicate was found
-                                end if                                
-                            end do
-                        else
-                            !% --- cannot be duplicate on ii==1
-                        end if
-                    end if
-                    
-                    if ((BC%flowI(ii,bi_TimeSeriesIdx) == -1) .and. (BC%flowI(ii,bi_BasePatType) == -1)) then
-                        BC%flowI(ii, bi_subcategory) = BCQ_fixed
-                    end if
-
-                else
-                    print *, "CODE ERROR unexpected else."
-                    print *, "Only nodes with extInflow or dwfInflow can have inflow BC"
-                    call util_crashpoint(826549)
-
-                end if
-            end do
-        end if
-
-        !% --- Initialize Head BCs  
-        if (N_headBC > 0) then
-            do ii = 1, N_headBC
-                nidx =  node%P%have_headBC(ii)
-                ntype = node%I(nidx, ni_node_type)
-
-                BC%headI(ii, bi_idx) = ii
-                BC%headI(ii, bi_node_idx) = nidx
-                BC%headI(ii, bi_face_idx) = node%I(nidx, ni_face_idx) 
-                BC%headI(ii, bi_elem_idx) = node%I(nidx, ni_elem_idx)
-
-                select case (ntype)
-                    case (nBCdn)
-                        BC%headI(ii, bi_category) = BCdn
-                    case default
-                        print *, "USER CONFIGURATION ERROR OR CODE ERROR for head boundary condition "
-                        print *, "Head BC is designated on something other than an nBCdn node, which is not allowed"
-                        print *, "node index is ",nidx
-                        print *, "node name is  ", trim(node%Names(nidx)%str) 
-                        if (ntype < (keys_lastplusone-1)) then
-                            print *, "node type is ",reverseKey(ntype)
-                        else
-                            print *, "node type # is invalid: ",ntype
-                        end if
-                        call util_crashpoint(57635)
-                end select
-
-                !% --- get the outfall type
-                outfallType = int(interface_get_nodef_attribute(nidx, api_nodef_outfall_type))
-                select case (outfallType)
-                    case (API_FREE_OUTFALL)
-                        BC%headI(ii, bi_subcategory) = BCH_free
-                        BC%headYN(ii, bYN_read_input_series) = .false.
-
-                    case (API_NORMAL_OUTFALL)
-                        BC%headI(ii, bi_subcategory) = BCH_normal
-                        BC%headYN(ii, bYN_read_input_series) = .false.
-
-                    case (API_FIXED_OUTFALL) 
-                        BC%headI(ii, bi_subcategory) = BCH_fixed
-                        BC%headYN(ii, bYN_read_input_series) = .false.
-
-                    case (API_TIDAL_OUTFALL)
-                        BC%headI(ii, bi_subcategory) = BCH_tidal
-                        BC%headYN(ii, bYN_read_input_series) = .true.
-
-                    case (API_TIMESERIES_OUTFALL)
-                        BC%headI(ii, bi_subcategory) = BCH_tseries
-                        BC%headYN(ii, bYN_read_input_series) = .true.
-                        BC%headI(ii,bi_TimeSeriesIdx) = interface_get_nodef_attribute(nidx, api_nodef_head_tSeries)
-
-                        if (BC%headI(ii,bi_TimeSeriesIdx) > 0) then 
-                            !% --- check for and stor index of a duplicate when a time series is re-used
-                            if (ii > 1) then 
-                                !% --- cycle through priro time series assignments
-                                do kk = 1,ii-1
-                                    if (BC%headI(kk,bi_TimeSeriesIdx) == BC%headI(ii,bi_TimeSeriesIdx)) then
-                                    !% --- store the local time series index that this duplicates
-                                        BC%headI(ii,bi_TS_duplicate) = kk
-                                        exit !% leave the do loop since the first duplicate was found
-                                    end if  
-                                end do 
-                            else
-                                !% --- cannot be duplicate on ii==1
-                            end if
-                        else
-                            !% --- HACK need handling of external (not file) time series data
-                            print *, 'USER CONFIGURATION ERROR: for head time series at outfall'
-                            print *, 'time series not found for head BC at node ',nidx
-                            print *, 'node name ',trim(node%Names(nidx)%str)
-                            call util_crashpoint(60982734)
-                        end if
-
-                    case default
-                        print *, 'CODE ERROR unexpected case default'
-                        call util_crashpoint(33875)
-                end select
-
-                !% --- check for a flap gate
-                if (interface_get_nodef_attribute(nidx, api_nodef_hasFlapGate) == oneR) then
-                    BC%headYN(ii,bYN_hasFlapGate) = .true.
-                else
-                    BC%headYN(ii,bYN_hasFlapGate) = .false.
-                endif
-
-            end do
-        end if
+        !% --- set the BC%flow and BC%head configurations
+        ! print *, 'calling init_bc_flow, and init_bc_head'
+        call init_bc_flow ()
+        call init_bc_head ()
+        
+        !% --- assign BC index to the elements
+        ! print *, 'calling init_elem_bc_assign'
+        call init_elem_bc_assign ()
     
+        !% --- create packed arrays of BC data
+        ! print *, 'calling pack_data_BC'
+        call pack_data_BC()
+
         !% --- take the first BC step
+        ! print *, 'calling bc_step'
         call bc_step()
 
         !% --- exit on crash condition
         if (crashI==1) return
-
-        !% --- create packed arrays of BC data
-        call pack_data_BC()
 
         !%------------------------------------------------------------------
         !% Closing
@@ -5733,9 +6225,9 @@ contains
             grav         => setting%Constant%gravity
         !%------------------------------------------------------------------ 
         !% --- return if there are no head BC
-        if (N_headBC < 1) return
+        if (N_headBCnode < 1) return
 
-        do ii = 1,N_headBC
+        do ii = 1,N_headBCnode
 
             !% --- increment over the last-used uniform table index
             UT_idx = UT_idx + 1

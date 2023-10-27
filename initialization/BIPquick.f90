@@ -1007,8 +1007,14 @@ contains
         B_nodeI(phantom_node_idx, :) = upstream_node_list
 
         !% --- Copy the link row entries from the spanning link to the phantom link
-        link%I(phantom_link_idx, :) = link%I(spanning_link, :)
-        link%R(phantom_link_idx, :) = link%R(spanning_link, :)
+        link%I (phantom_link_idx, :) = link%I (spanning_link, :)
+        link%R (phantom_link_idx, :) = link%R (spanning_link, :)
+        link%YN(phantom_link_idx, :) = link%YN(spanning_link, :)
+        !% --- reset the phantom link identifier
+        link%YN(phantom_link_idx,lYN_isPhantomLink) = .true.
+        !% --- SHOULD phantom link be added to output-- it was not done before --- 20231025brh HACK
+        link%YN(phantom_link_idx,lYN_isOutput) = .false.
+
 
         !% find what will be the adjusted link length if the orinal cut is used
         adjustedLinkLength = link%R(spanning_link, lr_Length) - phantom_node_start
@@ -1056,7 +1062,26 @@ contains
 
         !% --- The phantom link length is the spanning_link length - the phantom node location
         link%R(phantom_link_idx, lr_Length) = link%R(spanning_link, lr_Length) - phantom_node_start
-        link%R(spanning_link, lr_Length) = phantom_node_start
+        link%R(spanning_link   , lr_Length) = phantom_node_start
+
+        !% --- Adjust the inflow link volume fraction based on length ratio
+        !%     This allows the node inflow to be split over both the spanning link and phantom link when
+        !%     the link has a lateral inflow
+        if (link%R(spanning_link   ,lr_InflowVolumeFraction) > zeroR) then 
+            
+            link%R(phantom_link_idx,lr_InflowVolumeFraction)                                     &
+                =  link%R(spanning_link   , lr_InflowVolumeFraction)                             &
+                 * link%R(phantom_link_idx, lr_Length)                                         &
+                / (link%R(spanning_link   , lr_Length)  + link%R(phantom_link_idx, lr_Length))
+            
+            link%R(spanning_link,lr_InflowVolumeFraction)                                        &
+                =  link%R(spanning_link   , lr_InflowVolumeFraction)                             &
+                 * link%R(spanning_link   , lr_Length)                                         &
+                / (link%R(spanning_link   , lr_Length)  + link%R(phantom_link_idx, lr_Length))
+        
+        end if
+
+        !% --- set the number of elements and nominal element size for each link
         call init_discretization_nominal(phantom_link_idx)
         call init_discretization_nominal(spanning_link)
 

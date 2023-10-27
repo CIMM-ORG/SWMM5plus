@@ -15,13 +15,16 @@ module pack_mask_arrays
     use define_keys
     use define_settings
     use utility_crash
+    use utility, only : util_unique_rank
     
     implicit none
     private
 
     public :: pack_mask_arrays_all
     public :: pack_dynamic_arrays
-    public :: pack_nodes_BC
+    public :: pack_BC_nodes_thisImage
+    public :: pack_links_haveBC_thisImage
+    !public :: pack_nodes_haveBC
     public :: pack_data_BC
     public :: pack_element_outputML
     public :: pack_face_outputML
@@ -134,48 +137,166 @@ contains
 !%    
 !%==========================================================================    
 !%==========================================================================
+!%
+    subroutine pack_BC_nodes_thisImage ()
+        !%------------------------------------------------------------------
+        !% DESCRIPTION
+        !% Packs all the node BC needed by an image, including lateral 
+        !% inflows, which might require node that is otherwise NOT on the image
+        !%------------------------------------------------------------------
+        !% DECLARATIONS:
+            integer :: nbc, lbc, Nunique
+            integer, allocatable :: fromNodes(:), fromLinks(:), allNodes(:)
+            integer, allocatable :: rankedNodes(:)
+        !%------------------------------------------------------------------
+
+        !% --- get the number of nodes that have inflows on this image
+        nbc = count(node%YN(:,nYN_has_inflow) .and. &
+                   (node%I(:,ni_P_image) == this_image()))
+
+        if (nbc > zeroI) then
+            !% --- store the BC node indexes
+            allocate(fromNodes(nbc))
+            fromNodes = pack( node%I (:,ni_idx),                               & 
+                                (node%YN(:,nYN_has_inflow)                ) .and. &
+                                (node%I (:,ni_P_image    ) == this_image())       &
+                                )
+        end if
+
+        !% --- look for lateral inflows on this image whose downstream nodes
+        !%     are phantom. These will not show up in the nbc set as the inflow
+        !%     nodes are not on this image, but the inflow must be distributed 
+        !%     over the "spanning link" that is upstream of the phantom node          
+        lbc = count( (link%YN(:,lYN_hasLateralInflow)                   ) .and. &
+                     (link%I (:,li_P_image)         == this_image()     ) .and. &
+                     (node%YN(link%I(:,li_Mnode_d ),nYN_is_phantom_node))       &
+                    )
+
+        if (lbc > 0) then 
+            !% --- store the BC node indexes for lateral inflows whose downstream node
+            !%     is a phantom node.
+            allocate(fromLinks(lbc))
+            fromLinks = pack( link%I (:,li_lateralInflowNode), &
+                             (link%YN(:,lYN_hasLateralInflow)                   ) .and. &
+                             (link%I (:,li_P_image)         == this_image()     ) .and. &
+                             (node%YN(link%I(:,li_Mnode_d ),nYN_is_phantom_node))       & 
+                            )
+                            
+            !% --- combine the fromNodes and fromLinks into a single array
+            allocate(allNodes(nbc+lbc))
+            allNodes(1:nbc)         = fromNodes 
+            allNodes(nbc+1:nbc+lbc) = fromLinks
+
+            !% --- sort and remove duplicates
+            !%     Note that duplicates should only occur when several links upstream
+            !%     of a  node are on the same image, but the node is on a different image
+            call util_unique_rank (allNodes, rankedNodes, Nunique)
+
+            allocate(node%P%have_flowBC(Nunique))
+            node%P%have_flowBC = rankedNodes
+
+            N_flowBCnode = Nunique
+
+        else
+            !% --- Note that if there are no lateral inflows with phantom nodes downstream
+            !%     then the fromNodes() contains all the node inflow indexes required for
+            !%     this image
+            if (nbc > 0) then
+                allocate(node%P%have_flowBC(nbc))
+                node%P%have_flowBC = fromNodes
+            end if
+            N_flowBCnode = nbc
+        end if
+
+        !% --- count the nodes with head BC on this image                
+        !%     HACK -- this assumes that a head BC is always a downstream BC.
+        N_headBCnode = count((node%I(:,ni_node_type) == nBCdn)       .and. &
+                             (node%I(:,ni_P_image)   == this_image())      &
+                            )  
+
+        if (N_headBCnode > 0) then
+            allocate(node%P%have_headBC(N_headBCnode))
+            node%P%have_headBC = pack( node%I(:,ni_idx),                           &
+                                      (node%I(:,ni_node_type) == nBCdn)      .and. &
+                                      (node%I(:,ni_P_image)   == this_image())     &
+                                     )
+        end if
+        
+        if (nbc > 0) deallocate(fromNodes)
+        if (lbc > 0) deallocate(fromLinks)
+        if (lbc > 0) deallocate(allNodes)
+        if (lbc > 0) deallocate(rankedNodes)
+
+
+    end subroutine  pack_BC_nodes_thisImage  
+!%
+!%==========================================================================  
+!%==========================================================================
 !
-    subroutine pack_nodes_BC()
+    ! subroutine pack_nodes_haveBC()
+    !     !%------------------------------------------------------------------
+    !     !% Description
+    !     !% This allocates and packs the nodes size data in the arrays of node%P.
+    !     !% With this approach using the P type, each of the arrays on the images
+    !     !% are allocated to the size needed.
+    !     !%------------------------------------------------------------------
+    !     !% Declarations:
+    !         character(64)    :: subroutine_name = 'pack_nodes_BC'
+    !     !%------------------------------------------------------------------
+    !     !% Preliminaries
+    !         if (setting%Debug%File%pack_mask_arrays) &
+    !             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+    !     !%------------------------------------------------------------------
+
+    !     !% --- moved into init_BC
+    !     !N_flowBCnode = count(node%YN(:,nYN_has_inflow) .and. &
+    !     !                (node%I(:,ni_P_image) == this_image()))
+
+    !     if (N_flowBCnode > 0) then
+    !         allocate(node%P%have_flowBC(N_flowBCnode))
+    !         node%P%have_flowBC = pack(node%I(:,ni_idx), &
+    !             node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
+    !     end if
+
+    !     !% --- moved into init_BC
+    !     !% HACK -- this assumes that a head BC is always a downstream BC.
+    !    ! N_headBCnode = count((node%I(:, ni_node_type) == nBCdn) .and. &
+    !     !                (node%I(:,ni_P_image) == this_image()))
+
+    !     if (N_headBCnode > 0) then
+    !         allocate(node%P%have_headBC(N_headBCnode))
+    !         node%P%have_headBC = pack(node%I(:,ni_idx), &
+    !         (node%I(:, ni_node_type) == nBCdn) .and. &
+    !         (node%I(:,ni_P_image) == this_image()))
+    !     end if
+
+    !     !%------------------------------------------------------------------
+    !     !% Closing
+    !         if (setting%Debug%File%pack_mask_arrays) &
+    !         write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+
+    ! end subroutine pack_nodes_haveBC
+!%
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine pack_links_haveBC_thisImage ()
         !%------------------------------------------------------------------
         !% Description
-        !% This allocates and packs the node data in the arrays of node%P.
-        !% With this approach using the P type, each of the arrays on the images
-        !% are allocated to the size needed.
-        !%------------------------------------------------------------------
-        !% Declarations:
-            character(64)    :: subroutine_name = 'pack_nodes'
-        !%------------------------------------------------------------------
-        !% Preliminaries
-            if (setting%Debug%File%pack_mask_arrays) &
-                write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
+        !% Allocates and packs the link%P%have_flowBC array 
         !%------------------------------------------------------------------
 
-        N_flowBC = count(node%YN(:,nYN_has_inflow) .and. &
-                        (node%I(:,ni_P_image) == this_image()))
+        !% --- count the links with lateral inflows on this image     
+        N_flowBClink = count(link%YN(:,lYN_hasLateralInflow) .and. &
+                        (link%I(:,li_P_image) == this_image()))
 
-        if (N_flowBC > 0) then
-            allocate(node%P%have_flowBC(N_flowBC))
-            node%P%have_flowBC = pack(node%I(:,ni_idx), &
-                node%YN(:,nYN_has_inflow) .and. (node%I(:,ni_P_image) == this_image()))
+        if (N_flowBClink > 0) then
+            allocate(link%P%have_flowBC(N_flowBClink))
+            link%P%have_flowBC = pack(link%I(:,li_idx), &
+                link%YN(:,lYN_hasLateralInflow) .and. (link%I(:,li_P_image) == this_image()))
         end if
 
-        !% HACK -- this assumes that a head BC is always a downstream BC.
-        N_headBC = count((node%I(:, ni_node_type) == nBCdn) .and. &
-                        (node%I(:,ni_P_image) == this_image()))
-
-        if (N_headBC > 0) then
-            allocate(node%P%have_headBC(N_headBC))
-            node%P%have_headBC = pack(node%I(:,ni_idx), &
-            (node%I(:, ni_node_type) == nBCdn) .and. &
-            (node%I(:,ni_P_image) == this_image()))
-        end if
-
-        !%------------------------------------------------------------------
-        !% Closing
-            if (setting%Debug%File%pack_mask_arrays) &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
-    end subroutine pack_nodes_BC
+    end subroutine pack_links_haveBC_thisImage    
 !%
 !%==========================================================================
 !%==========================================================================
@@ -187,9 +308,13 @@ contains
         !%------------------------------------------------------------------
         !% Declarations
             integer :: psize
+            integer, pointer :: nIdx, linkUp
+            integer, pointer :: tempI(:)
+
             character(64) :: subroutine_name = 'pack_data_BC'
         !%------------------------------------------------------------------
         !% Preliminaries
+            tempI => elemI(:,ei_Temp01)
             if (setting%Debug%File%pack_mask_arrays) &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
@@ -197,7 +322,8 @@ contains
         !% --- BC packs upstream and lateral (flow) BC
         !%     zero out the number of upBC to get a new count of how many is in a given partition
         N_nBCup = 0
-        if (N_flowBC > 0) then
+        if (N_flowBCnode > 0) then
+            !% --- handle BCup
             N_nBCup = count(BC%flowI(:, bi_category) == BCup)
             if (N_nBCup > 0) then
                 allocate(BC%P%BCup(N_nBCup))
@@ -207,20 +333,29 @@ contains
                 faceP(1:N_nBCup,fp_BCup) = BC%flowI(BC%P%BCup, bi_face_idx)
             end if
 
+            !% --- create pack of elements with lateral inflow BC
+            N_flowBCelem= count(elemYN(:,eYN_hasLateralInflow))
+            if (N_flowBCelem > 0) then 
+                npack_elemP(ep_BClat) = N_flowBCelem
+                elemP(1:N_flowBCelem, ep_BClat) &
+                     = pack(elemI(:,ei_Lidx), elemYN(:,eYN_hasLateralInflow))
+            end if
+
+            !% --- pack the BClat indexes
             N_nBClat = count(BC%flowI(:, bi_category) == BClat)
             if (N_nBClat > 0) then
                 allocate(BC%P%BClat(N_nBClat))
                 BC%P%BClat = pack(BC%flowI(:, bi_idx), BC%flowI(:, bi_category) == BClat)
-                !% --- Elem Packs
-                npack_elemP(ep_BClat) = N_nBClat
-                elemP(1:N_nBClat,ep_BClat) = BC%flowI(BC%P%BClat, bi_elem_idx)
+            !     !% --- Elem Packs
+            !     npack_elemP(ep_BClat) = N_nBClat
+            !     elemP(1:N_nBClat,ep_BClat) = BC%flowI(BC%P%BClat, bi_elem_idx)
             end if
         end if
 
         !% --- BC packs downstream BC (head)
         !%     zero out the number of dnBC to get a new count of how many is in a given partition
         N_nBCdn = 0
-        if (N_headBC > 0) then
+        if (N_headBCnode > 0) then
             N_nBCdn = count(BC%headI(:, bi_category) == BCdn)
             if (N_nBCdn > 0) then
                 allocate(BC%P%BCdn(N_nBCdn))

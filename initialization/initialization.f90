@@ -142,53 +142,57 @@ contains
 
         !% --- initialize the coarrays that depend on number of images
         !%     and not on number of links/nodes, elements or faces.
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin initialize secondary coarrays"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin initialize secondary coarrays"
         call util_allocate_secondary_coarrays ()
 
         !% --- initialize the API with the SWMM-C code
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin interface between SWMM-C and 5+"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin interface between SWMM-C and 5+"
         call interface_init ()
         call util_crashstop(43974)
 
         !% --- set up and store the SWMM-C link-node arrays in equivalent Fortran arrays
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin link-node processing"
         call init_linknode_arrays ()
         call util_crashstop(31973)
 
         !% --- initialize ForceMain settings (determines if FM is used)
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin Forcemain setting"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin Forcemain setting"
         call init_ForceMain_setting ()
 
         !% --- initialize Adjustments from EPA SWMM input file
-       ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin get adjustments"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin get adjustments"
         call interface_get_adjustments ()
 
         !% --- setup the irregular transect arrays associated with SWMM-C input links
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin transect_arrays"
         call init_link_transect_array()
         call util_crashstop(42873)
 
         !% --- initialize globals that are run-time dependent
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initialize globals"
         call init_globals()
         
         !% --- store the SWMM-C curves in equivalent Fortran arrays
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 curve processing"
         call init_curves()
         call util_crashstop(53454)
 
         !% --- read in profiles from .inp file and create 
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 profile processing"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin SWMM5 profile processing"
         if (this_image() .eq. 1) then 
             call init_profiles()
         end if
 
         !% --- initialize culverts
-        !if (setting%Output%Verbose) print *, "begin initializing culverts"
+        ! if (setting%Output%Verbose) print *, "begin initializing culverts"
         call init_culvert()
 
         !% --- kinematic viscosity for water
         call init_viscosity()
+
+        !% --- initialize volume fractions for links that replace node inflows (if used)
+        ! if (setting%Output%Verbose) print *, "begin initializing link inflow volumefraction"
+        call init_link_inflow_volumefraction ()
 
         !%==========================================================================
         !%                      BEGIN PARTITIONING FOR PARALLEL                            
@@ -196,7 +200,7 @@ contains
         !%==========================================================================
     
         !% --- break the link-node system into partitions for multi-processor operation
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin link-node partitioning"
         call init_partitioning()
         call util_crashstop(5297)
 
@@ -224,34 +228,34 @@ contains
         !%                NETWORK DEFINITION ON EACH PROCESSOR IMAGE
         !%==========================================================================
         !% --- translate the link-node system into a finite-volume network
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin network define"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin network define"
         call network_define_toplevel ()
         call util_crashstop(3293)
 
         !% --- LINK-ELEM DATA BROADCAST
         !%     ensures that all images have the unique data they need from other images after
         !%     partitioning and network definition
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin init linkarray broadcast"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *,"begin init linkarray broadcast"
         call init_linkarray_broadcast()
         call util_crashstop(550987)
 
         !% --- initialize boundary and ghost elem arrays for inter image data transfer
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init boundary ghost"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init boundary ghost"
         call init_boundary_ghost_elem_array ()
         call util_crashstop(2293)
         
         !% --- initialize the time variables
-        !if (setting%Output%Verbose) print *, "begin initializing time"
+        ! if (setting%Output%Verbose) print *, "begin initializing time"
         call init_time()
 
         !% --- initialize simple controls from json file
-        !if (setting%Output%Verbose) print *, "begin initializing simulation controls"
+        ! if (setting%Output%Verbose) print *, "begin initializing simulation controls"
         call init_simulation_controls() 
 
         !% --- HYDROLOGY
         if (setting%Simulation%useHydrology) then 
             if (setting%SWMMinput%N_subcatch > 0) then
-                !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin subcatchment initialization"
+                ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin subcatchment initialization"
                 call init_subcatchment()
             else 
                 if (this_image() == 1) then
@@ -268,7 +272,7 @@ contains
         !%==========================================================================
         !%                                   OUTPUT SETUP
         !%==========================================================================
-        !if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin initializing output report"
         call init_report()
 
         !%==========================================================================
@@ -288,7 +292,7 @@ contains
         end if    
 
         !% --- initial conditions
-        !if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init IC_toplevel"
+        ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, "begin init IC_toplevel"
         call init_IC_toplevel ()       
         call util_crashstop(4429873)
 
@@ -467,16 +471,18 @@ contains
         !% Description:
         !%   Retrieves data from EPA-SWMM interface and populates link and 
         !%   and node tables
-        !% Note:
-        !%   The order in which link and nodes are populated coincides with
+        !% Notes:
+        !% 1.The order in which link and nodes are populated coincides with
         !%   the order in which links and nodes are allocated in EPA-SWMM 
         !%   data structures. Keeping the same order is important to be able 
         !%   to locate node/link data by label and not by index, reusing 
         !%   EPA-SWMM functionalities.
+        !% 2.This is called before partitioning, so the links and nodes do
+        !%   not know their
         !%------------------------------------------------------------------
         !% Declarations   
             integer          :: ii, jj, total_n_links, link_idx
-            integer, pointer :: linkUp, linkDn
+            integer, pointer :: linkUp, linkDn,  nodeDn
             logical          :: noerrorfound
             character(64)    :: subroutine_name = 'init_linknode_arrays'
         !%--------------------------------------------------------------------
@@ -781,6 +787,17 @@ contains
             !%     adding upstream and downstream
             total_n_links = node%I(ii,ni_N_link_u) + node%I(ii,ni_N_link_d)
             node%I(ii, ni_idx) = ii
+
+            !% --- defaults
+            node%YN(ii,nYN_has_inflow)      = .false.
+            node%YN(ii,nYN_has_extInflow)   = .false.
+            node%YN(ii,nYN_has_dwfInflow)   = .false.
+            node%YN(ii,nYN_has_storage)     = .false.
+            node%YN(ii,nYN_isOutput)        = .false.
+            node%YN(ii,nYN_is_phantom_node) = .false.
+            node%YN(ii,nYN_hasFlapGate)     = .false.
+            node%YN(ii,nYN_isLinkFlow)      = .false.
+            
 
             !% --- check for node inflows
             node%YN(ii, nYN_has_extInflow) = (interface_get_nodef_attribute(ii, api_nodef_has_extInflow) == 1)
@@ -1139,42 +1156,103 @@ contains
                 if (node%I(ii, ni_node_type) == nJ1) node%I(ii, ni_node_type) = nBCup
             end if
 
-
-            !% --- calculate the full volumes of the links upstream of a node
+            !% --- calculate the total full volumes of the links upstream of a node
+            !%     computed this ONLY where the inflow will be distributed across a link
             !%     this volume will be used later the distribute lateral inflows across links
             node%R(ii,nr_UpLinksFullVolume) = zeroR
 
-            do jj = 1,node%I(ii,ni_N_link_u)
-                !% pointer to the upstream links of that node
-                link_idx = node%I(ii,ni_idx_base1 + jj)
-
-                !% only calculate the volumes of open channels 
-                if (link%I(link_idx,li_link_type) == lchannel) then
-                    !% add the the volume of the upstream links
-                    node%R(ii,nr_UpLinksFullVolume) = node%R(ii,nr_UpLinksFullVolume) &
-                                    + link%R(link_idx,lr_FullArea) * link%R(link_idx,lr_Length)    
-                end if
-
-            end do
+            if (node%YN(ii,nYN_has_inflow)) then
+                select case (node%I(ii,ni_node_type))
+                    case (nJ2)
+                        !% --- nJ2 can have only one link
+                        !%     which is added to the volume regardless of whether conduit or channel
+                        link_idx = node%I(ii,ni_Mlink_u1)
+                        node%R(ii,nr_UpLinksFullVolume) = link%R(link_idx,lr_FullArea) * link%R(link_idx,lr_Length) 
+                    case (nJm)
+                        !% --- nJm only gets link info if the UseLinkDistributionTF is true
+                        if (setting%BC%InflowBC%UseLinkDistributionTF) then
+                            !% --- cycle through the upstream links of the node
+                            do jj = 1,node%I(ii,ni_N_link_u)
+                                !% --- identify the link
+                                link_idx = node%I(ii,ni_idx_base1 + jj) 
+                                !% --- nJm can have inflow distributed along multiple links, so we add volumes
+                                select case (setting%BC%InflowBC%LinkDistributionMethod)
+                                    case (BC_AllUpstreamOpenChannels)
+                                        !% --- only calculate the volumes of open channels upstream
+                                        if (link%I(link_idx,li_link_type) == lchannel) then
+                                            !% --- add the the volume of the open channel upstream links
+                                            node%R(ii,nr_UpLinksFullVolume) = node%R(ii,nr_UpLinksFullVolume) &
+                                                + link%R(link_idx,lr_FullArea) * link%R(link_idx,lr_Length)  
+                                        end if
+                                    case (BC_AllUpstreamLinks)
+                                        !%---  add the the volume of all the upstream links
+                                        node%R(ii,nr_UpLinksFullVolume) = node%R(ii,nr_UpLinksFullVolume) &
+                                            + link%R(link_idx,lr_FullArea) * link%R(link_idx,lr_Length)   
+                                    case (BC_AllLinks)
+                                        !% --- not implemented
+                                        print *, 'CODE ERROR: case BC_AllLinks not implemented'
+                                        call util_crashpoint(799872)
+                                    case default
+                                        print *, 'CODE ERROR: unknown case default'
+                                        call util_crashpoint(799873)
+                                end select
+                            end do
+                        else 
+                            !% the uplinks full volume remains zero if UseLinkDistributionTF is false
+                        end if
+                    case (nBCup, nBCdn)
+                        !% --- inflow on face, not through link
+                    case default
+                        print *, 'CODE ERROR: unexpected case default'
+                        call util_crashpoint(4929827)
+                end select
+                
+            end if
 
             !% --- note pattern initialization MUST be called after inflows are set
             node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
         end do
 
+        !% MOVED TO init_link_inflow_volumefraction
         !% --- find the volume fraction metric for channel links to distribute lateral inflows
-        do ii = 1, setting%SWMMinput%N_link
-            if (link%I(ii,li_link_type) == lchannel) then
-                link%R(ii,lr_VolumeFractionMetric) = link%R(ii,lr_FullArea) * link%R(ii,lr_Length) &
-                                                / node%R(link%I(ii,li_Mnode_d),nr_UpLinksFullVolume)
-            else
-                !% --- lateral inflows will not be distributed for non channel links.
-                link%R(ii,lr_VolumeFractionMetric) = zeroR
-            end if
-
-            !% save the node from which lateral inflows will be distributed
-            link%I(ii,li_lateralInflowNode)    = link%I(ii,li_Mnode_d)
-
-        end do
+        !%     FUTURE: development of input file that directs inflow to a link will require
+        !%     the LinkVolumeFraction to be 1.0.
+        ! do ii = 1, setting%SWMMinput%N_link
+        !     !% --- initialize so that links not meeting the case criteria are not included
+        !     !%     in lateral flow distribution.
+        !     link%R(ii,lr_InflowVolumeFraction) = zeroR
+        !     !% --- downstream node processing 
+        !     !%     FUTURE: handle an upstream node, downstream link distribution -- requires significant rewrite
+        !     nodeDn => link%I(ii,li_Mnode_d)
+        !     select case (node%I(nodeDn,ni_node_type))
+        !         case (nJ2)
+        !             !% --- nJ2 should always have an uplink volume
+        !             if (node%R(nodeDn,nr_UpLinksFullVolume) > zeroR) then 
+        !                 link%R(ii,lr_InflowVolumeFraction) = link%R(ii,lr_FullArea) * link%R(ii,lr_Length) &
+        !                                                  / node%R(nodeDn,nr_UpLinksFullVolume)
+        !             else 
+        !                 print *, 'CODE ERROR: unexpected zero UpLinksFullVolume for an nJ2'
+        !                 call util_crashpoint(2098744)
+        !             end if
+        !         case (nJm)
+        !             !% --- nJm only gets link info if the UseLinkDistributionTF is true
+        !             if (setting%BC%InflowBC%UseLinkDistributionTF) then
+        !                 if (node%R(nodeDn,nr_UpLinksFullVolume) > zeroR) then 
+        !                     link%R(ii,lr_InflowVolumeFraction) = link%R(ii,lr_FullArea) * link%R(ii,lr_Length) &
+        !                                                      / node%R(nodeDn,nr_UpLinksFullVolume)
+        !                 else 
+        !                     ! --- if volume fraction is zero then no lateral inflow occurs
+        !                 end if
+        !             else
+        !                 !% --- no action if UseLinkDistributionTF is false
+        !             end if
+        !         case (nBCup, nBCdn)
+        !             !% --- inflow on face, not through link
+        !         case default
+        !             print *, 'CODE ERROR: unexpected case default'
+        !             call util_crashpoint(4929833)
+        !     end select
+        ! end do
 
         !% --- error checking for disconnected nodes
         noerrorfound = .true.
@@ -3267,13 +3345,120 @@ contains
     subroutine init_culvert ()
         !%------------------------------------------------------------------
         !% Description:
-        !% Inialize culvert parameters and numbers.
+        !% Initialize culvert parameters and numbers.
         !%------------------------------------------------------------------
 
         !% --- set up the culvert parameters array
         call culvert_parameter_values ()
 
     end subroutine init_culvert
+!% 
+!%==========================================================================
+!%==========================================================================
+!%     
+    subroutine init_link_inflow_volumefraction()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Initialize the link%R(:,lr_inflowVolumeFraction) where a lateral
+        !% inflow will replace a node inflow
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer          :: linkUp(max_up_branch_per_node), ii, kk
+            real(8)          :: linkVolumeTotal
+        !%------------------------------------------------------------------
+        !% --- exit if link inflows are not used
+            if (.not. setting%BC%InflowBC%UseLinkDistributionTF) return
+        !%------------------------------------------------------------------
+
+        link%R(:,lr_InflowVolumeFraction) = zeroR  !% default     
+
+        do ii = 1, N_node
+            !% --- skip if this does not have inflow or is a BCup or BCdn node
+            if (.not. node%YN(ii,nYN_has_inflow)) cycle 
+            if (node%I(ii,ni_node_type) .eq. nBCup) cycle
+            if (node%I(ii,ni_node_type) .eq. nBCdn) cycle
+
+            !% --- initialize local data
+            linkUp          = zeroI
+            linkVolumeTotal = zeroR
+
+            select case (setting%BC%InflowBC%LinkDistributionMethod)    
+                case (BC_AllUpstreamOpenChannels)
+                    !% --- sum volumes of the upstream open channels
+                    do kk=1,max_up_branch_per_node
+                        linkUp(kk) = node%I(ii,ni_idx_base1+kk) !% ADDBRANCH
+                        if ((linkUp(kk) .le. 0) .or. (linkUp(kk) .eq. nullvalueI)) cycle
+
+                        if (link%I(linkUp(kk),li_link_type) .eq. lChannel) then 
+
+                            linkVolumeTotal = linkVolumeTotal &
+                                + link%R(linkUp(kk),lr_FullArea) * link%R(linkUp(kk),lr_Length)
+                        end if
+                    end do
+
+                    !% -- get the inflow volume fractions
+                    if (linkVolumeTotal > zeroR) then
+                        do kk=1,max_up_branch_per_node
+                            if ((linkUp(kk) .le. 0) .or. (linkUp(kk) .eq. nullvalueI)) cycle
+
+                            if (link%I(linkUp(kk),li_link_type) .eq. lChannel) then 
+
+                                link%R(linkUp(kk),lr_InflowVolumeFraction)                           &
+                                    = link%R(linkUp(kk),lr_FullArea) * link%R(linkUp(kk),lr_Length)  &
+                                    / linkVolumeTotal 
+                            end if
+                        end do
+                    else 
+                        print *, 'CODE ERROR: unexpected linkVolumeTotal is zero '
+                        call util_crashpoint(7109873) 
+                    end if
+
+                case (BC_AllUpstreamLinks)
+
+                    !% --- sum volumes of the upstream open channels and conduits
+                    do kk=1,max_up_branch_per_node
+
+                        linkUp(kk) = node%I(ii,ni_idx_base1+kk) !% ADDBRANCH
+
+                        if ((linkUp(kk) .le. 0) .or. (linkUp(kk) .eq. nullvalueI)) cycle
+
+                        if ((link%I(linkUp(kk),li_link_type) .eq. lChannel) .or. &
+                            (link%I(linkUp(kk),li_link_type) .eq. lPipe)) then
+
+                            linkVolumeTotal = linkVolumeTotal &
+                                + link%R(linkUp(kk),lr_FullArea) * link%R(linkUp(kk),lr_Length)
+                        end if
+                    end do
+                    
+                    !% --- get the inflow volume fractions
+                    if (linkVolumeTotal > zeroR) then
+                        do kk=1,max_up_branch_per_node    
+                            if ((linkUp(kk) .le. 0) .or. (linkUp(kk) .eq. nullvalueI)) cycle
+
+                            if ((link%I(linkUp(kk),li_link_type) .eq. lChannel) .or. &
+                                (link%I(linkUp(kk),li_link_type) .eq. lPipe   )) then
+    
+                                link%R(linkUp(kk),lr_InflowVolumeFraction)                            &
+                                    = link%R(linkUp(kk),lr_FullArea) * link%R(linkUp(kk),lr_Length)   &
+                                    / linkVolumeTotal                     
+                    
+                            end if
+                        end do
+                    else 
+                        print *, 'CODE ERROR: unexpected linkVolumeTotal is zero '
+                        call util_crashpoint(67109873) 
+                    end if
+
+                case default
+                    print *, 'CODE ERROR: unknown Link Distribution Method'
+                    print *, 'value given is ',setting%BC%InflowBC%LinkDistributionMethod
+                    print *, trim(reverseKey(setting%BC%InflowBC%LinkDistributionMethod))
+                    call util_crashpoint(81209874)
+            end select
+ 
+        end do
+
+    end subroutine init_link_inflow_volumefraction
 !%  
 !%==========================================================================
 !% END OF MODULE

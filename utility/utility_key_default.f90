@@ -70,8 +70,9 @@ module utility_key_default
         !% Declarations
             integer, allocatable :: keylist(:)
         !%------------------------------------------------------------------
-        !% --- keylist must match the number of KEY columns for bi_ indexes
-        allocate(keylist(2))  
+        !% --- keylist must match the number of KEY columns for indexes 
+        !%     beginning with bi_...
+        allocate(keylist(3))  
         keylist = (/    bi_category, &
                         bi_subcategory, &
                         bi_BasePatType /)

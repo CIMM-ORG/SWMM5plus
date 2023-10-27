@@ -43,12 +43,13 @@ contains
         !%------------------------------------------------------------------
         !% Declarations:
             integer :: ii
+            integer, pointer :: thisP, bidx
             logical :: isBConly = .true.
             character(64) :: subroutine_name = "bc_update"
         !%------------------------------------------------------------------
         !% Preliminaries
             !% --- ignore this subroutine if there are no BC
-            if ((N_flowBC == 0) .and. (N_headBC == 0)) return    
+            if ((N_flowBCnode == 0) .and. (N_headBCnode == 0)) return    
 
             if (setting%Debug%File%boundary_conditions)  &
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
@@ -67,24 +68,19 @@ contains
         !% --- check for inflow BC that imply a large velocity if the
         !%     cross-section is full
         if (setting%Limiter%Velocity%UseLimitMaxYN) then
-            do ii=1,N_flowBC
-                ! print *, '=============================='
-                ! print *, ii
-                ! print *, 'bi_idx         ',BC%flowI(ii,bi_idx) 
-                ! print *, 'bi_elem_idx    ',BC%flowI(ii,bi_elem_idx)
-                ! print *, 'br_value       ',BC%flowR(ii,br_value)
-                ! print *, 'full area      ',elemR(BC%flowI(ii,bi_elem_idx),er_FullArea)
-                ! print *, ''
-                if ((BC%flowR(ii,br_value) / elemR(BC%flowI(ii,bi_elem_idx),er_FullArea)) &
-                    .ge. setting%Limiter%Velocity%Maximum) then
+            do ii=1,npack_elemP(ep_BClat)
+                thisP => elemP(ii,ep_BClat)
+                bidx  => elemI(thisP,ei_lateralInflowBCidx)
+                if (BC%flowR(bidx,br_value) / elemR(thisP,er_FullArea) &
+                    .ge. setting%Limiter%Velocity%Maximum) then 
                     print *, 'USER CONFIGURATION ERROR for inflow velocity'
                     print *, 'Implied inflow velocity exceeds the setting.Limiter.Velocity.Maximum'
                     print *, 'for one or more inflow elements (usually due to small area)'
-                    print *, 'Error at BC bi_idx ',BC%flowI(ii,bi_idx)
-                    print *, 'Node name  ', trim(node%Names(BC%flowI(ii,bi_node_idx))%str)
-                    print *, 'Inflow value (CMS) = ',BC%flowR(ii,br_value)
-                    print *, 'cross-sectional area of section ',elemR(BC%flowI(ii,bi_elem_idx),er_FullArea)
-                    print *, 'Velocity limiter to use this inflow must be > ',BC%flowR(ii,br_value) / elemR(BC%flowI(ii,bi_elem_idx),er_FullArea)
+                    print *, 'Error at BC bi_idx ',bidx
+                    print *, 'for element ',thisP
+                    print *, 'Inflow value (CMS) = ',BC%flowR(bidx,br_value)
+                    print *, 'cross-sectional area of section ',elemR(thisP,er_FullArea)
+                    print *, 'Velocity limiter to use this inflow must be > ',BC%flowR(bidx,br_value) / elemR(thisP,er_FullArea)
                     print *, 'Current value of limiter ',setting%Limiter%Velocity%Maximum
                     call util_crashpoint(66987236)
                 end if
@@ -151,9 +147,9 @@ contains
         !%-----------------------------------------------------------------
 
         !% --- flow BC 
-        if (N_flowBC > 0) then
+        if (N_flowBCnode > 0) then
             !% --- cycle through all the flow BC
-            do ii = 1, N_flowBC
+            do ii = 1, N_flowBCnode
                 !% --- get the node index
                 nidx = BC%flowI(ii, bi_node_idx)
 
@@ -240,9 +236,9 @@ contains
         end if
 
         !% --- Head BC (outfall)  
-        if (N_headBC > 0) then
+        if (N_headBCnode > 0) then
             !% --- cycle through all the head BC
-            do ii = 1, N_headBC
+            do ii = 1, N_headBCnode
                 !% --- check that this BC has an input file
                 if (BC%headYN(ii,bYN_read_input_series)) then
                     if (BC%headI(ii,bi_TS_duplicate) == 0) then 
@@ -512,7 +508,7 @@ contains
             upper_idx => BC%flowI(:,bi_TS_upper_idx)
         !%-------------------------------------------------------------------    
 
-        do ii=1, N_flowBC
+        do ii=1, N_flowBCnode
             !% --- get the index below the current upper index
             lower_idx = upper_idx(ii) - 1
 
@@ -585,7 +581,7 @@ contains
             upper_idx   => BC%headI(:,bi_TS_upper_idx)
         !%-------------------------------------------------------------------    
         !% --- cycle throuhg the head BC
-        do ii=1, N_headBC
+        do ii=1, N_headBCnode
 
             nIdx        => BC%headI(ii,bi_node_idx)
             fIdx        => BC%headI(ii,bi_face_idx)
