@@ -540,7 +540,7 @@ contains
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-------------------------------------------------------------------
 
-        if (N_flowBC > 0) then
+        if (N_flowBCnode > 0) then
             deallocate(BC%flowI, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check (deallocation_status, emsg, 'BC%flowI')
 
@@ -564,7 +564,7 @@ contains
             end if
         end if
 
-        if (N_headBC > 0) then
+        if (N_headBCnode > 0) then
             deallocate(BC%headI, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check (deallocation_status, emsg, 'BC%headI')
 

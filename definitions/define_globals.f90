@@ -388,8 +388,10 @@ module define_globals
     integer :: N_uniformTable_locations
     integer :: N_link
     integer :: N_node
-    integer :: N_headBC
-    integer :: N_flowBC
+    integer :: N_headBCnode !% number of head BC defined on nodes
+    integer :: N_flowBCnode !% number of flow BC defined on nodes (may be pushed to links)
+    integer :: N_flowBCLink !% number of flow BC defined on links
+    integer :: N_flowBCelem !% number of flow BC on elements (includes link-elem and node-elem)
     integer :: N_nBCup
     integer :: N_nBCdn
     integer :: N_nBClat

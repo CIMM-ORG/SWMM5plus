@@ -72,6 +72,7 @@ module define_types
 
     type LinkPack
         integer, allocatable :: have_output(:)
+        integer, allocatable :: have_flowBC(:)
     end type LinkPack
 
     type NodeArray

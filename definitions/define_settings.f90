@@ -43,7 +43,7 @@ module define_settings
     !% setting%Adjust%Flowrate
     type AdjustFlowrateType
         logical :: ApplyYN = .true.
-        integer :: Approach = vshape !% vshape, doesnotexist
+        integer :: Approach = vshape !% vshape
         real(8) :: Coef = 1.0d0
         real(8) :: SmallDepthMultiplier = 3.0d0
     end type AdjustFlowrateType
@@ -52,7 +52,7 @@ module define_settings
     type AdjustHeadType
         logical :: ApplyYN = .false.  !% BUG IN CODE FOR ADJUSTMENT 
         !% --- only use vshape_surcharge_CC.  
-        integer :: Approach = vshape_surcharge !% vshape_surcharge, doesnotexist
+        integer :: Approach = vshape_surcharge !% vshape_surcharge
         real(8) :: Coef = 1.0d0
     end type AdjustHeadType
 
@@ -126,14 +126,25 @@ module define_settings
         real(8) :: minimum_slope  = 1.0d-3  !% minimum slope in HW computation
     end type ForceMainType
 
+    !% setting%BC%InflowBC
+    type InflowBCType
+        logical :: UseLinkDistributionTF = .false. !% false is standard node inflows, true uses distribution to links
+        integer :: LinkDistributionMethod = BC_AllUpstreamOpenChannels !% keywords  BC_AllUpstreamOpenChannels BC_AllUpstreamLinks
+        !% -- AllUpstreamOpenChannels distributes inflow to upstream open channels
+        !%    need to create other options, e.g., 
+        !%      (over all upstream links)
+        !%      (over all upstream and downstream links)
+        !%      (over upstream links only for nodes served exclusively by open channels upstream)
+    end type InflowBCType
+
     !% setting%Limiter%Dt
     type LimiterDtType
-        logical :: FailOnMinYN = .true.
-        logical :: FailOnMaxYN = .false.
+        logical :: FailOnMinYN   = .true.
+        logical :: FailOnMaxYN   = .false.
         logical :: UseLimitMinYN = .true.
-        real(8) :: Minimum     = 1.0d-3
         logical :: UseLimitMaxYN = .true.
-        real(8) :: Maximum     = 86400.0d0
+        real(8) :: Minimum       = 1.0d-3
+        real(8) :: Maximum       = 86400.0d0
     end type LimiterDtType
 
     !% setting%Limiter%InterpWeight
@@ -145,8 +156,8 @@ module define_settings
     !% setting%Limiter%Velocity
     type LimiterVelocityType
         logical :: UseLimitMaxYN = .true.
-        real(8) :: Maximum = 10.0d0 ! m/s
         logical :: ZeroMinimumVelocitiesYN = .true. 
+        real(8) :: Maximum = 10.0d0 ! m/s
         real(8) :: Minimum = 1.0d-8 ! m/s below this set to zero
     end type LimiterVelocityType
 
@@ -172,11 +183,11 @@ module define_settings
         real(8) :: OrificeLength !% length of overflow orifice (m)
         real(8) :: OrificeHeight!% height of overflow orifice (m)
         real(8) :: WeirLengthFactor !% multiplier of the default overflow weir length that is derived from junction plan area
-        real(8) :: CbroadCrestedWeir
-        real(8) :: coef1 
-        real(8) :: coef2
-        real(8) :: coef3
-        real(8) :: coef4
+        real(8) :: CbroadCrestedWeir !% empirical coefficient for broad crested weir of overflow
+        real(8) :: coef1  !% computed based on above values -- NOT A USER SETTING
+        real(8) :: coef2  !% computed based on above values -- NOT A USER SETTING
+        real(8) :: coef3  !% computed based on above values -- NOT A USER SETTING
+        real(8) :: coef4  !% computed based on above values -- NOT A USER SETTING
     end type
 
     !% setting%Junction%PlanArea
@@ -192,7 +203,7 @@ module define_settings
     !% setting%Solver%PreissmannSlot
     type PreissmannSlotType
         logical :: useSlotTF = .true.
-        !% Allowable values: DynamicSlot, StaticSlot, SplitDynamicSlot
+        !% Allowable values: DynamicSlot, StaticSlot, SplitDynamicSlot (experimental)
         integer :: Method = DynamicSlot
         real(8) :: TargetCelerity = 15.0d0
         real(8) :: Alpha = 3.0d0
@@ -216,7 +227,7 @@ module define_settings
     !% setting%Time% ...Hydraulics, Hydrology, Dry
     !% these is initialized in define_settings_defaults
     type TimeStepType
-       real(8) :: Dt
+       real(8) :: Dt        !% user setting for hydrology and initial hydraulics step
        real(8) :: LastTime  !% NOT A USER SETTING
        real(8) :: NextTime  !% NOT A USER SETTING
        integer(kind=8) :: Step  !% NOT A USER SETTING
@@ -347,6 +358,7 @@ module define_settings
         integer :: TimeSlotsStored        = 1000
         logical :: disableInterpolationYN = .false.
         real(8) :: smallestTimeInterval   = 86400.d0  !% NOT A USER SETTING
+        type(InflowBCType) :: InflowBC
     end type BCPropertiesType
 
     ! setting%CaseName
@@ -360,9 +372,9 @@ module define_settings
     type ClimateType
         logical :: useHydraulicsEvaporationTF = .true. !% user may turn off hydrauilcs evaporation
         real(8) :: HydraulicsOnlyIntervalHours = 1.d0 !% hours between updating climate if no runoff
+        real(8) :: EvapRate = 0.d0 !% current evaporation rate in m/s OVERWRITES USER FILE
         real(8) :: LastTimeUpdate = 0.d0 !% time (seconds) of last update NOT A USER SETTING
         real(8) :: NextTimeUpdate = 0.d0 !% time (seconds) of next update NOT A USER SETTING
-        real(8) :: EvapRate = 0.d0 !% current evaporation rate in m/s
     end type ClimateType
 
     ! setting%Constant
@@ -370,7 +382,7 @@ module define_settings
         real(8) :: gravity = 9.81d0 ! m^2/s
         real(8) :: pi = 4.d0*datan(1.d0)   !% NOT A USER SETTING
         real(8) :: water_temperature = 20.d0
-        real(8) :: water_kinematic_viscosity = 1.0d-6  !% NOT A USER SETTING
+        real(8) :: water_kinematic_viscosity = 1.0d-6
     end type ConstantType
 
     ! setting%Control
@@ -387,10 +399,10 @@ module define_settings
 
     !% setting%Crash !% NOT USER SETTING(see util_crash_initialize)
     type CrashType
-        real(8) :: DepthMax  !% maximum depth exceedence in 1 cell that causes crash
-        real(8) :: HeadMax   !% maximum head exceedence in 1 cell that causes crash
-        real(8) :: FlowrateMax   !% maximum flow exceedence in 1 cell that causes crash
-        real(8) :: PercentVelocityAtLimit  !% percentage of cells at velocity limit that causes crash
+        real(8) :: DepthMax  !% maximum depth exceedence in 1 cell that causes crash NOT A USER SETTING
+        real(8) :: HeadMax   !% maximum head exceedence in 1 cell that causes crash NOT A USER SETTING
+        real(8) :: FlowrateMax   !% maximum flow exceedence in 1 cell that causes crash NOT A USER SETTING
+        real(8) :: PercentVelocityAtLimit  !% percentage of cells at velocity limit that causes crash NOT A USER SETTING
     end type CrashType
 
     type CulvertType
@@ -419,7 +431,7 @@ module define_settings
         ! real(8) :: MinElemLengthFactor = 0.5d0           !% define the minimum allowable fraction of an element size to help with the cfl
         !integer :: MinElemLengthMethod = ElemLengthAdjust
         logical :: UseNominalElemLength = .true.
-        logical :: DistributeOpenChannelInflowsTF = .false.
+        !% replaced 20231025brh logical :: DistributeOpenChannelInflowsTF = .false.
         real(8) :: NominalElemLength   = 10.0d0
         integer :: MinElementPerLink   = 3               !% force a minimum number of elements per link
         logical :: UseEquivalentOrifice = .false.        !% replace small conduits with equivalent orifice
@@ -431,17 +443,15 @@ module define_settings
     ! setting%Eps
     type EpsilonType
         !% epsilon relative to machine precision
-        real(8) :: Machine = 0.d0  !% computed in code
+        real(8) :: Machine = 0.d0  !% computed in code NOT A USER SETTING
         !% +- small non-dimensional range for hyd jump discrimination
         real(8) :: FroudeJump = 0.1d0
-        !% Fractional increase in depth under froude limitation
-        !rm 20220207brh real(8) :: InflowDepthIncreaseFroudeLimit = 0.1
-        !% small velocity
-        real(8) :: Velocity = 1.0d-6
-        !% small head difference (tolerance for no flow)
-        real(8) :: Head = 1.0d-6
-        !% small time (prevent division by zero)
-        real(8) :: TimeStep = 1.0d-6
+        !% tiny velocity
+        real(8) :: Velocity = 1.0d-6 !% NOT A USER SETTING
+        !% tiny head difference (tolerance for no flow)
+        real(8) :: Head = 1.0d-6   !% NOT A USER SETTING
+        !% tiny time (prevent division by zero)
+        real(8) :: TimeStep = 1.0d-6   !% NOT A USER SETTING
     end type EpsilonType
 
     !% setting%File
@@ -454,10 +464,10 @@ module define_settings
         !character(len=256)   :: library_folder = "/usr/local/lib"  !% Use this for standard release
         character(len=256)   :: library_folder = "build"            !% Use this for developer
         character(len=256)   :: output_folder= "" !
-        character(len=256)   :: output_timestamp_subfolder = ""
-        character(len=256)   :: output_temp_subfolder = "temp"
+        character(len=256)   :: output_timestamp_subfolder = ""  !% NOT A USER SETTING
+        character(len=256)   :: output_temp_subfolder = "temp"   
         character(len=256)   :: project_folder = "" ! project path
-        character(len=256)   :: setting_file = "" ! path to settings JSON file
+        character(len=256)   :: setting_file = "" ! path to settings JSON file  !% NOT A USER SETTING
         character(len=256)   :: input_kernel = "" ! main part of input file name   NOT A USER SETTING
         character(len=256)   :: output_kernel= "" ! main part ouf output file name  NOT A USER SETTING
         character(len=256)   :: inp_file = "" ! path to SWMM input (.inp) file
@@ -465,17 +475,17 @@ module define_settings
         character(len=256)   :: out_file = "" ! path to SWMM output (.out) file  NOT A USER SETTING
         
         !% for multi-level output NOT USER SETTINGS
-        character(len=256)   :: outputML_Link_kernel = "link"
-        character(len=256)   :: outputML_Node_kernel = "node"
-        character(len=256)   :: outputML_combinedfile_kernel = "combined_output" !% filenames that combine across images
-        character(len=256)   :: outputML_filename_file = 'output_filenames.txt'  !% list of interim filenames used in combined output
-        character(len=256)   :: outputML_control_file = 'control.unf'  !% global parameters that control the processing of combined output
-        integer              :: outputML_Ncombined_file_written = 0
-        integer              :: outputML_total_timelevels_written = 0
+        character(len=256)   :: outputML_Link_kernel = "link"  !% NOT A USER SETTING
+        character(len=256)   :: outputML_Node_kernel = "node"  !% NOT A USER SETTING
+        character(len=256)   :: outputML_combinedfile_kernel = "combined_output" !% filenames that combine across images !% NOT A USER SETTING
+        character(len=256)   :: outputML_filename_file = 'output_filenames.txt'  !% list of interim filenames used in combined output !% NOT A USER SETTING
+        character(len=256)   :: outputML_control_file = 'control.unf'  !% global parameters that control the processing of combined output !% NOT A USER SETTING
+        integer              :: outputML_Ncombined_file_written = 0 !% NOT A USER SETTING
+        integer              :: outputML_total_timelevels_written = 0 !% NOT A USER SETTING
 
         !% file handling !% NOT USER SETTINGS
-        integer              :: last_unit = 1000 !% starting point for assigning unit numbers
-        type(UnitNumberType) :: UnitNumber  
+        integer              :: last_unit = 1000 !% starting point for assigning unit numbers !% NOT A USER SETTING
+        type(UnitNumberType) :: UnitNumber   !% NOT A USER SETTING
     end type FileType
 
     ! setting%Junction
@@ -490,8 +500,8 @@ module define_settings
         integer :: FunStorageN  = 10            !% number of curve entries for functional storage   
         real(8) :: kFactor      = 0.5d0         !% default entrance/exit losses at junction branch (use 0.5 )
         real(8) :: OutflowDampingFactor = 0.99d0 !% 0 to <1, with 0 being strictly energy-based outflow, 1 being strictly extrapolated from neighbor (fails); 0.99 recommended
-        real(8) :: ZeroHeadDiffValue = 1.0d-8   !% Head difference (m) that results in zero outflow in a branch. 
-        real(8) :: ZeroOutflowValue  = 1.0d-8   !% Outflow (m^3/s) that results in zero outflow in a branch
+        real(8) :: ZeroHeadDiffValue = 1.0d-8   !% Head difference (m) that results in zero outflow in a branch. !% NOT A USER SETTING
+        real(8) :: ZeroOutflowValue  = 1.0d-8   !% Outflow (m^3/s) that results in zero outflow in a branch   !% NOT A USER SETTING
         real(8) :: InfiniteExtraDepthValue = 999.d0  !% Surcharge Depth if this value or higher is treated as impossible to overflow
 
         !% Ponding ScaleFactor is multiplier of junction/storage length scale (sqrt of area) to get minimum length scale of ponding
@@ -503,19 +513,19 @@ module define_settings
     ! setting%Limiter
     type LimiterType
         real(8) :: NormalDepthInfinite   = 1000.d0     ! value used when normal depth would be infinite.
+        !% --- limiter%VolumeFractionInTimeStep: limits momentum/velocity in RK solution to a rate consistent with the
+        !%     VolumeFractionInTimeStep * volume / dt. This helps prevent oscillations in very small depths.
+        !%     Should generally be less than one.  1/4 or 1/2 seems to work well.
+        real(8)                       :: VolumeFractionInTimeStep = 0.5d0          
         type(LimiterInterpWeightType) :: InterpWeight
         type(LimiterVelocityType)     :: Velocity
         type(LimiterFlowrateType)     :: Flowrate
         type(LimiterDtType)           :: Dt
-        !% --- limiter%VolumeFractionInTimeStep: limits momentum/velocity in RK solution to a rate consistent with the
-        !%     VolumeFractionInTimeStep * volume / dt. This helps prevent oscillations in very small depths.
-        !%     Should generally be less than one.  1/4 seems to work well.
-        real(8)                       :: VolumeFractionInTimeStep = 0.5d0  
     end type LimiterType
 
     type LinkType
         ! Allowable: UniformDepth, LinearlyVaryingDepth, IncreasingDepth,  FixedHead
-        integer :: DefaultInitDepthType = LinearlyVaryingDepth 
+        integer :: DefaultInitDepthType = LinearlyVaryingDepth  !% DISABLED -- NOT A USER SETTING
         !% --- if users include an unnecessarily large full depth, this can affect the precision in 
         !%     look up tables. The following allows global replacement of excessive maximum depths.
         logical :: OpenChannelLimitDepthYN = .false.  !% Y/N overwrite for the max depth from SWMM.inp file
@@ -533,24 +543,25 @@ module define_settings
     !% setting%Output
     type OutputType
         logical :: UseFileNameFile = .false.
+        logical :: Verbose         = .true.
+        logical :: Warning         = .true.
+        integer :: StoredLevels    = 100        
+        integer :: StoredFileNames = 100
+        integer (kind=8) :: MemoryStorageMax = 29000000   
         logical, allocatable :: ElementsExist_byImage(:)[:]  !% NOT A USER SETTING
         logical, allocatable :: FacesExist_byImage(:)[:]     !% NOT A USER SETTING
         logical :: ElementsExist_global                      !% NOT A USER SETTING 
         logical :: FacesExist_global                         !% NOT A USER SETTING  
         logical :: BarrelsExist = .false.                    !% NOT A USER SETTING
-        logical :: Verbose = .true.
-        logical :: Warning = .true.
         integer :: LastLevel = 0                             !% NOT A USER SETTING
         integer :: MaxExpectedLevels = 0                     !% NOT A USER SETTING
         integer :: NumberOfWriteSteps = 0                    !% NOT A USER SETTING
         integer :: NumberOfTimeLevelSaved = 0                !% NOT A USER SETTING
-        integer :: StoredLevels = 100        
-        integer :: StoredFileNames = 100
         integer :: ElemHeadIndex = 0                         !% NOT A USER SETTING
         integer :: FaceUpHeadIndex = 0                       !% NOT A USER SETTING
         integer :: faceDnHeadIndex = 0                       !% NOT A USER SETTING
         integer :: ElemFlowAvgIndex= 0                       !% NOT A USER SETTING 
-        integer (kind=8) :: MemoryStorageMax = 29000000  
+        
         type(CommandLineType) :: CommandLine
         type(DataOutType) :: DataOut
         type(ReportType) :: Report
@@ -558,8 +569,7 @@ module define_settings
 
     !% setting%Partitioning
     type PartitioningType
-        !% Allowable values: BQquick
-        integer :: PartitioningMethod = BQuick
+        integer :: PartitioningMethod = BQuick !% Allowable values: BQquick (others have not been checked)
         logical :: PhantomLinkAdjust  = .true.
     endtype PartitioningType
 
@@ -606,9 +616,9 @@ module define_settings
         !logical :: PreissmannSlot = .true.
         logical :: SubtractReferenceHead = .false.
         integer :: MomentumSourceMethod = T10 
-        integer :: SolverSelect = ETM
-        real(8) :: SwitchFractionDn = 0.8d0
-        real(8) :: SwitchFractionUp = 0.9d0
+        !integer :: SolverSelect = ETM
+        !real(8) :: SwitchFractionDn = 0.8d0
+        !real(8) :: SwitchFractionUp = 0.9d0
         real(8) :: ReferenceHead = zeroR
         real(8) :: AverageZbottom = zeroR               !% NOT A USER SETTING
         real(8) :: MaxZbottom = zeroR                   !% NOT A USER SETTING
@@ -990,13 +1000,37 @@ contains
         call json%get('BC.disableInterpolationYN', logical_value, found)
         if (found) setting%BC%disableInterpolationYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'BC.disableInterpolationYN not found'
+  
+    !% BC.Inflow =====================================================================
+    !%                          BC.InflowBC.UseLinkDistributionTF
+        call json%get('BC.InflowBC.UseLinkDistributionTF', logical_value, found)
+        if (found) setting%BC%InflowBC%UseLinkDistributionTF = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'BC.InflowBC.UseLinkDistributionTF found'
+
+        !%                       BC.InflowBC.LinkDistributionMethod
+        call json%get('BC.InflowBC.LinkDistributionMethod', c, found)
+        if (found) then            
+            call util_lower_case(c)
+            if (c == 'bc_allupstreamopenchannels') then
+                setting%BC%InflowBC%LinkDistributionMethod = BC_AllUpstreamOpenChannels
+            else if (c == 'bc_allupstreamlinks') then
+                setting%BC%InflowBC%LinkDistributionMethod = BC_AllUpstreamLinks
+            else
+                write(*,"(A)") 'Error - json file - BC.InflowBC.LinkDistributionMethod  of ',trim(c)
+                write(*,"(A)") '..is not in allowed options of:'
+                write(*,"(A)") '... BC_AllUpstreamOpenChannels, BC_AllUpstreamLinks'
+                stop 93773
+            end if
+        end if
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'BC.InflowBC.LinkDistributionMethod not found'
+
 
     !% Case. =====================================================================
         !%                       CaseName.Long
         call json%get('CaseName.Long', c, found)
         if (found) setting%CaseName%Long = trim(c)
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'CaseName.Long not found' 
-        
+
         !%                       CaseName.Short
         call json%get('CaseName.Short', c, found)
         if (found) setting%CaseName%Short = trim(c)
@@ -1014,6 +1048,11 @@ contains
         call json%get('Climate.HydraulicsOnlyIntervalHours', real_value, found)
         if (found) setting%Climate%HydraulicsOnlyIntervalHours = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Climate.HydraulicsOnlyIntervalHours not found'
+       
+        !%                          Climate.EvapRate
+        call json%get('Climate.EvapRate', real_value, found)
+        if (found) setting%Climate%EvapRate = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Climate.EvapRate not found'
    
         !% do not read Climate.LastTimeUpdate or Climate.NextTimeUpdate
 
@@ -1035,75 +1074,78 @@ contains
 
 
     !% Control. =====================================================================
+    !% 20231027 CONTROLS ONLY THROUGH USER INPUT FILE
+    !% CANNOT BE READ IN JSON FILE
+    !% RETAIN THIS FOR FUTURE USE
     !%                       Control.NumControl
-        call json%info('Control.Links',found,var_type,n_controls)
-        if (found) setting%Control%NumControl = n_controls
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Control.Links not found'
+        ! call json%info('Control.Links',found,var_type,n_controls)
+        ! if (found) setting%Control%NumControl = n_controls
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Control.Links not found'
 
         
-        if (n_controls > zeroI) then
-            !%                       Control.Links
-            call json%get('Control.Links', cvec, ilen=ilen)
-            len_max = maxval(ilen)
-            allocate(character(len_max) :: setting%Control%Links(n_controls))
-            setting%Control%Links = cvec
+        ! if (n_controls > zeroI) then
+        !     !%                       Control.Links
+        !     call json%get('Control.Links', cvec, ilen=ilen)
+        !     len_max = maxval(ilen)
+        !     allocate(character(len_max) :: setting%Control%Links(n_controls))
+        !     setting%Control%Links = cvec
 
-            !%                       Control.TimeArray
-            !% assuming data stored by column, each column has the same number of elements, and is the same data type
-            call json%info('Control.TimeArray',found,var_type,n_cols)
-            if (.not. found) stop 'error: Control.TimeArray not found'
-            if(n_cols /= n_controls) stop 'error: Control.TimeArray has more/less columns than number of controlled links'
+        !     !%                       Control.TimeArray
+        !     !% assuming data stored by column, each column has the same number of elements, and is the same data type
+        !     call json%info('Control.TimeArray',found,var_type,n_cols)
+        !     if (.not. found) stop 'error: Control.TimeArray not found'
+        !     if(n_cols /= n_controls) stop 'error: Control.TimeArray has more/less columns than number of controlled links'
 
-            call json%info('Control.TimeArray(1)',found,var_type,n_rows)
-            if (.not. found) stop 'error: Control.TimeArray(1) setting%Control%ElemIdxnot found'
+        !     call json%info('Control.TimeArray(1)',found,var_type,n_rows)
+        !     if (.not. found) stop 'error: Control.TimeArray(1) setting%Control%ElemIdxnot found'
 
-            !% get a pointer to the wind matrix:
-            call json%get('Control.TimeArray',PointerMatrix)
-            if (.not. associated(PointerMatrix)) stop "Error - json file - setting " // 'Control.TimeArray not found'
+        !     !% get a pointer to the wind matrix:
+        !     call json%get('Control.TimeArray',PointerMatrix)
+        !     if (.not. associated(PointerMatrix)) stop "Error - json file - setting " // 'Control.TimeArray not found'
 
-            allocate(setting%Control%TimeArray(n_rows,n_cols))
-            !% grab each column of the PointerMatrix:
-            do ii=1,n_cols
-                call core%get_child(PointerMatrix,ii,row)
-                if (.not. associated(row)) stop 'error: TimeArray column not found'
-                call core%get(row,rvec)
-                if (.not. allocated(rvec)) stop 'error: could not get TimeArray real column'
-                if (size(rvec)/=n_rows) stop 'error: Control.TimeArray column is wrong size'
-                setting%Control%TimeArray(:,ii) = rvec
-                deallocate(rvec)
-                nullify(row)
-            end do
-            nullify(PointerMatrix)
+        !     allocate(setting%Control%TimeArray(n_rows,n_cols))
+        !     !% grab each column of the PointerMatrix:
+        !     do ii=1,n_cols
+        !         call core%get_child(PointerMatrix,ii,row)
+        !         if (.not. associated(row)) stop 'error: TimeArray column not found'
+        !         call core%get(row,rvec)
+        !         if (.not. allocated(rvec)) stop 'error: could not get TimeArray real column'
+        !         if (size(rvec)/=n_rows) stop 'error: Control.TimeArray column is wrong size'
+        !         setting%Control%TimeArray(:,ii) = rvec
+        !         deallocate(rvec)
+        !         nullify(row)
+        !     end do
+        !     nullify(PointerMatrix)
 
-            !%                       Control.SettingsArray
-            !% assuming data stored by column, each column has the same number of elements, and is the same data type
-            call json%info('Control.SettingsArray',found,var_type,n_cols1)
-            if (.not. found) stop 'error: Control.SettingsArray not found'
-            if(n_cols1 /= n_controls) stop 'error: Control.SettingsArray has more/less columns than number of controlled links'
+        !     !%                       Control.SettingsArray
+        !     !% assuming data stored by column, each column has the same number of elements, and is the same data type
+        !     call json%info('Control.SettingsArray',found,var_type,n_cols1)
+        !     if (.not. found) stop 'error: Control.SettingsArray not found'
+        !     if(n_cols1 /= n_controls) stop 'error: Control.SettingsArray has more/less columns than number of controlled links'
 
-            call json%info('Control.SettingsArray(1)',found,var_type,n_rows1)
-            if(n_rows1 /= n_rows) stop 'error: Control.SettingsArray has more/less rows than the Control.TimeArray'
-            if (.not. found) stop 'error: Control.SettingsArray(1) not found'
+        !     call json%info('Control.SettingsArray(1)',found,var_type,n_rows1)
+        !     if(n_rows1 /= n_rows) stop 'error: Control.SettingsArray has more/less rows than the Control.TimeArray'
+        !     if (.not. found) stop 'error: Control.SettingsArray(1) not found'
 
-            !% get a pointer to the PointerMatrix:
-            call json%get('Control.SettingsArray',PointerMatrix)
-            if (.not. associated(PointerMatrix)) stop "Error - json file - setting " // 'Control.SettingsArray not found'
+        !     !% get a pointer to the PointerMatrix:
+        !     call json%get('Control.SettingsArray',PointerMatrix)
+        !     if (.not. associated(PointerMatrix)) stop "Error - json file - setting " // 'Control.SettingsArray not found'
 
-            allocate(setting%Control%SettingsArray(n_rows1,n_cols1))
-            !% grab each column of the PointerMatrix:
-            do ii=1,n_cols1
-                call core%get_child(PointerMatrix,ii,row)
-                if (.not. associated(row)) stop "Error - json file - setting " // 'Control.SettingsArray column not found'
-                call core%get(row,rvec)
-                if (.not. allocated(rvec)) stop "Error - json file - setting " // 'Could not get SettingsArray real column'
-                if (size(rvec)/=n_rows1) stop "Error - json file - setting " // 'Control.SettingsArray is wrong size'
-                setting%Control%SettingsArray(:,ii) = rvec
-                deallocate(rvec)
-                nullify(row)
-            end do
-            nullify(PointerMatrix)
+        !     allocate(setting%Control%SettingsArray(n_rows1,n_cols1))
+        !     !% grab each column of the PointerMatrix:
+        !     do ii=1,n_cols1
+        !         call core%get_child(PointerMatrix,ii,row)
+        !         if (.not. associated(row)) stop "Error - json file - setting " // 'Control.SettingsArray column not found'
+        !         call core%get(row,rvec)
+        !         if (.not. allocated(rvec)) stop "Error - json file - setting " // 'Could not get SettingsArray real column'
+        !         if (size(rvec)/=n_rows1) stop "Error - json file - setting " // 'Control.SettingsArray is wrong size'
+        !         setting%Control%SettingsArray(:,ii) = rvec
+        !         deallocate(rvec)
+        !         nullify(row)
+        !     end do
+        !     nullify(PointerMatrix)
 
-        end if
+        ! end if
 
     !% Crash =====================================================================
         !%                       Crash. are set by code    
@@ -1134,10 +1176,10 @@ contains
         if (found) setting%Discretization%UseEquivalentOrifice = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.UseEquivalentOrifice not found'
 
-        !%                       Discretization.DistributeOpenChannelInflowsTF
-        call json%get('Discretization.DistributeOpenChannelInflowsTF', logical_value, found)
-        if (found) setting%Discretization%DistributeOpenChannelInflowsTF = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.DistributeOpenChannelInflowsTF not found'
+        ! !%                       Discretization.DistributeOpenChannelInflowsTF
+        ! call json%get('Discretization.DistributeOpenChannelInflowsTF', logical_value, found)
+        ! if (found) setting%Discretization%DistributeOpenChannelInflowsTF = logical_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.DistributeOpenChannelInflowsTF not found'
 
         !%                       Discretization.EquivalentOrificeDischargeCoeff
         call json%get('Discretization.EquivalentOrificeDischargeCoeff', real_value, found)
@@ -1158,6 +1200,12 @@ contains
         call json%get('Discretization.MinElementPerLink', integer_value, found)
         if (found) setting%Discretization%MinElementPerLink = integer_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.MinElementPerLink not found'
+
+        !%                       Discretization.FullConduitTopwidthDepthFraction
+        call json%get('Discretization.FullConduitTopwidthDepthFraction', real_value, found)
+        if (found) setting%Discretization%FullConduitTopwidthDepthFraction = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.FullConduitTopwidthDepthFraction not found'
+
 
     !% Eps. =====================================================================
         !% --- Eps Settings
@@ -1255,8 +1303,6 @@ contains
         if (found) setting%Junction%PondingScaleFactor = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.PondingScaleFactor not found'
 
-
-
         !%                       Junction.Overflow.OrificeLength
         call json%get('Junction.Overflow.OrificeLength', real_value, found)
         if (found) setting%Junction%Overflow%OrificeLength = real_value
@@ -1272,44 +1318,43 @@ contains
         if (found) setting%Junction%Overflow%WeirLengthFactor= real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.WeirLengthFactor not found'
 
-
         !%                       Junction.Overflow.CbroadCrestedWeir
         call json%get('Junction.Overflow.CbroadCrestedWeir', real_value, found)
         if (found) setting%Junction%Overflow%CbroadCrestedWeir = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.CbroadCrestedWeir not found'
 
-        !%                       Junction.Overflow.coef1
-        call json%get('Junction.Overflow.coef1', real_value, found)
-        if (found) setting%Junction%Overflow%coef1 = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.coef1 not found'
+        ! !%                       Junction.Overflow.coef1
+        ! call json%get('Junction.Overflow.coef1', real_value, found)
+        ! if (found) setting%Junction%Overflow%coef1 = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.coef1 not found'
 
-        !%                       Junction.Overflow.coef2
-        call json%get('Junction.Overflow.x', real_value, found)
-        if (found) setting%Junction%Overflow%coef2 = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.coef2 not found'
+        ! !%                       Junction.Overflow.coef2
+        ! call json%get('Junction.Overflow.x', real_value, found)
+        ! if (found) setting%Junction%Overflow%coef2 = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.coef2 not found'
 
-        !%                       Junction.Overflow.coef3
-        call json%get('Junction.Overflow.coef3', real_value, found)
-        if (found) setting%Junction%Overflow%coef3 = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.coef3 not found'
+        ! !%                       Junction.Overflow.coef3
+        ! call json%get('Junction.Overflow.coef3', real_value, found)
+        ! if (found) setting%Junction%Overflow%coef3 = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.coef3 not found'
 
-        !%                       Junction.Overflow.coef4
-        call json%get('Junction.Overflow.coef4', real_value, found)
-        if (found) setting%Junction%Overflow%coef4 = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.coef4 not found'
+        ! !%                       Junction.Overflow.coef4
+        ! call json%get('Junction.Overflow.coef4', real_value, found)
+        ! if (found) setting%Junction%Overflow%coef4 = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.Overflow.coef4 not found'
 
 
-        !%                       Junction.UseLargeBranchStorageTF
+        !%                       Junction.PlanArea.UseLargeBranchStorageTF
         call json%get('Junction.PlanArea.UseLargeBranchStorageTF', logical_value, found)
         if (found) setting%Junction%PlanArea%UseLargeBranchStorageTF = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.PlanArea.UseLargeBranchStorageTF not found'
 
-        !%                       Junction.PlanArea_Minimum
-        call json%get('Junction.PlanArea.AreaMinimum', real_value, found)
-        if (found) setting%Junction%PlanArea%AreaMinimum = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.PlanArea5.AreaMinimum not found'
+        ! !%                       Junction.PlanArea_Minimum
+        ! call json%get('Junction.PlanArea.AreaMinimum', real_value, found)
+        ! if (found) setting%Junction%PlanArea%AreaMinimum = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.PlanArea5.AreaMinimum not found'
 
-        !%                       Junction.BreadthFactor
+        !%                       Junction.AreaFactorMaximum
         call json%get('Junction.PlanArea.AreaFactorMaximum', real_value, found)
         if (found) setting%Junction%PlanArea%AreaFactorMaximum = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.PlanArea.AreaFactorMaximum not found'
@@ -1321,16 +1366,48 @@ contains
 
 
     !% Limiter. =====================================================================
+       !%                       Limiter.NormalDepthInfinite
+        call json%get('Limiter.NormalDepthInfinite', real_value, found)
+        if (found) setting%Limiter%NormalDepthInfinite = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.NormalDepthInfinite not found'
+     
+        !%                       Limiter.VolumeFractionInTimeStep
+        call json%get('Limiter.VolumeFractionInTimeStep', real_value, found)
+        if (found) setting%Limiter%VolumeFractionInTimeStep = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.VolumeFractionInTimeStep not found'
+
+        
+
+        !%                       Limiter.Dt.UseLimitMinYN
+        call json%get('Limiter.Dt.UseLimitMinYN', logical_value, found)
+        if (found) setting%Limiter%Dt%UseLimitMinYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Dt.UseLimitMinYN not found'
+
+       !%                       Limiter.Dt.UseLimitMaxYN
+        call json%get('Limiter.Dt.UseLimitMaxYN', logical_value, found)
+        if (found) setting%Limiter%Dt%UseLimitMaxYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Dt.UseLimitMaxYN not found'
     
+        !%                       Limiter.Dt.FailOnMinYN
+        call json%get('Limiter.Dt.FailOnMinYN', logical_value, found)
+        if (found) setting%Limiter%Dt%FailOnMinYN= logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Dt.FailOnMinYN not found'
+
+        !%                       Limiter.Dt.FailOnMaxYN
+        call json%get('Limiter.Dt.FailOnMaxYN', logical_value, found)
+        if (found) setting%Limiter%Dt%FailOnMaxYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Dt.FailOnMaxYN found'
+
         !%                       Limiter.Dt.Minimum
         call json%get('Limiter.Dt.Minimum', real_value, found)
         if (found) setting%Limiter%Dt%Minimum = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Dt.Minimum not found'
         
-        !%                       Limiter.Dt.UseLimitMinYN
-        call json%get('Limiter.Dt.UseLimitMinYN', logical_value, found)
-        if (found) setting%Limiter%Dt%UseLimitMinYN = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Dt.UseLimitMinYN not found'
+        !%                       Limiter.Dt.Maximum
+        call json%get('Limiter.Dt.Maximum', real_value, found)
+        if (found) setting%Limiter%Dt%Maximum = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Dt.Maximum not found'
+        
 
         !%                       Limiter.InterpWeight.Maximum
         call json%get('Limiter.InterpWeight.Maximum', real_value, found)
@@ -1342,21 +1419,28 @@ contains
         if (found) setting%Limiter%InterpWeight%Minimum = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.InterpWeight.Minimum not found'
 
-        !%                       Limiter.Velocity.Maximum
-        call json%get('Limiter.Velocity.Maximum', real_value, found)
-        if (found) setting%Limiter%Velocity%Maximum = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Velocity.Maximum not found'
-        
+
         !%                       Limiter.Velocity.UseLimitMaxYN
         call json%get('Limiter.Velocity.UseLimitMaxYN', logical_value, found)
         if (found) setting%Limiter%Velocity%UseLimitMaxYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Velocity.UseLimitMaxYN not found'
 
-         !%                       Limiter.VolumeFractionInTimeStep
-        call json%get('Limiter.VolumeFractionInTimeStep', real_value, found)
-        if (found) setting%Limiter%VolumeFractionInTimeStep = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.VolumeFractionInTimeStep not found'
+        !%                       Limiter.Velocity.ZeroMinimumVelocitiesYN
+        call json%get('Limiter.Velocity.ZeroMinimumVelocitiesYN', logical_value, found)
+        if (found) setting%Limiter%Velocity%ZeroMinimumVelocitiesYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Velocity.ZeroMinimumVelocitiesYN not found'
 
+        !%                       Limiter.Velocity.Maximum
+        call json%get('Limiter.Velocity.Maximum', real_value, found)
+        if (found) setting%Limiter%Velocity%Maximum = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Velocity.Maximum not found'
+        
+        !%                       Limiter.Velocity.Minimum
+        call json%get('Limiter.Velocity.Minimum', real_value, found)
+        if (found) setting%Limiter%Velocity%Minimum = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Limiter.Velocity.Minimum not found'
+      
+    
         !%                       Limiter.Flowrate.UseSWMMlinkValueYN
         call json%get('Limiter.Flowrate.UseSWMMlinkValueYN', logical_value, found)
         if (found) setting%Limiter%Flowrate%UseSWMMlinkValueYN = logical_value
@@ -1374,26 +1458,28 @@ contains
         
 
     !% Link. =====================================================================
-        !%                      Link.DefaultInitDepthType       
+        !%                      Link.DefaultInitDepthType    
+        !% --- HACK presently disabled -- needs to be rewritten in init_IC_get_head_and_depth   
         call json%get('Link.DefaultInitDepthType', c, found)
-        if (found) then            
-            call util_lower_case(c)
-            if (c == 'linear') then
-                setting%Link%DefaultInitDepthType = LinearlyVaryingDepth
-            else if (c == 'uniform') then
-                setting%Link%DefaultInitDepthType = UniformDepth
-            else if (c == 'exponential') then
-                setting%Link%DefaultInitDepthType = ExponentialDepth
-            else if (c == 'fixedhead') then
-                setting%Link%DefaultInitDepthTYpe = FixedHead
-            else
-                write(*,"(A)") 'Error - json file - setting.Link.DefaultInitDepthType of ',trim(c)
-                write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '... linear, uniform, exponential, fixedhead'
-                stop 93775
-            end if
-        end if
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Link.DefaultInitDepthType not found'
+        if (found) stop "Error - json file," // "setting Link.DefaultInitDepthType is not presently supported"
+        ! if (found) then            
+        !     call util_lower_case(c)
+        !     if (c == 'linearlyvaryingdepth') then
+        !         setting%Link%DefaultInitDepthType = LinearlyVaryingDepth
+        !     else if (c == 'uniformdepth') then
+        !         setting%Link%DefaultInitDepthType = UniformDepth
+        !     else if (c == 'increasingdepth') then
+        !         setting%Link%DefaultInitDepthType = IncreasingDepth
+        !     else if (c == 'fixedhead') then
+        !         setting%Link%DefaultInitDepthTYpe = FixedHead
+        !     else
+        !         write(*,"(A)") 'Error - json file - setting.Link.DefaultInitDepthType of ',trim(c)
+        !         write(*,"(A)") '..is not in allowed options of:'
+        !         write(*,"(A)") '... linear, uniform, exponential, fixedhead'
+        !         stop 93775
+        !     end if
+        ! end if
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Link.DefaultInitDepthType not found'
 
         !%                      Link.OpenChannelLimitDepthYN
         call json%get('Link.OpenChannelLimitDepthYN', logical_value, found)
@@ -1411,7 +1497,7 @@ contains
         if (found) setting%Orifice%ForceOrificeNodesToJM = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Orifice.ForceOrificeNodesToJM not found'
 
-        !%                       SharpCrestedWeirCoefficeint
+        !%                       SharpCrestedWeirCoefficient
         call json%get('Orifice.SharpCrestedWeirCoefficient', real_value, found)
         if (found) setting%Orifice%SharpCrestedWeirCoefficient = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - setting " // 'Orifice.SharpCrestedWeirCoefficient not found'
@@ -1445,7 +1531,7 @@ contains
         if (found) setting%Output%Warning = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.Warning not found'
         
-        !% do not read           Output.LastLeve
+        !% do not read           Output.LastLevel
         !% do not read           Output.MaxExpectedLevels
 
         !%                       Output.StoredLevels
@@ -1458,6 +1544,12 @@ contains
         if (found) setting%Output%StoredFileNames = integer_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.StoredFileNames not found'
 
+        !%                       Output.MemoryStorageMax 
+        call json%get('Output.MemoryStorageMax ', integer_value, found)
+        if (found) setting%Output%MemoryStorageMax  = integer_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.MemoryStorageMax  not found'
+
+
         !% --- Output.CommandLine
         !%                       CommandLine.quietYN
         call json%get('Output.CommandLine.quietYN', logical_value, found)
@@ -1468,6 +1560,7 @@ contains
         call json%get('Output.CommandLine.interval', integer_value, found)
         if (found) setting%Output%CommandLine%interval = integer_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.CommandLine.interval not found'
+
 
         !% --- Output.DataOut
         !%                       Dataout.isAreaOut                   
@@ -1540,7 +1633,7 @@ contains
         if (found) setting%Output%DataOut%isVelocityOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isVelocityOut not found'
         
-        !%                       Dataout.isVolume
+        !%                       Dataout.isVolumeOut
         call json%get('Output.DataOut.isVolumeOut', logical_value, found)
         if (found) setting%Output%DataOut%isVolumeOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isVolumeOut not found'
@@ -1729,12 +1822,15 @@ contains
             call util_lower_case(c)
             if (c == 'default') then
                 setting%Partitioning%PartitioningMethod = Default
+                stop "Error - json file - setting" // "PartitioningMethod = Default not presently supported"
             else if (c == 'bquick') then
                 setting%Partitioning%PartitioningMethod = BQuick
             else if (c == 'random') then
                 setting%Partitioning%PartitioningMethod = Random
+                stop "Error - json file - setting" // "PartitioningMethod = Random not presently supported"
             else if (c == 'blink') then
                 setting%Partitioning%PartitioningMethod = BLink
+                stop "Error - json file - setting" // "PartitioningMethod = BLink not presently supported"
             else
                 write(*,"(A)") 'Error - json file - setting.Partitioning.PartitioningMethod of ',trim(c)
                 write(*,"(A)") '..is not in allowed options of:'
@@ -1755,12 +1851,30 @@ contains
         if (found) setting%Profile%useYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Profile.useYN not found'
 
+    !% Pump. =====================================================================
+
+        !%                       RampupTime
+        call json%get('Pump.RampupTime', real_value, found)
+        if (found) setting%Pump%RampupTime = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Pump.RampupTime not found'
+
+        !%                       MinShutoffTime
+        call json%get('Pump.MinShutoffTime', real_value, found)
+        if (found) setting%Pump%MinShutoffTime = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Pump.MinShutoffTime not found'
+  
     !% Simulation. =====================================================================
         !%                       AllowReverseGradientInitialConditionsTF
         call json%get('Simulation.AllowReverseGradientInitialConditionsTF', logical_value, found)
         if (found) setting%Simulation%AllowReverseGradientInitialConditionsTF = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.AllowReverseGradientInitialConditionsTF not found'
-          !%                       useHydrology
+
+        !%                       stopAfterInitializationYN
+        call json%get('Simulation.stopAfterInitializationYN', logical_value, found)
+        if (found) setting%Simulation%stopAfterInitializationYN = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.stopAfterInitializationYN not found'
+
+        !%                       useHydrology
         call json%get('Simulation.useHydrology', logical_value, found)
         if (found) setting%Simulation%useHydrology = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.useHydrology not found'
@@ -1769,11 +1883,6 @@ contains
         call json%get('Simulation.useHydraulics', logical_value, found)
         if (found) setting%Simulation%useHydraulics = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.useHydraulics not found'
-
-        !%                       stopAfterInitializationYN
-        call json%get('Simulation.stopAfterInitializationYN', logical_value, found)
-        if (found) setting%Simulation%stopAfterInitializationYN = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Simulation.stopAfterInitializationYN not found'
 
         !%                       useSpinUp
         call json%get('Simulation.useSpinUp', logical_value, found)
@@ -1817,6 +1926,17 @@ contains
         if (found) setting%SmallDepth%LateralInflowSmallDepth = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallDepth.LateralInflowSmallDepth not found'
 
+        !%                       BCInflowSmallDepth
+        call json%get('SmallDepth.BCInflowSmallDepth', real_value, found)
+        if (found) setting%SmallDepth%BCInflowSmallDepth = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallDepth.BCInflowSmallDepth not found'
+
+        !%                       InflowSmallDepthMultiplier
+        call json%get('SmallDepth.InflowSmallDepthMultiplier', real_value, found)
+        if (found) setting%SmallDepth%InflowSmallDepthMultiplier = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'SmallDepth.InflowSmallDepthMultiplier not found'
+
+
     !% Solver. =====================================================================
        
         !%                       Solver.SubtractReferenceHead
@@ -1851,15 +1971,15 @@ contains
         end if
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.MomentumSourceMethod not found'     
 
-        !%                       Solver.SwitchFractionDn
-        call json%get('Solver.SwitchFractionDn', real_value, found)
-        if (found)  setting%Solver%SwitchFractionDn = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.SwitchFractionDn not found'
+        ! !%                       Solver.SwitchFractionDn
+        ! call json%get('Solver.SwitchFractionDn', real_value, found)
+        ! if (found)  setting%Solver%SwitchFractionDn = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.SwitchFractionDn not found'
         
-        !%                       Solver.SwitchFractionU
-        call json%get('Solver.SwitchFractionUp', real_value, found)
-        if (found)   setting%Solver%SwitchFractionUp = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.SwitchFractionUp not found'
+        ! !%                       Solver.SwitchFractionU
+        ! call json%get('Solver.SwitchFractionUp', real_value, found)
+        ! if (found)   setting%Solver%SwitchFractionUp = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Solver.SwitchFractionUp not found'
 
         !% do not read           Solver.crk2
 
@@ -2017,19 +2137,19 @@ contains
         !% do not read          Time.End
 
         !%                      Time.StartEpoch
-        call json%get('Time.StartEpoch', real_value, found)
-        if (found) setting%Time%StartEpoch = real_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.StartEpoch not found'
+        ! call json%get('Time.StartEpoch', real_value, found)
+        ! if (found) setting%Time%StartEpoch = real_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.StartEpoch not found'
     
         !%                      Time.EndEpoch
-        call json%get('Time.EndEpoch', real_value, found)
-        if (found) setting%Time%EndEpoch = real_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.EndEpoch not found'
+        ! call json%get('Time.EndEpoch', real_value, found)
+        ! if (found) setting%Time%EndEpoch = real_value
+        ! !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.EndEpoch not found'
 
         !%                      Time.Hydraulics.Dt
         call json%get('Time.Hydraulics.Dt', real_value, found)
         if (found) setting%Time%Hydraulics%Dt = real_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.Hydraulics.Dt not found'
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.Hydraulics.Dt not found'
     
         !% do not read          Time.Hydraulics.LastTime
         !% do not read          Time.Hydraulics.NextTime
@@ -2038,7 +2158,7 @@ contains
         !%                      Time.Hydrology.Dt
         if (found) call json%get('Time.Hydrology.Dt', real_value, found)
         setting%Time%Hydrology%Dt = real_value
-        !if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.Hydrology.Dt not found'
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Time.Hydrology.Dt not found'
 
         !% do not read          Time.Hydrology.LastTime
         !% do not read          Time.Hydrology.NextTime
@@ -2199,27 +2319,33 @@ contains
         if (found) setting%ZeroValue%UseZeroValues = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ZeroValue.UseZeroValues not found'
         
-        !%                       Area
-        call json%get('ZeroValue.Area', real_value, found)
-        if (found) setting%ZeroValue%Area = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ZeroValue.Area not found'
+        ! !%                       Area
+        ! call json%get('ZeroValue.Area', real_value, found)
+        ! if (found) setting%ZeroValue%Area = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ZeroValue.Area not found'
         
         !%                       Depth
         call json%get('ZeroValue.Depth', real_value, found)
         if (found) setting%ZeroValue%Depth = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ZeroValue.Depth not found'
         
-        !%                       Topwidth
-        call json%get('ZeroValue.Topwidth', real_value, found)
-        if (found) setting%ZeroValue%Topwidth = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ZeroValue.Topwidth not found'
+        ! !%                       Topwidth
+        ! call json%get('ZeroValue.Topwidth', real_value, found)
+        ! if (found) setting%ZeroValue%Topwidth = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ZeroValue.Topwidth not found'
 
-        !%                       Volume
-        call json%get('ZeroValue.Volume', real_value, found)
-        if (found) setting%ZeroValue%Volume = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ZeroValue.Volume not found'
+        ! !%                       Volume
+        ! call json%get('ZeroValue.Volume', real_value, found)
+        ! if (found) setting%ZeroValue%Volume = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ZeroValue.Volume not found'
 
         !% do not read VolumeResetLevel
+
+        !%                       Velocity
+        call json%get('ZeroValue.Velocity', real_value, found)
+        if (found) setting%ZeroValue%Velocity = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'ZeroValue.Velocity not found'
+      
 
     !% Debug. =====================================================================
         !%                       isGlobalVolumeBalance 

@@ -366,7 +366,7 @@ module utility_allocate
         !% all BC, transects, curves, etc.
         !%------------------------------------------------------------------
 
-        N_uniformTable_locations = N_headBC
+        N_uniformTable_locations = N_headBCnode
 
         !% --- storage for integer data
         allocate(uniformTableI &
@@ -691,39 +691,39 @@ module utility_allocate
             end if
         !%-----------------------------------------------------------------
 
-        if (N_headBC > 0) then
-            allocate(BC%headI(N_headBC, N_headI), stat=allocation_status, errmsg=emsg)
+        if (N_headBCnode > 0) then
+            allocate(BC%headI(N_headBCnode, N_headI), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%headI')
             BC%headI(:,:) = nullvalueI
 
-            allocate(BC%headYN(N_headBC, N_headYN), stat=allocation_status, errmsg=emsg)
+            allocate(BC%headYN(N_headBCnode, N_headYN), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%headYN')
             BC%headYN(:,:) = nullvalueL
 
-            allocate(BC%headR(N_headBC, N_headR), stat=allocation_status, errmsg=emsg)
+            allocate(BC%headR(N_headBCnode, N_headR), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%headR')
             BC%headR(:,:) = nullvalueR
 
-            allocate(BC%headTimeseries(N_headBC, setting%BC%TimeSlotsStored, N_headR_TS), stat=allocation_status, errmsg=emsg)
+            allocate(BC%headTimeseries(N_headBCnode, setting%BC%TimeSlotsStored, N_headR_TS), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%headTimeseries')
             BC%headTimeseries(:,:,:) = nullvalueR
 
         end if
 
-        if (N_flowBC > 0) then
-            allocate(BC%flowI(N_flowBC, N_flowI), stat=allocation_status, errmsg=emsg)
+        if (N_flowBCnode > 0) then
+            allocate(BC%flowI(N_flowBCnode, N_flowI), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%flowI')
             BC%flowI(:,:) = nullvalueI
 
-            allocate(BC%flowYN(N_flowBC, N_flowYN), stat=allocation_status, errmsg=emsg)
+            allocate(BC%flowYN(N_flowBCnode, N_flowYN), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%flowYN')
             BC%flowYN(:,:) = nullvalueL
 
-            allocate(BC%flowR(N_flowBC, N_flowR), stat=allocation_status, errmsg=emsg)
+            allocate(BC%flowR(N_flowBCnode, N_flowR), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%flowR')
             BC%flowR(:,:) = nullvalueR
 
-            allocate(BC%flowTimeseries(N_flowBC, setting%BC%TimeSlotsStored, N_flowR_TS), stat=allocation_status, errmsg=emsg)
+            allocate(BC%flowTimeseries(N_flowBCnode, setting%BC%TimeSlotsStored, N_flowR_TS), stat=allocation_status, errmsg=emsg)
             call util_allocate_check (allocation_status, emsg, 'BC%flowTimeseries')
             BC%flowTimeseries(:,:,:) = nullvalueR
             
