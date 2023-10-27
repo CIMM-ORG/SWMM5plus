@@ -1,4 +1,4 @@
-module air_tracking
+module air_entrapment
     !%==========================================================================
     !% SWMM5+ release, version 1.0.0
     !% 20230608
@@ -20,7 +20,7 @@ module air_tracking
     private
 
     
-    ! public :: 
+    public :: air_entrapment_toplevel 
 
 contains
     !%    
@@ -28,6 +28,20 @@ contains
     !% PUBLIC
     !%==========================================================================
     !%
+    subroutine air_entrapment_toplevel (istep)
+        !%-----------------------------------------------------------------
+        !% Description
+        !%-----------------------------------------------------------------
+        !% toplevel subroutine for air entrapment modeling
+        !%-----------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: istep
+            integer             ::  ii
+        !%------------------------------------------------------------------
+
+        call ae_elem_air_preliminaries ()
+
+    end subroutine air_entrapment_toplevel
     !%    
     !%==========================================================================
     !%==========================================================================
@@ -71,35 +85,56 @@ contains
     ! !%==========================================================================
     ! !%==========================================================================
     ! !%
-    ! subroutine at_elem_air_volume (pCol_Closed) 
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Find the airvolume from the empty spaces in closed elements
-    !     !%------------------------------------------------------------------
-    !     integer, intent(in) :: pCol_Closed
-    !     integer          :: ii
-    !     integer, pointer :: thisP(:), npack
-    !     real(8), pointer :: Volume(:), AirVolume(:), fullVolume(:)
+    subroutine ae_elem_air_preliminaries () 
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Find the airvolume from the empty spaces in closed elements
+        !% Copy the flows from upstream and downstream of the elements
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer          :: ii 
+            integer, pointer :: nElem, eIdx(:), fUp(:), fDn(:)
+            real(8), pointer :: airVolume(:), volume(:), fullVolume(:)
+            real(8), pointer :: flowUp(:), flowDn(:), faceFlow(:)
+            logical, pointer :: upCons(:), dnCons(:), faceSurcharged(:) 
+            logical, pointer :: elemCons(:), surcharged(:)
+        !%------------------------------------------------------------------
+        !% static pointers 
+        fullVolume => elemR(:,er_FullVolume)
+        volume     => elemR(:,er_Volume)
+        surcharged => elemYN(:,eYN_isSurcharged)
+        faceFlow   => faceR(:,fr_Flowrate)
+        faceSurcharged => faceYN(:,fYN_isPSsurcharged)
 
-    !     character(64) :: subroutine_name = 'at_elem_air_volume'
-    !     !%------------------------------------------------------------------
-    !     npackP  = npack_elemP(pCol_Closed)
-    !     if (npackP < 1) return 
-    !     thisP => elemP(1:npackP,pCol)
+        !% cycle through the links to find element air volumes
+        do ii = 1,N_link
+            !% additional pointers
+            nElem     => link%I(ii,li_N_element)
+            eIdx      => LinkElemMapsI(ii,1:nElem,lmi_elem_idx)
+            fUp       => LinkElemMapsI(ii,1:nElem,lmi_elem_up_face)
+            fDn       => LinkElemMapsI(ii,1:nElem,lmi_elem_dn_face)
+            airVolume => elemAirR(ii,1:nElem,ear_air_volume)
+            flowUp    => elemAirR(ii,1:nElem,ear_flowrate_up)
+            flowDn    => elemAirR(ii,1:nElem,ear_flowrate_dn)
+            elemCons  => elemAirYN(ii,1:nElem,eaYN_elem_pressurized)
+            upCons    => elemAirYN(ii,1:nElem,eaYN_elem_up_constricted)
+            dnCons    => elemAirYN(ii,1:nElem,eaYN_elem_dn_constricted)
 
-    !     !% Aliases
-    !     Volume     => elemR(:,er_Volume)
-    !     AirVolume  => elemR(:,er_Air_volume)
-    !     fullVomume => elemR(:,er_FullVolume)
+            !% find the airvolumes in conduit elements
+            airVolume = max(fullVolume(eIdx) - volume(eIdx), zeroR)
+            !% find if the conduit element is surcharged
+            elemCons  = surcharged(eIdx)
+            !% copy the upstream and downstream flowrates from the faces
+            flowUp    = faceFlow(fUp)
+            flowDn    = faceFlow(fDn)
+            !% find if upsteam or downstream of the element is constricted 
+            !% due to water pressurization
+            upCons    = faceSurcharged(fUp)
+            dnCons    = faceSurcharged(fDn)
 
-    !     !% assume the empty space will be occupied by air
-    !     AirVolume(thisP) = fullVolume(thisP) - Volume(thisP)
+        end do
 
-    !     where (AirVolume(thisP) <= zeroR)
-    !         AirVolume(thisP) = zeroR
-    !     end where
-
-    ! end subroutine at_elem_air_volume   
+    end subroutine ae_elem_air_preliminaries   
     ! !%    
     ! !%==========================================================================
     ! !%==========================================================================
@@ -159,4 +194,4 @@ contains
     !%
 
     
-end module air_tracking
+end module air_entrapment
