@@ -1645,16 +1645,15 @@ module define_indexes
 !% Arrays for entrapped air tracking
 !%==========================================================================
 !%  
-    !% --- LinkElemMapsI(:,:,:) 3-d array
-    !% --- column index for linkAirI (mostly element maps)
+    !% --- conduitElemMapsI(:,:,:) 3-d array
     enum, bind(c)
-        enumerator :: lmi_elem_idx = 1
-        enumerator :: lmi_elem_up_face
-        enumerator :: lmi_elem_dn_face
-        enumerator :: lmi_lastplusone
+        enumerator :: cmi_elem_idx = 1
+        enumerator :: cmi_elem_up_face
+        enumerator :: cmi_elem_dn_face
+        enumerator :: cmi_lastplusone
     end enum
 
-    integer, target :: Ncol_LinkElemMapsI = lmi_lastplusone - 1
+    integer, target :: Ncol_conduitElemMapsI = cmi_lastplusone - 1
 
     !% --- elemAirR(:,:,:) 3-d array columns
     enum, bind(c)
@@ -1672,34 +1671,48 @@ module define_indexes
     enum, bind(c)
         enumerator :: eaYN_elem_air_pressurized = 1
         enumerator :: eaYN_elem_pressurized
-        enumerator :: eaYN_elem_up_face_pressurized
-        enumerator :: eaYN_elem_dn_face_pressurized
+        enumerator :: eaYN_elem_up_constricted
+        enumerator :: eaYN_elem_dn_constricted
         enumerator :: eaYN_lastplusone
     end enum
 
     integer, target :: Ncol_elemAirYN = eaYN_lastplusone - 1
 
-    !% --- linkAirR(:,:) 2-d array columns
+    !% --- conduitAirI(:,:) 2-d array
     enum, bind(c)
-        enumerator :: lar_air_volume = 1
-        enumerator :: lar_alpha
-        enumerator :: lar_link_air_pressure
-        enumerator :: lar_link_air_pressure_head
-        enumerator :: lar_lastplusone
+        enumerator :: cai_conduit_idx = 1
+        enumerator :: cai_node_up
+        enumerator :: cai_node_dn
+        enumerator :: cai_node_up_type
+        enumerator :: cai_node_dn_type
+        enumerator :: cai_N_elements
+        enumerator :: cai_N_air_pockets
+        enumerator :: cai_lastplusone
     end enum
 
-    integer, target :: Ncol_linkAirR= lar_lastplusone - 1
+    integer, target :: Ncol_conduitAirI = cai_lastplusone - 1
 
-    !% --- linkAirYN(:,:) 2-d logical array columns
+    !% --- conduitAirR(:,:) 2-d array columns
     enum, bind(c)
-        enumerator :: laYN_link_air_pressurized = 1
-        enumerator :: laYN_link_pressurized
-        enumerator :: laYN_link_up_pressurized
-        enumerator :: laYN_link_dn_pressurized
-        enumerator :: laYN_lastplusone
+        enumerator :: car_air_volume = 1
+        enumerator :: car_alpha
+        enumerator :: car_link_air_pressure
+        enumerator :: car_link_air_pressure_head
+        enumerator :: car_lastplusone
     end enum
 
-    integer, target :: Ncol_linkAirYN = laYN_lastplusone - 1
+    integer, target :: Ncol_conduitAirR= car_lastplusone - 1
+
+    !% --- conduitAirYN(:,:) 2-d logical array columns
+    enum, bind(c)
+        enumerator :: caYN_link_air_pressurized = 1
+        enumerator :: caYN_link_pressurized
+        enumerator :: caYN_link_up_pressurized
+        enumerator :: caYN_link_dn_pressurized
+        enumerator :: caYN_lastplusone
+    end enum
+
+    integer, target :: Ncol_conduitAirYN = caYN_lastplusone - 1
     
 !%
 !%==========================================================================

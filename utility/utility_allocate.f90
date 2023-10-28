@@ -755,14 +755,14 @@ module utility_allocate
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
 
-        !% --- allocating the LinkElemMapsI 3-d array
-        nPlanes =  N_link
-        nRows   =  maxval(link%I(1:N_link,li_N_element))
-        ncol    => Ncol_LinkElemMapsI
+        !% --- allocating the conduitElemMapsI 3-d array
+        nPlanes =  N_conduit
+        nRows   =  maxval(link%I(1:N_link,li_N_element), MASK = link%I(1:N_link,li_link_type) == lPipe)
+        ncol    => Ncol_conduitElemMapsI
 
-        allocate(LinkElemMapsI(nPlanes, nRows, ncol), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg, 'LinkElemMapsI')
-        LinkElemMapsI(:,:,:) = nullvalueI
+        allocate(conduitElemMapsI(nPlanes, nRows, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'conduitElemMapsI')
+        conduitElemMapsI(:,:,:) = nullvalueI
 
         !% --- allocating the elemAirR 3-d array
         ncol  => Ncol_elemAirR
@@ -776,17 +776,23 @@ module utility_allocate
         call util_allocate_check (allocation_status, emsg, 'elemAirYN')
         elemAirYN(:,:,:) = nullvalueL
 
-        !% --- allocating the linkAirR 2-d array
-        ncol  => Ncol_linkAirR
-        allocate(linkAirR(N_link, ncol), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg, 'linkAirR')
-        linkAirR(:,:) = nullvalueR 
+        !% allocating conduitAirI 2-d array
+        ncol  => Ncol_conduitAirI
+        allocate(conduitAirI(N_conduit, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'conduitAirI')
+        conduitAirI(:,:) = nullvalueI 
 
-        !% --- allocating the linkAirYN 2-d array
-        ncol  => Ncol_linkAirYN
-        allocate(linkAirYN(N_link, ncol), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg, 'linkAirYN')
-        linkAirYN(:,:) = nullvalueL
+        !% --- allocating the conduitAirR 2-d array
+        ncol  => Ncol_conduitAirR
+        allocate(conduitAirR(N_conduit, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'conduitAirR')
+        conduitAirR(:,:) = nullvalueR 
+
+        !% --- allocating the conduitAirYN 2-d array
+        ncol  => Ncol_conduitAirYN
+        allocate(conduitAirYN(N_conduit, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'conduitAirYN')
+        conduitAirYN(:,:) = nullvalueL
 
         !%-----------------------------------------------------------------
         !% Closing

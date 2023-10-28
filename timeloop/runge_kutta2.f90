@@ -29,6 +29,7 @@ module runge_kutta2
     use preissmann_slot
     use adjust
     use diagnostic_elements
+    use air_entrapment
     use utility_crash
     use utility_unit_testing, only: util_utest_CLprint, util_utest_checkIsNan
 
@@ -200,6 +201,12 @@ module runge_kutta2
             end if
 
         end do
+
+        !% Air entrapment modeling
+        if (setting%AirTracking%UseAirTrackingYN) then
+
+            call air_entrapment_toplevel (istep)
+        end if
 
         !% HACK --- this needs to be setup for multiple images and moved to the utility_debug
         if (setting%Debug%isGlobalVolumeBalance) then

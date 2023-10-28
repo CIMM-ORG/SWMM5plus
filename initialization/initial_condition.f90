@@ -7025,11 +7025,11 @@ contains
         faceFlow   => faceR(:,fr_Flowrate)
 
         !% cycle through the links to find element air volumes
-        do ii = 1,N_link
-            nElem => link%I(ii,li_N_element)
-            eIdx  => LinkElemMapsI(ii,1:nElem,lmi_elem_idx)
-            fUp   => LinkElemMapsI(ii,1:nElem,lmi_elem_up_face)
-            fDn   => LinkElemMapsI(ii,1:nElem,lmi_elem_dn_face)
+        do ii = 1,N_conduit
+            nElem => conduitAirI(ii,cai_N_elements) 
+            eIdx  => conduitElemMapsI(ii,1:nElem,cmi_elem_idx)
+            fUp   => conduitElemMapsI(ii,1:nElem,cmi_elem_up_face)
+            fDn   => conduitElemMapsI(ii,1:nElem,cmi_elem_dn_face)
             airVolume => elemAirR(ii,1:nElem,ear_air_volume)
             flowUp    => elemAirR(ii,1:nElem,ear_flowrate_up)
             flowDn    => elemAirR(ii,1:nElem,ear_flowrate_dn)
@@ -7038,7 +7038,6 @@ contains
             airVolume = max(fullVolume(eIdx) - volume(eIdx), zeroR)
             flowUp    = faceFlow(fUp)
             flowDn    = faceFlow(fDn)
-
         end do
 
     end subroutine init_IC_air_entrapment

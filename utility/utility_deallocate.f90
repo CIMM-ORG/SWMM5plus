@@ -396,17 +396,20 @@ contains
 
         if (setting%AirTracking%UseAirTrackingYN) then
 
-            deallocate(LinkElemMapsI, stat=deallocation_status, errmsg=emsg)
-            call util_deallocate_check(deallocation_status, emsg, 'LinkElemMapsI')
+            deallocate(conduitElemMapsI, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'ConduitElemMapI')
 
-            deallocate(linkAirR, stat=deallocation_status, errmsg=emsg)
-            call util_deallocate_check(deallocation_status, emsg, 'linkAirR')
+            deallocate(conduitAirI, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'conduitAirI')
+
+            deallocate(ConduitAirR, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'ConduitAirR')
+
+            deallocate(conduitAirYN, stat=deallocation_status, errmsg=emsg)
+            call util_deallocate_check(deallocation_status, emsg, 'conduitAirYN')
 
             deallocate(elemAirR, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check(deallocation_status, emsg, 'elemAirR')
-
-            deallocate(linkAirYN, stat=deallocation_status, errmsg=emsg)
-            call util_deallocate_check(deallocation_status, emsg, 'linkAirYN')
 
             deallocate(elemAirYN, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check(deallocation_status, emsg, 'elemAirYN')

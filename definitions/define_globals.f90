@@ -204,10 +204,11 @@ module define_globals
     logical, allocatable :: image_full(:)
 
     !% --- Storage for entrapped air in links
-    integer, allocatable, target :: LinkElemMapsI(:,:,:)      !% 3-d array to store element and face maps to a corresponding links
-    real(8), allocatable, target :: linkAirR(:,:)             !% 2-d array to store reals of entrapped air values link scale
+    integer, allocatable, target :: conduitElemMapsI(:,:,:)   !% 3-d array to store element and face maps to a corresponding conduits
+    integer, allocatable, target :: conduitAirI(:,:)          !% 2-d array to store integer of entrapped air values link scale
+    real(8), allocatable, target :: conduitAirR(:,:)          !% 2-d array to store reals of entrapped air values link scale
     real(8), allocatable, target :: elemAirR(:,:,:)           !% 2-d array to store real entrapped air values element scale
-    logical, allocatable, target :: linkAirYN(:,:)            !% 2-d array to store logicals of entrapped air links scale
+    logical, allocatable, target :: conduitAirYN(:,:)         !% 2-d array to store logicals of entrapped air links scale
     logical, allocatable, target :: elemAirYN(:,:,:)          !% 2-d array to store logicals of entrapped air element scale
 
     !% --- link and node output_idx
@@ -387,6 +388,7 @@ module define_globals
     integer :: N_uniformTableData_items = 51  !% 51 is consistent with tables of EPA-SWMM
     integer :: N_uniformTable_locations
     integer :: N_link
+    integer :: N_conduit
     integer :: N_node
     integer :: N_headBCnode !% number of head BC defined on nodes
     integer :: N_flowBCnode !% number of flow BC defined on nodes (may be pushed to links)

@@ -274,8 +274,7 @@ contains
         !%==========================================================================
 
         !% firstly check if the network has any closed conduits
-        if ((setting%AirTracking%UseAirTrackingYN      ) .and. &
-            (count(link%I(:,li_link_type) == lPipe) < 1)) then
+        if ((setting%AirTracking%UseAirTrackingYN) .and. (N_conduit < 1)) then
 
             write(*,*) 'USER CONFIGURATION ERROR : The network does not contain any closed conduits'
             write(*,*) '... skipping air entrapment in this simulation'
@@ -768,6 +767,9 @@ contains
             end if
 
         end do
+
+        !% --- count the number of conduits in the network
+        N_conduit = count(link%I(:,li_link_type) == lPipe)
 
         !% --- ERROR CHECK for number of connections
         do ii = 1,N_node
@@ -3402,25 +3404,44 @@ contains
         !%------------------------------------------------------------------
         !% Declarations
             integer          :: ii, jj
-            integer, pointer :: nElem
-            integer, dimension(:), allocatable :: p_elem, p_up_face, p_dn_face
+            integer, pointer :: cIdx, nElem
+            integer, dimension(:), allocatable, target :: p_conduit, p_elem, p_up_face, p_dn_face
             character(64)    :: subroutine_name = 'init_entrapped_air_arrays'
         !-------------------------------------------------------------------
+        !% pack the conduits in the network
+        p_conduit = pack(link%I(:,li_idx), (link%I(:,li_link_type) == lPipe))
 
-        do ii = 1,N_Link
-            nElem     => link%I(ii,li_N_element)
+        do ii = 1, N_conduit
+        
+            cIdx      => p_conduit(ii)
+            nElem     => link%I(cIdx,li_N_element)
+
+            !% initialize the conduitAirI array
+            conduitAirI(ii,cai_conduit_idx)  = cIdx
+            conduitAirI(ii,cai_node_up)      = link%I(cIdx, li_Mnode_u)
+            conduitAirI(ii,cai_node_dn)      = link%I(cIdx, li_Mnode_d)
+            conduitAirI(ii,cai_node_up_type) = node%I(link%I(cIdx, li_Mnode_u),ni_node_type)
+            conduitAirI(ii,cai_node_dn_type) = node%I(link%I(cIdx, li_Mnode_d),ni_node_type)
+            conduitAirI(ii,cai_N_elements)   = nElem
+
             !% pack all the element indexes in the link ii
-            p_elem    = pack(elemI(:,ei_Lidx),     ((elemI(:,ei_link_Gidx_BIPquick) == ii) .and. (elemI(:,ei_ElementType) == CC)))
+            p_elem    = pack(elemI(:,ei_Lidx),     (elemI(:,ei_link_Gidx_BIPquick) == cIdx))
             !% pack the upstream face indexes of those corresponding elements
-            p_up_face = pack(elemI(:,ei_Mface_uL), ((elemI(:,ei_link_Gidx_BIPquick) == ii) .and. (elemI(:,ei_ElementType) == CC)))
+            p_up_face = pack(elemI(:,ei_Mface_uL), (elemI(:,ei_link_Gidx_BIPquick) == cIdx))
             !% pack the downstream face indexes of those corresponding elements
-            p_dn_face = pack(elemI(:,ei_Mface_dL), ((elemI(:,ei_link_Gidx_BIPquick) == ii) .and. (elemI(:,ei_ElementType) == CC)))
+            p_dn_face = pack(elemI(:,ei_Mface_dL), (elemI(:,ei_link_Gidx_BIPquick) == cIdx))
 
             !% store the maps to the 3d elements
-            LinkElemMapsI(ii,1:nElem,lmi_elem_idx)     = p_elem
-            LinkElemMapsI(ii,1:nElem,lmi_elem_up_face) = p_up_face
-            LinkElemMapsI(ii,1:nElem,lmi_elem_dn_face) = p_dn_face
+            conduitElemMapsI(ii,1:nElem,cmi_elem_idx)     = p_elem
+            conduitElemMapsI(ii,1:nElem,cmi_elem_up_face) = p_up_face
+            conduitElemMapsI(ii,1:nElem,cmi_elem_dn_face) = p_dn_face
+
+            !% --- deallocate the temporary packed arrays
+            deallocate(p_elem,p_up_face,p_dn_face)
         end do
+
+        !% --- deallocate the temporary packed array
+        deallocate(p_conduit)
 
     end subroutine init_entrapped_air_arrays
 !% 
