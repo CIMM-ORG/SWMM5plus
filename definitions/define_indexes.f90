@@ -1645,15 +1645,16 @@ module define_indexes
 !% Arrays for entrapped air tracking
 !%==========================================================================
 !%  
-    !% --- conduitElemMapsI(:,:,:) 3-d array
+    !% --- elemAirI(:,:,:) 3-d array
     enum, bind(c)
-        enumerator :: cmi_elem_idx = 1
-        enumerator :: cmi_elem_up_face
-        enumerator :: cmi_elem_dn_face
-        enumerator :: cmi_lastplusone
+        enumerator :: eai_elem_idx = 1
+        enumerator :: eai_elem_up_face
+        enumerator :: eai_elem_dn_face
+        enumerator :: eai_airpocket_type
+        enumerator :: eai_lastplusone
     end enum
 
-    integer, target :: Ncol_conduitElemMapsI = cmi_lastplusone - 1
+    integer, target :: Ncol_elemAirI = eai_lastplusone - 1
 
     !% --- elemAirR(:,:,:) 3-d array columns
     enum, bind(c)
@@ -1671,8 +1672,10 @@ module define_indexes
     enum, bind(c)
         enumerator :: eaYN_elem_air_pressurized = 1
         enumerator :: eaYN_elem_pressurized
-        enumerator :: eaYN_elem_up_constricted
-        enumerator :: eaYN_elem_dn_constricted
+        enumerator :: eaYN_elem_up_pressurized
+        enumerator :: eaYN_elem_dn_pressurized
+        enumerator :: eaYN_elem_open_airflow
+        enumerator :: eaYN_elem_has_entrapped_air
         enumerator :: eaYN_lastplusone
     end enum
 
@@ -1696,8 +1699,8 @@ module define_indexes
     enum, bind(c)
         enumerator :: car_air_volume = 1
         enumerator :: car_alpha
-        enumerator :: car_link_air_pressure
-        enumerator :: car_link_air_pressure_head
+        enumerator :: car_conduit_air_pressure
+        enumerator :: car_conduit_air_pressure_head
         enumerator :: car_lastplusone
     end enum
 
@@ -1705,10 +1708,10 @@ module define_indexes
 
     !% --- conduitAirYN(:,:) 2-d logical array columns
     enum, bind(c)
-        enumerator :: caYN_link_air_pressurized = 1
-        enumerator :: caYN_link_pressurized
-        enumerator :: caYN_link_up_pressurized
-        enumerator :: caYN_link_dn_pressurized
+        enumerator :: caYN_conduit_air_pressurized = 1
+        enumerator :: caYN_conduit_pressurized
+        enumerator :: caYN_conduit_up_pressurized
+        enumerator :: caYN_conduit_dn_pressurized
         enumerator :: caYN_lastplusone
     end enum
 

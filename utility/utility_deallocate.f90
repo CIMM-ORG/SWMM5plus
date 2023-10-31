@@ -396,7 +396,7 @@ contains
 
         if (setting%AirTracking%UseAirTrackingYN) then
 
-            deallocate(conduitElemMapsI, stat=deallocation_status, errmsg=emsg)
+            deallocate(elemAirI, stat=deallocation_status, errmsg=emsg)
             call util_deallocate_check(deallocation_status, emsg, 'ConduitElemMapI')
 
             deallocate(conduitAirI, stat=deallocation_status, errmsg=emsg)

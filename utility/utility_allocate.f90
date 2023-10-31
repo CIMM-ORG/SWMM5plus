@@ -755,14 +755,14 @@ module utility_allocate
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
 
-        !% --- allocating the conduitElemMapsI 3-d array
+        !% --- allocating the elemAirI 3-d array
         nPlanes =  N_conduit
         nRows   =  maxval(link%I(1:N_link,li_N_element), MASK = link%I(1:N_link,li_link_type) == lPipe)
-        ncol    => Ncol_conduitElemMapsI
+        ncol    => Ncol_elemAirI
 
-        allocate(conduitElemMapsI(nPlanes, nRows, ncol), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg, 'conduitElemMapsI')
-        conduitElemMapsI(:,:,:) = nullvalueI
+        allocate(elemAirI(nPlanes, nRows, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'elemAirI')
+        elemAirI(:,:,:) = nullvalueI
 
         !% --- allocating the elemAirR 3-d array
         ncol  => Ncol_elemAirR

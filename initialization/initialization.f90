@@ -3432,9 +3432,9 @@ contains
             p_dn_face = pack(elemI(:,ei_Mface_dL), (elemI(:,ei_link_Gidx_BIPquick) == cIdx))
 
             !% store the maps to the 3d elements
-            conduitElemMapsI(ii,1:nElem,cmi_elem_idx)     = p_elem
-            conduitElemMapsI(ii,1:nElem,cmi_elem_up_face) = p_up_face
-            conduitElemMapsI(ii,1:nElem,cmi_elem_dn_face) = p_dn_face
+            elemAirI(ii,1:nElem,eai_elem_idx)     = p_elem
+            elemAirI(ii,1:nElem,eai_elem_up_face) = p_up_face
+            elemAirI(ii,1:nElem,eai_elem_dn_face) = p_dn_face
 
             !% --- deallocate the temporary packed arrays
             deallocate(p_elem,p_up_face,p_dn_face)

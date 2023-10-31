@@ -308,6 +308,12 @@
         enumerator :: OneSideAdjust    !% one sided link length adjustment has done
         enumerator :: BothSideAdjust   !% both sided link length adjustment has done
         enumerator :: DiagAdjust       !% if the connected link is an diagnostic element
+
+        !% --- airpocket type
+        enumerator :: noAirPocket
+        enumerator :: entrappedAirpocket
+        enumerator :: upReleaseAirpocket
+        enumerator :: dnReleaseAirpocket
  
         !% last items for bookkeeping
         enumerator :: SWMM_FlowUnits_CFS
@@ -557,6 +563,10 @@
         reverseKey(Paved)  = 'Paved'
         reverseKey(Gravel) = 'Gravel'
         reverseKey(NoRoadSurface) = 'NoRoadSurface'
+        reverseKey(noAirPocket) = 'noAirPocket'
+        reverseKey(entrappedAirpocket) = 'entrappedAirpocket'
+        reverseKey(upReleaseAirpocket) = 'upReleaseAirpocket'
+        reverseKey(dnReleaseAirpocket) = 'dnReleaseAirpocket'
         reverseKey(SWMM_FlowUnits_CFS) = 'SWMM_FlowUnits_CFS'
         reverseKey(SWMM_FlowUnits_GPM) = 'SWMM_FlowUnits_GPM'
         reverseKey(SWMM_FlowUnits_MGD) = 'SWMM_FlowUnits_MGD'
