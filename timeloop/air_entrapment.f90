@@ -107,8 +107,8 @@ contains
         !% Description:
         !% Find air bubbles in an link
         !%------------------------------------------------------------------
-            integer          :: ii, jj, startIdx, endIdx
-            integer, pointer :: nElem, eIdx(:), airPocketType(:)
+            integer          :: ii, jj, startIdx, endIdx, count
+            integer, pointer :: nElem, eIdx(:), airPocketType(:), nPockets
             logical, pointer :: upSur(:), dnSur(:), faceSurcharged(:) 
             logical, pointer :: elemSur(:), surcharged(:), entrappedAir(:)
             logical          :: possibleAirBubble, stopCheck
@@ -118,6 +118,7 @@ contains
         do ii = 1,N_conduit
             !% pointers
             nElem     => conduitAirI(ii,cai_N_elements)
+            nPockets  => conduitAirI(ii,cai_N_air_pockets)
             eIdx      => elemAirI(ii,:,eai_elem_idx)
             elemSur   => elemAirYN(ii,:,eaYN_elem_pressurized)
             upSur     => elemAirYN(ii,:,eaYN_elem_up_pressurized)
@@ -145,12 +146,14 @@ contains
 
             !% if initially any airbubble is detected, map the location of that air bubble
             if (possibleAirBubble) then
+                !% reset the counter for number of bubbles
+                count = zeroI
                 !% reset the indexes
-                startIdx    = nullvalueI
-                endIdx      = nullvalueI
+                startIdx    = zeroI
+                endIdx      = zeroI
                 !% --- cycle through the conduit elements to 
                 !%     find entrapped air pockets
-                jj = 1
+                jj = oneI
                 do while (jj <= nElem)
 
                     !% the element is not surcharged and start counting 
@@ -162,12 +165,13 @@ contains
                         !% cycle through the next elements until a surcharge
                         !% element is encountered
                         do while (jj <= nElem .and. (.not. elemSur(jj)))
-                            jj = jj + 1
+                            jj = jj + oneI
                         end do
 
                         !% set the ending index
-                        endIdx = jj - 1
-
+                        endIdx = jj - oneI
+                        !% count the number of airpockets
+                        count = count + oneI
                         !% set the entrapped airpocket logical to true
                         entrappedAir(startIdx:endIdx) = .true.
                         !% set the type of the airpocket 
@@ -181,26 +185,32 @@ contains
 
                         !% HACK: 
                         !% while surcharging, v-shape patterns can develop
-                        !% thus eliminate the entrapped airpockets that
+                        !% thus remove the saved entrapped airpockets that
                         !% consnsts of only one element and both the upstream
-                        !% and downstream elements are surcharged 
+                        !% and downstream elements are surcharged (thus creating a v)
                         if ((startIdx - endIdx == zeroI) .and. (airPocketType(startIdx) == entrappedAirpocket)) then
                             airPocketType(startIdx:endIdx) = noAirPocket
                             entrappedAir(startIdx:endIdx)  = .false.
+                            count = count - oneI
                         end if
 
                     !% progress the counter for surcharge elements
                     else
-                        jj = jj + 1
+                        jj = jj + oneI
                     end if
 
                 end do
-                ! if (any(airPocketType(1:nElem) == entrappedAirpocket)) then
+                !% save the number of airpockets in the link
+                nPockets = count
+
+                ! !% debug printing
+                ! if (any(entrappedAir(1:nElem))) then
                 !     print*, 'Entrapped air at conduit  ',link%names(ii)%str
                 !     print*, entrappedAir(1:nElem), 'entrappedAir(1:nElem)'
                 !     print*, elemSur(1:nElem), 'elemSur(1:nElem)'
                 !     print*, airPocketType(1:nElem), 'airPocketType(1:nElem)'
-                ! end if
+                !     print*, nPockets, 'nPockets'
+                end if
             end if
 
         end do
