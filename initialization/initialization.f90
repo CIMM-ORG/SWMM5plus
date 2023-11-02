@@ -3405,24 +3405,15 @@ contains
         !% Declarations
             integer          :: ii, jj
             integer, pointer :: cIdx, nElem
-            integer, dimension(:), allocatable, target :: p_conduit, p_elem, p_up_face, p_dn_face
+            integer, dimension(:), allocatable, target :: p_elem, p_up_face, p_dn_face
             character(64)    :: subroutine_name = 'init_entrapped_air_arrays'
         !-------------------------------------------------------------------
-        !% pack the conduits in the network
-        p_conduit = pack(link%I(:,li_idx), (link%I(:,li_link_type) == lPipe))
+        !% pack the conduit indexes in the network
+        pConduitIdx = pack(link%I(:,li_idx), (link%I(:,li_link_type) == lPipe))
 
         do ii = 1, N_conduit
-        
-            cIdx      => p_conduit(ii)
+            cIdx      => pConduitIdx(ii)
             nElem     => link%I(cIdx,li_N_element)
-
-            !% initialize the conduitAirI array
-            conduitAirI(ii,cai_conduit_idx)  = cIdx
-            conduitAirI(ii,cai_node_up)      = link%I(cIdx, li_Mnode_u)
-            conduitAirI(ii,cai_node_dn)      = link%I(cIdx, li_Mnode_d)
-            conduitAirI(ii,cai_node_up_type) = node%I(link%I(cIdx, li_Mnode_u),ni_node_type)
-            conduitAirI(ii,cai_node_dn_type) = node%I(link%I(cIdx, li_Mnode_d),ni_node_type)
-            conduitAirI(ii,cai_N_elements)   = nElem
 
             !% pack all the element indexes in the link ii
             p_elem    = pack(elemI(:,ei_Lidx),     (elemI(:,ei_link_Gidx_BIPquick) == cIdx))
@@ -3432,16 +3423,12 @@ contains
             p_dn_face = pack(elemI(:,ei_Mface_dL), (elemI(:,ei_link_Gidx_BIPquick) == cIdx))
 
             !% store the maps to the 3d elements
-            elemAirI(ii,1:nElem,eai_elem_idx)     = p_elem
-            elemAirI(ii,1:nElem,eai_elem_up_face) = p_up_face
-            elemAirI(ii,1:nElem,eai_elem_dn_face) = p_dn_face
-
+            conduitElemMapsI(ii,1:nElem,cmi_elem_idx)     = p_elem
+            conduitElemMapsI(ii,1:nElem,cmi_elem_up_face) = p_up_face
+            conduitElemMapsI(ii,1:nElem,cmi_elem_dn_face) = p_dn_face
             !% --- deallocate the temporary packed arrays
             deallocate(p_elem,p_up_face,p_dn_face)
         end do
-
-        !% --- deallocate the temporary packed array
-        deallocate(p_conduit)
 
     end subroutine init_entrapped_air_arrays
 !% 

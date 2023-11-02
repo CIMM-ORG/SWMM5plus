@@ -755,44 +755,32 @@ module utility_allocate
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
 
-        !% --- allocating the elemAirI 3-d array
+        !% --- allocating the conduitElemMapsI 3-d array
         nPlanes =  N_conduit
         nRows   =  maxval(link%I(1:N_link,li_N_element), MASK = link%I(1:N_link,li_link_type) == lPipe)
         ncol    => Ncol_elemAirI
 
-        allocate(elemAirI(nPlanes, nRows, ncol), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg, 'elemAirI')
-        elemAirI(:,:,:) = nullvalueI
+        allocate(conduitElemMapsI(nPlanes, nRows, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'conduitElemMapsI')
+        conduitElemMapsI(:,:,:) = nullvalueI
 
-        !% --- allocating the elemAirR 3-d array
-        ncol  => Ncol_elemAirR
-        allocate(elemAirR(nPlanes, nRows, ncol), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg, 'elemAirR')
-        elemAirR(:,:,:) = nullvalueR
+        !% --- allocating the airI 3-d array
+        ncol  => Ncol_airI
+        allocate(airI(nPlanes, max_airpockets_per_conduit, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'airI')
+        airI(:,:,:) = nullvalueI
 
-        !% --- allocating the elemAirR 3-d array
-        ncol  => Ncol_elemAirYN
-        allocate(elemAirYN(nPlanes, nRows, ncol), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg, 'elemAirYN')
-        elemAirYN(:,:,:) = nullvalueL
+        !% --- allocating the airR 3-d array
+        ncol  => Ncol_AirR
+        allocate(airR(nPlanes, max_airpockets_per_conduit, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'airR')
+        airR(:,:,:) = nullvalueR
 
-        !% allocating conduitAirI 2-d array
-        ncol  => Ncol_conduitAirI
-        allocate(conduitAirI(N_conduit, ncol), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg, 'conduitAirI')
-        conduitAirI(:,:) = nullvalueI 
-
-        !% --- allocating the conduitAirR 2-d array
-        ncol  => Ncol_conduitAirR
-        allocate(conduitAirR(N_conduit, ncol), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg, 'conduitAirR')
-        conduitAirR(:,:) = nullvalueR 
-
-        !% --- allocating the conduitAirYN 2-d array
-        ncol  => Ncol_conduitAirYN
-        allocate(conduitAirYN(N_conduit, ncol), stat=allocation_status, errmsg=emsg)
-        call util_allocate_check (allocation_status, emsg, 'conduitAirYN')
-        conduitAirYN(:,:) = nullvalueL
+        !% --- allocating the airYN 3-d array
+        ncol  => Ncol_airYN
+        allocate(airYN(nPlanes, max_airpockets_per_conduit, ncol), stat=allocation_status, errmsg=emsg)
+        call util_allocate_check (allocation_status, emsg, 'airYN')
+        airYN(:,:,:) = nullvalueL
 
         !%-----------------------------------------------------------------
         !% Closing

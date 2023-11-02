@@ -204,13 +204,12 @@ module define_globals
     logical, allocatable :: image_full(:)
 
     !% --- Storage for entrapped air in links
-    integer, allocatable, target :: elemAirI(:,:,:)           !% 3-d array to store element and face maps to a corresponding conduits along with integer data
-    real(8), allocatable, target :: elemAirR(:,:,:)           !% 3-d array to store real entrapped air values element scale
-    logical, allocatable, target :: elemAirYN(:,:,:)          !% 3-d array to store logicals of entrapped air element scale
-    integer, allocatable, target :: conduitAirI(:,:)          !% 2-d array to store integer of entrapped air values link scale
-    real(8), allocatable, target :: conduitAirR(:,:)          !% 2-d array to store reals of entrapped air values link scale
-    logical, allocatable, target :: conduitAirYN(:,:)         !% 2-d array to store logicals of entrapped air links scale
-    
+    integer, parameter :: max_airpockets_per_conduit = 3  
+    integer, allocatable, target :: pConduitIdx(:)
+    integer, allocatable, target :: conduitElemMapsI(:,:,:) !% 3-d array to store element and face maps to a corresponding conduits
+    integer, allocatable, target :: AirI(:,:,:)             !% 3-d array to store integer of entrapped air pockets
+    real(8), allocatable, target :: AirR(:,:,:)             !% 3-d array to store reals of entrapped air pockets 
+    logical, allocatable, target :: AirYN(:,:,:)            !% 3-d array to store logicals of entrapped pockets   
 
     !% --- link and node output_idx
     integer, allocatable :: link_output_idx(:)

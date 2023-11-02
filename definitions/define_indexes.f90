@@ -1645,77 +1645,109 @@ module define_indexes
 !% Arrays for entrapped air tracking
 !%==========================================================================
 !%  
-    !% --- elemAirI(:,:,:) 3-d array
+    !% --- conduitElemMapsI(:,:,:) 3-d array
+    !%     this 3d array saves the maps of  
+    !%     elements and faces in a conduit
     enum, bind(c)
-        enumerator :: eai_elem_idx = 1
-        enumerator :: eai_elem_up_face
-        enumerator :: eai_elem_dn_face
-        enumerator :: eai_airpocket_type
-        enumerator :: eai_lastplusone
+        enumerator :: cmi_elem_idx = 1
+        enumerator :: cmi_elem_up_face
+        enumerator :: cmi_elem_dn_face
+        enumerator :: cmi_airpocket_type
+        enumerator :: cmi_airpocket_idx
+        enumerator :: cmi_lastplusone
     end enum
 
-    integer, target :: Ncol_elemAirI = eai_lastplusone - 1
+    integer, target :: Ncol_elemAirI = cmi_lastplusone - 1
 
-    !% --- elemAirR(:,:,:) 3-d array columns
+    !% --- airI(:,:,:) 3-d array columns
+    !%     saves the airpocket integer data 
     enum, bind(c)
-        enumerator :: ear_air_volume = 1
-        enumerator :: ear_flowrate_up
-        enumerator :: ear_flowrate_dn
-        enumerator :: ear_elem_air_pressure
-        enumerator :: ear_elem_air_pressure_head
-        enumerator :: ear_lastplusone
+        enumerator :: airI_idx = 1
+        enumerator :: airI_elem_start
+        enumerator :: airI_face_up
+        enumerator :: airI_elem_end
+        enumerator :: airI_face_dn
+        enumerator :: airI_type
+        enumerator :: airI_lastplusone
     end enum
 
-    integer, target :: Ncol_elemAirR = ear_lastplusone - 1
+    integer, target :: Ncol_airI = airI_lastplusone - 1
 
-    !% --- elemAirYN(:,:,:) 3-d logical array columns
+    !% --- airR(:,:,:) 3-d array columns
+    !%     saves the airpocket real data 
     enum, bind(c)
-        enumerator :: eaYN_elem_air_pressurized = 1
-        enumerator :: eaYN_elem_pressurized
-        enumerator :: eaYN_elem_up_pressurized
-        enumerator :: eaYN_elem_dn_pressurized
-        enumerator :: eaYN_elem_open_airflow
-        enumerator :: eaYN_elem_has_entrapped_air
-        enumerator :: eaYN_lastplusone
+        enumerator :: airR_volume = 1
+        enumerator :: airR_flowUp
+        enumerator :: airR_flowDn
+        enumerator :: airR_dvdt
+        enumerator :: airR_air_pressure
+        enumerator :: airR_air_pressure_head
+        enumerator :: airR_lastplusone
     end enum
+    integer, target :: Ncol_AirR = airR_lastplusone - 1
 
-    integer, target :: Ncol_elemAirYN = eaYN_lastplusone - 1
-
-    !% --- conduitAirI(:,:) 2-d array
+    !% --- airYN(:,:,:) 3-d array columns
+    !%     saves the airpocket logical data 
     enum, bind(c)
-        enumerator :: cai_conduit_idx = 1
-        enumerator :: cai_node_up
-        enumerator :: cai_node_dn
-        enumerator :: cai_node_up_type
-        enumerator :: cai_node_dn_type
-        enumerator :: cai_N_elements
-        enumerator :: cai_N_air_pockets
-        enumerator :: cai_lastplusone
+        enumerator :: airYN_is_air_pocket = 1
+        enumerator :: airYN_lastplusone
     end enum
+    integer, target :: Ncol_airYN = airYN_lastplusone - 1
 
-    integer, target :: Ncol_conduitAirI = cai_lastplusone - 1
+    ! !% --- elemAirR(:,:,:) 3-d array columns
+    ! enum, bind(c)
+    !     enumerator :: ear_air_volume = 1
+    !     enumerator :: ear_flowrate_up
+    !     enumerator :: ear_flowrate_dn
+    !     enumerator :: ear_elem_air_pressure
+    !     enumerator :: ear_elem_air_pressure_head
+    !     enumerator :: ear_lastplusone
+    ! end enum
 
-    !% --- conduitAirR(:,:) 2-d array columns
-    enum, bind(c)
-        enumerator :: car_air_volume = 1
-        enumerator :: car_alpha
-        enumerator :: car_conduit_air_pressure
-        enumerator :: car_conduit_air_pressure_head
-        enumerator :: car_lastplusone
-    end enum
+    ! integer, target :: Ncol_elemAirR = ear_lastplusone - 1
 
-    integer, target :: Ncol_conduitAirR= car_lastplusone - 1
+    ! !% --- elemAirYN(:,:,:) 3-d logical array columns
+    ! enum, bind(c)
+    !     enumerator :: eaYN_elem_air_pressurized = 1
+    !     enumerator :: eaYN_elem_pressurized
+    !     enumerator :: eaYN_elem_up_pressurized
+    !     enumerator :: eaYN_elem_dn_pressurized
+    !     enumerator :: eaYN_elem_open_airflow
+    !     enumerator :: eaYN_elem_has_entrapped_air
+    !     enumerator :: eaYN_lastplusone
+    ! end enum
 
-    !% --- conduitAirYN(:,:) 2-d logical array columns
-    enum, bind(c)
-        enumerator :: caYN_conduit_air_pressurized = 1
-        enumerator :: caYN_conduit_pressurized
-        enumerator :: caYN_conduit_up_pressurized
-        enumerator :: caYN_conduit_dn_pressurized
-        enumerator :: caYN_lastplusone
-    end enum
+    ! integer, target :: Ncol_elemAirYN = eaYN_lastplusone - 1
 
-    integer, target :: Ncol_conduitAirYN = caYN_lastplusone - 1
+    ! !% --- airI(:,:) 2-d array
+    ! enum, bind(c)
+    !     enumerator :: cai_conduit_idx = 1
+    !     enumerator :: cai_node_up
+    !     enumerator :: cai_node_dn
+    !     enumerator :: cai_node_up_type
+    !     enumerator :: cai_node_dn_type
+    !     enumerator :: cai_N_elements
+    !     enumerator :: cai_N_air_ps
+    !     enumerator :: cai_lastplusone
+    ! end enum
+
+    ! integer, target :: Ncol_airI = cai_lastplusone - 1
+
+    ! !% --- airR(:,:) 2-d array columns
+    ! enum, bind(c)
+    !     enumerator :: ar_air_volume = 1
+    !     enumerator :: ar_alpha
+    !     enumerator :: ar_conduit_air_pressure
+    !     enumerator :: ar_conduit_air_pressure_head
+    !     enumerator :: ar_lastplusone
+    ! end enum
+
+    
+
+    ! !% --- airYN(:,:) 2-d logical array columns
+    
+
+    
     
 !%
 !%==========================================================================
