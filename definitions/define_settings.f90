@@ -350,7 +350,10 @@ module define_settings
 
     ! setting%AirTracking
     type AirTrackingType
-        logical :: UseAirTrackingYN = .false.
+        real(8) :: PolytropicExponent      = 1.2d0    !% Polytropic exponent for adiabatic air comperssion/expansion process
+        real(8) :: AtmosphericPressure     = 101.3d0  !% atmospheric pressure in kPa
+        real(8) :: AirDischargeCoefficient = 0.65     !% Discharge coefficient for air-orifice flow
+        logical :: UseAirTrackingYN        = .false.  !% setting to turn on air tracking
     end type AirTrackingType
 
     ! setting%BC
@@ -984,6 +987,24 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Adjust.Head.Coef not found'
 
     !% AirTracking. ============================================================
+    !% --- AirTracking.PolytropicExponent
+        !%                       PolytropicExponent
+        call json%get('AirTracking.PolytropicExponent', real_value, found)
+        if (found) setting%AirTracking%PolytropicExponent = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.PolytropicExponent not found'
+
+    !% --- AirTracking.AtmosphericPressure
+        !%                       AtmosphericPressure
+        call json%get('AirTracking.AtmosphericPressure', real_value, found)
+        if (found) setting%AirTracking%AtmosphericPressure = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.AtmosphericPressure not found'
+
+    !% --- AirTracking.AirDischargeCoefficient
+        !%                       AirDischargeCoefficient
+        call json%get('AirTracking.AirDischargeCoefficient', real_value, found)
+        if (found) setting%AirTracking%AirDischargeCoefficient = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.AirDischargeCoefficient not found'
+
     !% --- AirTracking.UseAirTrackingYN
         !%                       UseAirTrackingYN
         call json%get('AirTracking.UseAirTrackingYN', logical_value, found)
