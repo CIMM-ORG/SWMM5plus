@@ -7008,39 +7008,31 @@ contains
 !%==========================================================================       
 !%==========================================================================
 !%
-    ! subroutine init_IC_air_entrapment ()
-    !     !%------------------------------------------------------------------
-    !     !% Description
-    !     !% Set initial air entrapment conditions
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer          :: ii 
-    !         integer, pointer :: nElem, eIdx(:), fUp(:), fDn(:)
-    !         real(8), pointer :: airVolume(:), volume(:), fullVolume(:)
-    !         real(8), pointer :: flowUp(:), flowDn(:), faceFlow(:)
-    !     !%------------------------------------------------------------------
-    !     !% pointers 
-    !     fullVolume => elemR(:,er_FullVolume)
-    !     volume     => elemR(:,er_Volume)
-    !     faceFlow   => faceR(:,fr_Flowrate)
+    subroutine init_IC_air_entrapment ()
+        !%------------------------------------------------------------------
+        !% Description
+        !% Set initial air entrapment conditions
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer          :: ii, jj
+        !%------------------------------------------------------------------
 
-    !     !% cycle through the links to find element air volumes
-    !     do ii = 1,N_conduit
-    !         nElem => conduitAirI(ii,cai_N_elements) 
-    !         eIdx  => conduitElemMapsI(ii,1:nElem,cmi_elem_idx)
-    !         fUp   => conduitElemMapsI(ii,1:nElem,cmi_elem_up_face)
-    !         fDn   => conduitElemMapsI(ii,1:nElem,cmi_elem_dn_face)
-    !         airVolume => elemAirR(ii,1:nElem,ear_air_volume)
-    !         flowUp    => elemAirR(ii,1:nElem,ear_flowrate_up)
-    !         flowDn    => elemAirR(ii,1:nElem,ear_flowrate_dn)
+        !% cycle through the links to find element air volumes
+        do ii = 1,N_conduit
+            !% cycle through the pre-allocated air pocket real data space
+            do jj = 1,max_airpockets_per_conduit 
+                !% set all the values to zero
+                airR(ii,jj,airR_volume)         = zeroR   
+                airR(ii,jj,airR_flowUp)         = zeroR
+                airR(ii,jj,airR_flowDn)         = zeroR
+                airR(ii,jj,airR_dvdt)           = zeroR
+                airR(ii,jj,airR_density)        = zeroR
+                airR(ii,jj,airR_air_pressure)   = zeroR
+                airR(ii,jj,airR_air_pressure)   = zeroR
+            end do
+        end do
 
-    !         !% find the airvolumes in conduit elements
-    !         airVolume = max(fullVolume(eIdx) - volume(eIdx), zeroR)
-    !         flowUp    = faceFlow(fUp)
-    !         flowDn    = faceFlow(fDn)
-    !     end do
-
-    ! end subroutine init_IC_air_entrapment
+    end subroutine init_IC_air_entrapment
 !%
 !%==========================================================================       
 !%==========================================================================

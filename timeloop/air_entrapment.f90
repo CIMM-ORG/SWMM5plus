@@ -39,93 +39,39 @@ contains
             integer             ::  ii
         !%------------------------------------------------------------------
 
-        ! call ae_elem_air_volume ()
+        call ae_detect_air_pockets ()
 
-        call ae_detect_air_bubbles ()
+        call ae_initialize_air_pockets ()
 
-    end subroutine air_entrapment_toplevel
+    end subroutine air_entrapment_toplevel 
     !%    
     !%==========================================================================
     !%==========================================================================
     !%
-    ! subroutine ae_elem_air_volume () 
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !% Find the airvolume from the empty spaces in closed elements
-    !     !% Copy the flows from upstream and downstream of the elements
-    !     !%------------------------------------------------------------------
-    !     !% Declarations:
-    !         integer          :: ii 
-    !         integer, pointer :: nElem, eIdx(:), fUp(:), fDn(:)
-    !         real(8), pointer :: airVolume(:), volume(:), fullVolume(:)
-    !         real(8), pointer :: flowUp(:), flowDn(:), faceFlow(:)
-    !         logical, pointer :: upSur(:), dnSur(:), faceSurcharged(:) 
-    !         logical, pointer :: elemSur(:), surcharged(:)
-    !     !%------------------------------------------------------------------
-    !     !% static pointers 
-    !     fullVolume => elemR(:,er_FullVolume)
-    !     volume     => elemR(:,er_Volume)
-    !     surcharged => elemYN(:,eYN_isSurcharged)
-    !     faceFlow   => faceR(:,fr_Flowrate)
-    !     faceSurcharged => faceYN(:,fYN_isPSsurcharged)
-
-    !     !% cycle through the conduits to find element air volumes
-    !     do ii = 1,N_conduit
-    !         !% additional pointers
-    !         nElem     => airI(ii,cairI_N_elements)
-    !         eIdx      => conduitElemMapsI(ii,1:nElem,cmi_elem_idx)
-    !         fUp       => conduitElemMapsI(ii,1:nElem,cmi_elem_up_face)
-    !         fDn       => conduitElemMapsI(ii,1:nElem,cmi_elem_dn_face)
-    !         airVolume => elemAirR(ii,1:nElem,ear_air_volume)
-    !         flowUp    => elemAirR(ii,1:nElem,ear_flowrate_up)
-    !         flowDn    => elemAirR(ii,1:nElem,ear_flowrate_dn)
-    !         elemSur   => elemAirYN(ii,1:nElem,eairYN_elem_pressurized)
-    !         upSur     => elemAirYN(ii,1:nElem,eairYN_elem_up_pressurized)
-    !         dnSur     => elemAirYN(ii,1:nElem,eairYN_elem_dn_pressurized)
-
-    !         !% find the airvolumes in conduit elements
-    !         airVolume = max(fullVolume(eIdx) - volume(eIdx), zeroR)
-    !         !% find if the conduit element is surcharged
-    !         elemSur   = surcharged(eIdx)
-    !         !% copy the upstream and downstream flowrates from the faces
-    !         flowUp    = faceFlow(fUp)
-    !         flowDn    = faceFlow(fDn)
-    !         !% find if upsteam or downstream of the element is constricted 
-    !         !% due to water pressurization
-    !         upSur    = faceSurcharged(fUp)
-    !         dnSur    = faceSurcharged(fDn)
-
-    !     end do
-
-    ! end subroutine ae_elem_air_volume   
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
-    subroutine ae_detect_air_bubbles () 
+    subroutine ae_detect_air_pockets () 
         !%------------------------------------------------------------------
         !% Description:
-        !% Find air bubbles in an link
+        !% Find air Pockets in an link
         !%------------------------------------------------------------------
             integer          :: ii, jj, startIdx, endIdx, airPocketIdx
             integer, pointer :: cIdx, nElem, eIdx(:), fUp(:), fDn(:)
-            logical, pointer :: elemSur(:), faceSur(:)
-            logical          :: possibleAirBubble
+            logical, pointer :: conAir, elemSur(:), faceSur(:) 
+            logical          :: possibleAirPocket
         !%------------------------------------------------------------------
-        !% cycle through the conduits to find air bubbles,
+        !% cycle through the conduits to find air Pockets,
         do ii = 1,N_conduit
             !% pointers
             cIdx      => pConduitIdx(ii)
             nElem     => link%I(cIdx,li_N_element)
+            conAir    => link%YN(cIdx,lYN_airPocketDetected)
             eIdx      => conduitElemMapsI(ii,1:nElem,cmi_elem_idx)
             fUp       => conduitElemMapsI(ii,1:nElem,cmi_elem_up_face)
             fDn       => conduitElemMapsI(ii,1:nElem,cmi_elem_dn_face)
             elemSur   => elemYN(:,eYN_isPSsurcharged)
             faceSur   => faceYN(:,fYN_isPSsurcharged)
 
-
             !% reset the possible air pocket detection logical
-            possibleAirBubble = .false.
+            possibleAirPocket = .false.
 
             !% ------------------------------------------------------------------
             !% initial air pockets detection
@@ -135,12 +81,12 @@ contains
             !% this reduces the need to cycle through all the conduits for
             !% possible air pocket
             if ((any(elemSur(eIdx))) .and. any(elemSur(eIdx))) then
-                possibleAirBubble = .true.
+                possibleAirPocket = .true.
             end if
 
-            !% if initially any airbubble is detected, map the location of that air bubble
-            if (possibleAirBubble) then
-                !% reset the counter for number of bubbles
+            !% if initially any airPocket is detected, map the location of that air Pocket
+            if (possibleAirPocket) then
+                !% reset the counter for number of Pockets
                 airPocketIdx = zeroI
                 !% reset the indexes
                 startIdx    = zeroI
@@ -148,7 +94,7 @@ contains
                 !% reset the air entrapment type
                 airI(ii,:,airI_type) = noAirPocket
                 !% reset the logicals
-                airYN(ii,:,airYN_is_air_pocket) = .false.
+                airYN(ii,:,airYN_air_pocket_detected) = .false.
                 !% initialize the index for the second do loop
                 jj = oneI
 
@@ -196,7 +142,9 @@ contains
                             airI(ii,airPocketIdx,airI_face_dn)    = fDn(endIdx)
 
                             !% save the logical air pocket data
-                            airYN(ii,airPocketIdx,airYN_is_air_pocket) = .true.
+                            airYN(ii,airPocketIdx,airYN_air_pocket_detected) = .true.
+                            !% save the airpocket detection at the conduit
+                            conAir = .true.
 
                             !% --- set the type of the airpocket
                             !%     if the starting element is the first element in the conduit
@@ -228,7 +176,7 @@ contains
                 end do
 
                 !% debug printing
-                ! if (any(airYN(ii,:,airYN_is_air_pocket))) then
+                ! if (any(airYN(ii,:,airYN_air_pocket_detected))) then
                 !     print*, 'Entrapped air at conduit  ',link%names(ii)%str
                 !     print*, 'airPocketIdx', airPocketIdx
                 !     print*, 'idx 1     = ', airI(ii,1,airI_idx),         'idx 2     = ', airI(ii,2,airI_idx),        'idx 3     = ',airI(ii,3,airI_idx) 
@@ -240,11 +188,70 @@ contains
             end if
         end do
 
-    end subroutine ae_detect_air_bubbles
+    end subroutine ae_detect_air_pockets
     !%    
     !%==========================================================================
     !%==========================================================================
     !%
+    subroutine ae_initialize_air_pockets ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Find the initial volume when an air pocket is detected
+        !%------------------------------------------------------------------
+            integer          :: ii, jj, startIdx, endIdx, airPocketIdx
+            integer, pointer :: cIdx, eStart, eEnd, fUp, fDn
+            real(8), pointer :: airVol, flowUp, flowDn
+            real(8), pointer :: elemVol(:), fullVol(:), faceFlow(:)
+            logical, pointer :: conAir, airPocket
+            logical          :: possibleAirPocket
+        !%------------------------------------------------------------------
+        !% static pointers
+        elemVol   => elemR(:,er_Volume)
+        fullVol   => elemR(:,er_FullVolume)
+        faceFlow  => faceR(:,fr_Flowrate)
+        !% cycle through the conduits to find air Pockets,
+        do ii = 1,N_conduit
+            !% pointers
+            cIdx      => pConduitIdx(ii)
+            conAir    => link%YN(cIdx,lYN_airPocketDetected)
+
+            if (conAir) then
+                do jj = 1,max_airpockets_per_conduit 
+                    eStart    => airI(ii,jj,airI_elem_start)
+                    eEnd      => airI(ii,jj,airI_elem_end)
+                    fUp       => airI(ii,jj,airI_face_up)
+                    fDn       => airI(ii,jj,airI_face_dn)
+                    airVol    => airR(ii,jj,airR_volume)
+                    flowUp    => airR(ii,jj,airR_flowUp)
+                    flowDn    => airR(ii,jj,airR_flowDn)
+                    airPocket => airYN(ii,jj,airYN_air_pocket_detected)
+                    
+                    !% calculate the air volume and 
+                    !% save the water flowrate at the airpocket interface
+                    if (airPocket) then
+                        airVol = max(sum(fullVol(eStart:eEnd) - elemVol(eStart:eEnd)), zeroR)
+                        flowUp = faceFlow(fUp)
+                        flowDn = faceFlow(fDn)
+                    else
+                        airVol = zeroR
+                        flowUp = zeroR
+                        flowDn = zeroR
+                    end if
+                end do
+            end if
+
+
+            !% debug printing
+            if (any(airYN(ii,:,airYN_air_pocket_detected))) then
+                print*, 'Entrapped air at conduit  ',link%names(ii)%str
+                print*, 'Vol 1     = ', airR(ii,1,airR_volume),         'Vol 2     = ', airR(ii,2,airR_volume),        'Vol 3     = ',airR(ii,3,airR_volume)
+                
+            end if
+                
+        end do
+        
+
+    end subroutine ae_initialize_air_pockets
     !%    
     !%==========================================================================
     !%==========================================================================

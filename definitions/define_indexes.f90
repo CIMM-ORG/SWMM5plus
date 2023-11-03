@@ -123,6 +123,7 @@ module define_indexes
         enumerator :: lYN_isDnSurcharge
         enumerator :: lYN_isSurcharged
         enumerator :: lYN_hasLateralInflow
+        enumerator :: lYN_airPocketDetected
         enumerator :: lYN_temp1
         enumerator :: lYN_lastplusone !% must be last enum item
     end enum
@@ -1680,6 +1681,7 @@ module define_indexes
         enumerator :: airR_flowUp
         enumerator :: airR_flowDn
         enumerator :: airR_dvdt
+        enumerator :: airR_density
         enumerator :: airR_air_pressure
         enumerator :: airR_air_pressure_head
         enumerator :: airR_lastplusone
@@ -1689,7 +1691,7 @@ module define_indexes
     !% --- airYN(:,:,:) 3-d array columns
     !%     saves the airpocket logical data 
     enum, bind(c)
-        enumerator :: airYN_is_air_pocket = 1
+        enumerator :: airYN_air_pocket_detected = 1
         enumerator :: airYN_lastplusone
     end enum
     integer, target :: Ncol_airYN = airYN_lastplusone - 1
