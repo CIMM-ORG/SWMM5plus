@@ -106,6 +106,11 @@ module runge_kutta2
                 ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
                 .true., .false., dummyIdx)
 
+            !% Air entrapment modeling
+            if (setting%AirTracking%UseAirTrackingYN) then
+                call air_entrapment_toplevel (istep)
+            end if
+
             !% --- zero and small depth adjustment for elements
             call adjust_element_toplevel (CC)
 
@@ -201,13 +206,7 @@ module runge_kutta2
             end if
 
         end do
-
-        !% Air entrapment modeling
-        if (setting%AirTracking%UseAirTrackingYN) then
-
-            call air_entrapment_toplevel (istep)
-        end if
-
+        
         !% HACK --- this needs to be setup for multiple images and moved to the utility_debug
         if (setting%Debug%isGlobalVolumeBalance) then
             !% --- overall volume conservation

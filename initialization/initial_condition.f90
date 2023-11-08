@@ -372,9 +372,9 @@ contains
         call adjust_zero_and_small_depth_face (.false.)
 
         !% --- set the initial air entrapment volumes
-        ! if (setting%AirTracking%UseAirTrackingYN) then
-        !     call init_IC_air_entrapment ()
-        ! end if
+        if (setting%AirTracking%UseAirTrackingYN) then
+            call init_IC_air_entrapment ()
+        end if
 
         !% ---populate er_ones columns with ones
         ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
@@ -7019,17 +7019,14 @@ contains
 
         !% cycle through the links to find element air volumes
         do ii = 1,N_conduit
-            !% cycle through the pre-allocated air pocket real data space
-            do jj = 1,max_airpockets_per_conduit 
-                !% set all the values to zero
-                airR(ii,jj,airR_volume)         = zeroR   
-                airR(ii,jj,airR_flowUp)         = zeroR
-                airR(ii,jj,airR_flowDn)         = zeroR
-                airR(ii,jj,airR_dvdt)           = zeroR
-                airR(ii,jj,airR_density)        = zeroR
-                airR(ii,jj,airR_air_pressure)   = zeroR
-                airR(ii,jj,airR_air_pressure)   = zeroR
-            end do
+            !% set all the values to zero
+            airR(ii,:,airR_volume)               = zeroR 
+            airR(ii,:,airR_inflow)               = zeroR
+            airR(ii,:,airR_outflow)              = zeroR
+            airR(ii,:,airR_dvdt)                 = zeroR
+            airR(ii,:,airR_density)              = zeroR
+            airR(ii,:,airR_air_absolute_head_N0) = setting%AirTracking%AtmosphericPressureHead
+            airR(ii,:,airR_air_absolute_head)    = setting%AirTracking%AtmosphericPressureHead
         end do
 
     end subroutine init_IC_air_entrapment

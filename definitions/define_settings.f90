@@ -351,7 +351,7 @@ module define_settings
     ! setting%AirTracking
     type AirTrackingType
         real(8) :: PolytropicExponent      = 1.2d0    !% Polytropic exponent for adiabatic air comperssion/expansion process
-        real(8) :: AtmosphericPressure     = 101.3d0  !% atmospheric pressure in kPa
+        real(8) :: AtmosphericPressureHead = 10.3d0   !% atmospheric pressure head in m
         real(8) :: AirDischargeCoefficient = 0.65     !% Discharge coefficient for air-orifice flow
         logical :: UseAirTrackingYN        = .false.  !% setting to turn on air tracking
     end type AirTrackingType
@@ -993,11 +993,11 @@ contains
         if (found) setting%AirTracking%PolytropicExponent = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.PolytropicExponent not found'
 
-    !% --- AirTracking.AtmosphericPressure
-        !%                       AtmosphericPressure
-        call json%get('AirTracking.AtmosphericPressure', real_value, found)
-        if (found) setting%AirTracking%AtmosphericPressure = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.AtmosphericPressure not found'
+    !% --- AirTracking.AtmosphericPressureHead
+        !%                       AtmosphericPressureHead
+        call json%get('AirTracking.AtmosphericPressureHead', real_value, found)
+        if (found) setting%AirTracking%AtmosphericPressureHead = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.AtmosphericPressureHead not found'
 
     !% --- AirTracking.AirDischargeCoefficient
         !%                       AirDischargeCoefficient

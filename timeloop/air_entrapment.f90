@@ -36,12 +36,12 @@ contains
         !%-----------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: istep
-            integer             ::  ii
+            integer             :: ii
         !%------------------------------------------------------------------
 
         call ae_detect_air_pockets ()
 
-        call ae_initialize_air_pockets ()
+        call ae_air_pockets_calculation (istep)
 
     end subroutine air_entrapment_toplevel 
     !%    
@@ -72,6 +72,8 @@ contains
 
             !% reset the possible air pocket detection logical
             possibleAirPocket = .false.
+            !% reset the conduit air pocket detection logical
+            conAir = .false.
 
             !% ------------------------------------------------------------------
             !% initial air pockets detection
@@ -141,8 +143,9 @@ contains
                             airI(ii,airPocketIdx,airI_elem_end)   = eIdx(endIdx)
                             airI(ii,airPocketIdx,airI_face_dn)    = fDn(endIdx)
 
-                            !% save the logical air pocket data
+                            !% save the airpocket detection logical
                             airYN(ii,airPocketIdx,airYN_air_pocket_detected) = .true.
+
                             !% save the airpocket detection at the conduit
                             conAir = .true.
 
@@ -152,17 +155,17 @@ contains
                             if (startIdx == oneI) then
                                 airI(ii,airPocketIdx,airI_type) = upReleaseAirpocket
                             
-                            !%     else if the ending element is the last element in the conduit
-                            !%     there will be a downstream release
+                            !% else if the ending element is the last element in the conduit
+                            !% there will be a downstream release
                             else if (endIdx == nElem) then
                                 airI(ii,airPocketIdx,airI_type) = dnReleaseAirpocket
                             
-                            !%     else the pocket is entrapped
+                            !% else the pocket is entrapped
                             else
                                 airI(ii,airPocketIdx,airI_type) = entrappedAirpocket
                             end if
 
-                        !% if there is too many air pockets than permissible  
+                        !% else if there is too many air pockets than permissible  
                         else if (airPocketIdx > max_airpockets_per_conduit) then
                             print*, "The conduit has, ", airPocketIdx, " airpockets "
                             print*, "which is more than maximum permissible of, ", max_airpockets_per_conduit
@@ -175,17 +178,29 @@ contains
                     end if
                 end do
 
-                !% debug printing
-                ! if (any(airYN(ii,:,airYN_air_pocket_detected))) then
-                !     print*, 'Entrapped air at conduit  ',link%names(ii)%str
-                !     print*, 'airPocketIdx', airPocketIdx
-                !     print*, 'idx 1     = ', airI(ii,1,airI_idx),         'idx 2     = ', airI(ii,2,airI_idx),        'idx 3     = ',airI(ii,3,airI_idx) 
-                !     print*, 'type 1    = ', airI(ii,1,airI_type),        'type 2    = ', airI(ii,2,airI_type),       'type 3    = ', airI(ii,3,airI_type)
-                !     print*, 'elem up 1 = ', airI(ii,1,airI_elem_start),  'elem up 2 = ', airI(ii,2,airI_elem_start), 'elem up 3 = ',airI(ii,3,airI_elem_start) 
-                !     print*, 'elem dn 1 = ', airI(ii,1,airI_elem_end),    'elem dn 2 = ', airI(ii,2,airI_elem_end),   'elem dn 3 = ',airI(ii,3,airI_elem_end) 
-                !     print* 
-                ! end if
+            !% if there is not any possible air pockets, reset the values of the air arrays of that correspondig conduit
+            else
+                !% reset the logicals
+                conAir = .false.
+                airYN(ii,:,:) = .false.
+                airI(ii,:,:)  = nullvalueI
+                !% reset the air entrapment type
+                airI(ii,:,airI_type) = noAirPocket
+                airR(ii,:,:)  = zeroR
+                airR(ii,:,airR_air_absolute_head) = setting%AirTracking%AtmosphericPressureHead
             end if
+
+            !% debug printing
+            ! if (any(airYN(ii,:,airYN_air_pocket_detected))) then
+                ! print*, 'Entrapped air at conduit  ',link%names(ii)%str
+                ! print*, 'airPocketIdx', airPocketIdx
+                ! print*, 'idx 1     = ', airI(ii,1,airI_idx),         'idx 2     = ', airI(ii,2,airI_idx),        'idx 3     = ',airI(ii,3,airI_idx) 
+                ! print*, 'type 1    = ', airI(ii,1,airI_type),        'type 2    = ', airI(ii,2,airI_type),       'type 3    = ', airI(ii,3,airI_type)
+                ! print*, 'elem up 1 = ', airI(ii,1,airI_elem_start),  'elem up 2 = ', airI(ii,2,airI_elem_start), 'elem up 3 = ',airI(ii,3,airI_elem_start) 
+                ! print*, 'elem dn 1 = ', airI(ii,1,airI_elem_end),    'elem dn 2 = ', airI(ii,2,airI_elem_end),   'elem dn 3 = ',airI(ii,3,airI_elem_end) 
+                ! print* 
+            ! end if
+
         end do
 
     end subroutine ae_detect_air_pockets
@@ -193,69 +208,260 @@ contains
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine ae_initialize_air_pockets ()
+    subroutine ae_air_pockets_calculation (istep)
         !%------------------------------------------------------------------
         !% Description:
-        !% Find the initial volume when an air pocket is detected
+        !% air pocket calculation
         !%------------------------------------------------------------------
-            integer          :: ii, jj, startIdx, endIdx, airPocketIdx
-            integer, pointer :: cIdx, eStart, eEnd, fUp, fDn
-            real(8), pointer :: airVol, flowUp, flowDn
-            real(8), pointer :: elemVol(:), fullVol(:), faceFlow(:)
-            logical, pointer :: conAir, airPocket
-            logical          :: possibleAirPocket
+            integer, intent(in) :: istep
+            integer          :: ii, jj
+            integer, pointer :: cIdx
+            logical, pointer :: conAir
         !%------------------------------------------------------------------
-        !% static pointers
-        elemVol   => elemR(:,er_Volume)
-        fullVol   => elemR(:,er_FullVolume)
-        faceFlow  => faceR(:,fr_Flowrate)
         !% cycle through the conduits to find air Pockets,
         do ii = 1,N_conduit
             !% pointers
             cIdx      => pConduitIdx(ii)
             conAir    => link%YN(cIdx,lYN_airPocketDetected)
 
+            !% only go through the conduit airpocket calculation if the
+            !% conduit contains one
             if (conAir) then
+
                 do jj = 1,max_airpockets_per_conduit 
-                    eStart    => airI(ii,jj,airI_elem_start)
-                    eEnd      => airI(ii,jj,airI_elem_end)
-                    fUp       => airI(ii,jj,airI_face_up)
-                    fDn       => airI(ii,jj,airI_face_dn)
-                    airVol    => airR(ii,jj,airR_volume)
-                    flowUp    => airR(ii,jj,airR_flowUp)
-                    flowDn    => airR(ii,jj,airR_flowDn)
-                    airPocket => airYN(ii,jj,airYN_air_pocket_detected)
-                    
-                    !% calculate the air volume and 
-                    !% save the water flowrate at the airpocket interface
-                    if (airPocket) then
-                        airVol = max(sum(fullVol(eStart:eEnd) - elemVol(eStart:eEnd)), zeroR)
-                        flowUp = faceFlow(fUp)
-                        flowDn = faceFlow(fDn)
-                    else
-                        airVol = zeroR
-                        flowUp = zeroR
-                        flowDn = zeroR
-                    end if
+                        
+                    !% initialize the airpocket real values
+                    call ae_airpocket_initialization (ii,jj, istep)
+
+                    !% calculate the net flowrate though the airpockets
+                    call ae_airpocket_netflowrate (ii,jj)
+
+                    !% calculate the air pressure head
+                    call ae_airpocket_pressure_head (ii, jj, istep)
+
+                    !% add the heads back to the elements
+                    call ae_add_airpocket_heads_to_elem (ii, jj)
+
                 end do
-            end if
-
-
-            !% debug printing
-            if (any(airYN(ii,:,airYN_air_pocket_detected))) then
-                print*, 'Entrapped air at conduit  ',link%names(ii)%str
-                print*, 'Vol 1     = ', airR(ii,1,airR_volume),         'Vol 2     = ', airR(ii,2,airR_volume),        'Vol 3     = ',airR(ii,3,airR_volume)
-                
+            
             end if
                 
         end do
         
 
-    end subroutine ae_initialize_air_pockets
+    end subroutine ae_air_pockets_calculation
     !%    
     !%==========================================================================
     !%==========================================================================
     !%
+    subroutine ae_airpocket_initialization (cIdx,aIdx,istep)
+        !%------------------------------------------------------------------
+        !% Description:
+        !%   newly detected airpocket: initialize the inflow, outflow,  
+        !%   volume and heads
+        !%   already detected airpockets: initialize the inflow and outflow 
+        !%   no air pockets: zero the values 
+        !%------------------------------------------------------------------
+            integer, intent (in) :: cIdx, aIdx, istep
+            integer, pointer     :: elemStartIdx, elemEndIdx, faceUp, faceDn
+            real(8), pointer     :: airVolume, inflow, outflow
+            real(8), pointer     :: absHead, absHead_N0, gaugeHead, atmHead
+            real(8), pointer     :: elemVol(:), fullVol(:), faceFlow(:)
+            logical, pointer     :: isAirPocket, newAirPocket
+        !%------------------------------------------------------------------
+        !% Aliases
+            elemStartIdx => airI(cIdx,aIdx,airI_elem_start)
+            elemEndIdx   => airI(cIdx,aIdx,airI_elem_end)
+            faceUp       => airI(cIdx,aIdx,airI_face_up)
+            faceDn       => airI(cIdx,aIdx,airI_face_dn)
+            airVolume    => airR(cIdx,aIdx,airR_volume)
+            inflow       => airR(cIdx,aIdx,airR_inflow)
+            outflow      => airR(cIdx,aIdx,airR_outflow)
+            absHead      => airR(cIdx,aIdx,airR_air_absolute_head)
+            absHead_N0   => airR(cIdx,aIdx,airR_air_absolute_head_N0)
+            gaugeHead    => airR(cIdx,aIdx,airR_air_gauge_head)
+            isAirPocket  => airYN(cIdx,aIdx,airYN_air_pocket_detected)
+            newAirPocket => airYN(cIdx,aIdx,airYN_new_air_pocket)
 
+        !% other aliases
+            elemVol   => elemR(:,er_Volume)
+            fullVol   => elemR(:,er_FullVolume)
+            faceFlow  => faceR(:,fr_Flowrate)
+            atmHead   => setting%AirTracking%AtmosphericPressureHead
+
+        !% if a airpocket is detected, initialize the air pocket
+        if (isAirPocket) then
+            !% in this algorithm, aiVolume = 0 means the air pocket is newly detected
+            if (airVolume == zeroR) then
+                newAirPocket = .true.
+                gaugeHead  = zeroR
+                absHead    = atmHead
+                absHead_N0 = atmHead 
+            end if
+            !% calculate the air pocket volume from empty space
+            airVolume   = max(sum(fullVol(elemStartIdx:elemEndIdx) - elemVol(elemStartIdx:elemEndIdx)), zeroR)
+            !% copy over the flow data
+            inflow     = faceFlow(faceUp)
+            outflow    = faceFlow(faceDn)
+
+            !% save the previous value of the absolute air pressure head in the first RK step only 
+            if (istep == oneI) absHead_N0 = atmHead
+            
+        else
+            !% if there is not an airpocket present, zero out the values
+            airVolume   = zeroR
+            inflow      = zeroR
+            outflow     = zeroR
+            gaugeHead   = zeroR
+            absHead     = atmHead
+        end if
+
+    end subroutine ae_airpocket_initialization
+    !%    
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine ae_airpocket_netflowrate (cIdx, aIdx)
+        !%------------------------------------------------------------------
+        !% Description:
+        !%   calculate the net flowrate through an airpocket 
+        !%------------------------------------------------------------------
+            integer, intent (in) :: cIdx, aIdx
+            integer, pointer     :: fUp(:), fDn(:), elemStartIdx, elemEndIdx
+            real(8), pointer     :: dvdt, inflow, outflow, faceFlow(:)
+            logical, pointer     :: isAirPocket
+        !%------------------------------------------------------------------
+        !% Aliases
+            dvdt        => airR(cIdx,aIdx,airR_dvdt)
+            inflow      => airR(cIdx,aIdx,airR_inflow)
+            outflow     => airR(cIdx,aIdx,airR_outflow)
+            isAirPocket => airYN(cIdx,aIdx,airYN_air_pocket_detected)
+
+
+            elemStartIdx => airI(cIdx,aIdx,airI_elem_start)
+            elemEndIdx   => airI(cIdx,aIdx,airI_elem_end)
+            faceFlow  => faceR(:,fr_Flowrate)
+            fUp       => elemI(:,ei_Mface_uL)
+            fDn       => elemI(:,ei_Mface_dL)
+        
+        !% if a airpocket is detected, calculate the net flowrate
+        if (isAirPocket) then
+            dvdt = outflow - inflow
+        else
+            dvdt = zeroR
+        end if 
+
+    end subroutine ae_airpocket_netflowrate
+    !%    
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine ae_airpocket_pressure_head (cIdx, aIdx, istep)
+        !%------------------------------------------------------------------
+        !% Description:
+        !%   Solves the airpocket pressure head
+        !%------------------------------------------------------------------
+            integer, intent (in) :: cIdx, aIdx, istep
+            integer, pointer     :: pocketType
+            real(8), pointer     :: airVolume, dvdt, absHead, gaugeHead
+            real(8), pointer     :: absHead_N0, inflow, outflow, dP
+            real(8), pointer     :: dt, kappa, atmHead, crk(:)
+            logical, pointer     :: isAirPocket
+        !%------------------------------------------------------------------
+        !% Aliases
+            pocketType  => airI(cIdx,aIdx,airI_type)
+            airVolume   => airR(cIdx,aIdx,airR_volume)
+            absHead     => airR(cIdx,aIdx,airR_air_absolute_head)
+            absHead_N0  => airR(cIdx,aIdx,airR_air_absolute_head_N0)
+            gaugeHead   => airR(cIdx,aIdx,airR_air_gauge_head)
+            dvdt        => airR(cIdx,aIdx,airR_dvdt)
+            inflow      => airR(cIdx,aIdx,airR_inflow)
+            outflow     => airR(cIdx,aIdx,airR_outflow)
+            dP          => airR(cIdx,aIdx,airR_temp01)
+            isAirPocket => airYN(cIdx,aIdx,airYN_air_pocket_detected)
+            crk         => setting%Solver%crk2
+            dt          => setting%Time%Hydraulics%Dt
+            kappa       => setting%AirTracking%PolytropicExponent
+            atmHead     => setting%AirTracking%AtmosphericPressureHead
+        
+        !% calculate the new airpocket pressure head
+        if (isAirPocket) then
+            select case (pocketType)
+
+                case (entrappedAirpocket)
+                    !% find the dvdt from the inflow and outflows
+                    dP   = (-kappa * (absHead/airVolume) * dvdt) * dt
+                    absHead = absHead_N0 + crk(istep) * dP 
+                    gaugeHead = absHead - atmHead
+
+                    print*, 'entrappedAirpocket at conduit  ',link%names(pConduitIdx(cIdx))%str
+                    print*, 'a idx  = ', aIdx
+                    print*, 'airVol = ', airVolume
+                    print*, 'dP     = ', dP
+                    print*, 'aHead  = ', absHead
+                    print*, 'gHead  = ', gaugeHead
+                    print*, 'dvdt   = ', dvdt
+                    print*
+
+                case (upReleaseAirpocket)
+                    !% dont do anything for now
+                    ! print*, 'upReleaseAirpocket at conduit  ',link%names(pConduitIdx(cIdx))%str
+                    ! print*, 'a idx  = ', aIdx
+                    ! print*, 'airVol = ', airVolume
+                    ! print*, 'dP     = ', dP
+                    ! print*, 'aHead  = ', absHead
+                    ! print*, 'gHead  = ', gaugeHead
+                    ! print*, 'dvdt   = ', dvdt
+                    ! print*
+                case (dnReleaseAirpocket)
+                    !% dont do anything for now
+                    ! print*, 'dnReleaseAirpocket at conduit  ',link%names(pConduitIdx(cIdx))%str
+                    ! print*, 'a idx  = ', aIdx
+                    ! print*, 'airVol = ', airVolume
+                    ! print*, 'dP     = ', dP
+                    ! print*, 'aHead  = ', absHead
+                    ! print*, 'gHead  = ', gaugeHead
+                    ! print*, 'dvdt   = ', dvdt
+                    ! print*
+                case (noAirPocket)
+                    !% dont do anything for now
+                case default
+                    !% dont do anything for now   
+            end select
+        end if
+    
+    end subroutine ae_airpocket_pressure_head
+    !%    
+    !%==========================================================================
+    !%==========================================================================
+    !%
+    subroutine ae_add_airpocket_heads_to_elem (cIdx, aIdx)
+        !%------------------------------------------------------------------
+        !% Description:
+        !%  add the airpocket heads to corresponding elements
+        !%------------------------------------------------------------------
+        integer, intent (in) :: cIdx, aIdx
+        integer, pointer     :: elemStartIdx, elemEndIdx
+        real(8), pointer     :: gaugeHead, elemHead(:)
+        logical, pointer     :: isAirPocket
+        !%------------------------------------------------------------------
+        !% Aliases
+            elemStartIdx => airI(cIdx,aIdx,airI_elem_start)
+            elemEndIdx   => airI(cIdx,aIdx,airI_elem_end)
+            gaugeHead    => airR(cIdx,aIdx,airR_air_gauge_head)
+            isAirPocket  => airYN(cIdx,aIdx,airYN_air_pocket_detected)
+            elemHead     => elemR(:,er_Head)
+        
+        !% add the gauge heads to elem heads
+        if (isAirPocket) then
+            elemHead(elemStartIdx:elemEndIdx) = elemHead(elemStartIdx:elemEndIdx) + gaugeHead
+        end if
+
+
+    end subroutine ae_add_airpocket_heads_to_elem
+    !%    
+    !%==========================================================================
+    !%==========================================================================
+    !%
     
 end module air_entrapment
