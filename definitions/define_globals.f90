@@ -204,7 +204,6 @@ module define_globals
     logical, allocatable :: image_full(:)
 
     !% --- Storage for entrapped air in links
-    integer, parameter :: max_airpockets_per_conduit = 3  
     integer, allocatable, target :: pConduitIdx(:)
     integer, allocatable, target :: conduitElemMapsI(:,:,:) !% 3-d array to store element and face maps to a corresponding conduits
     integer, allocatable, target :: AirI(:,:,:)             !% 3-d array to store integer of entrapped air pockets

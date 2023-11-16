@@ -7014,19 +7014,16 @@ contains
         !% Set initial air entrapment conditions
         !%------------------------------------------------------------------
         !% Declarations:
-            integer          :: ii, jj
+            integer          :: ii
         !%------------------------------------------------------------------
 
         !% cycle through the links to find element air volumes
         do ii = 1,N_conduit
             !% set all the values to zero
-            airR(ii,:,airR_volume)               = zeroR 
-            airR(ii,:,airR_inflow)               = zeroR
-            airR(ii,:,airR_outflow)              = zeroR
-            airR(ii,:,airR_dvdt)                 = zeroR
-            airR(ii,:,airR_density)              = zeroR
-            airR(ii,:,airR_air_absolute_head_N0) = setting%AirTracking%AtmosphericPressureHead
-            airR(ii,:,airR_air_absolute_head)    = setting%AirTracking%AtmosphericPressureHead
+            airR(ii,:,:)                     = zeroR 
+            airR(ii,:,airR_density)          = setting%AirTracking%AirDensity
+            airR(ii,:,airR_absolute_head_N0) = setting%AirTracking%AtmosphericPressureHead
+            airR(ii,:,airR_absolute_head)    = setting%AirTracking%AtmosphericPressureHead
         end do
 
     end subroutine init_IC_air_entrapment

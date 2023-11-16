@@ -106,11 +106,6 @@ module runge_kutta2
                 ep_CC, ep_CC_Open_Elements, ep_CC_Closed_Elements, &
                 .true., .false., dummyIdx)
 
-            !% Air entrapment modeling
-            if (setting%AirTracking%UseAirTrackingYN) then
-                call air_entrapment_toplevel (istep)
-            end if
-
             !% --- zero and small depth adjustment for elements
             call adjust_element_toplevel (CC)
 
@@ -127,6 +122,11 @@ module runge_kutta2
                     !% --- conservative storage advance for junction, second step
                     call junction_second_step ()
                 end if
+            end if
+
+            !% Air entrapment modeling
+            if (setting%AirTracking%UseAirTrackingYN) then
+                call air_entrapment_toplevel (istep)
             end if
 
             !% --- interpolate all data to faces

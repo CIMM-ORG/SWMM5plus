@@ -350,10 +350,14 @@ module define_settings
 
     ! setting%AirTracking
     type AirTrackingType
-        real(8) :: PolytropicExponent      = 1.2d0    !% Polytropic exponent for adiabatic air comperssion/expansion process
-        real(8) :: AtmosphericPressureHead = 10.3d0   !% atmospheric pressure head in m
-        real(8) :: AirDischargeCoefficient = 0.65     !% Discharge coefficient for air-orifice flow
-        logical :: UseAirTrackingYN        = .false.  !% setting to turn on air tracking
+        integer :: NumberOfAirpocketsAllowed = 5        !% number of airpockets allowed for air simulation
+        real(8) :: PolytropicExponent        = 1.2d0    !% Polytropic exponent for adiabatic air comperssion/expansion process
+        real(8) :: AtmosphericPressureHead   = 10.3d0   !% atmospheric pressure head in m
+        real(8) :: AirDischargeCoefficient   = 0.65     !% discharge coefficient for air-orifice flow
+        real(8) :: AirDensity                = 1.225d0  !% density of air kg/m^3
+        real(8) :: WaterDensity              = 1000.0d0 !% density of water kg/m^3
+        real(8) :: MinimumVentArea           = 0.0d0    !% area of the venting tunnel at the end of links
+        logical :: UseAirTrackingYN          = .false.  !% setting to turn on air tracking
     end type AirTrackingType
 
     ! setting%BC
@@ -987,6 +991,12 @@ contains
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Adjust.Head.Coef not found'
 
     !% AirTracking. ============================================================
+    !% --- AirTracking.NumberOfAirpocketsAllowed
+        !%                       NumberOfAirpocketsAllowed
+        call json%get('AirTracking.NumberOfAirpocketsAllowed', real_value, found)
+        if (found) setting%AirTracking%NumberOfAirpocketsAllowed = integer_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.NumberOfAirpocketsAllowed not found'
+
     !% --- AirTracking.PolytropicExponent
         !%                       PolytropicExponent
         call json%get('AirTracking.PolytropicExponent', real_value, found)
@@ -1004,6 +1014,24 @@ contains
         call json%get('AirTracking.AirDischargeCoefficient', real_value, found)
         if (found) setting%AirTracking%AirDischargeCoefficient = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.AirDischargeCoefficient not found'
+    
+    !% --- AirTracking.AirDensity
+        !%                       AirDensity
+        call json%get('AirTracking.AirDensity', real_value, found)
+        if (found) setting%AirTracking%AirDensity = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.AirDensity not found'
+
+    !% --- AirTracking.WaterDensity
+        !%                       WaterDensity
+        call json%get('AirTracking.WaterDensity', real_value, found)
+        if (found) setting%AirTracking%WaterDensity = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.WaterDensity not found'
+
+    !% --- AirTracking.MinimumVentArea
+        !%                       MinimumVentArea
+        call json%get('AirTracking.MinimumVentArea', real_value, found)
+        if (found) setting%AirTracking%MinimumVentArea = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.MinimumVentArea not found'
 
     !% --- AirTracking.UseAirTrackingYN
         !%                       UseAirTrackingYN

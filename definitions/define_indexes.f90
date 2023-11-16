@@ -1678,13 +1678,18 @@ module define_indexes
     !%     saves the airpocket real data 
     enum, bind(c)
         enumerator :: airR_volume = 1
+        enumerator :: airR_volume_N0
         enumerator :: airR_inflow
         enumerator :: airR_outflow
+        enumerator :: airR_flowrate
+        enumerator :: air_mass_flowrate
         enumerator :: airR_dvdt
         enumerator :: airR_density
-        enumerator :: airR_air_absolute_head
-        enumerator :: airR_air_absolute_head_N0
-        enumerator :: airR_air_gauge_head
+        enumerator :: airR_mass
+        enumerator :: airR_mass_N0
+        enumerator :: airR_absolute_head
+        enumerator :: airR_absolute_head_N0
+        enumerator :: airR_gauge_head
         enumerator :: airR_temp01
         enumerator :: airR_lastplusone
     end enum

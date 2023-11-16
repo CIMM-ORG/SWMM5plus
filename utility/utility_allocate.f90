@@ -745,9 +745,8 @@ module utility_allocate
         !% allocate arrays used for entrapped air calculations
         !%------------------------------------------------------------------
         !% Declarations
-            integer :: ii
             integer :: nPlanes, nRows
-            integer, pointer :: nCol
+            integer, pointer :: nCol, max_airpockets
             character(64) :: subroutine_name = 'util_allocate_entrapped_air_arrays'
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -759,6 +758,7 @@ module utility_allocate
         nPlanes =  N_conduit
         nRows   =  maxval(link%I(1:N_link,li_N_element), MASK = link%I(1:N_link,li_link_type) == lPipe)
         ncol    => Ncol_elemAirI
+        max_airpockets => setting%AirTracking%NumberOfAirpocketsAllowed
 
         allocate(conduitElemMapsI(nPlanes, nRows, ncol), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg, 'conduitElemMapsI')
@@ -766,19 +766,19 @@ module utility_allocate
 
         !% --- allocating the airI 3-d array
         ncol  => Ncol_airI
-        allocate(airI(nPlanes, max_airpockets_per_conduit, ncol), stat=allocation_status, errmsg=emsg)
+        allocate(airI(nPlanes, max_airpockets, ncol), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg, 'airI')
         airI(:,:,:) = nullvalueI
 
         !% --- allocating the airR 3-d array
         ncol  => Ncol_AirR
-        allocate(airR(nPlanes, max_airpockets_per_conduit, ncol), stat=allocation_status, errmsg=emsg)
+        allocate(airR(nPlanes, max_airpockets, ncol), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg, 'airR')
         airR(:,:,:) = nullvalueR
 
         !% --- allocating the airYN 3-d array
         ncol  => Ncol_airYN
-        allocate(airYN(nPlanes, max_airpockets_per_conduit, ncol), stat=allocation_status, errmsg=emsg)
+        allocate(airYN(nPlanes, max_airpockets, ncol), stat=allocation_status, errmsg=emsg)
         call util_allocate_check (allocation_status, emsg, 'airYN')
         airYN(:,:,:) = nullvalueL
 
