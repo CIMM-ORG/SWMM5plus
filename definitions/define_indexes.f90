@@ -1685,6 +1685,7 @@ module define_indexes
         enumerator :: air_mass_flowrate
         enumerator :: airR_dvdt
         enumerator :: airR_density
+        enumerator :: airR_density_N0
         enumerator :: airR_mass
         enumerator :: airR_mass_N0
         enumerator :: airR_absolute_head
@@ -1699,6 +1700,7 @@ module define_indexes
     !%     saves the airpocket logical data 
     enum, bind(c)
         enumerator :: airYN_air_pocket_detected = 1
+        enumerator :: airYN_air_pocket_vacuumed 
         enumerator :: airYN_new_air_pocket
         enumerator :: airYN_lastplusone
     end enum

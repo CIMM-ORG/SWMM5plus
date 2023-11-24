@@ -984,7 +984,7 @@ contains
         !% --- get the CFL based on last time step as a control
         oldCFL = tl_get_max_CFL(ep_CCJM_NOTzerodepth,oldDT)
 
-        
+        ! newDT = 0.08
         if ((matchHydrologyStep) .and. (useHydrology) .and. (.not. inSpinUpYN)) then 
             !%-----------------------------------------------------------
             !% IF HYDRAULICS STEP SHOULD END EXACTLY ON A HYDROLOGY STEP
@@ -1017,16 +1017,16 @@ contains
             !%     but this using 3 forces a rounding operation below
             neededSteps = 3  
         end if
-
+        ! newDT = 0.08
         !% --- invoke other time step limiters
         call tl_limit_DT (newDT)
-
+        ! newDT = 0.08
         !% --- round off of time steps with too many digits
         call tl_roundoff_DT (newDT, neededSteps)
-
+        ! newDT = 0.08
         !% --- match the newDT across all images
         call co_min(newDT) 
-
+        ! newDT = 0.08
         !% --- increment the hydraulics time clock
         nextHydraulicsTime = lastHydraulicsTime + newDT
 
