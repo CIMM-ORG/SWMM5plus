@@ -403,7 +403,7 @@ contains
             faceUp       => airI(cIdx,aIdx,airI_face_up)
             faceDn       => airI(cIdx,aIdx,airI_face_dn)
             absHead      => airR(cIdx,aIdx,airR_absolute_head)
-            massOutflow  => airR(cIdx,aIdx,air_mass_flowrate)
+            massOutflow  => airR(cIdx,aIdx,airR_mass_flowrate)
             airDensity   => airR(cIdx,aIdx,airR_density)
             isAirPocket  => airYN(cIdx,aIdx,airYN_air_pocket_detected)
             isVacuumed   => airYN(cIdx,aIdx,airYN_air_pocket_vacuumed)
@@ -451,7 +451,7 @@ contains
             !% choked orifice airflow
             if (ratio > zeroR .and. ratio < 0.53 ) then
                 if (airDensity > zeroR) then
-                    massOutflow = dishCoeff * areaOpening * airDensity * sqrt(grav * (rho_w / airDensity) &
+                    massOutflow = - dishCoeff * areaOpening * airDensity * sqrt(grav * (rho_w / airDensity) &
                                 * absHead) * sqrt(kappa * (twoR / (kappa + oneR)) ** ((kappa + oneR) / (kappa - oneR)))
                 else
                     massOutflow = zeroR
@@ -532,7 +532,7 @@ contains
             absHead_N0  => airR(cIdx,aIdx,airR_absolute_head_N0)
             gaugeHead   => airR(cIdx,aIdx,airR_gauge_head)
             dvdt        => airR(cIdx,aIdx,airR_dvdt)
-            massOutflow => airR(cIdx,aIdx,air_mass_flowrate)
+            massOutflow => airR(cIdx,aIdx,airR_mass_flowrate)
             dHdt        => airR(cIdx,aIdx,airR_temp01)
             isAirPocket => airYN(cIdx,aIdx,airYN_air_pocket_detected)
             crk         => setting%Solver%crk2
@@ -602,7 +602,7 @@ contains
             airMass_N0    => airR(cIdx,aIdx,airR_mass_N0)
             airDensity    => airR(cIdx,aIdx,airR_density)
             airDensity_N0 => airR(cIdx,aIdx,airR_density_N0)
-            massOutflow   => airR(cIdx,aIdx,air_mass_flowrate)
+            massOutflow   => airR(cIdx,aIdx,airR_mass_flowrate)
             isAirPocket   => airYN(cIdx,aIdx,airYN_air_pocket_detected)
             isVacuumed    => airYN(cIdx,aIdx,airYN_air_pocket_vacuumed)
             dt            => setting%Time%Hydraulics%Dt
@@ -613,7 +613,7 @@ contains
 
             !% timemarch air mass through mass flowrate
             airMass = airMass_N0 + dt * crk(istep) * massOutflow
-
+            !% limit air mass
             airMass = max(airMass,zeroR)
 
 
@@ -671,6 +671,8 @@ contains
         if (isAirPocket) then
 
             airVolume = airVolume_N0 + crk(istep) * dt * dvdt
+            !% limit air volume
+            airVolume = max(airVolume, zeroR)
 
             !% save the new volume and push down to old mass
             !% after the end of an RK step

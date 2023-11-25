@@ -1682,7 +1682,7 @@ module define_indexes
         enumerator :: airR_inflow
         enumerator :: airR_outflow
         enumerator :: airR_flowrate
-        enumerator :: air_mass_flowrate
+        enumerator :: airR_mass_flowrate
         enumerator :: airR_dvdt
         enumerator :: airR_density
         enumerator :: airR_density_N0
