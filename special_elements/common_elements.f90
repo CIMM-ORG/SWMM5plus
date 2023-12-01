@@ -68,12 +68,13 @@ module common_elements
             integer, intent(in) :: eIdx  !% must be a single element ID
             !% --- input is (e.g.) esr_Weir_Zcrest, esr_Weir_NominalDownstreamHead, esi_Weir_FlowDirection
             integer, intent(in) :: ZcrestCol, NominalDownstreamHeadCol, FlowDirectionCol
-            real(8), pointer :: Head, NominalDSHead
+            real(8), pointer :: Head, NominalDSHead, CurrentSetting
             real(8), pointer :: UpstreamFaceHead, DownstreamFaceHead, Zcrest
             integer, pointer :: FlowDirection, iupf, idnf
         !%------------------------------------------------------------------
         !% Aliases
             !% --- outputs
+            CurrentSetting => elemR(eIdx,er_Setting)
             Head           => elemR(eIdx,er_Head)
             NominalDSHead  => elemSR(eIdx,NominalDownstreamHeadCol)
             FlowDirection  => elemSI(eIdx,FlowDirectionCol)
@@ -94,6 +95,20 @@ module common_elements
         
         !% nominal downstream head on a diagnostic element
         NominalDSHead = min(UpstreamFaceHead, DownstreamFaceHead)
+
+
+        !% --- airflow venting settings
+        if (CurrentSetting == zeroR) then
+            faceYN(iupf, fYN_isAirflowBlocked) = .true.
+            faceYN(idnf, fYN_isAirflowBlocked) = .true.
+        else
+            faceYN(iupf, fYN_isAirflowBlocked) = .false.
+            faceYN(idnf, fYN_isAirflowBlocked) = .false.
+        end if
+
+        !% --- airflow ventig reset for surcharged faces
+        if (faceYN(iupf, fYN_isPSsurcharged)) faceYN(iupf, fYN_isAirflowBlocked) = .true.
+        if (faceYN(idnf, fYN_isPSsurcharged)) faceYN(idnf, fYN_isAirflowBlocked) = .true.
         
     end subroutine common_head_and_flowdirection_singular
 !%      

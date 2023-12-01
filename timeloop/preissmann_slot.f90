@@ -265,7 +265,7 @@ module preissmann_slot
             real(8), pointer :: SlotVolume(:), SlotDepth(:), SlotArea(:), SlotVolN0(:)
             real(8), pointer :: SlotWidth(:), SurchargeTime(:), PnumberInitial(:)
             real(8), pointer :: grav, TargetPCelerity, Dt, DecayRate
-            logical, pointer :: isSlot(:) , isfSlot(:), isSurcharge(:), canSurcharge(:)
+            logical, pointer :: isSlot(:) , isfSlot(:), isSurcharge(:), canSurcharge(:), isfBlocked(:)
             integer, pointer :: SlotMethod, fUp(:), fDn(:)
             integer :: tB, ii, kk
 
@@ -309,6 +309,7 @@ module preissmann_slot
             isSurcharge    => elemYN(:,eYN_isSurcharged)
             isSlot         => elemYN(:,eYN_isPSsurcharged)
             isfSlot        => faceYN(:,fYN_isPSsurcharged)
+            isfBlocked     => faceYN(:,fYN_isAirflowBlocked)
             SlotMethod     => setting%Solver%PreissmannSlot%Method
             TargetPCelerity=> setting%Solver%PreissmannSlot%TargetCelerity
             DecayRate      => setting%Solver%PreissmannSlot%DecayRate
@@ -338,9 +339,11 @@ module preissmann_slot
                     if ((head(tB) .gt. zcrown(tB)) .and. (canSurcharge(tB))) then
                         !% --- classify face as slot ONLY if JM is slot
                         if (isSlot(tM)) then 
-                            isfSlot(fUp(tB)) = .true.
+                            isfSlot(fUp(tB))    = .true.
+                            isfBlocked(fUp(tB)) = .true.
                         else 
-                            isfSlot(fUp(tB)) = .false.
+                            isfSlot(fUp(tB))    = .false.
+                            isfBlocked(fUp(tB)) = .false.
                         end if
                         isSlot(tB)      = .true.
                         !isfSlot(fUp(tB)) = .true.
@@ -360,7 +363,8 @@ module preissmann_slot
                         !% --- excess head at JB in an open channel represents
                         !%     head from ponding of JM, so do not adjust.
                         !%     Volume and depth are retained at full levels
-                        isfSlot(fUp(tB)) = .false.
+                        isfSlot(fUp(tB))    = .false.
+                        isfBlocked(fUp(tB)) = .false.
                     end if  
 
                     !% --- increase surcharge time if edge and junction are both surcharge
@@ -392,9 +396,11 @@ module preissmann_slot
                     if ((head(tB) .gt. zcrown(tB)) .and. (canSurcharge(tB))) then
                         !% --- classify face as slot ONLY if JM is slot
                         if (isSlot(tM)) then 
-                            isfSlot(fDn(tB)) = .true.
+                            isfSlot(fDn(tB))    = .true.
+                            isfBlocked(fDn(tB)) = .true.
                         else 
-                            isfSlot(fDn(tB)) = .false.
+                            isfSlot(fDn(tB))    = .false.
+                            isfBlocked(fDn(tB)) = .false.
                         end if
                         isSlot(tB)     = .true.
                         isSurcharge(tB)= .true.
@@ -416,7 +422,8 @@ module preissmann_slot
                         !% --- excess head at JB in an open channel represents
                         !%     head from ponding of JM, so do not adjust level.
                         !%     Volume and depth are retained at full levels
-                        isfSlot(fDn(tB)) = .false.
+                        isfSlot(fDn(tB))    = .false.
+                        isfBlocked(fDn(tB)) = .false.
                     end if
 
                     !% --- increase surcharge time if edge and junction are
@@ -463,7 +470,7 @@ module preissmann_slot
             real(8), pointer    :: dSlotVol(:), dSlotArea(:), dSlotDepth(:), SlotVolN0(:), volume(:) 
             real(8), pointer    :: velocity(:), fPNumber(:), SurchargeTime(:), PnumberInitial(:)
             real(8), pointer    :: TargetPCelerity, grav, Dt, cfl, DecayRate !, Alpha
-            logical, pointer    :: isSlot(:), isfSlot(:), isSurcharge(:)
+            logical, pointer    :: isSlot(:), isfSlot(:), isSurcharge(:), isfBlocked(:)
             character(64) :: subroutine_name = "slot_CC"
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -498,6 +505,7 @@ module preissmann_slot
             isSurcharge=> elemYN(:,eYN_isSurcharged)
             isSlot     => elemYN(:,eYN_isPSsurcharged)
             isfSlot    => faceYN(:,fYN_isPSsurcharged)
+            isfBlocked => faceYN(:,fYN_isAirflowBlocked)
             !% --- pointers to elemI columns
             fUp        => elemI(:,ei_Mface_uL)
             fDn        => elemI(:,ei_Mface_dL)
@@ -520,6 +528,8 @@ module preissmann_slot
         isSurcharge(thisP)  = .false.
         isfSlot(fUp(thisP)) = .false.
         isfSlot(fDn(thisP)) = .false.
+        isfBlocked(fUp(thisP)) = .false.
+        isfBlocked(fDn(thisP)) = .false.
 
         !% --- Select the type of slot method
         select case (SlotMethod)
@@ -542,6 +552,9 @@ module preissmann_slot
                     SlotWidth(thisP)  = (grav * fullarea(thisP)) / (PCelerity(thisP) ** twoR)
                     !%TEST VALUE: SlotWidth(thisP) = elemR(thisP,er_BreadthMax) * 0.1d0
                     SlotDepth(thisP)  = SlotArea(thisP) / SlotWidth(thisP)
+                    !% Air passageway is blocked
+                    isfBlocked(fUp(thisP)) = .true.
+                    isfBlocked(fDn(thisP)) = .true.
                 end where
             
             !% --- for dynamic slot, preissmann number is adjusted
@@ -574,6 +587,9 @@ module preissmann_slot
                     dSlotVol(thisP)   = SlotVolume(thisP) - SlotVolN0(thisP)
                     !% --- find the change in slot area
                     dSlotArea(thisP)  = dSlotVol(thisP) / length(thisP)
+                    !% Air passageway is blocked
+                    isfBlocked(fUp(thisP)) = .true.
+                    isfBlocked(fDn(thisP)) = .true.
                 endwhere
 
                 if (SlotMethod == DynamicSlot) then
@@ -607,10 +623,12 @@ module preissmann_slot
                 where (.not. isSlot(thisP))
                     isfSlot(fUp(thisP)) = .false.
                     isfSlot(fDn(thisP)) = .false.
+                    !% Air passageway is not blocked
+                    isfBlocked(fUp(thisP)) = .false.
+                    isfBlocked(fDn(thisP)) = .false.
                 end where
 
-                !% --- set any diagnostic face as venting point
-                !%     thus not changing preissmann number here
+                !% --- not changing preissmann number at diagnostic adjacent elements
                 where (faceYN(fUP(thisP),fYN_isDiag_adjacent_all))
                     isfSlot(fUp(thisP)) = .false.
                 end where

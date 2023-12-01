@@ -406,7 +406,7 @@ module update
             real(8), pointer    :: PCelerity(:), SlotVolume(:),SlotWidth(:), fullArea(:)
             real(8), pointer    :: w_uQ(:), w_dQ(:),  w_uG(:), w_dG(:),  w_uH(:), w_dH(:), w_uP(:), w_dP(:), Area(:)
             real(8), pointer    :: Fr(:), grav
-            logical, pointer    :: isSlot(:), fSlot(:)
+            logical, pointer    :: isSlot(:)
         !%------------------------------------------------------------------
         !% Preliminaries
             if (setting%Debug%File%update) &
@@ -429,7 +429,6 @@ module update
             Fr        => elemR(:,er_FroudeNumber)  !BRHbugfix20210811 test
             isSlot    => elemYN(:,eYN_isPSsurcharged)  !% Preissmann
 
-            fSlot    => faceYN(:,fYN_isPSsurcharged)  !% Preissmann
             fUp      => elemI(:,ei_Mface_uL)
             fDn      => elemI(:,ei_Mface_dL)
 

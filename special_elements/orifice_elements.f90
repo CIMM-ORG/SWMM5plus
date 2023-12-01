@@ -96,7 +96,6 @@ module orifice_elements
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: eIdx !% single ID of element
-
             real(8), pointer    :: FullDepth, EffectiveFullDepth, dt
             real(8), pointer    :: Orate, CurrentSetting, TargetSetting
             real(8) :: deltaRemaining, changeFraction

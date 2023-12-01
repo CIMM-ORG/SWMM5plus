@@ -88,7 +88,10 @@ else:
 # output h5 file
 output_file = output_path+'/output.h5'
 
-output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/model1_output/tc50_dx10_20231120_1422/output.h5'
+# abdul muttalibs case
+# output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/model1_output/tc50_dx10_20231127_1517/output.h5'
+# Ferreira case
+output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/Ferreira_2023_output/tc50_dx10_20231128_163/output.h5'
 
 
 
@@ -210,6 +213,8 @@ for profile_name_test in all_attribute_names:
     baseline_head    = []
 
     element_head     = []
+    element_air_head = []
+    element_air      = []
     element_length   = []
     element_zbottom  = []
     element_zcrown   = []
@@ -249,11 +254,15 @@ for profile_name_test in all_attribute_names:
                 baseline_head.append(node_face_heads)
 
 
+                element_air.append(np.zeros(len(node_face_heads)))
+                element_air_head.append(np.zeros(len(node_face_heads)))
 
                 # append rest of the geometry as zero (updated later)
                 element_zbottom.append(0)
                 element_zcrown.append(0)
                 element_length.append(0)
+
+                
                 feature_length.append(0)
                 # append element type
                 element_type.append(nJ2)
@@ -271,6 +280,16 @@ for profile_name_test in all_attribute_names:
                 node_elem_heads = h5_file[node_data_set][:,1]
                 # append the nJm heads to a compined list
                 element_head.append(node_elem_heads)
+
+
+                # air data
+                node_air_data = 'nodeFV_'+feature+'_AirPressurized'
+                node_elem_air = h5_file[node_air_data][:,1]
+                # append the nJm heads to a compined list
+                element_air.append(node_elem_air)
+
+                # this should be zero 
+                element_air_head.append(node_elem_air)
 
 
 
@@ -320,6 +339,22 @@ for profile_name_test in all_attribute_names:
 
 
 
+            air_head_data = 'linkFV_'+feature+'_AirPressureHead'
+            # retrieve the actual piezometric head data from hdf5
+            link_elem_air_heads = h5_file[air_head_data][:,1:]
+            # append the link air heads to a compined list
+            element_air_head.append(link_elem_air_heads)
+
+
+
+            air_data_set   = 'linkFV_'+feature+'_AirPressurized'
+            # retrieve the actual piezometric head data from hdf5
+            link_elem_air = h5_file[air_data_set][:,1:]
+            # append the link heads to a compined list
+            element_air.append(link_elem_air)
+
+
+
             # baseline
             link_elem_heads = h5_file_baseline[head_data_set][:,1:]
             baseline_head.append(link_elem_heads)
@@ -361,6 +396,8 @@ for profile_name_test in all_attribute_names:
     baseline_head   = np.column_stack(baseline_head) * Yf
 
     element_head    = np.column_stack(element_head) * Yf
+    element_air_head= np.column_stack(element_air_head) * Yf
+    element_air     = np.column_stack(element_air)
     element_zbottom = np.hstack(element_zbottom) * Yf
     element_zcrown  = np.hstack(element_zcrown) * Yf 
     element_length  = np.hstack(element_length) * Yf
@@ -534,10 +571,19 @@ for profile_name_test in all_attribute_names:
     #             ax.text(xval_feature[indx],feature_zbottom[indx]-buffer,feature_name[indx],
     #                 rotation=90,ha='center',va='top', fontsize='small')
 
+    element_head_mod = element_head.copy()
+    element_head_mod[element_air < 1] = np.nan
+
+
+    water_head = element_head - element_air_head
+    
     # animation line          
-    line,  = ax.plot(xval, element_head[x,:], '-o', markersize=2.0, color='xkcd:cerulean')
-    line2, = ax.plot(xval, baseline_head[x,:], '-+', markersize=2.0, color='xkcd:orange')
+    line,  = ax.plot(xval, element_head[x,:], '-o', markersize=2.0, color='xkcd:cerulean', label='Air Entrapment Model')
+    line2, = ax.plot(xval, baseline_head[x,:], '--', markersize=2.0, color='xkcd:orange', label = 'Baseline Model')
+    line3, = ax.plot(xval, element_head_mod[x,:], '-x', markersize=2.0, color='xkcd:red', label = 'Entrapped Air')
+
     time_text = ax.text(0.98, 0.95,'',ha='right',va='top',transform=plt.gca().transAxes,fontsize='small')
+    ax.legend(handles=[line, line2, line3],loc='upper left')
 
     #labeling the plots, using profile name and units for length and head
     plt.title(profile_name_test)
@@ -545,7 +591,7 @@ for profile_name_test in all_attribute_names:
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
     # plt.ylim(min_zbottom-buffer,max_head+buffer)
-    plt.ylim(0,20)
+    plt.ylim(-0.2,1.5)
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
     plt.tight_layout()
@@ -553,11 +599,13 @@ for profile_name_test in all_attribute_names:
     def animate(ii):
         line.set_ydata(element_head[x+ii,:])  # update the data.
         line2.set_ydata(baseline_head[x+ii,:])  # update the data.
-        time_text.set_text('Time = %.1f hr.' %(sim_time[ii]))
-        return line, line2
+        line3.set_ydata(element_head_mod[x+ii,:])
+
+        time_text.set_text('Time = %.1f sec.' %(sim_time[ii]))
+        return line, line2, line3
 
 
-    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=50, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=30, blit=False)
 
     #saving the animation before showing it
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY

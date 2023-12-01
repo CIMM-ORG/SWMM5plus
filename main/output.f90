@@ -399,7 +399,9 @@ contains
         if (setting%Output%DataOut%isWaveSpeedOut)               N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isPreissmannCelerityOut)      N_OutTypeElem =  N_OutTypeElem + 1
         if (setting%Output%DataOut%isPreissmannNumberOut)        N_OutTypeElem =  N_OutTypeElem + 1
-        
+        if (setting%Output%DataOut%isElemHasAirOut)              N_OutTypeElem =  N_OutTypeElem + 1
+        if (setting%Output%DataOut%isAirPressureHeadOut)         N_OutTypeElem =  N_OutTypeElem + 1
+
         if (N_OutTypeElem == 0) then
             !% --- if no outputtypes are specified, then suppress the element output
             setting%Output%ElementsExist_global = .false.
@@ -612,6 +614,25 @@ contains
             output_typeMultiplyByBarrels_elemR(ii) = zeroI
         end if
 
+        !% --- Entrapped Pressurized Air
+        if (setting%Output%DataOut%isElemHasAirOut) then
+            ii = ii+1
+            output_types_elemR(ii) = er_Pressurized_Air
+            output_typenames_elemR(ii) = 'AirPressurized'
+            output_typeUnits_elemR(ii) = ' '
+            output_typeProcessing_elemR(ii) = MaximumValue
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
+        end if
+
+        !% ---  Head of just the water
+        if (setting%Output%DataOut%isAirPressureHeadOut) then
+            ii = ii+1
+            output_types_elemR(ii) = er_Air_Pressure_Head
+            output_typenames_elemR(ii) = 'AirPressureHead'
+            output_typeUnits_elemR(ii) = 'm'
+            output_typeProcessing_elemR(ii) = AverageElements
+            output_typeMultiplyByBarrels_elemR(ii) = zeroI
+        end if
         
         !% -- store 'time' for use in output
         output_typeNames_withTime_elemR(2:ii+1) = output_typeNames_elemR(:)

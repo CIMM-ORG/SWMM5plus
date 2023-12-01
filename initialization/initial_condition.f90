@@ -372,9 +372,7 @@ contains
         call adjust_zero_and_small_depth_face (.false.)
 
         !% --- set the initial air entrapment volumes
-        if (setting%AirTracking%UseAirTrackingYN) then
-            call init_IC_air_entrapment ()
-        end if
+        call init_IC_air_entrapment ()
 
         !% ---populate er_ones columns with ones
         ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin init_IC_oneVectors'
@@ -7017,14 +7015,20 @@ contains
             integer          :: ii
         !%------------------------------------------------------------------
 
-        !% cycle through the links to find element air volumes
-        do ii = 1,N_conduit
-            !% set all the values to zero
-            airR(ii,:,:)                     = zeroR 
-            airR(ii,:,airR_density)          = setting%AirTracking%AirDensity
-            airR(ii,:,airR_absolute_head_N0) = setting%AirTracking%AtmosphericPressureHead
-            airR(ii,:,airR_absolute_head)    = setting%AirTracking%AtmosphericPressureHead
-        end do
+        !% initialize elemR
+        elemR(1:size(elemR,1)-1,er_Pressurized_Air) =  zeroR
+
+        !% set the initial air entrapment values
+        if (setting%AirTracking%UseAirTrackingYN) then
+            !% cycle through the links to find element air volumes
+            do ii = 1,N_conduit
+                !% set all the values to zero
+                airR(ii,:,:)                     = zeroR 
+                airR(ii,:,airR_density)          = setting%AirTracking%AirDensity
+                airR(ii,:,airR_absolute_head_N0) = setting%AirTracking%AtmosphericPressureHead
+                airR(ii,:,airR_absolute_head)    = setting%AirTracking%AtmosphericPressureHead
+            end do
+        end if
 
     end subroutine init_IC_air_entrapment
 !%

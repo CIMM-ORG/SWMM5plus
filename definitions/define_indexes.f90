@@ -333,6 +333,7 @@ module define_indexes
         enumerator :: er_Area_N1                    !% cross-sectional flow area (time N-1)
         enumerator :: er_AreaBelowBreadthMax        !% area below the max breadth in a conduit (static)
         enumerator :: er_AoverAfull                 !% ratio of are to full area -- used for tabular geometry
+        enumerator :: er_Air_Pressure_Head          !% Entrapped air pressure head
         enumerator :: er_BottomSlope                !% bottom slope of the element
         enumerator :: er_BreadthMax                 !% maximum breadth of conduit (static)
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
@@ -382,6 +383,7 @@ module define_indexes
         enumerator :: er_Preissmann_Number          !% Preissmann number
         enumerator :: er_Preissmann_Number_N0       !% preissmann number at previous time step
         enumerator :: er_Preissmann_Number_initial  !% Initial Preissmann number before surcharge
+        enumerator :: er_Pressurized_Air            !% 0 for no air, 1 for pressurized air
         enumerator :: er_ManningsN                  !% baseline Mannings N roughness value for friction model
         enumerator :: er_SedimentDepth
         enumerator :: er_SeepRate                   !% Local seepage rate in m/s
@@ -1252,6 +1254,7 @@ module define_indexes
         enumerator :: fYN_isDnGhost
         enumerator :: fYN_isnull
         enumerator :: fYN_isPSsurcharged
+        enumerator :: fYN_isAirflowBlocked
         enumerator :: fYN_isDownstreamJBFace
         enumerator :: fYN_isUpstreamJBFace
         enumerator :: fYN_isFaceOut

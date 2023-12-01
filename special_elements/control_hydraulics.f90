@@ -340,7 +340,7 @@ contains
                             hasChanged = zeroI
                         end if
                         !% --- error check
-                        if ((thisSetting .ne. zeroR) .or. (thisSetting .ne. oneR)) then
+                        if ((thisSetting .ne. zeroR) .and. (thisSetting .ne. oneR)) then
                             print *, 'CODE ERROR a closed conduit element has an er_Setting of other than 0.0 or 1.0'
                             call util_crashpoint(598723)
                         end if

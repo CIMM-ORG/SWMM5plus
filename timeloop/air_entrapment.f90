@@ -58,6 +58,9 @@ contains
             integer, pointer :: cIdx, max_airpockets
             logical, pointer :: conAir
         !%------------------------------------------------------------------
+        !% initialize if an element has pressurized air
+        elemR(1:size(elemR,1)-1,er_Pressurized_Air)   =  zeroR
+        elemR(1:size(elemR,1)-1,er_Air_Pressure_Head) =  zeroR
         !% cycle through the conduits to find air Pockets,
         do ii = 1,N_conduit
             !% pointers
@@ -81,7 +84,7 @@ contains
                     call airpocket_netflowrate (ii,jj)
     
                     !% calculate air outflow rate form an airpocket if any vent is present
-                    call airpocket_air_mass_outflow (ii, jj)
+                    call airpocket_air_mass_outflow (ii, jj, istep)
 
                     !% calculate the air pressure head
                     call airpocket_pressure_head (ii, jj, istep)
@@ -114,7 +117,7 @@ contains
         !%------------------------------------------------------------------
             integer          :: ii, jj, startIdx, endIdx, airPocketIdx
             integer, pointer :: cIdx, nElem, eIdx(:), fUp(:), fDn(:), max_airpockets
-            logical, pointer :: conAir, elemSur(:), faceSur(:) 
+            logical, pointer :: conAir, elemSur(:), faceSur(:), fBlocked(:) 
             logical          :: possibleAirPocket
         !%------------------------------------------------------------------
         !% cycle through the conduits to find air Pockets,
@@ -128,6 +131,7 @@ contains
             fDn       => conduitElemMapsI(ii,1:nElem,cmi_elem_dn_face)
             elemSur   => elemYN(:,eYN_isPSsurcharged)
             faceSur   => faceYN(:,fYN_isPSsurcharged)
+            fBlocked  => faceYN(:,fYN_isAirflowBlocked)
 
             max_airpockets => setting%AirTracking%NumberOfAirpocketsAllowed
 
@@ -137,13 +141,10 @@ contains
             conAir = .false.
 
             !% ------------------------------------------------------------------
-            !% initial air pockets detection
-            !% search for mixed flow condition in a conduit
-            !% if a conduit has a mixed of surcharged and non-surcharged cell,
-            !% it will have to potential to entrap air pockets
-            !% this reduces the need to cycle through all the conduits for
-            !% possible air pocket
-            if ((any(elemSur(eIdx))) .and. any(elemSur(eIdx))) then
+            !% initial air pockets screening
+            !% search for if any faces conduit elements that has blocked airflow
+            !% airflow can be blocked due to surcharge or a gate being closed
+            if ((any(fBlocked(fUp))) .or. any(fBlocked(fDn))) then
                 possibleAirPocket = .true.
             end if
 
@@ -164,8 +165,9 @@ contains
                 !% --- cycle through the conduit elements to 
                 !%     find entrapped air pockets
                 do while (jj <= nElem)
-                    !% the element is not surcharged and start counting 
-                    !% the non-surcharged elements
+                    !% --- Find the airpocket based on mixed condition first
+                    !%     the element is not surcharged and start counting 
+                    !%     the non-surcharged elements
                     if (.not. elemSur(eIdx(jj))) then
 
                         !% set the starting index 
@@ -226,6 +228,25 @@ contains
                                 airI(ii,airPocketIdx,airI_type) = entrappedAirpocket
                             end if
 
+                            ! !% --- special conditions for upstream and downstream 
+                            ! !%     airflow blockage
+                            if (airI(ii,airPocketIdx,airI_type) == upReleaseAirpocket)  then
+
+                                !% if the airflow of upstream release is blocked 
+                                if (fBlocked(fUp(oneI))) then
+                                    airI(ii,airPocketIdx,airI_type)  = entrappedAirpocket
+                                end if
+                            end if
+                                
+                            if (airI(ii,airPocketIdx,airI_type) == dnReleaseAirpocket) then
+
+                                !% if the airflow of downstream release is blocked
+                                if (fBlocked(fDn(nElem))) then
+                                    airI(ii,airPocketIdx,airI_type)  = entrappedAirpocket
+                                end if
+                            end if
+                            
+
                         !% else if there is too many air pockets than permissible  
                         else if (airPocketIdx > max_airpockets) then
                             print*, "The conduit has, ", airPocketIdx, " airpockets "
@@ -249,17 +270,18 @@ contains
                 airI(ii,:,airI_type) = noAirPocket
                 airR(ii,:,:)  = zeroR
                 airR(ii,:,airR_absolute_head) = setting%AirTracking%AtmosphericPressureHead
+                airR(ii,:,airR_density)       = setting%AirTracking%AirDensity
             end if
 
-            !% debug printing
+            ! !% debug printing
             ! if (any(airYN(ii,:,airYN_air_pocket_detected))) then
-                ! print*, 'Entrapped air at conduit  ',link%names(ii)%str
-                ! print*, 'airPocketIdx', airPocketIdx
-                ! print*, 'idx 1     = ', airI(ii,1,airI_idx),         'idx 2     = ', airI(ii,2,airI_idx),        'idx 3     = ',airI(ii,3,airI_idx) 
-                ! print*, 'type 1    = ', airI(ii,1,airI_type),        'type 2    = ', airI(ii,2,airI_type),       'type 3    = ', airI(ii,3,airI_type)
-                ! print*, 'elem up 1 = ', airI(ii,1,airI_elem_start),  'elem up 2 = ', airI(ii,2,airI_elem_start), 'elem up 3 = ',airI(ii,3,airI_elem_start) 
-                ! print*, 'elem dn 1 = ', airI(ii,1,airI_elem_end),    'elem dn 2 = ', airI(ii,2,airI_elem_end),   'elem dn 3 = ',airI(ii,3,airI_elem_end) 
-                ! print* 
+            !     print*, 'air at conduit  ',link%names(ii)%str
+            !     print*, 'airPocketIdx', airPocketIdx
+            !     print*, 'idx 1     = ', airI(ii,1,airI_idx),         'idx 2     = ', airI(ii,2,airI_idx),        'idx 3     = ',airI(ii,3,airI_idx) 
+            !     print*, 'type 1    = ', airI(ii,1,airI_type),        'type 2    = ', airI(ii,2,airI_type),       'type 3    = ', airI(ii,3,airI_type)
+            !     print*, 'elem up 1 = ', airI(ii,1,airI_elem_start),  'elem up 2 = ', airI(ii,2,airI_elem_start), 'elem up 3 = ',airI(ii,3,airI_elem_start) 
+            !     print*, 'elem dn 1 = ', airI(ii,1,airI_elem_end),    'elem dn 2 = ', airI(ii,2,airI_elem_end),   'elem dn 3 = ',airI(ii,3,airI_elem_end) 
+            !     print* 
             ! end if
 
         end do
@@ -375,6 +397,9 @@ contains
         !% if a airpocket is detected, calculate the net flowrate
         if (isAirPocket) then
             dvdt = outflow - inflow
+
+            !% HACK: checking ferreria test case
+            ! dvdt = elemR(135,er_Flowrate) - elemR(12,er_Flowrate) 
         else
             dvdt = zeroR
         end if 
@@ -384,16 +409,16 @@ contains
     !%==========================================================================
     !%==========================================================================
     !%
-    subroutine airpocket_air_mass_outflow (cIdx, aIdx)
+    subroutine airpocket_air_mass_outflow (cIdx, aIdx, istep)
         !%------------------------------------------------------------------
         !% Description:
         !%   calculates the air outflow rate for airpocket with release
         !%------------------------------------------------------------------
-            integer, intent (in) :: cIdx, aIdx
-            real(8)              :: ExpansionFactor, ratio, areaOpening
+            integer, intent (in) :: cIdx, aIdx, istep
+            real(8)              :: ExpansionFactor, ratio, areaOpening, outflowLimit
             integer, pointer     :: pocketType, elemStartIdx, elemEndIdx, faceUp, faceDn
             real(8), pointer     :: massOutflow, absHead, dt, kappa, atmHead, airDensity
-            real(8), pointer     :: dishCoeff, rho_w, rho_a, grav, minVentArea
+            real(8), pointer     :: dishCoeff, rho_w, rho_a, grav, minVentArea, airMass, crk(:)
             logical, pointer     :: isAirPocket, isVacuumed
         !%------------------------------------------------------------------
         !% Aliases
@@ -405,9 +430,11 @@ contains
             absHead      => airR(cIdx,aIdx,airR_absolute_head)
             massOutflow  => airR(cIdx,aIdx,airR_mass_flowrate)
             airDensity   => airR(cIdx,aIdx,airR_density)
+            airMass      => airR(cIdx,aIdx,airR_mass)
             isAirPocket  => airYN(cIdx,aIdx,airYN_air_pocket_detected)
             isVacuumed   => airYN(cIdx,aIdx,airYN_air_pocket_vacuumed)
             dt           => setting%Time%Hydraulics%Dt
+            crk          => setting%Solver%crk2
             grav         => setting%constant%gravity
             kappa        => setting%AirTracking%PolytropicExponent
             atmHead      => setting%AirTracking%AtmosphericPressureHead
@@ -476,20 +503,29 @@ contains
                     massOutflow = zeroR
                 end if
 
-            !% airflow into the airpocket
-            else if (ratio > 1.00) then
+            ! !% airflow into the airpocket
+            ! else if (ratio > 1.00) then
 
-                !% find the expansion factor
-                ExpansionFactor = sqrt((kappa / (kappa - oneR)) * (ratio ** (twoR / kappa)) &
-                                    * ((oneR - ratio ** ((kappa - oneR) / kappa)) / (oneR - ratio)))
+            !     !% find the expansion factor
+            !     ExpansionFactor = sqrt((kappa / (kappa - oneR)) * (ratio ** (twoR / kappa)) &
+            !                         * ((oneR - ratio ** ((kappa - oneR) / kappa)) / (oneR - ratio)))
 
-                !% find the airflow
-                massOutflow = dishCoeff * areaOpening * ExpansionFactor * airDensity &
-                        * sqrt(twoR * grav * (rho_w / rho_a) * abs(atmHead - absHead))   
+            !     !% find the airflow
+            !     massOutflow = dishCoeff * areaOpening * ExpansionFactor * airDensity &
+            !             * sqrt(twoR * grav * (rho_w / rho_a) * abs(atmHead - absHead))   
             else
 
                 massOutflow = zeroR
             end if
+
+
+            ! !% limitair for outflow
+            ! outflowLimit = - massOutflow * dt * crk(istep)
+
+            ! if (outflowLimit > airMass) then
+            !     massOutflow = airMass / (dt * crk(istep))
+            ! end if
+
 
             ! print*, '... ... ... ... ... ... ... ... ... ...'
 
@@ -555,8 +591,11 @@ contains
             end if
             
             absHead   = absHead_N0 + crk(istep) * dHdt * dt 
-            absHead   = max(absHead,atmHead)
-            gaugeHead = absHead - atmHead
+            ! absHead   = max(absHead,atmHead)
+            ! gaugeHead = absHead - atmHead
+
+
+            gaugeHead = max(absHead - atmHead,zeroR)
 
 
             ! print*, 'airpocket_pressure_head'
@@ -612,7 +651,7 @@ contains
         if (isAirPocket) then
 
             !% timemarch air mass through mass flowrate
-            airMass = airMass_N0 + dt * crk(istep) * massOutflow
+            airMass = airMass + dt * crk(istep) * massOutflow
             !% limit air mass
             airMass = max(airMass,zeroR)
 
@@ -694,7 +733,7 @@ contains
         !%------------------------------------------------------------------
         integer, intent (in) :: cIdx, aIdx
         integer, pointer     :: elemStartIdx, elemEndIdx
-        real(8), pointer     :: gaugeHead, elemHead(:)
+        real(8), pointer     :: gaugeHead, elemHead(:), hasAirPocket(:), AirHead(:)
         logical, pointer     :: isAirPocket
         !%------------------------------------------------------------------
         !% Aliases
@@ -703,10 +742,15 @@ contains
             gaugeHead    => airR(cIdx,aIdx,airR_gauge_head)
             isAirPocket  => airYN(cIdx,aIdx,airYN_air_pocket_detected)
             elemHead     => elemR(:,er_Head)
-        
+            AirHead      => elemR(:,er_Air_Pressure_Head)
+            hasAirPocket => elemR(:,er_Pressurized_Air)
+
         !% add the gauge heads to elem heads
         if (isAirPocket) then
-            elemHead(elemStartIdx:elemEndIdx) = elemHead(elemStartIdx:elemEndIdx) + gaugeHead
+            elemHead(elemStartIdx:elemEndIdx)     = elemHead(elemStartIdx:elemEndIdx) + gaugeHead
+            AirHead(elemStartIdx:elemEndIdx)      = gaugeHead
+            hasAirPocket(elemStartIdx:elemEndIdx) = oneR
+
         end if
 
 

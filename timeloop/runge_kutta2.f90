@@ -124,10 +124,6 @@ module runge_kutta2
                 end if
             end if
 
-            !% Air entrapment modeling
-            if (setting%AirTracking%UseAirTrackingYN) then
-                call air_entrapment_toplevel (istep)
-            end if
 
             !% --- interpolate all data to faces
             sync all
@@ -185,6 +181,14 @@ module runge_kutta2
             sync all
             call face_shared_face_sync (fp_noBC_IorS, [fr_flowrate,fr_Velocity_d,fr_Velocity_u])
             sync all
+
+            !% Air entrapment modeling
+            if (setting%AirTracking%UseAirTrackingYN) then
+                call air_entrapment_toplevel (istep)
+                !% interpolate the faces again after air calculation
+                !% to update the new heads to the faces
+                call face_interpolation(fp_noBC_IorS, .true., .true., .true., .false., .true.)
+            end if
 
             !% --- JUNCTION -- first step compute
             if (istep == 1) then 

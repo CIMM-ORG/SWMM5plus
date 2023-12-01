@@ -93,6 +93,8 @@ module define_settings
         logical :: isWaveSpeedOut           = .false.
         logical :: isPreissmannCelerityOut  = .false.
         logical :: isPreissmannNumberOut    = .false.
+        logical :: isElemHasAirOut          = .false. 
+        logical :: isAirPressureHeadOut     = .false.
         Logical :: isElemLengthOut          = .true.  
         Logical :: isElemBottomSlopeOut     = .false.      
         Logical :: isElemBreathMaxOut       = .false.      
@@ -1716,6 +1718,16 @@ contains
         call json%get('Output.DataOut.isPreissmannNumberOut', logical_value, found)
         if (found) setting%Output%DataOut%isPreissmannNumberOut = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isPreissmannNumberOut not found'
+
+        !%                       Dataout.isElemHasAirOut
+        call json%get('Output.DataOut.isElemHasAirOut', logical_value, found)
+        if (found) setting%Output%DataOut%isElemHasAirOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isElemHasAirOut not found'
+
+        !%                       Dataout.isAirPressureHeadOut
+        call json%get('Output.DataOut.isAirPressureHeadOut', logical_value, found)
+        if (found) setting%Output%DataOut%isAirPressureHeadOut = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Output.DataOut.isAirPressureHeadOut not found'
              
         !%                       Dataout.isElemLengthOut
         call json%get('Output.DataOut.isElemLengthOut', logical_value, found)
