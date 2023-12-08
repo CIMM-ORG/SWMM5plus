@@ -286,6 +286,13 @@ contains
 
         if (setting%AirTracking%UseAirTrackingYN) then
             if (num_images() == 1) then
+                !% --- air modeling does not distinguish between conduits
+                !%     connected through nJ2 nodes since hte nJ2 nodes can not vent
+                !%     thus, this subroutine finds the continious conduits connected
+                !%     via nJ2 nodes
+                !%     HACK: not fully tested against large compelx networks 
+                call init_count_continious_conduits ()
+
                 !% --- allocate the arrays for tracking entrapped air
                 !%     this must be done after the links are discretized
                 !%     HACK: only work with one processor for now.
@@ -1252,6 +1259,13 @@ contains
 
             !% --- note pattern initialization MUST be called after inflows are set
             node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
+
+            !% --- identify links that are connected my nJ2 junctions
+            if (node%I(ii,ni_node_type) == nJ2) then
+                link%YN(node%I(ii,ni_Mlink_u1), lYN_is_nj2_connection) = .true.
+                link%YN(node%I(ii,ni_Mlink_d1), lYN_is_nj2_connection) = .true.
+            end if
+            
         end do
 
         !% MOVED TO init_link_inflow_volumefraction
@@ -3393,6 +3407,118 @@ contains
         call culvert_parameter_values ()
 
     end subroutine init_culvert
+!%  
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine init_count_continious_conduits ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Count the number of continious conduits that are connected through 
+        !% nJ2 node. 
+        !% HACK: NOT PROPERLY TESTED AGAINST LARGE NETWORKS
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer          :: ii, link_count, current_link, num_conduits
+            integer, pointer :: lType(:), nUp(:), nDn(:), nType(:), linkUp(:), linkDn(:)
+            logical, pointer :: is_nJ2_connection(:), visitedLinks(:)  
+        !%------------------------------------------------------------------
+        !% pointers
+        !% pointer to the link type
+        lType   => link%I(:,li_link_type)
+        !% pointer to  the node type
+        nType   => node%I(:, ni_node_type)
+        !% pointer to  the upstream node
+        nUp     => link%I(:,li_Mnode_u)
+        !% pointer to  the upstream link
+        linkUp  => node%I(:,ni_Mlink_u1)
+        !% pointer to  the downstream node
+        nDn     => link%I(:,li_Mnode_d)
+        !% pointer to  the downstream link
+        linkDn  => node%I(:,ni_Mlink_d1)
+        !% pointer to link nj2 connection logical
+        is_nJ2_connection => link%YN(:, lYN_is_nj2_connection)
+        !% pointer to link logical temporary space
+        visitedLinks      => link%YN(:, lYN_temp1)
+        
+        !% initialize the temporary arrays
+        visitedLinks          = .false.
+        num_conduits          = zeroI
+        sc_link_Idx    = zeroI
+        links_per_sc     = zeroI
+        
+        !% --- cycle through packed conduits 
+        do ii = 1, N_link
+
+            if (lType(ii) == lPipe .and. .not. visitedLinks(ii)) then
+
+                !% save the current loop index
+                current_link = ii
+                !% set link count to one
+                link_count =  oneI
+                !% save the current link to the conduit array
+                sc_link_Idx(num_conduits + 1, link_count) = current_link
+
+                do while (is_nJ2_connection(current_link) .and. lType(current_link) == lPipe)
+                    visitedLinks(current_link) = .true.
+
+                    !% check if the downstream node of the current link is a nJm or nBCdn
+                    !% if so, exit the loop
+                    if ((nType(nDn(current_link)) == nJm) .or. (nType(nDn(current_link)) == nBCdn)) then
+                        !% exit the loop
+                        exit
+                    
+                    else
+                        !% else advance to the next link downstream of the nJ2 node
+                        current_link = linkDn(nDn(current_link))
+                        !% advance the lnik count
+                        link_count = link_count + 1
+                        !% save the link index in the conduit array
+                        sc_link_Idx(num_conduits + 1, link_count) = current_link
+
+                        !% if the advanced link is not a pipe, exit the loop
+                        if (.not. lType(current_link) == lPipe .or. visitedLinks(current_link)) then
+                            !% revert back to the old link
+                            current_link = linkUp(nUp(current_link))
+                            !% reset the previously saved conduit in the conduit array
+                            sc_link_Idx(num_conduits + 1, link_count) = zeroR
+                            !% reset the link counter
+                            link_count = link_count  - 1 
+                            !% exit the loop
+                            exit
+                        end if
+  
+                    end if
+
+                    !% exit when the link counter exceeds the number of links
+                    if (current_link > N_link) exit
+                    
+                end do
+                
+                links_per_sc(num_conduits + 1)   = link_count
+                num_conduits = num_conduits + 1
+            end if
+        end do
+
+        !% save the final number of continious conduits
+        !% HACK: initially N_
+        N_super_conduit = num_conduits
+
+
+        ! !% debug printing
+        ! !% Display the number of continuous conduits with 1-to-1 connections
+        ! print *, 'Number of continuous conduits with 1-to-1 connections:', num_conduits
+        ! !% Display conduit start and end indices
+        ! print *, 'Conduit indices:'
+        ! do ii = 1, num_conduits
+        !     print *, 'Conduit ', ii, ' - Start Index: ', link%names(sc_link_Idx(ii,1))%str, &
+        !             ', End Index: ', link%names(sc_link_Idx(ii,links_per_sc(ii)))%str
+
+        !     print*, 'link indeces in the conduit'
+        !     print*,  sc_link_Idx(ii,1:links_per_sc(ii))
+        ! end do
+
+    end subroutine init_count_continious_conduits
 !% 
 !%==========================================================================
 !%==========================================================================
@@ -3403,31 +3529,41 @@ contains
         !% Inialize the entrapped air arrays
         !%------------------------------------------------------------------
         !% Declarations
-            integer          :: ii, jj
+            integer          :: ii, jj, startPos, endPos
             integer, pointer :: cIdx, nElem
-            integer, dimension(:), allocatable, target :: p_elem, p_up_face, p_dn_face
+            integer, dimension(:), allocatable :: p_elem, p_up_face, p_dn_face
             character(64)    :: subroutine_name = 'init_entrapped_air_arrays'
         !-------------------------------------------------------------------
-        !% pack the conduit indexes in the network
-        pConduitIdx = pack(link%I(:,li_idx), (link%I(:,li_link_type) == lPipe))
 
-        do ii = 1, N_conduit
-            cIdx      => pConduitIdx(ii)
-            nElem     => link%I(cIdx,li_N_element)
+        do ii = 1, N_super_conduit
+            !% initialize the start and end position for element map savings
+            startPos = zeroI
+            endPos   = zeroI
 
-            !% pack all the element indexes in the link ii
-            p_elem    = pack(elemI(:,ei_Lidx),     (elemI(:,ei_link_Gidx_BIPquick) == cIdx))
-            !% pack the upstream face indexes of those corresponding elements
-            p_up_face = pack(elemI(:,ei_Mface_uL), (elemI(:,ei_link_Gidx_BIPquick) == cIdx))
-            !% pack the downstream face indexes of those corresponding elements
-            p_dn_face = pack(elemI(:,ei_Mface_dL), (elemI(:,ei_link_Gidx_BIPquick) == cIdx))
+            do jj = 1,links_per_sc(ii)
 
-            !% store the maps to the 3d elements
-            conduitElemMapsI(ii,1:nElem,cmi_elem_idx)     = p_elem
-            conduitElemMapsI(ii,1:nElem,cmi_elem_up_face) = p_up_face
-            conduitElemMapsI(ii,1:nElem,cmi_elem_dn_face) = p_dn_face
-            !% --- deallocate the temporary packed arrays
-            deallocate(p_elem,p_up_face,p_dn_face)
+                cIdx      => sc_link_Idx(ii,jj)
+                nElem     =>  link%I(cIdx,li_N_element)
+
+                !% pack all the element indexes in the link ii
+                p_elem    = pack(elemI(:,ei_Lidx),     (elemI(:,ei_link_Gidx_BIPquick) == cIdx))
+                !% pack the upstream face indexes of those corresponding elements
+                p_up_face = pack(elemI(:,ei_Mface_uL), (elemI(:,ei_link_Gidx_BIPquick) == cIdx))
+                !% pack the downstream face indexes of those corresponding elements
+                p_dn_face = pack(elemI(:,ei_Mface_dL), (elemI(:,ei_link_Gidx_BIPquick) == cIdx))
+
+                !% find the starting and ending position to save element idxs and maps
+                startPos = endPos + oneI
+                endPos   = startPos + nElem - oneI
+
+                !% store the maps to the 3d elements
+                conduitElemMapsI(ii,startPos:endPos,cmi_elem_idx)     = p_elem
+                conduitElemMapsI(ii,startPos:endPos,cmi_elem_up_face) = p_up_face
+                conduitElemMapsI(ii,startPos:endPos,cmi_elem_dn_face) = p_dn_face
+
+                !% --- deallocate the temporary packed arrays
+                deallocate(p_elem,p_up_face,p_dn_face)
+            end do
         end do
 
     end subroutine init_entrapped_air_arrays

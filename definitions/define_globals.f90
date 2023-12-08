@@ -204,7 +204,8 @@ module define_globals
     logical, allocatable :: image_full(:)
 
     !% --- Storage for entrapped air in links
-    integer, allocatable, target :: pConduitIdx(:)
+    integer, allocatable, target :: sc_link_Idx(:,:)        !% link indexes of super conduits
+    integer, allocatable, target :: links_per_sc(:)         !% save the total number of links in a super conduit
     integer, allocatable, target :: conduitElemMapsI(:,:,:) !% 3-d array to store element and face maps to a corresponding conduits
     integer, allocatable, target :: AirI(:,:,:)             !% 3-d array to store integer of entrapped air pockets
     real(8), allocatable, target :: AirR(:,:,:)             !% 3-d array to store reals of entrapped air pockets 
@@ -388,6 +389,7 @@ module define_globals
     integer :: N_uniformTable_locations
     integer :: N_link
     integer :: N_conduit
+    integer :: N_super_conduit
     integer :: N_node
     integer :: N_headBCnode !% number of head BC defined on nodes
     integer :: N_flowBCnode !% number of flow BC defined on nodes (may be pushed to links)

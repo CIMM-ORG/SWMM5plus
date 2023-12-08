@@ -213,6 +213,16 @@ module utility_allocate
         allocate(link_output_idx(setting%SWMMinput%N_link + additional_rows), stat=allocation_status,errmsg=emsg)
         call util_allocate_check(allocation_status, emsg, 'link_output_idx')
 
+        !% allocate sc_link_Idx array
+        allocate(sc_link_Idx(setting%SWMMinput%N_link + additional_rows, setting%SWMMinput%N_link + additional_rows), stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'link_output_idx')
+        sc_link_Idx = nullvalueI
+
+        !% allocate links_per_sc array
+        allocate(links_per_sc(setting%SWMMinput%N_link + additional_rows), stat=allocation_status,errmsg=emsg)
+        call util_allocate_check(allocation_status, emsg, 'links_per_sc')
+        links_per_sc = nullvalueI
+
         !%-------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%utility_allocate) &
@@ -745,7 +755,7 @@ module utility_allocate
         !% allocate arrays used for entrapped air calculations
         !%------------------------------------------------------------------
         !% Declarations
-            integer :: nPlanes, nRows
+            integer :: ii, nPlanes, nRows
             integer, pointer :: nCol, max_airpockets
             character(64) :: subroutine_name = 'util_allocate_entrapped_air_arrays'
         !%------------------------------------------------------------------
@@ -755,8 +765,13 @@ module utility_allocate
         !%------------------------------------------------------------------
 
         !% --- allocating the conduitElemMapsI 3-d array
-        nPlanes =  N_conduit
-        nRows   =  maxval(link%I(1:N_link,li_N_element), MASK = link%I(1:N_link,li_link_type) == lPipe)
+        nPlanes =  N_super_conduit
+        nRows   =  zeroI
+        !% find the number of rows for air arrays
+        do ii = 1, N_super_conduit
+            nRows = max(sum(link%I(sc_link_Idx(ii,1:links_per_sc(ii)),li_N_element)), nRows)
+        end do
+
         ncol    => Ncol_elemAirI
         max_airpockets => setting%AirTracking%NumberOfAirpocketsAllowed
 

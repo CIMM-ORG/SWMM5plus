@@ -7021,12 +7021,15 @@ contains
         !% set the initial air entrapment values
         if (setting%AirTracking%UseAirTrackingYN) then
             !% cycle through the links to find element air volumes
-            do ii = 1,N_conduit
+            do ii = 1,N_super_conduit
                 !% set all the values to zero
                 airR(ii,:,:)                     = zeroR 
                 airR(ii,:,airR_density)          = setting%AirTracking%AirDensity
                 airR(ii,:,airR_absolute_head_N0) = setting%AirTracking%AtmosphericPressureHead
                 airR(ii,:,airR_absolute_head)    = setting%AirTracking%AtmosphericPressureHead
+                !% conduitElemMapsI arrays
+                conduitElemMapsI(ii,:,cmi_airpocket_idx)  = zeroI
+                conduitElemMapsI(ii,:,cmi_airpocket_type) = noAirPocket
             end do
         end if
 

@@ -116,6 +116,7 @@ module define_indexes
     !%-------------------------------------------------------------------------
     enum, bind(c)
         enumerator :: lYN_weir_CanSurcharge = 1
+        enumerator :: lYN_is_nj2_connection
         enumerator :: lYN_isOutput
         enumerator :: lYN_isPhantomLink
         enumerator :: lYN_hasFlapGate

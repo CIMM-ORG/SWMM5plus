@@ -203,6 +203,12 @@ contains
         ! deallocate(link%Names, stat=deallocation_status, errmsg=emsg)
         ! call util_deallocate_check(deallocation_status, emsg, 'link%Names')
 
+        deallocate(sc_link_Idx, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check(deallocation_status, emsg, 'sc_link_Idx')
+
+        deallocate(links_per_sc, stat=deallocation_status, errmsg=emsg)
+        call util_deallocate_check(deallocation_status, emsg, 'links_per_conduit')
+
         !%-------------------------------------------------------------------
         !% Closing
             if (setting%Debug%File%utility_deallocate) &
