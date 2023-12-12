@@ -89,9 +89,9 @@ else:
 output_file = output_path+'/output.h5'
 
 # abdul muttalibs case
-# output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/model1_output/tc50_dx10_20231127_1517/output.h5'
+# output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/model1_output/tc50_dx10_20231211_1737/output.h5'
 # Ferreira case
-output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/Ferreira_2023_output/tc50_dx10_20231128_163/output.h5'
+output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/Ferreira_2023_discretized_output/tc50_dx10_20231211_2145/output.h5'
 
 
 
@@ -476,9 +476,9 @@ for profile_name_test in all_attribute_names:
             # calculations fro link labels
             feature_zbottom = 0.5 * (min(element_zbottom[element_rank==indx])
                                     +max(element_zbottom[element_rank==indx]))
-            # link labels
-            ax.text(xval_feature[indx],feature_zbottom-0.5*buffer,feature,
-                    rotation=90,ha='center',va='top', fontsize='small')
+            # # link labels
+            # ax.text(xval_feature[indx],feature_zbottom-0.5*buffer,feature,
+            #         rotation=90,ha='center',va='top', fontsize='small')
 
         elif feature_type[indx] == nJ2:
             # find the index of the J2 face
@@ -590,8 +590,8 @@ for profile_name_test in all_attribute_names:
     plt.xlabel('Length along the profile '+Yunit)
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
-    # plt.ylim(min_zbottom-buffer,max_head+buffer)
-    plt.ylim(-0.2,1.5)
+    plt.ylim(min_zbottom-buffer,max_head+buffer)
+    # plt.ylim(0,30)
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
     plt.tight_layout()
@@ -605,7 +605,7 @@ for profile_name_test in all_attribute_names:
         return line, line2, line3
 
 
-    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=30, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=40, blit=False)
 
     #saving the animation before showing it
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY

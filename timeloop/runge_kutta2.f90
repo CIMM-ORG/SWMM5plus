@@ -124,6 +124,10 @@ module runge_kutta2
                 end if
             end if
 
+            where (elemR(:,er_Pressurized_Air) == 1.0)
+                elemR(:,er_Head) = elemR(:,er_Head) + elemR(:,er_Air_Pressure_Head)
+            end where
+
 
             !% --- interpolate all data to faces
             sync all
@@ -182,14 +186,7 @@ module runge_kutta2
             call face_shared_face_sync (fp_noBC_IorS, [fr_flowrate,fr_Velocity_d,fr_Velocity_u])
             sync all
 
-            !% Air entrapment modeling
-            if (setting%AirTracking%UseAirTrackingYN) then
-                call air_entrapment_toplevel (istep)
-                !% interpolate the faces again after air calculation
-                !% to update the new heads to the faces
-                call face_interpolation(fp_noBC_IorS, .true., .true., .true., .false., .true.)
-            end if
-
+            
             !% --- JUNCTION -- first step compute
             if (istep == 1) then 
                 !% --- Junction first step RK estimate
@@ -209,7 +206,18 @@ module runge_kutta2
                 !%  --- no action 
             end if
 
+            !% Air entrapment modeling
+            if (setting%AirTracking%UseAirTrackingYN) then
+                call air_entrapment_toplevel (2)
+                !% interpolate the faces again after air calculation
+                !% to update the new heads to the faces
+                ! call face_interpolation(fp_noBC_IorS, .true., .true., .true., .true., .true.)
+            end if
+
         end do
+
+        
+            
         
         !% HACK --- this needs to be setup for multiple images and moved to the utility_debug
         if (setting%Debug%isGlobalVolumeBalance) then

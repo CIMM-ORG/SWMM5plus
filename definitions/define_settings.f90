@@ -359,6 +359,7 @@ module define_settings
         real(8) :: AirDensity                = 1.225d0  !% density of air kg/m^3
         real(8) :: WaterDensity              = 1000.0d0 !% density of water kg/m^3
         real(8) :: MinimumVentArea           = 0.0d0    !% area of the venting tunnel at the end of links
+        real(8) :: theta                     = 0.5d0    !% theta value for the theta numerical method
         logical :: UseAirTrackingYN          = .false.  !% setting to turn on air tracking
     end type AirTrackingType
 
@@ -995,7 +996,7 @@ contains
     !% AirTracking. ============================================================
     !% --- AirTracking.NumberOfAirpocketsAllowed
         !%                       NumberOfAirpocketsAllowed
-        call json%get('AirTracking.NumberOfAirpocketsAllowed', real_value, found)
+        call json%get('AirTracking.NumberOfAirpocketsAllowed', integer_value, found)
         if (found) setting%AirTracking%NumberOfAirpocketsAllowed = integer_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.NumberOfAirpocketsAllowed not found'
 
@@ -1034,6 +1035,12 @@ contains
         call json%get('AirTracking.MinimumVentArea', real_value, found)
         if (found) setting%AirTracking%MinimumVentArea = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.MinimumVentArea not found'
+
+    !% --- AirTracking.theta
+        !%                       theta
+        call json%get('AirTracking.MinimumVentArea', real_value, found)
+        if (found) setting%AirTracking%theta = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.theta not found'
 
     !% --- AirTracking.UseAirTrackingYN
         !%                       UseAirTrackingYN

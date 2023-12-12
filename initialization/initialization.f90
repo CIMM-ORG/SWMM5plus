@@ -3442,10 +3442,10 @@ contains
         visitedLinks      => link%YN(:, lYN_temp1)
         
         !% initialize the temporary arrays
-        visitedLinks          = .false.
-        num_conduits          = zeroI
-        sc_link_Idx    = zeroI
-        links_per_sc     = zeroI
+        visitedLinks = .false.
+        num_conduits = zeroI
+        sc_link_Idx  = zeroI
+        links_per_sc = zeroI
         
         !% --- cycle through packed conduits 
         do ii = 1, N_link

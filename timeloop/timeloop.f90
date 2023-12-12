@@ -1194,6 +1194,14 @@ contains
         elemR(:,er_Area_N0)       = elemR(:,er_Area)
         elemR(:,er_SlotVolume_N0) = elemR(:,er_SlotVolume)
         elemR(:,er_SlotDepth_N0)  = elemR(:,er_SlotDepth)
+
+        if (setting%AirTracking%UseAirTrackingYN) then
+            !% push down old air values
+            airR(:,:,airR_density_N0)       = airR(:,:,airR_density)
+            airR(:,:,airR_mass_N0)          = airR(:,:,airR_mass) 
+            airR(:,:,airR_absolute_head_N0) = airR(:,:,airR_absolute_head)
+            airR(:,:,airR_volume_N0)        = airR(:,:,airR_volume) 
+        end if
         !%------------------------------------------------------------------
             if (setting%Debug%File%timeloop) &
                 write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"

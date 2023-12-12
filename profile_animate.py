@@ -500,6 +500,7 @@ for profile_name_test in all_attribute_names:
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
     plt.ylim(min_zbottom-buffer,max_head+buffer)
+    plt.ylim(0,2)
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
     plt.tight_layout()
@@ -510,7 +511,7 @@ for profile_name_test in all_attribute_names:
         return line,
 
 
-    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=100, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=1, blit=False)
 
     #saving the animation before showing it
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY
