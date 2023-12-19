@@ -765,7 +765,7 @@ module define_settings
 
     type settingType
         logical                  :: JSON_FoundFileYN = .false.
-        logical                  :: JSON_CheckAllInputYN = .true.
+        logical                  :: JSON_CheckAllInputYN = .false.
         type(AdjustType)         :: Adjust
         type(BCPropertiesType)   :: BC
         type(CaseNameType)       :: CaseName ! name of case
