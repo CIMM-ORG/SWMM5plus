@@ -13,6 +13,7 @@ module air_entrapment
     use define_indexes
     use define_keys
     use define_settings, only: setting
+    use face, only: face_interpolation
     use utility_crash
 
     implicit none
@@ -39,9 +40,13 @@ contains
             integer             :: ii
         !%------------------------------------------------------------------
 
+        !% find the airpockets in the network
         call airpockets_detection ()
-
+        !% find the pressure head due to airpocket
         call airpockets_calculation (istep)
+        !% interpolate the faces again after air calculation
+        !% to update the new heads to the faces (only head interp)
+        call face_interpolation(fp_noBC_IorS, .false., .true., .false., .true., .true.)
 
     end subroutine air_entrapment_toplevel 
     !%    
@@ -115,7 +120,7 @@ contains
         !% Description:
         !% Find air Pockets in an link
         !%------------------------------------------------------------------
-            integer          :: ii, jj, startIdx, endIdx, airPocketIdx, nElem
+            integer          :: ii, jj, kk, startIdx, endIdx, airPocketIdx, nElem
             integer, pointer :: cIdx(:), eIdx(:), fUp(:), fDn(:), max_airpockets
             logical, pointer :: conAir(:), elemSur(:), faceSur(:), fBlocked(:) 
             logical          :: possibleAirPocket
@@ -204,10 +209,6 @@ contains
                             airI(ii,airPocketIdx,airI_elem_end)   = eIdx(endIdx)
                             airI(ii,airPocketIdx,airI_face_dn)    = fDn(endIdx)
 
-                            !% HACK: testing inflow in and out of the conduit
-                            airI(ii,airPocketIdx,airI_face_up)    = fUp(oneI)
-                            airI(ii,airPocketIdx,airI_face_dn)    = fDn(nElem)
-
                             if (.not. airYN(ii,airPocketIdx,airYN_air_pocket_detected)) then
                                 airYN(ii,airPocketIdx,airYN_new_air_pocket) =  .true.
                             end if
@@ -234,7 +235,7 @@ contains
                                 airI(ii,airPocketIdx,airI_type) = entrappedAirpocket
                             end if
 
-                            ! !% --- special conditions for upstream and downstream 
+                            !% --- special conditions for upstream and downstream 
                             ! !%     airflow blockage
                             if (airI(ii,airPocketIdx,airI_type) == upReleaseAirpocket)  then
 
@@ -269,6 +270,17 @@ contains
                     end if
                 end do
 
+                !% reset the rest of the empty airpocket array locations
+                if (airPocketIdx <= max_airpockets) then
+                    airYN(ii,airPocketIdx+1:max_airpockets,:)                 = .false.
+                    airI(ii,airPocketIdx+1:max_airpockets,:)                  = nullvalueI
+                    !% reset the air entrapment type
+                    airI(ii,airPocketIdx+1:max_airpockets,airI_type)          = noAirPocket
+                    airR(ii,airPocketIdx+1:max_airpockets,:)                  = zeroR
+                    airR(ii,airPocketIdx+1:max_airpockets,airR_absolute_head) = setting%AirTracking%AtmosphericPressureHead
+                    airR(ii,airPocketIdx+1:max_airpockets,airR_density)       = setting%AirTracking%AirDensity
+                end if
+
             !% if there is not any possible air pockets, reset the values of the air arrays of that correspondig conduit
             else
                 conAir(cIdx)  = .false.
@@ -289,7 +301,7 @@ contains
             !     print*, 'airPocketIdx', airPocketIdx
             !     print*, 'idx 1     = ', airI(ii,1,airI_idx),         'idx 2     = ', airI(ii,2,airI_idx),        'idx 3     = ',airI(ii,3,airI_idx) 
             !     print*, 'type 1    = ', airI(ii,1,airI_type),        'type 2    = ', airI(ii,2,airI_type),       'type 3    = ', airI(ii,3,airI_type)
-            !     print*, 'elem up 1 = ', airI(ii,1,airI_elem_start),  'elem up 2 = ', airI(ii,2,airI_elem_start), 'elem up 3 = ',airI(ii,3,airI_elem_start) 
+            !     print*, 'elem up 1 = ', airI(ii,1,airI_elem_start),  'elem up 2 = ', airI(ii,5,airI_elem_start), 'elem up 3 = ',airI(ii,3,airI_elem_start) 
             !     print*, 'elem dn 1 = ', airI(ii,1,airI_elem_end),    'elem dn 2 = ', airI(ii,2,airI_elem_end),   'elem dn 3 = ',airI(ii,3,airI_elem_end) 
             !     print*, 'Head 1= ', airR(ii,1,airR_absolute_head), 'Head 2= ', airR(ii,2,airR_absolute_head), 'Head 3= ', airR(ii,3,airR_absolute_head)
             !     print* 
@@ -572,11 +584,21 @@ contains
                 beta  = (kappa / airMass)   * dmdt
 
                 !% find the absolute head 
-                absHead = absHead * (oneR + dt * crk(istep) * (oneR - theta) * ( - alpha + beta)) / (oneR - dt * crk(istep) * theta * ( - alpha + beta))
+                absHead = absHead_N0 * (oneR + dt * crk(istep) * (oneR - theta) * (- alpha + beta)) / (oneR - dt * crk(istep) * theta * (- alpha + beta))
                 
                 !% find the gauge pressure head
                 gaugeHead = max(absHead - atmHead,zeroR)
             end if
+
+            ! print*, '--------------------------------------------'
+            ! print*, link%names(sc_link_Idx(sc_Idx,1))%str
+            ! print*, 'aIdx      = ', aIdx
+            ! print*, 'type      = ', reverseKey(airI(sc_Idx,aIdx,airI_type))
+            ! print*, 'alpha     = ', alpha
+            ! print*, 'beta      = ', beta
+            ! print*, 'absHead   = ', absHead
+            ! print*, 'gaugeHead = ', gaugeHead
+            ! print*
 
         end if
     
@@ -615,7 +637,7 @@ contains
         if (isAirPocket) then
 
             !% timemarch air mass through mass flowrate
-            airMass = airMass + dt * crk(istep) * massOutflow
+            airMass = airMass_N0 + dt * crk(istep) * massOutflow
 
             !% limit air mass
             airMass = max(airMass,zeroR)
@@ -636,40 +658,34 @@ contains
     !%==========================================================================
     !%==========================================================================
     !%
-    ! subroutine airpockets_volume_update (sc_Idx, aIdx, istep)
-    !     !%------------------------------------------------------------------
-    !     !% Description:
-    !     !%   Timemarch airpocket volume
-    !     !%------------------------------------------------------------------
-    !         integer, intent (in) :: sc_Idx, aIdx, istep
-    !         real(8)              :: tempVol
-    !         real(8), pointer     :: airVolume, dvdt, airVolume_N0, dt, crk(:)
-    !         logical, pointer     :: isAirPocket
-    !     !%------------------------------------------------------------------
-    !     !% Aliases
-    !         airVolume    => airR(sc_Idx,aIdx,airR_volume)
-    !         dvdt         => airR(sc_Idx,aIdx,airR_dvdt)
-    !         airVolume_N0 => airR(sc_Idx,aIdx,airR_volume_N0)
-    !         isAirPocket  => airYN(sc_Idx,aIdx,airYN_air_pocket_detected)
-    !         dt           => setting%Time%Hydraulics%Dt
-    !         crk          => setting%Solver%crk2
+    subroutine airpockets_volume_update (sc_Idx, aIdx, istep)
+        !%------------------------------------------------------------------
+        !% Description:
+        !%   Timemarch airpocket volume
+        !%------------------------------------------------------------------
+            integer, intent (in) :: sc_Idx, aIdx, istep
+            real(8)              :: tempVol
+            real(8), pointer     :: airVolume, dvdt, airVolume_N0, dt, crk(:)
+            logical, pointer     :: isAirPocket
+        !%------------------------------------------------------------------
+        !% Aliases
+            airVolume    => airR(sc_Idx,aIdx,airR_volume)
+            dvdt         => airR(sc_Idx,aIdx,airR_dvdt)
+            airVolume_N0 => airR(sc_Idx,aIdx,airR_volume_N0)
+            isAirPocket  => airYN(sc_Idx,aIdx,airYN_air_pocket_detected)
+            dt           => setting%Time%Hydraulics%Dt
+            crk          => setting%Solver%crk2
         
-    !     !% update the new volume based on inflow and outflow outflow
-    !     if (isAirPocket) then
+        !% update the new volume based on inflow and outflow outflow
+        if (isAirPocket) then
 
-    !         airVolume = airVolume_N0 + crk(istep) * dt * dvdt
-    !         !% limit air volume
-    !         airVolume = max(airVolume, zeroR)
+            airVolume = airVolume_N0 + crk(istep) * dt * dvdt
+            !% limit air volume
+            airVolume = max(airVolume, zeroR)
 
-    !         !% save the new volume and push down to old mass
-    !         !% after the end of an RK step
-    !         if (istep == twoI) then
-    !             airVolume_N0 = airVolume
-    !         end if
+        end if
 
-    !     end if
-
-    ! end subroutine airpockets_volume_update
+    end subroutine airpockets_volume_update
     !%    
     !%==========================================================================
     !%==========================================================================
@@ -699,7 +715,7 @@ contains
             !% pack the elements that contain air pocket
             pElem = pack(conduitElemMapsI(sc_Idx,:,cmi_elem_idx), conduitElemMapsI(sc_Idx,:,cmi_airpocket_idx)  == aIdx)
             !% add the air head to piezometric head
-            ! elemHead(pElem)     = elemHead(pElem) + gaugeHead
+            elemHead(pElem)     = elemHead(pElem) + gaugeHead
             AirHead(pElem)      = gaugeHead
             hasAirPocket(pElem) = oneR
 

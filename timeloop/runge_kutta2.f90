@@ -96,6 +96,15 @@ module runge_kutta2
         !% --- RK2 SOLUTION
         do istep = 1,2
 
+            ! if (istep == 2) then
+            !     where (elemR(:,er_Pressurized_Air) == 1.0)
+            !         elemR(:,er_Head) = elemR(:,er_Head) + elemR(:,er_Air_Pressure_Head)
+            !     end where
+            !     !% interpolate the faces again after air calculation
+            !     !% to update the new heads to the faces (only head interp)
+            !     call face_interpolation(fp_noBC_IorS, .false., .true., .false., .true., .true.)
+            ! end if
+
             !% --- Half-timestep advance on CC for U and UVolume
             call rk2_step_CC (istep)  
 
@@ -122,11 +131,7 @@ module runge_kutta2
                     !% --- conservative storage advance for junction, second step
                     call junction_second_step ()
                 end if
-            end if
-
-            where (elemR(:,er_Pressurized_Air) == 1.0)
-                elemR(:,er_Head) = elemR(:,er_Head) + elemR(:,er_Air_Pressure_Head)
-            end where
+            end if  
 
 
             !% --- interpolate all data to faces
@@ -208,17 +213,11 @@ module runge_kutta2
 
             !% Air entrapment modeling
             if (setting%AirTracking%UseAirTrackingYN) then
-                call air_entrapment_toplevel (2)
-                !% interpolate the faces again after air calculation
-                !% to update the new heads to the faces
-                ! call face_interpolation(fp_noBC_IorS, .true., .true., .true., .true., .true.)
-            end if
+                call air_entrapment_toplevel (istep)
+            end if 
 
         end do
 
-        
-            
-        
         !% HACK --- this needs to be setup for multiple images and moved to the utility_debug
         if (setting%Debug%isGlobalVolumeBalance) then
             !% --- overall volume conservation

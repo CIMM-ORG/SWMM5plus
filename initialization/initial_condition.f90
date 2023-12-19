@@ -7016,7 +7016,8 @@ contains
         !%------------------------------------------------------------------
 
         !% initialize elemR
-        elemR(1:size(elemR,1)-1,er_Pressurized_Air) =  zeroR
+        elemR(1:size(elemR,1)-1,er_Pressurized_Air)      = zeroR
+        elemR(1:size(elemR,1)-1,er_Air_Pressure_Head)    = zeroR
 
         !% set the initial air entrapment values
         if (setting%AirTracking%UseAirTrackingYN) then

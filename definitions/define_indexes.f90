@@ -334,7 +334,7 @@ module define_indexes
         enumerator :: er_Area_N1                    !% cross-sectional flow area (time N-1)
         enumerator :: er_AreaBelowBreadthMax        !% area below the max breadth in a conduit (static)
         enumerator :: er_AoverAfull                 !% ratio of are to full area -- used for tabular geometry
-        enumerator :: er_Air_Pressure_Head          !% Entrapped air pressure head
+        enumerator :: er_Air_Pressure_Head    !% Entrapped air pressure head
         enumerator :: er_BottomSlope                !% bottom slope of the element
         enumerator :: er_BreadthMax                 !% maximum breadth of conduit (static)
         enumerator :: er_Depth                      !% actual maximum depth of open-channel flow
