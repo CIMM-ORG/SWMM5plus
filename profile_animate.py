@@ -395,9 +395,9 @@ for profile_name_test in all_attribute_names:
             # calculations fro link labels
             feature_zbottom = 0.5 * (min(element_zbottom[element_rank==indx])
                                     +max(element_zbottom[element_rank==indx]))
-            # link labels
-            ax.text(xval_feature[indx],feature_zbottom-0.5*buffer,feature,
-                    rotation=90,ha='center',va='top', fontsize='small')
+            # # link labels
+            # ax.text(xval_feature[indx],feature_zbottom-0.5*buffer,feature,
+            #         rotation=90,ha='center',va='top', fontsize='small')
 
         elif feature_type[indx] == nJ2:
             # find the index of the J2 face
@@ -499,7 +499,7 @@ for profile_name_test in all_attribute_names:
     plt.xlabel('Length along the profile '+Yunit)
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
-    plt.ylim(min_zbottom-buffer,max_head+buffer)
+    # plt.ylim(min_zbottom-buffer,max_head+buffer)
     plt.ylim(0,2)
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
@@ -511,7 +511,7 @@ for profile_name_test in all_attribute_names:
         return line,
 
 
-    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=1, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=50, blit=False)
 
     #saving the animation before showing it
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY

@@ -89,9 +89,9 @@ else:
 output_file = output_path+'/output.h5'
 
 # abdul muttalibs case
-# output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/model1_output/tc50_dx10_20231211_1737/output.h5'
+output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/model1_output/tc50_dx10_20231213_1702/output.h5'
 # Ferreira case
-output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/Ferreira_2023_discretized_output/tc50_dx10_20231211_2145/output.h5'
+# output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/Ferreira_2023_mod_output/tc50_dx10_20231213_1247/output.h5'
 
 
 
@@ -589,9 +589,9 @@ for profile_name_test in all_attribute_names:
     plt.title(profile_name_test)
     plt.xlabel('Length along the profile '+Yunit)
     plt.ylabel('Piezometric Head '+Yunit)
-    plt.xlim(min(xval),max(xval))
+    plt.xlim(min(xval)-50,max(xval)+50)
     plt.ylim(min_zbottom-buffer,max_head+buffer)
-    # plt.ylim(0,30)
+    plt.ylim(0,30)
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
     plt.tight_layout()

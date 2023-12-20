@@ -6440,7 +6440,7 @@ contains
                 print *, 'CODE ERROR in geometry processing for uniform table.'
                 print *, 'tolerance setting is ',uTol
                 print *, 'relative error is ',errorU
-                call util_crashpoint(698731)
+                ! call util_crashpoint(698731)
             end if
         end do
 

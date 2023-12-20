@@ -96,15 +96,6 @@ module runge_kutta2
         !% --- RK2 SOLUTION
         do istep = 1,2
 
-            ! if (istep == 2) then
-            !     where (elemR(:,er_Pressurized_Air) == 1.0)
-            !         elemR(:,er_Head) = elemR(:,er_Head) + elemR(:,er_Air_Pressure_Head)
-            !     end where
-            !     !% interpolate the faces again after air calculation
-            !     !% to update the new heads to the faces (only head interp)
-            !     call face_interpolation(fp_noBC_IorS, .false., .true., .false., .true., .true.)
-            ! end if
-
             !% --- Half-timestep advance on CC for U and UVolume
             call rk2_step_CC (istep)  
 

@@ -496,6 +496,9 @@ contains
                     ! areaOpening = max(elemR(elemEndIdx,er_FullArea) - faceR(faceDn,fr_Area_u), minVentArea)
                     areaOpening = minVentArea
 
+                    !% HACK code
+                    ! areaOpening = elemR(elemEndIdx,er_FullArea)
+
                 case (noAirPocket)
 
                     areaOpening = zeroR
@@ -578,17 +581,37 @@ contains
         !% calculate the new airpocket pressure head
         if (isAirPocket) then
 
-            if (airVolume > zeroR .and. airMass > zeroR) then
-                !% find the alpha and beta
-                alpha = (kappa / airVolume) * dvdt
-                beta  = (kappa / airMass)   * dmdt
+            ! if (airVolume > zeroR .and. airMass > zeroR) then
+            !     !% find the alpha and beta
+            !     alpha = (kappa / airVolume) * dvdt
+            !     beta  = (kappa / airMass)   * dmdt
 
-                !% find the absolute head 
-                absHead = absHead_N0 * (oneR + dt * crk(istep) * (oneR - theta) * (- alpha + beta)) / (oneR - dt * crk(istep) * theta * (- alpha + beta))
+            !     !% find the absolute head 
+            !     absHead = absHead_N0 * (oneR + dt * crk(istep) * (oneR - theta) * (- alpha + beta)) / (oneR - dt * crk(istep) * theta * (- alpha + beta))
                 
-                !% find the gauge pressure head
-                gaugeHead = max(absHead - atmHead,zeroR)
+            !     !% find the gauge pressure head
+            !     gaugeHead = max(absHead - atmHead,zeroR)
+            ! end if
+
+
+            if (airVolume > zeroR) then 
+                alpha = (kappa / airVolume) * dvdt
+            else
+                alpha = zeroR
             end if
+
+
+            if (airMass > zeroR) then
+                beta  = (kappa / airMass)   * dmdt
+            else
+                beta = zeroR
+            end if
+
+            !% find the absolute head 
+            absHead = absHead_N0 * (oneR + dt * crk(istep) * (oneR - theta) * (- alpha + beta)) / (oneR - dt * crk(istep) * theta * (- alpha + beta))
+
+            !% find the gauge pressure head
+            gaugeHead = max(absHead - atmHead,zeroR)
 
             ! print*, '--------------------------------------------'
             ! print*, link%names(sc_link_Idx(sc_Idx,1))%str
@@ -642,7 +665,7 @@ contains
             !% limit air mass
             airMass = max(airMass,zeroR)
 
-            if (airMass > zeroR) then
+            if (airMass > zeroR .and. airVolume > zeroR) then
                 isVacuumed = .false.
                 airDensity = airMass / airVolume
             else 
