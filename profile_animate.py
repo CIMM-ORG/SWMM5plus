@@ -511,14 +511,14 @@ for profile_name_test in all_attribute_names:
         return line,
 
 
-    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=50, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=30, blit=False)
 
     #saving the animation before showing it
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY
     if save_animation:
         # animation file name
         animation_name = output_path+""+test_case+"_"+ profile_name_test+'.gif' 
-        writergif = animation.PillowWriter(fps=30)
+        writergif = animation.PillowWriter(fps=50)
         ani.save(animation_name,writer=writergif)
 
 
