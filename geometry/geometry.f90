@@ -1199,8 +1199,8 @@ module geometry
         !% the main head to the branch with an adjustment for head loss.
         !% When the main head is below the branch, this sets the
         !% branch head to the bottom elevation plus a depth implied
-        !%------------------------------------------------------------------
         !% by a Froude number of one.
+        !%------------------------------------------------------------------
         !%
         !% Note that the JB works in an inverse form from the other geometry computations.
         !% That is, for CC, JM we have volume a priori and then compute area, depth etc.
@@ -1221,7 +1221,7 @@ module geometry
 
             integer, pointer :: Npack, thisP(:), BranchExists(:), thisSolve(:),  tM
             integer, pointer :: fup(:), fdn(:)
-            real(8), pointer :: area(:), depth(:), head(:), hydradius(:)
+            real(8), pointer :: area(:), depth(:), head(:), hydradius(:), AreaVelocity(:)
             real(8), pointer :: length(:), perimeter(:), topwidth(:), velocity(:), flowrate(:)
             real(8), pointer :: volume(:), zBtm(:), Kfac(:), dHdA(:), ellDepth(:)
             real(8), pointer :: zCrown(:), fullArea(:), fulldepth(:), fullperimeter(:)
@@ -1243,6 +1243,7 @@ module geometry
         !% Aliases
             Npack         => npack_elemP(thisColP_JM)
             area          => elemR(:,er_Area)
+            AreaVelocity  => elemR(:,er_AreaVelocity)
             breadthmax    => elemR(:,er_BreadthMax)
             depth         => elemR(:,er_Depth)
             dHdA          => elemR(:,er_dHdA)
@@ -1302,27 +1303,29 @@ module geometry
 
                     if ( head(tM) > (zBtm(tB) + sedimentDepth(tB)) ) then
 
-                        !head(tB) = head(tM)
+                        head(tB) = head(tM)
 
-                        !% == test 20230904brh
-                        !% --- head(tB) is linear interp from face value.
-                        if (isUpBranch) then 
-                            if (fHead_d(fup(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
-                                head(tB) = head(tM) &
-                                    + onehalfR * (fHead_d(fup(tB)) - head(tM))
-                            else 
-                                head(tB) = head(tM) &
-                                    + onehalfR * ((zBtm(tB) + sedimentDepth(tB)) - head(tM))
-                            end if
-                        else
-                            if (fHead_u(fdn(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
-                                head(tB) = head(tM) &
-                                    + onehalfR * (fHead_u(fdn(tB)) - head(tM))
-                            else 
-                                head(tB) = head(tM) &
-                                    + onehalfR * ((zBtm(tB) + sedimentDepth(tB)) - head(tM))
-                            end if
-                        end if
+                        ! !% == test 20230904brh
+                        ! !% --- head(tB) is linear interp from face value.
+                        ! if (isUpBranch) then 
+                        !     !% --- upstream branch
+                        !     if (fHead_d(fup(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
+                        !         head(tB) = head(tM)  &
+                        !            + onehalfR * (fHead_d(fup(tB)) - head(tM))
+                        !     else 
+                        !         head(tB) = head(tM) &
+                        !            + onehalfR * ((zBtm(tB) + sedimentDepth(tB)) - head(tM))
+                        !     end if
+                        ! else
+                        !     !% --- downstream branch
+                        !     if (fHead_u(fdn(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
+                        !         head(tB) = head(tM)  &
+                        !              + onehalfR * (fHead_u(fdn(tB)) - head(tM))
+                        !     else 
+                        !         head(tB) = head(tM) !%&
+                        !            !+ onehalfR * ((zBtm(tB) + sedimentDepth(tB)) - head(tM))
+                        !     end if
+                        ! end if
 
                         iswaterfall = .false.
 
@@ -1394,6 +1397,7 @@ module geometry
                         !%--- surcharged or incipient surcharged
                         depth(tB)        = fulldepth(tB)
                         area(tB)         = fullArea(tB)
+                        AreaVelocity(tB) = fullArea(tB)
                         perimeter(tB)    = fullperimeter(tB)
                         topwidth(tB)     = setting%ZeroValue%Topwidth
                         hydRadius(tB)    = fulldepth(tB) / fullperimeter(tB)
@@ -1404,6 +1408,7 @@ module geometry
                         !% --- negligible depth is treated with ZeroValues
                         depth(tB)        = setting%ZeroValue%Depth * 0.99d0
                         area(tB)         = setting%ZeroValue%Area
+                        AreaVelocity(tB) = setting%ZeroValue%Area
                         topwidth(tB)     = setting%ZeroValue%Topwidth
                         perimeter(tB)    = setting%ZeroValue%Topwidth + setting%ZeroValue%Depth
                         hydRadius(tB)    = setting%ZeroValue%Depth
@@ -1682,6 +1687,8 @@ module geometry
 
                         end select
 
+                        AreaVelocity(tB) = area(tB)
+
                         !% --- standard for all geometries
                         dHdA(tB)     = oneR / topwidth(tB)
 
@@ -1701,7 +1708,7 @@ module geometry
                     else
                         !% --- universal computation of velocity
                         if (area(tB) > setting%ZeroValue%Area) then 
-                            velocity(tB) = flowrate(tB) / area(tB)
+                            velocity(tB) = flowrate(tB) / AreaVelocity(tB)
 
                             !% ARCHIVE METHOD
                             !% -- set slightly larger depths to velocity consistent with FR=1

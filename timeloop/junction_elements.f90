@@ -64,18 +64,26 @@ module junction_elements
             step => setting%Time%Step
         !%-----------------------------------------------------------------
 
+        ! print *, 'XXX 0',elemR(103,er_Velocity)
+
         !% --- ensure Slot is correctly initialized
         if (N_nJM > 0) then 
             call lljunction_main_slotwidth (ep_JM)
         end if
 
+        ! print *, 'XXX 1',elemR(103,er_Velocity)
+
         !% --- flowrate/velocity of the JM
         if (N_nJM > 0) then
             call lljunction_main_velocity (ep_JM)
 
+            ! print *, 'XXX 2',elemR(103,er_Velocity)
+
                 ! call util_utest_CLprint ('------- jjj.01  after lljunction_main_velocity')
 
             call lljunction_main_energyhead (ep_JM)
+
+            ! print *, 'XXX 3',elemR(103,er_Velocity), faceR(102,fr_Velocity_u)
 
             ! call util_utest_CLprint ('------- jjj.02  after lljunction_main_energyhead')
         end if
@@ -84,8 +92,12 @@ module junction_elements
         if (N_nJM > 0) then 
             call lljunction_push_inflows_from_CC_to_JB_face ()
 
+            ! print *, 'XXX 4',elemR(103,er_Velocity), faceR(102,fr_Velocity_u)
+
             !% --- update the velocities for the new inflows.
             call face_update_velocities (fp_JB_IorS)
+
+            ! print *, 'XXX 5',elemR(103,er_Velocity), faceR(102,fr_Velocity_u)
 
                 ! call util_utest_CLprint ('------- jjj.03  after lljunction_push_inflowCC_flowrates_to_face')
         end if
@@ -106,6 +118,8 @@ module junction_elements
         sync all
         !% ==============================================================
 
+        ! print *, 'XXX 6',elemR(103,er_Velocity), faceR(102,fr_Velocity_u)
+
         !% --- ensure that all JB are consistent with adjacent face before the
         !%     energy equation is invoked for outflow
         if (N_nJM > 0) then 
@@ -114,6 +128,8 @@ module junction_elements
             call face_pull_facedata_to_JBelem (ep_JM, fr_Velocity_d, er_Velocity, .true.)
             call face_pull_facedata_to_JBelem (ep_JM, fr_Velocity_u, er_Velocity, .false.)
         end if
+
+        ! print *, 'XXX 7',elemR(103,er_Velocity), faceR(102,fr_Velocity_u)
 
         ! call util_utest_CLprint ('------- jjj.05 after face_pull_facedata')
 
@@ -126,10 +142,14 @@ module junction_elements
             call lljunction_push_adjacent_CC_elemdata_to_face ()
         end if
 
+        ! print *, 'XXX 8',elemR(103,er_Velocity), faceR(102,fr_Velocity_u)
+
         !% --- push JB adjacent diag data to faces
         if (npack_elemP(ep_Diag_JBadjacent) > 0) then
             call face_push_diag_adjacent_data_to_face (ep_Diag_JBadjacent)
         end if
+
+        ! print *, 'XXX 9',elemR(103,er_Velocity), faceR(102,fr_Velocity_u)
 
         ! call util_utest_CLprint ('------- jjj.06 after lljunction_push_adjacent')
         !% ==============================================================
@@ -145,7 +165,7 @@ module junction_elements
         !% 
         !% ==============================================================
 
- 
+        ! print *, 'XXX A',elemR(103,er_Velocity), faceR(102,fr_Velocity_u)
 
         ! call util_utest_CLprint ('------- jjj.07 after face_push_diag')
 
@@ -167,6 +187,8 @@ module junction_elements
             ! call util_utest_CLprint ('------- jjj.08 after lljunction_branch_energy_outflow')
         end if
 
+        ! print *, 'XXX B',elemR(103,er_Velocity), faceR(102,fr_Velocity_u)
+
         !% --- force the changed JB element flowrate and velocity alues to the faces for upstream (true)
         !%     and downstream (false) branches.
         call face_push_JBelem_to_face (ep_JM, fr_Flowrate,   er_Flowrate, .true.)
@@ -180,6 +202,8 @@ module junction_elements
         !% inflows have had the face values pushed to the JB, and JB/CC faces having the energy
         !% based flowrate/velocity from the element pushed to faces. Need to sync faces to
         !% ensure consistency across processors
+
+        ! print *, 'XXX C',elemR(103,er_Velocity), faceR(102,fr_Velocity_u)
 
         !% ==============================================================
         !% --- face sync
@@ -197,6 +221,7 @@ module junction_elements
                 ! call util_utest_CLprint ('------- jjj.09 after lljunction_branch_dQdH')
         end if
 
+        ! print *, 'XXX D',elemR(103,er_Velocity), faceR(102,fr_Velocity_u)
     end subroutine junction_preliminaries
 !%
 !%==========================================================================
@@ -467,6 +492,7 @@ module junction_elements
             elemR(thisP,er_Head)     = llgeo_head_from_depth_pure (thisP,elemR(thisP,er_Depth))
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
             elemR(thisP,er_Area)     = elemR(thisP,er_Depth) * sqrt(elemSR(thisP,esr_Storage_Plan_Area))
+            elemR(thisP,er_AreaVelocity) = elemR(thisP,er_Area)
 
             !% --- add the Preissmann slot depths back to head 
             call slot_JM_adjustments (ep_JM, Npack)
@@ -609,7 +635,7 @@ module junction_elements
 
         ! call util_utest_CLprint('ggg after updates JM -------------------------------------')
 
-        !% NOTE TRUE FORCES Q weight on JB to minimum, which
+        !% Note TRUE in below forces Q weight on JB to minimum, which
         !% means that face interpolation will have JB values
         !% dominate over adjacent CC values, but will be
         !% simple averaging with adjacen Diag Q values
