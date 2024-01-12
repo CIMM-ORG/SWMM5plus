@@ -194,8 +194,10 @@ for profile_name_test in all_attribute_names:
                 quit()
 
             else:
+                profile_name = arg_profile_name
                 profile = h5_file.attrs[arg_profile_name][0,:].astype('U')
         else:
+            profile_name = profile_name_test
             profile = h5_file.attrs[profile_name_test][0,:].astype('U')
 
     # say we have a profile like below from the hdf file
@@ -495,7 +497,7 @@ for profile_name_test in all_attribute_names:
     time_text = ax.text(0.98, 0.95,'',ha='right',va='top',transform=plt.gca().transAxes,fontsize='small')
 
     #labeling the plots, using profile name and units for length and head
-    plt.title(profile_name_test)
+    plt.title(profile_name)
     plt.xlabel('Length along the profile '+Yunit)
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
@@ -516,7 +518,7 @@ for profile_name_test in all_attribute_names:
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY
     if save_animation:
         # animation file name
-        animation_name = output_path+""+test_case+"_"+ profile_name_test+'.gif' 
+        animation_name = output_path+""+test_case+"_"+ profile_name+'.gif' 
         writergif = animation.PillowWriter(fps=30)
         ani.save(animation_name,writer=writergif)
 
