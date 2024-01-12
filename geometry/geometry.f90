@@ -1403,6 +1403,7 @@ module geometry
                         hydRadius(tB)    = fulldepth(tB) / fullperimeter(tB)
                         dHdA(tB)         = oneR / setting%ZeroValue%Topwidth
                         ellDepth(tBA)    = llgeo_elldepth_pure(tBA)
+                        elemYN(tB,eYN_isSurcharged) = .true.
 
                     elseif (depth(tB) .le. setting%ZeroValue%Depth) then
                         !% --- negligible depth is treated with ZeroValues
@@ -1414,6 +1415,7 @@ module geometry
                         hydRadius(tB)    = setting%ZeroValue%Depth
                         dHdA(tB)         = oneR / setting%ZeroValue%Topwidth
                         ellDepth(tB)     = setting%ZeroValue%Depth * 0.99d0 
+                        elemYN(tB,eYN_isSurcharged) = .false.
 
                     else
                         !% --- set lookup table names
@@ -1687,6 +1689,7 @@ module geometry
 
                         end select
 
+                        elemYN(tB,eYN_isSurcharged) = .false.
                         AreaVelocity(tB) = area(tB)
 
                         !% --- standard for all geometries

@@ -126,8 +126,11 @@ contains
          !integer, dimension(7) :: iet =     (/  133, 134,     136,135,137,   146, 147 /)
          !integer, dimension(4) :: ift =    (/      124,   125,             126,  135    /)
 
-         integer, dimension(7) :: iet = (/ 99, 100,   102, 101, 103,  112, 113/)
-         integer, dimension(4) :: ift =    (/ 100, 101,            102, 111 /)
+         ! integer, dimension(7) :: iet = (/ 99, 100,   102, 101, 103,  112, 113/)
+         ! integer, dimension(4) :: ift =    (/ 100, 101,            102, 111 /)
+
+         integer, dimension(7) :: iet = (/ 9, 10,   12, 11, 13,  22, 23/)
+         integer, dimension(4) :: ift =    (/ 10, 11,          12,  21 /)
       !%------------------------------------------------------------------
       !% Preliminaries:
       !%------------------------------------------------------------------
@@ -145,19 +148,12 @@ contains
 
      ! return
 
-       if (setting%Time%Step < 512) return
+       if (setting%Time%Step < 152000) return
 
-      !   if (setting%Time%Step == 841) then
+      !   if (setting%Time%Step == 152020) then
       !    stop 880984
       !   end if
 
-      !   if (setting%Time%Step > 11948) then 
-      !    stop 550987
-      !   end if
-
-         !  if (setting%Time%Step == 392) then 
-         !       stop 7098723
-         !  end if
 
          ! if (setting%Time%Now + setting%Time%Hydraulics%Dt > ceiling(setting%Time%Now)) then
       
@@ -183,19 +179,7 @@ contains
          !       print *, ii, elemI(ii,ei_node_Gidx_SWMM), 'node ', trim(node%Names(elemI(ii,ei_node_Gidx_SWMM))%str)
          !    end if
          ! end do
-         ! print *, ' '
-         ! print *, elemI(32,ei_Mface_uL), elemI(32,ei_Mface_dL)
-         ! print *, ' '
          !    stop 609873
-
-      !    do ii=1,N_elem(1)  
-      !       if (elemI(ii,ei_node_Gidx_SWMM) .ne. nullvalueI) then
-      !          write(*,"(i3,12f12.3)") ii, elemR(ii,er_Zcrown), elemSR(ii,esr_JM_MinHeadForOverflowPonding), &
-      !          elemSR(ii,esr_JM_OverflowHeightAboveCrown)
-      !       end if
-      !    end do
-      !   stop 609873
-      !    print *, ' '
 
          ! do ii =1,7
          !    write(*,"(12i8.0)"), ii, elemI(iet(ii),ei_Mface_uL),  iet(ii),  elemI(iet(ii),ei_Mface_dL)
