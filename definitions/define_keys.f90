@@ -218,6 +218,10 @@
         enumerator :: static
         enumerator :: dynamic
 
+        !% --- JB head computation method; setting.Junction.HeadMethodJB
+        enumerator :: linear_interp
+        enumerator :: use_JM
+
         !% type of junction overflow
         enumerator :: NoOverflow
         enumerator :: PondedWeir
@@ -499,6 +503,8 @@
         reverseKey(TA2) = 'TA2'
         reverseKey(static) = 'static'
         reverseKey(dynamic) = 'dynamic'
+        reverseKey(linear_interp) = 'linear_interp'
+        reverseKey(use_JM) = 'use_JM'
         reverseKey(NoOverflow) = 'NoOverflow'
         reverseKey(PondedWeir) = 'PondedWeir'
         reverseKey(PondedOrifice) = 'PondedOrifice'
@@ -689,6 +695,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(jump_from_downstream)) , jump_from_downstream
         write(*,'(A," = ",i4)') trim(reverseKey(jump_none)) , jump_none
         write(*,'(A," = ",i4)') trim(reverseKey(keys_lastplusone)) , keys_lastplusone
+        write(*,'(A," = ",i4)') trim(reverseKey(linear_interp)) , linear_interp
         write(*,'(A," = ",i4)') trim(reverseKey(lArch)) , lArch
         write(*,'(A," = ",i4)') trim(reverseKey(lBasket_handle)) , lBasket_handle
         write(*,'(A," = ",i4)') trim(reverseKey(lBottomOrifice)) , lBottomOrifice
@@ -804,6 +811,7 @@
         write(*,'(A," = ",i4)') trim(reverseKey(StaticSlot)) , StaticSlot
         write(*,'(A," = ",i4)') trim(reverseKey(DynamicSlot)) , DynamicSlot
         write(*,'(A," = ",i4)') trim(reverseKey(SplitDynamicSlot)) , SplitDynamicSlot
+        write(*,'(A," = ",i4)') trim(reverseKey(use_JM)) , use_JM
         write(*,'(A," = ",i4)') trim(reverseKey(vert_ellipse)) , vert_ellipse
         write(*,'(A," = ",i4)') trim(reverseKey(vnotch_weir)) , vnotch_weir
         write(*,'(A," = ",i4)') trim(reverseKey(VolumeValue)) , VolumeValue

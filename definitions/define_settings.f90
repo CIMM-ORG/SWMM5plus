@@ -492,6 +492,7 @@ module define_settings
         !% NOTE ForceStorage must be true as of 20230507. Future extension may include junction solution that does
         !% not require the minimum surface area of the ImpliedStorage type
         logical :: ForceStorage = .true.        !% forces nJM junctions without explicit storage to have implied storage
+        integer :: HeadMethodJB = linear_interp !% {use_JM / linear_interp} methods for head on JB, recommend linear_interp 
         integer :: FunStorageN  = 10            !% number of curve entries for functional storage   
         real(8) :: kFactor      = 0.5d0         !% default entrance/exit losses at junction branch (use 0.5 )
         real(8) :: BlendingFactor = 0.8d0       !% 0 to <1, with 0 being strictly energy-based branch flow, 1 being strictly extrapolated from neighbor (fails); 0.99 recommended

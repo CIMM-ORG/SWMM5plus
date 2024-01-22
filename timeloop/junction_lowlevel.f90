@@ -2589,7 +2589,7 @@ subroutine lljunction_branch_energy_outflow ()
     subroutine lljunction_main_slotwidth (thisColP) 
         !%-----------------------------------------------------------------
         !% Description
-        !% ensures the Preissman Slot width is set correctly for  non-surcharged
+        !% ensures the Preissman Slot width is set correctly for non-surcharged
         !% junctions. This is needed so that incipient surcharge starts with
         !% the correct values
         !%-----------------------------------------------------------------
@@ -2853,7 +2853,7 @@ subroutine lljunction_branch_energy_outflow ()
             integer :: mm, ii, kk, rr, JMidx, nInflow
 
             real(8), dimension(max_branch_per_node) :: inVelocity, inFlow
-            real(8) :: weightedVelocity, massVelocity, totalQ
+            real(8) :: weightedVelocity, massVelocity, totalQin
             real(8) :: junctionVelocity
         !%-----------------------------------------------------------------
         !% Preliminaries
@@ -2906,26 +2906,26 @@ subroutine lljunction_branch_energy_outflow ()
 
             !% --- sum the inflows
             if (nInflow > 0) then 
-                totalQ = sum(inFlow(1:nInflow))
+                totalQin = sum(inFlow(1:nInflow))
             else
-                totalQ = zeroR
+                totalQin = zeroR
             end if
 
-            ! if (JMidx == printJM) print *, 'total Q ',totalQ
+            ! if (JMidx == printJM) print *, 'total Q ',totalQin
 
             !% --- add lateral inflow
             if (elemR(JMidx,er_FlowrateLateral) > zeroR) then
-                totalQ = totalQ + elemR(JMidx,er_FlowrateLateral)
+                totalQin = totalQin + elemR(JMidx,er_FlowrateLateral)
             else 
                 !% --- nothing to add 
             end if
 
-            ! if (JMidx == printJM) print *, 'total Q ',totalQ
+            ! if (JMidx == printJM) print *, 'total Q ',totalQin
 
-            if (totalQ > zeroR) then 
+            if (totalQin > zeroR) then 
                 !% --- weightedvelocity is the flow-weighted average velocity of the inflows
                 !% --- HACK we need some branch reduction factors for more than 1 inflow branch
-                weightedVelocity = sum(inFlow(1:nInflow) * inVelocity(1:nInflow) ) / totalQ
+                weightedVelocity = sum(inFlow(1:nInflow) * inVelocity(1:nInflow) ) / totalQin
 
                 ! if (JMidx == printJM) then 
                 !     do rr = 1,nInflow
@@ -2935,7 +2935,8 @@ subroutine lljunction_branch_energy_outflow ()
                 ! if (JMidx == printJM) print *, 'weighted V ',weightedVelocity
 
                 !% --- massVelocity is the velocity for the flow given the junction geometry
-                massVelocity = totalQ / ( sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) * elemR(JMidx,er_Depth))
+                !%     note that this is guaranteed positive
+                massVelocity = totalQin / ( sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) * elemR(JMidx,er_Depth))
 
                 ! if (JMidx == printJM) print *, 'massVelocity ',massVelocity
 
@@ -2943,32 +2944,24 @@ subroutine lljunction_branch_energy_outflow ()
                     junctionVelocity = massVelocity
                 elseif (weightedVelocity < zeroR) then 
                     !% -- net upstream velocity
-                    !brh20230829 junctionVelocity = max(weightedVelocity, -massVelocity)
-                    !junctionVelocity = min(weightedVelocity, -massVelocity)
                     junctionVelocity = onehalfR * (weightedVelocity - massVelocity)
-
-
                 else 
-                    !brh20230829 junctionVelocity = min(weightedVelocity,massVelocity)
-                    !junctionVelocity = max(weightedVelocity,massVelocity)
                     junctionVelocity = onehalfR * (weightedVelocity + massVelocity)
                 end if
 
-                ! if (JMidx == printJM) print *, 'junction V 1 ',junctionVelocity
-
-                !% --- excessive velocites are likely in error, so set to zero
+                !% --- excessive velocities are likely in error, so set to zero
                 if (abs(junctionVelocity) > setting%Limiter%Velocity%Maximum) then
                     junctionVelocity = zeroR
                 end if
 
                 elemR(JMidx,er_Velocity) = junctionVelocity
 
-                !elemR(JMidx,er_Flowrate)     = junctionVelocity * elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area))
+                !% --- use the smaller magnitude of the total inflow rate or the flowrate implied by the junction velocity
                 if (junctionVelocity < zeroR) then
-                    elemR(JMidx,er_Flowrate) = max(-totalQ, &
+                    elemR(JMidx,er_Flowrate) = max(-totalQin, &
                                                     junctionVelocity * elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)))
                 elseif (junctionVelocity > zeroR) then
-                    elemR(JMidx,er_Flowrate) = min(totalQ, &
+                    elemR(JMidx,er_Flowrate) = min(totalQin, &
                                                     junctionVelocity * elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)))
                 else 
                     elemR(JMidx,er_Flowrate) = zeroR
@@ -2977,6 +2970,7 @@ subroutine lljunction_branch_energy_outflow ()
 
             else
                 !% --- no inflows to provide momentum, 
+                !%     no changes to flowrate, velocity or froude number
             end if
 
             ! if (JMidx == printJM) print *,  'flowrate ',elemR(JMidx,er_Flowrate)

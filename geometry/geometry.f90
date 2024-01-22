@@ -1303,29 +1303,34 @@ module geometry
 
                     if ( head(tM) > (zBtm(tB) + sedimentDepth(tB)) ) then
 
-                        head(tB) = head(tM)
-
-                        ! !% == test 20230904brh
-                        ! !% --- head(tB) is linear interp from face value.
-                        ! if (isUpBranch) then 
-                        !     !% --- upstream branch
-                        !     if (fHead_d(fup(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
-                        !         head(tB) = head(tM)  &
-                        !            + onehalfR * (fHead_d(fup(tB)) - head(tM))
-                        !     else 
-                        !         head(tB) = head(tM) &
-                        !            + onehalfR * ((zBtm(tB) + sedimentDepth(tB)) - head(tM))
-                        !     end if
-                        ! else
-                        !     !% --- downstream branch
-                        !     if (fHead_u(fdn(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
-                        !         head(tB) = head(tM)  &
-                        !              + onehalfR * (fHead_u(fdn(tB)) - head(tM))
-                        !     else 
-                        !         head(tB) = head(tM) !%&
-                        !            !+ onehalfR * ((zBtm(tB) + sedimentDepth(tB)) - head(tM))
-                        !     end if
-                        ! end if
+                        select case (setting%Junction%HeadMethodJB)
+                        case (use_JM)
+                            head(tB) = head(tM)
+                        case (linear_interp)
+                            !% --- head(tB) is linear interp from face value.
+                            if (isUpBranch) then 
+                                !% --- upstream branch
+                                if (fHead_d(fup(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
+                                    head(tB) = head(tM)  &
+                                    + onehalfR * (fHead_d(fup(tB)) - head(tM))
+                                else 
+                                    head(tB) = head(tM) &
+                                    + onehalfR * ((zBtm(tB) + sedimentDepth(tB)) - head(tM))
+                                end if
+                            else
+                                !% --- downstream branch
+                                if (fHead_u(fdn(tB)) > (zBtm(tB) + sedimentDepth(tB) + setting%ZeroValue%Depth)) then
+                                    head(tB) = head(tM)  &
+                                        + onehalfR * (fHead_u(fdn(tB)) - head(tM))
+                                else 
+                                    head(tB) = head(tM) !%&
+                                    !+ onehalfR * ((zBtm(tB) + sedimentDepth(tB)) - head(tM))
+                                end if
+                            end if
+                        case default 
+                            print *, 'CODE ERROR: unknown case for setting.Junction.HeadMethodJB of ',setting%Junction%HeadMethodJB
+                            call util_crashpoint(7209874)
+                        end select
 
                         iswaterfall = .false.
 

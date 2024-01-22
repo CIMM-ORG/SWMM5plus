@@ -129,8 +129,11 @@ contains
          ! integer, dimension(7) :: iet = (/ 99, 100,   102, 101, 103,  112, 113/)
          ! integer, dimension(4) :: ift =    (/ 100, 101,            102, 111 /)
 
-         integer, dimension(7) :: iet = (/ 9, 10,   12, 11, 13,  22, 23/)
-         integer, dimension(4) :: ift =    (/ 10, 11,          12,  21 /)
+         !integer, dimension(7) :: iet = (/ 9, 10,   12, 11, 13,  22, 23/)
+         !integer, dimension(4) :: ift =    (/ 10, 11,          12,  21 /)
+
+         integer, dimension(7) :: iet = (/ 16, 17,   19, 18, 20,  29, 30/)
+         integer, dimension(4) :: ift =    (/ 15, 16,          17,  26 /)
       !%------------------------------------------------------------------
       !% Preliminaries:
       !%------------------------------------------------------------------
@@ -148,7 +151,7 @@ contains
 
      ! return
 
-       if (setting%Time%Step < 152000) return
+       if (setting%Time%Step < 123000) return
 
       !   if (setting%Time%Step == 152020) then
       !    stop 880984
@@ -182,19 +185,20 @@ contains
          !    stop 609873
 
          ! do ii =1,7
-         !    write(*,"(12i8.0)"), ii, elemI(iet(ii),ei_Mface_uL),  iet(ii),  elemI(iet(ii),ei_Mface_dL)
-         !    if (elemI(iet(ii),ei_Mface_uL) .ne. 998877) then
-         !       write(*,"(12i8.0)"), ii, faceI(elemI(iet(ii),ei_Mface_uL),fi_Melem_dL), 998877
-         !    end if
-         !    if (elemI(iet(ii),ei_Mface_dL) .ne. 998877) then
-         !       write(*,"(12i8.0)"), ii, 998877, faceI(elemI(iet(ii),ei_Mface_dL),fi_Melem_uL)
-         !    end if
-         !    print *, ' '
+         !    write(*,"(i8.0,A,12i8.0)"), iet(ii), ' : ', elemI(iet(ii),ei_Mface_uL),  iet(ii),  elemI(iet(ii),ei_Mface_dL)
+         !    ! if (elemI(iet(ii),ei_Mface_uL) .ne. 998877) then
+         !    !    write(*,"(12i8.0)"), ii, faceI(elemI(iet(ii),ei_Mface_uL),fi_Melem_dL), 998877
+         !    ! end if
+         !    ! if (elemI(iet(ii),ei_Mface_dL) .ne. 998877) then
+         !    !    write(*,"(12i8.0)"), ii, 998877, faceI(elemI(iet(ii),ei_Mface_dL),fi_Melem_uL)
+         !    ! end if
+         !    ! print *, ' '
          ! end do
          ! stop 5098723
 
          ! do ii=1,N_elem(this_image())
-         !    print *, ii, elemI(ii,ei_elementType), trim(reverseKey(elemI(ii,ei_elementType))), elemI(ii,ei_link_Gidx_BIPquick)
+         !    !print *, ii, elemI(ii,ei_elementType), trim(reverseKey(elemI(ii,ei_elementType))), elemI(ii,ei_link_Gidx_BIPquick)
+         !    !print *, ii, trim(reverseKey(elemI(ii,ei_elementType))), elemR(ii,er_Length)
          ! end do
 
          ! stop 5509873
@@ -457,17 +461,30 @@ contains
          ! elemR(iet(7),er_Head) - elemR(iet(7),er_Zcrown)
 
           write(*,"(A,15f12.3)") 'Head', &
-         elemR(iet(1),er_Head) - 3.d0, &
-            faceR(ift(1),fr_Head_d) - 3.d0, &
-         elemR(iet(2),er_Head) - 3.d0, &
-            faceR(ift(2),fr_Head_d) - 3.d0, &
-         elemR(iet(3),er_Head) - 3.d0, & 
-         elemR(iet(4),er_Head) - 3.d0, &
-         elemR(iet(5),er_Head) - 3.d0, &
-            faceR(ift(3),fr_Head_d) - 3.d0, &
-         elemR(iet(6),er_Head) - 3.d0, &
-            faceR(ift(4),fr_Head_d) - 3.d0, &
-         elemR(iet(7),er_Head) - 3.d0
+         elemR(iet(1),er_Head),  &
+            faceR(ift(1),fr_Head_d) , &
+         elemR(iet(2),er_Head) , &
+            faceR(ift(2),fr_Head_d) , &
+         elemR(iet(3),er_Head) , & 
+         elemR(iet(4),er_Head) , &
+         elemR(iet(5),er_Head) , &
+            faceR(ift(3),fr_Head_d) , &
+         elemR(iet(6),er_Head), &
+            faceR(ift(4),fr_Head_d) , &
+         elemR(iet(7),er_Head) 
+
+         write(*,"(A,15f12.3)") 'Zbtm', &
+         elemR(iet(1),er_Zbottom),  &
+            faceR(ift(1),fr_Zbottom) , &
+         elemR(iet(2),er_Zbottom) , &
+            faceR(ift(2),fr_Zbottom) , &
+         elemR(iet(3),er_Zbottom) , & 
+         elemR(iet(4),er_Zbottom) , &
+         elemR(iet(5),er_Zbottom) , &
+            faceR(ift(3),fr_Zbottom) , &
+         elemR(iet(6),er_Zbottom), &
+            faceR(ift(4),fr_Zbottom) , &
+         elemR(iet(7),er_Zbottom) 
 
 
          write(*,"(A,15f12.3)") 'H-Z ', &
@@ -483,7 +500,7 @@ contains
             faceR(ift(4),fr_Head_d) - faceR(ift(4),fr_Zbottom), &
          elemR(iet(7),er_Head) - elemR(iet(7),er_Zbottom)
 
-         write(*,"(A,15e12.3)") 'Dpth', &
+         write(*,"(A,15f12.3)") 'Dpth', &
          elemR(iet(1),er_Depth), &
             faceR(ift(1),fr_Depth_d), &
          elemR(iet(2),er_Depth), &
@@ -497,7 +514,7 @@ contains
          elemR(iet(7),er_Depth)
 
 
-         write(*,"(A,15e12.3)") 'Area', &
+         write(*,"(A,15f12.3)") 'Area', &
          elemR(iet(1),er_Area), &
             faceR(ift(1),fr_Area_d), &
          elemR(iet(2),er_Area), &
@@ -510,7 +527,7 @@ contains
             faceR(ift(4),fr_Area_d), &
          elemR(iet(7),er_Area)
 
-         write(*,"(A,15e12.3)") 'AVel', &
+         write(*,"(A,15f12.3)") 'AVel', &
          elemR(iet(1),er_AreaVelocity), &
             faceR(ift(1),fr_Area_d), &
          elemR(iet(2),er_AreaVelocity), &
@@ -589,6 +606,19 @@ contains
          elemR(iet(6),er_FroudeNumber), &
             0.d0, &
          elemR(iet(7),er_FroudeNumber)
+
+         write(*,"(A,15e12.3)") 'IW  ', &
+         0.d0, &
+         elemR(iet(1),er_InterpWeight_dQ), &
+         elemR(iet(2),er_InterpWeight_uQ), &
+         elemR(iet(2),er_InterpWeight_dQ), &
+         elemR(iet(3),er_InterpWeight_uQ), & 
+         0.d0, &
+         elemR(iet(5),er_InterpWeight_dQ), &
+         elemR(iet(6),er_InterpWeight_uQ), &
+         elemR(iet(6),er_InterpWeight_dQ), &
+         elemR(iet(7),er_InterpWeight_uQ), &
+         0.d0
 
 
          ! write(*,"(A,15f12.3)") 'Qlat', &
