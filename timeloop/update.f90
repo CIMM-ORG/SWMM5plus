@@ -28,6 +28,7 @@ module update
 
     private
 
+    public :: update_area_for_velocity
     public :: update_auxiliary_variables_CC
     public :: update_Froude_number_element
     public :: update_wavespeed_element
@@ -38,6 +39,69 @@ module update
     contains
 !%==========================================================================
 !% PUBLIC
+!%==========================================================================
+!%
+    subroutine update_area_for_velocity (pCol)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% The volume-based cross-sectional area (er_Area) does not reflect
+        !% the average velocity in an element during rapid refilling; 
+        !% i.e., when the upstream face has a large area and the downstream
+        !% face has a small area and the element has a small volume, the 
+        !% standard er_Area will give a very large velocity, which then
+        !% is translated into a large outflow velocity. As an ad hoc fix
+        !% we use a weighted area based on face and geometry as the basis
+        !% for the er_AreaVelocity used to compute velocity i
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: pCol !% packed elemP column for elements
+            integer, pointer    :: npackP
+            integer, pointer    :: thisP(:), mapUp(:), mapDn(:)
+            real(8), pointer    :: AreaUp(:), AreaDn(:), AreaV(:), AreaE(:)
+            real(8), pointer    :: Flowrate(:)
+            real(8) :: coef = 0.8d0
+        !%------------------------------------------------------------------
+        !% Aliases
+            npackP  => npack_elemP(pCol)
+            if (npackP < 1) return 
+            thisP   => elemP(1:npackP,pCol)
+            AreaUp  => faceR(:,fr_Area_d)
+            AreaDn  => faceR(:,fr_Area_u)
+            mapUp   => elemI(:,ei_Mface_uL)
+            mapDn   => elemI(:,ei_Mface_dL)
+            AreaV   => elemR(:,er_AreaVelocity)
+            AreaE   => elemR(:,er_Area)
+            Flowrate=> elemR(:,er_Flowrate)
+        !%------------------------------------------------------------------
+        !% Preliminaries  
+        !%------------------------------------------------------------------
+
+        !% --- using RMS area
+        !AreaV(thisP) = sqrt(((AreaUp(mapUp(thisP))**2) + (AreaE(thisP)**2) + (AreaDn(mapDn(thisP))**2)) / threeR) 
+
+        !% --- using linear average
+        !AreaV(thisP) = (AreaUp(mapUp(thisP)) + AreaE(thisP) + AreaDn(mapDn(thisP))) / threeR 
+
+        where (Flowrate(thisP) > zeroR)    
+            AreaV(thisP) = coef * AreaUp(mapUp(thisP)) + (oneR - coef) * AreaE(thisP)
+        endwhere
+
+        where (Flowrate(thisP) < zeroR)    
+            AreaV(thisP) = coef * AreaDn(mapDn(thisP)) + (oneR - coef) * AreaE(thisP)
+        endwhere
+
+        where (Flowrate(thisP) == zeroR)
+            AreaV(thisP) = AreaE(thisP)
+        endwhere
+
+        where (AreaV(thisP) < twoR * AreaE(thisP))
+            AreaV(thisP) = AreaE(thisP)
+        endwhere
+
+
+    end subroutine update_area_for_velocity
+!%
+!%==========================================================================
 !%==========================================================================
 !%
     subroutine update_auxiliary_variables_CC ( &
@@ -70,7 +134,7 @@ module update
                 !% --- only a single element with index idx is handled
                 npackP  = oneI
                 aIdx(1) = idx  !% convert the scalar idx to an array
-                thisP => Aidx
+                thisP => aIdx
                 if (elemYN(idx,eYN_canSurcharge)) then 
                     thisP_Closed  => aIdx
                     thisP_Open    => zeroIdx
@@ -249,6 +313,17 @@ module update
                     w_uQ(jB) = - onehalfR * length(jB)  / (velocity(jB) - PCelerity(jB))
                     w_dQ(jB) = + onehalfR * length(jB)  / (velocity(jB) + PCelerity(jB))
                 end if
+
+                !print *, 'YYYY1 ',w_uQ(103), w_dQ()
+                 
+                ! if (jB == 103) then
+                !     print *, 'YYYY2 ',w_dQ(103), w_uQ(112)
+                ! !      print *, 'YYYY3', w_dQ(100), w_uQ(102)
+                ! !      print *, length(jB), velocity(jB), wavespeed(jB)
+                ! !      print *, isSlot(jB)
+
+                ! end if
+                
 
             else
                 w_uQ(jB) = setting%Limiter%InterpWeight%Minimum

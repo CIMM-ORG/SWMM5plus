@@ -64,30 +64,25 @@ module junction_elements
             step => setting%Time%Step
         !%-----------------------------------------------------------------
 
-        !% --- ensure Slot is correctly initialized
+        !% --- ensure Slot is correctly initialized for non-surcharged junctions
+        !%     i.e., the slot width for free-surface is the sqrt(plan area)
         if (N_nJM > 0) then 
             call lljunction_main_slotwidth (ep_JM)
         end if
 
-        !% --- flowrate/velocity of the JM
-        if (N_nJM > 0) then
-            call lljunction_main_velocity (ep_JM)
-
-                ! call util_utest_CLprint ('------- jjj.01  after lljunction_main_velocity')
-
-            call lljunction_main_energyhead (ep_JM)
-
-            ! call util_utest_CLprint ('------- jjj.02  after lljunction_main_energyhead')
-        end if
+        !% MOVED BELOW JB UPDATES brh20240119
+        ! !% --- compute inflow-based flow data for the JM
+        ! if (N_nJM > 0) then
+        !     call lljunction_main_velocity (ep_JM)
+        !     call lljunction_main_energyhead (ep_JM)
+        ! end if
 
         !% --- push inflows on CC upstream or downstream of JB elem to CC/JB face
+        !%     This overwrites any prior interpolation to the face
         if (N_nJM > 0) then 
             call lljunction_push_inflows_from_CC_to_JB_face ()
-
             !% --- update the velocities for the new inflows.
             call face_update_velocities (fp_JB_IorS)
-
-                ! call util_utest_CLprint ('------- jjj.03  after lljunction_push_inflowCC_flowrates_to_face')
         end if
            
         !% AT THIS POINT: JB-ADJACENT FACES NOW CONTAIN EITHER 
@@ -115,8 +110,6 @@ module junction_elements
             call face_pull_facedata_to_JBelem (ep_JM, fr_Velocity_u, er_Velocity, .false.)
         end if
 
-        ! call util_utest_CLprint ('------- jjj.05 after face_pull_facedata')
-
         !% --- store junction-adjacent element data on face so that no-neighbor principal
         !%     is not violated.
         !%     QUESTION -- SHOULD THIS BE IN THE RK ITERATION FOR UPDATES?
@@ -131,7 +124,6 @@ module junction_elements
             call face_push_diag_adjacent_data_to_face (ep_Diag_JBadjacent)
         end if
 
-        ! call util_utest_CLprint ('------- jjj.06 after lljunction_push_adjacent')
         !% ==============================================================
         !% --- face sync
         !%     sync all the images first. then copy over the data between
@@ -142,22 +134,12 @@ module junction_elements
                                     fr_Velocity_Adjacent,fr_Froude_Adjacent,fr_Depth_Adjacent,   &
                                     fr_dQdH_Adjacent])
         sync all
-        !% 
-        !% ==============================================================
 
- 
-
-        ! call util_utest_CLprint ('------- jjj.07 after face_push_diag')
-
-         !% ==============================================================
-        !% --- face sync
-        !%     sync all the images first. then copy over the data between
-        !%     shared-identical faces. then sync all images again
-        ! sync all
-        ! call face_shared_face_sync (fp_JB_IorS,[fr_Zcrest_Adjacent,fr_dQdH_Adjacent,fr_EnergyHead_Adjacent])
-        ! sync all
-        !% 
-        !% ==============================================================
+        !% --- compute inflow-based flow data for the JM
+        if (N_nJM > 0) then
+            call lljunction_main_velocity (ep_JM)
+            call lljunction_main_energyhead (ep_JM)
+        end if
 
         !% --- JB ENERGY EQUATION compute flows/velocities on JB/CC outflow elements/faces from 
         !%     energy equation (does not affect JB with inflows or diagnostic adjacent )
@@ -181,15 +163,12 @@ module junction_elements
         !% based flowrate/velocity from the element pushed to faces. Need to sync faces to
         !% ensure consistency across processors
 
-        !% ==============================================================
         !% --- face sync
         !%     sync all the images first. then copy over the data between
         !%     shared-identical faces. then sync all images again
         sync all
         call face_shared_face_sync (fp_JB_IorS,[fr_Flowrate,fr_Velocity_u,fr_Velocity_d])
         sync all
-        !% 
-        !% ==============================================================
 
         !% --- store the junction dQdH used in Backwards Euler
         if (N_nJM > 0) then            
@@ -197,6 +176,7 @@ module junction_elements
                 ! call util_utest_CLprint ('------- jjj.09 after lljunction_branch_dQdH')
         end if
 
+        ! print *, 'XXX D',elemR(103,er_Velocity), faceR(102,fr_Velocity_u)
     end subroutine junction_preliminaries
 !%
 !%==========================================================================
@@ -467,6 +447,7 @@ module junction_elements
             elemR(thisP,er_Head)     = llgeo_head_from_depth_pure (thisP,elemR(thisP,er_Depth))
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
             elemR(thisP,er_Area)     = elemR(thisP,er_Depth) * sqrt(elemSR(thisP,esr_Storage_Plan_Area))
+            elemR(thisP,er_AreaVelocity) = elemR(thisP,er_Area)
 
             !% --- add the Preissmann slot depths back to head 
             call slot_JM_adjustments (ep_JM, Npack)
@@ -609,7 +590,7 @@ module junction_elements
 
         ! call util_utest_CLprint('ggg after updates JM -------------------------------------')
 
-        !% NOTE TRUE FORCES Q weight on JB to minimum, which
+        !% Note TRUE in below forces Q weight on JB to minimum, which
         !% means that face interpolation will have JB values
         !% dominate over adjacent CC values, but will be
         !% simple averaging with adjacen Diag Q values
