@@ -147,11 +147,20 @@ contains
             !% reset the conduit air pocket detection logical
             conAir(cIdx) = .false.
 
+
+            !% initialize the conduitElemMapsI
+            conduitElemMapsI(ii,:,cmi_airpocket_idx)  = nullvalueI
+            conduitElemMapsI(ii,:,cmi_airpocket_type) = noAirPocket
+
             !% ------------------------------------------------------------------
             !% initial air pockets screening
             !% search for if any faces conduit elements that has blocked airflow
             !% airflow can be blocked due to surcharge or a gate being closed
-            if ((any(fBlocked(fUp))) .or. any(fBlocked(fDn))) then
+            ! if ((any(fBlocked(fUp))) .or. any(fBlocked(fDn))) then
+            !     possibleAirPocket = .true.
+            ! end if
+
+            if (any(elemSur(eIdx))) then
                 possibleAirPocket = .true.
             end if
 
@@ -194,7 +203,12 @@ contains
                         !%     thus remove the saved entrapped airpockets that
                         !%     consnsts of only one element and both the upstream
                         !%     and downstream elements are surcharged (thus creating a v)
-                        if ((startIdx - endIdx == zeroI)  .and. ((startIdx > oneI) .and. (endIdx < nElem)))    then
+                        ! if ((startIdx - endIdx == zeroI)  .and. ((startIdx > oneI) .and. (endIdx < nElem)))    then
+                        !     airPocketIdx = airPocketIdx - oneI
+                        !     cycle
+                        ! end if
+
+                        if ((startIdx - endIdx == zeroI))    then
                             airPocketIdx = airPocketIdx - oneI
                             cycle
                         end if
@@ -237,23 +251,23 @@ contains
                                 airI(ii,airPocketIdx,airI_type) = entrappedAirpocket
                             end if
 
-                            ! !% --- special conditions for upstream and downstream 
-                            ! ! !%     airflow blockage
-                            ! if (airI(ii,airPocketIdx,airI_type) == upReleaseAirpocket)  then
+                            !% --- special conditions for upstream and downstream 
+                            ! !%     airflow blockage
+                            if (airI(ii,airPocketIdx,airI_type) == upReleaseAirpocket)  then
 
-                            !     !% if the airflow of upstream release is blocked 
-                            !     if (fBlocked(fUp(oneI))) then
-                            !         airI(ii,airPocketIdx,airI_type)  = entrappedAirpocket
-                            !     end if
-                            ! end if
+                                !% if the airflow of upstream release is blocked 
+                                if (fBlocked(fUp(oneI))) then
+                                    airI(ii,airPocketIdx,airI_type)  = entrappedAirpocket
+                                end if
+                            end if
                                 
-                            ! if (airI(ii,airPocketIdx,airI_type) == dnReleaseAirpocket) then
+                            if (airI(ii,airPocketIdx,airI_type) == dnReleaseAirpocket) then
 
-                            !     !% if the airflow of downstream release is blocked
-                            !     if (fBlocked(fDn(nElem))) then
-                            !         airI(ii,airPocketIdx,airI_type)  = entrappedAirpocket
-                            !     end if
-                            ! end if
+                                !% if the airflow of downstream release is blocked
+                                if (fBlocked(fDn(nElem))) then
+                                    airI(ii,airPocketIdx,airI_type)  = entrappedAirpocket
+                                end if
+                            end if
 
                             !% save airpocket detection data in the conduitElemMapsI array
                             conduitElemMapsI(ii,startIdx:endIdx,cmi_airpocket_idx)  = airPocketIdx
@@ -293,7 +307,7 @@ contains
                 airR(ii,:,:)  = zeroR
                 airR(ii,:,airR_absolute_head) = setting%AirTracking%AtmosphericPressureHead
                 airR(ii,:,airR_density)       = setting%AirTracking%AirDensity
-                conduitElemMapsI(ii,:,cmi_airpocket_idx)  = zeroI
+                conduitElemMapsI(ii,:,cmi_airpocket_idx)  = nullvalueI
                 conduitElemMapsI(ii,:,cmi_airpocket_type) = noAirPocket
             end if
 
@@ -490,11 +504,16 @@ contains
 
                 case (upReleaseAirpocket)
 
-                    areaOpening = minVentArea
+                    ! areaOpening = min(minVentArea, max(elemR(elemStartIdx,er_FullArea) - elemR(elemStartIdx,er_Area), zeroR))
 
+                    areaOpening = minVentArea
+                    
                 case (dnReleaseAirpocket)
 
+                    ! areaOpening = min(minVentArea, max(elemR(elemEndIdx,er_FullArea) - elemR(elemEndIdx,er_Area), zeroR))
+
                     areaOpening = minVentArea
+                    
 
                 case (noAirPocket)
 
@@ -508,38 +527,7 @@ contains
 
             !% calculate the ratio between atmospheric vs. absolute pressue head at conduit
             ratio = atmHead / absHead
-
-            ! !% choked orifice airflow
-            ! if (ratio > zeroR .and. ratio < 0.53 ) then
-            !     if (airDensity > zeroR) then
-            !         massOutflow = - dishCoeff * areaOpening * airDensity * sqrt(grav * (rho_w / airDensity) &
-            !                     * absHead) * sqrt(kappa * (twoR / (kappa + oneR)) ** ((kappa + oneR) / (kappa - oneR)))
-            !     else
-            !         massOutflow = zeroR
-            !     end if
-            ! !% normal orifice airflow
-            ! else if (ratio >= 0.53 .and. ratio < 1.00) then
-
-            !     !% find the expansion factor
-            !     ExpansionFactor = sqrt((kappa / (kappa - oneR)) * (ratio ** (twoR / kappa)) &
-            !                         * ((oneR - ratio ** ((kappa - oneR) / kappa)) / (oneR - ratio)))
-
-            !     if (airDensity > zeroR) then
-                    
-
-            !         !% find the airflow
-            !         massOutflow = - dishCoeff * areaOpening * ExpansionFactor * airDensity &
-            !                     * sqrt(twoR * grav * (rho_w / airDensity) * abs(absHead - atmHead))
-            !     else
-
-            !         massOutflow = zeroR
-            !     end if   
-            ! else
-
-            !     massOutflow = zeroR
-            ! end if
             
-
             if (absHead >= 1.893 * atmHead) then
                 !% chocked air expulsion form the valve
                 if (airDensity > zeroR) then
@@ -566,40 +554,26 @@ contains
                     massOutflow = zeroR
                 end if 
             
-            else if (absHead < atmHead .and. absHead > 0.528 * atmHead) then
-                !% subsonic air admittance from the valve
-                !% find the expansion factor
-                ExpansionFactor = sqrt((kappa / (kappa - oneR)) * (ratio ** (twoR / kappa)) &
-                                    * ((oneR - ratio ** ((kappa - oneR) / kappa)) / (oneR - ratio)))
+            ! else if (absHead < atmHead .and. absHead > 0.528 * atmHead) then
+            !     !% subsonic air admittance from the valve
+            !     !% find the expansion factor
+            !     ExpansionFactor = sqrt((kappa / (kappa - oneR)) * (ratio ** (twoR / kappa)) &
+            !                         * ((oneR - ratio ** ((kappa - oneR) / kappa)) / (oneR - ratio)))
                 
-                !% find the airflow
-                massOutflow = dishCoeff * areaOpening * ExpansionFactor * rho_a &
-                            * sqrt(twoR * grav * (rho_w / rho_a) * abs(atmHead - absHead))
+            !     !% find the airflow
+            !     massOutflow = dishCoeff * areaOpening * ExpansionFactor * rho_a &
+            !                 * sqrt(twoR * grav * (rho_w / rho_a) * abs(atmHead - absHead))
 
             
-            else if (absHead <= 0.528 * atmHead) then
-                ! !% choocked air admittance from the valve
-                massOutflow = dishCoeff * areaOpening * rho_a * sqrt(grav * (rho_w / rho_a) &
-                              * atmHead) * sqrt(kappa * (twoR / (kappa + oneR)) ** ((kappa + oneR) / (kappa - oneR)))
+            ! else if (absHead <= 0.528 * atmHead) then
+            !     ! !% choocked air admittance from the valve
+            !     massOutflow = dishCoeff * areaOpening * rho_a * sqrt(grav * (rho_w / rho_a) &
+            !                   * atmHead) * sqrt(kappa * (twoR / (kappa + oneR)) ** ((kappa + oneR) / (kappa - oneR)))
             
             else
                 massOutflow = zeroR
             end if
 
-
-
-            ! if (pocketType == dnReleaseAirpocket) then
-            !     print*
-            !     print*, 'airpocket_air_mass_outflow'
-            !     print*, 'pocket index       = ',aIdx
-            !     print*, 'pocketType         = ',reverseKey(pocketType)
-            !     print*, 'ratio              = ',ratio
-            !     print*, 'massOutflow        = ',massOutflow
-            !     print*, 'areaOpening        = ',areaOpening
-            !     print*, 'airDensity         = ',airDensity
-            !     print*, 'airMass            = ',airMass
-            !     print*, 'ExpansionFactor    = ',ExpansionFactor
-            ! end if
         end if
 
 
@@ -652,7 +626,7 @@ contains
                 gaugeHead = absHead - atmHead
 
             else
-                absHead   = absHead_N0
+                absHead   = atmHead
                 gaugeHead = absHead - atmHead  
             end if
 
@@ -699,19 +673,20 @@ contains
             !% limit air mass
             airMass = max(airMass,zeroR)
 
-            if (airMass > zeroR .and. airVolume > zeroR) then
+            if (airMass > zeroR) then
                 isVacuumed = .false.
                 airDensity = airMass / airVolume
 
             else 
-                if (airVolume > zeroR) then
-                    airMass     = 1E-15
-                    airDensity  = airMass / airVolume
-                    massOutflow = massOutflow + airMass / (dt * crk(istep))
-                else
-                    airDensity = zeroR
-                    isVacuumed  = .true.
-                end if
+                ! if (airVolume > zeroR) then
+                !     airMass     = 1E-15
+                !     airDensity  = airMass / airVolume
+                !     massOutflow = massOutflow + airMass / (dt * crk(istep))
+                ! else
+                    airDensity  = zeroR
+                    !% no mass left thus the airpocket has been collasped
+                    isAirPocket = .false.
+                ! end if
 
             end if
 

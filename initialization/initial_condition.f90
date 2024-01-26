@@ -956,6 +956,10 @@ contains
                                                    + link%R(thisLink,lr_Kentry_MinorLoss)
         end if
 
+        !% HACK
+        elemR(firstelem,er_Kconduit_MinorLoss) = elemR(firstelem,er_Kconduit_MinorLoss) &
+                                                   + link%R(thisLink,lr_Kentry_MinorLoss)
+
         tNode => link%I(thisLink,li_Mnode_d)
         if (node%I(tNode,ni_node_type) == nJM) then 
             !% --- this is an inlet to an nJM junction, which uses the exit minor
@@ -967,6 +971,10 @@ contains
             elemR(lastelem,er_Kconduit_MinorLoss) = elemR(lastelem,er_Kconduit_MinorLoss) &
                                                    + link%R(thisLink,lr_Kexit_MinorLoss)
         end if
+
+        !% HACK
+        elemR(lastelem,er_Kconduit_MinorLoss) = elemR(lastelem,er_Kconduit_MinorLoss) &
+                                                   + link%R(thisLink,lr_Kexit_MinorLoss)
 
         !%-----------------------------------------------------------------
         !% Closing

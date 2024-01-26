@@ -88,8 +88,6 @@ else:
 # output h5 file
 output_file = output_path+'/output.h5'
 
-
-
 if os.path.isfile(output_file):
     # now we have the location of the h5 file, and the list of all the datasets in the h5 file
     h5_file = h5py.File(output_file,'r')
@@ -97,7 +95,9 @@ else:
     print("--------------ERROR: Could not find the h5 file in the SWMM5+ output folder---------------")
     print("           Make sure to turn on the hdf5 output option from SWMM5+ settings file          ")
     quit()
-    
+
+# h5_file_baseline = h5py.File(output_file_baseline,'r')
+
 # get to unit conversion factors to change the units of SWMM5+ output to match SWMM5_c output
 if unit == 'CFS':
     Yf = 3.28084
@@ -199,7 +199,10 @@ for profile_name_test in all_attribute_names:
             profile = h5_file.attrs[profile_name_test][0,:].astype('U')
 
     # say we have a profile like below from the hdf file
+    element_depth    = []
     element_head     = []
+    element_air_head = []
+    element_air      = []
     element_length   = []
     element_zbottom  = []
     element_zcrown   = []
@@ -230,10 +233,27 @@ for profile_name_test in all_attribute_names:
                 node_face_heads = 0.5 * (node_data[:,index_1] + node_data[:,index_2])
                 # append the nJ2 heads to a compined list
                 element_head.append(node_face_heads)
+
+
+                # element depth
+                # find the head of the nJ2 face
+                node_data_set = 'node_face_'+feature
+                node_data = h5_file[node_data_set]
+                index_1 = get_index_from_data_array(node_data,node_data_set,'DepthUpstream')
+                index_2 = get_index_from_data_array(node_data,node_data_set,'DepthDownstream')
+                node_face_heads = 0.5 * (node_data[:,index_1] + node_data[:,index_2]) 
+                # append the nJ2 heads to a compined list
+                element_depth.append(node_face_heads)
+
+                element_air.append(np.zeros(len(node_face_heads)))
+                element_air_head.append(np.zeros(len(node_face_heads)))
+
                 # append rest of the geometry as zero (updated later)
                 element_zbottom.append(0)
                 element_zcrown.append(0)
                 element_length.append(0)
+
+                
                 feature_length.append(0)
                 # append element type
                 element_type.append(nJ2)
@@ -251,6 +271,27 @@ for profile_name_test in all_attribute_names:
                 node_elem_heads = h5_file[node_data_set][:,1]
                 # append the nJm heads to a compined list
                 element_head.append(node_elem_heads)
+
+
+
+                # depth
+                # find the name of the Piezometric head dataset in the hdf5
+                # using the node ID
+                node_data_set = 'nodeFV_'+feature+'_Depth'
+                node_elem_heads = h5_file[node_data_set][:,1]
+                # append the nJm heads to a compined list
+                element_depth.append(node_elem_heads)
+
+
+                # air data
+                node_air_data = 'nodeFV_'+feature+'_AirPressurized'
+                node_elem_air = h5_file[node_air_data][:,1]
+                # append the nJm heads to a compined list
+                element_air.append(node_elem_air)
+
+                # this should be zero 
+                element_air_head.append(node_elem_air)
+
                 # now retrieve static dataset for geometry
                 # find the name of the static file in the hdf5 dataset
                 static_data_set = 'nodeFV_static_'+feature
@@ -285,6 +326,33 @@ for profile_name_test in all_attribute_names:
             link_elem_heads = h5_file[head_data_set][:,1:]
             # append the link heads to a compined list
             element_head.append(link_elem_heads)
+
+
+
+            air_head_data = 'linkFV_'+feature+'_AirPressureHead'
+            # retrieve the actual piezometric head data from hdf5
+            link_elem_air_heads = h5_file[air_head_data][:,1:]
+            # append the link air heads to a compined list
+            element_air_head.append(link_elem_air_heads)
+
+
+
+            ### depth
+            # using the link ID
+            head_data_set   = 'linkFV_'+feature+'_Depth'
+            # retrieve the actual piezometric head data from hdf5
+            link_elem_heads = h5_file[head_data_set][:,1:]
+            # append the link heads to a compined list
+            element_depth.append(link_elem_heads)
+
+
+
+            air_data_set   = 'linkFV_'+feature+'_AirPressurized'
+            # retrieve the actual piezometric head data from hdf5
+            link_elem_air = h5_file[air_data_set][:,1:]
+            # append the link heads to a compined list
+            element_air.append(link_elem_air)
+
             # now retrieve static dataset for geometry
             # find the name of the static file in the hdf5 dataset
             static_data_set = 'linkFV_static_'+feature
@@ -316,7 +384,12 @@ for profile_name_test in all_attribute_names:
     nTimeSteps = h5_file[head_data_set].shape[0]
 
     # combine and stack all the lists in to numpy arrays
+
+    # baseline_head   = np.column_stack(baseline_head) * Yf
+    element_depth   = np.column_stack(element_depth) * Yf
     element_head    = np.column_stack(element_head) * Yf
+    element_air_head= np.column_stack(element_air_head) * Yf
+    element_air     = np.column_stack(element_air)
     element_zbottom = np.hstack(element_zbottom) * Yf
     element_zcrown  = np.hstack(element_zcrown) * Yf 
     element_length  = np.hstack(element_length) * Yf
@@ -490,35 +563,48 @@ for profile_name_test in all_attribute_names:
     #             ax.text(xval_feature[indx],feature_zbottom[indx]-buffer,feature_name[indx],
     #                 rotation=90,ha='center',va='top', fontsize='small')
 
+    element_head_mod = element_head.copy()
+    element_head_mod[element_air < 1] = np.nan
+    
+
+    water_head = element_head - element_air_head
+    
     # animation line          
-    line,  = ax.plot(xval, element_head[x,:], '-o', markersize=2.0, color='xkcd:cerulean')
+    line,  = ax.plot(xval, element_head[x,:], '-o', markersize=2.0, color='xkcd:cerulean', label='Air Entrapment Model')
+    line2, = ax.plot(xval, element_depth[x,:]+element_zbottom, '--', markersize=2.0, color='xkcd:orange', label = 'Water Depth')
+    line3, = ax.plot(xval, element_head_mod[x,:], '-x', markersize=2.0, color='xkcd:red', label = 'Entrapped Air')
+
     time_text = ax.text(0.98, 0.95,'',ha='right',va='top',transform=plt.gca().transAxes,fontsize='small')
+    # ax.legend(handles=[line, line2, line3],loc='upper left')
 
     #labeling the plots, using profile name and units for length and head
     plt.title(profile_name_test)
     plt.xlabel('Length along the profile '+Yunit)
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
-    # plt.ylim(min_zbottom-buffer,max_head+buffer)
-    plt.ylim(0,30)
+    plt.ylim(min_zbottom-buffer,max_head+buffer)
+    plt.ylim(0,1.0)
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
     plt.tight_layout()
 
     def animate(ii):
         line.set_ydata(element_head[x+ii,:])  # update the data.
-        time_text.set_text('Time = %.1f hr.' %(sim_time[ii]))
-        return line,
+        line2.set_ydata(element_depth[x+ii,:]+element_zbottom)  # update the data.
+        line3.set_ydata(element_head_mod[x+ii,:])
+
+        time_text.set_text('Time = %.1f sec.' %(sim_time[ii]*3600))
+        return line, line2, line3
 
 
-    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=10, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=30, blit=False)
 
     #saving the animation before showing it
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY
     if save_animation:
         # animation file name
         animation_name = output_path+""+test_case+"_"+ profile_name_test+'.gif' 
-        writergif = animation.PillowWriter(fps=50)
+        writergif = animation.PillowWriter(fps=30)
         ani.save(animation_name,writer=writergif)
 
 

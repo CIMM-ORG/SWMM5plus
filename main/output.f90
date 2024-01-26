@@ -921,7 +921,8 @@ contains
         !% --- There are 2 areas at a face
         if (setting%Output%DataOut%isAreaOut)           N_OutTypeFace =  N_OutTypeFace + 2
 
-        !% --- Depth does not exist at a face
+        !% --- There are 2 depths at a face
+        if (setting%Output%DataOut%isDepthOut)          N_OutTypeFace =  N_OutTypeFace + 2
 
         !% --- Flowrate
         if (setting%Output%DataOut%isFlowrateOut)       N_OutTypeFace =  N_OutTypeFace + 1
@@ -980,6 +981,22 @@ contains
             output_types_faceR(ii) = fr_Area_d
             output_typeNames_faceR(ii) = 'AreaDownstream'
             output_typeUnits_faceR(ii) = 'm^2'
+            output_typeProcessing_faceR(ii) = SingleValue
+            output_typeMultiplyByBarrels_faceR(ii) = oneI
+        end if
+
+        !% --- Depth
+        if (setting%Output%DataOut%isAreaOut) then
+            ii = ii+1
+            output_types_faceR(ii) = fr_Depth_u
+            output_typeNames_faceR(ii) = 'DepthUpstream'
+            output_typeUnits_faceR(ii) = 'm'
+            output_typeProcessing_faceR(ii) = SingleValue
+            output_typeMultiplyByBarrels_faceR(ii) = oneI
+            ii = ii+1
+            output_types_faceR(ii) = fr_Depth_d
+            output_typeNames_faceR(ii) = 'DepthDownstream'
+            output_typeUnits_faceR(ii) = 'm'
             output_typeProcessing_faceR(ii) = SingleValue
             output_typeMultiplyByBarrels_faceR(ii) = oneI
         end if
