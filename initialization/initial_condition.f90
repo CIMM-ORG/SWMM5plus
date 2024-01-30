@@ -49,6 +49,8 @@ module initial_condition
     use utility_key_default
     use utility_crash, only: util_crashpoint
    
+   ! use utility_unit_testing, only: util_utest_CLprint, util_utest_checkIsNan
+
     implicit none
 
     public :: init_IC_toplevel
@@ -101,7 +103,7 @@ contains
         setting%Output%BarrelsExist = .false. !% will be set to true if barrels > 1 detected
         elemI(:,ei_barrels) = oneR
 
-        !% --- initialize sedmient depths
+        !% --- initialize sediment depths
         !%     Note: as of 20221006 only FilledCircular is allowed to have nonzero sediment depth
         !%     this corresponds to the "yBot" of the Filled Circular cross-section in EPA-SWMM
         elemR(:,er_SedimentDepth) = zeroR
@@ -298,6 +300,8 @@ contains
             !% --- junction head
             elemR(thisP,er_Head) = llgeo_head_from_depth_pure(thisP,elemR(thisP,er_Depth))
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
+            !% --- need face interpolation of head before assigning JB head using geo_assign
+            call face_interpolation (fp_noBC_IorS,.false.,.true.,.false.,.false.,.false.)
             call geo_assign_JB_from_head (ep_JM)
         end if
         
@@ -349,7 +353,7 @@ contains
         !% --- update faces
         ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin face_interpolation '
         call face_interpolation (fp_noBC_IorS,.true.,.true.,.true.,.false.,.false.)
-
+       
         !% --- SET THE MONITOR AND ACTION POINTS FROM EPA-SWMM
         ! if ((setting%Output%Verbose) .and. (this_image() == 1))  print *, "begin controls init monitoring and action from EPSWMM"
         call control_init_monitoring_and_action_from_EPASWMM()
@@ -3790,8 +3794,6 @@ contains
                 = elemR(JMidx,er_Zcrown) + elemSR(JMidx,esr_JM_OverflowHeightAboveCrown)
         end if
 
-        
-
         !% JM elements are not solved for momentum.
         elemR(JMidx,er_Flowrate)     = zeroR
         elemR(JMidx,er_Velocity)     = zeroR
@@ -3979,6 +3981,7 @@ contains
                     !%     to cycle through all the CC, JM/JB before we can set the element transect
                     !%     tables.
                     elemR(JBidx,er_Area)                = elemR(Aidx,er_Area)[Ci]
+                    elemR(JBidx,er_AreaVelocity)        = elemR(Aidx,er_Area)[Ci]
                     elemR(JBidx,er_AreaBelowBreadthMax) = elemR(Aidx,er_AreaBelowBreadthMax)[Ci]
                     elemR(JBidx,er_BreadthMax)          = elemR(Aidx,er_BreadthMax)[Ci]
                     elemR(JBidx,er_FullArea)            = elemR(Aidx,er_FullArea)[Ci]
@@ -4011,8 +4014,8 @@ contains
             end select
 
             !% --- set the velocity
-            if (elemR(JBidx,er_Area) .gt. setting%ZeroValue%Area) then ! BRHbugfix 20210813
-                elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_Area)
+            if (elemR(JBidx,er_AreaVelocity) .gt. setting%ZeroValue%Area) then ! BRHbugfix 20210813
+                elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_AreaVelocity)
             else
                 elemR(JBidx,er_Velocity) = zeroR
             end if
@@ -4106,6 +4109,7 @@ contains
                 elemSR(JMidx,esr_Storage_Plan_Area) = elemR(JMidx,er_Temp01)    
                 elemR (JMidx,er_Topwidth)           = sqrt(elemSR(JMidx,esr_Storage_Plan_Area))    
                 elemR (JMidx,er_Area)               = elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area))
+                elemR (JMidx,er_AreaVelocity)       = elemR(JMidx,er_Area)
              
             case default 
                 print *, 'CODE ERROR Unexpected case default'

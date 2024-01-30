@@ -21,6 +21,7 @@ module face
     use geometry
     use jump
     use pack_mask_arrays, only: pack_CC_zeroDepth_interior_faces, pack_CC_zeroDepth_shared_faces
+    use update, only: update_area_for_velocity
     use utility_profiler
     use utility, only: util_sign_with_ones
     use utility_crash, only: util_crashpoint
@@ -238,7 +239,7 @@ module face
         !% this subroutine MUST be called by all images (even with a null)
         !% to make sure that the images can be synced before sharing.
         !% Gyn, Hyn, Qyn = true will interpolate geometry, head, flowrate, respectively
-        !% skipZeroAdjust = true skips the adjustment for zero cells, which
+        !% skipZeroAdjust = OBSOLETE: true skips the adjustment for zero cells, which
         !%    must be skipped for interpolation of JM to ensure mass conservation
         !%------------------------------------------------------------------
         !% Declarations
@@ -264,6 +265,13 @@ module face
         call face_interpolation_shared (faceCol, Gyn, Hyn, Qyn, .true.)
 
         call face_interpolate_bc (isBConly)
+
+        if ((Gyn) .and. (faceCol == fp_noBC_IorS)) then 
+            !% --- update the effective area for velocity computation
+            !%     required here because anytime we update the area on faces
+            !%     we need to change the er_AreaVelocity
+            call update_area_for_velocity (ep_CC)
+        end if
 
         !%-------------------------------------------------------------------
         !% Closing
@@ -308,7 +316,10 @@ module face
         (thisColP, thisFaceCol, thisElemCol, isJBupstreamYN)
         !%------------------------------------------------------------------
         !% Description
-        !% Forces JB to face values without interpolation
+        !% Forces JB to face values without interpolation.
+        !% isJBupstreamYN decides whether the upstream or downstream JB
+        !% are handled in a call. This must be called twice, using .true.
+        !% and .false. on separate calls to handle all JB.
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: thisColP, thisFaceCol, thisElemCol
