@@ -23,8 +23,7 @@ module junction_lowlevel
 
     private
 
-    public :: lljunction_branch_energy_outflow
-    public :: lljunction_branch_energy_outflow_OLD 
+    public :: lljunction_branch_energy_outflow 
     public :: lljunction_branch_dQdH
     !public :: lljunction_branch_getface
     public :: lljunction_branch_Qnet
@@ -72,191 +71,8 @@ module junction_lowlevel
 !%==========================================================================
 !% PUBLIC
 !%==========================================================================
-!%    
-subroutine lljunction_branch_energy_outflow ()
-    !%-----------------------------------------------------------------
-        !% Description:
-        !% Computes an energy-equation outflow for each outflow junction 
-        !% branch. This is needed to ensure that zero outflow do not 
-        !% become stuck.
-        !%-----------------------------------------------------------------
-        !% Declarations:
-        integer, pointer :: JBidx, JMidx, Npack, thisP(:)
-        integer, pointer :: fidx
-        real(8), pointer :: HeadJM, HeadAdj
-        real(8), pointer :: DepthAdj, ZbottomJB, Ke
-        real(8), pointer :: VelocityJM, VelocityAdj, grav
-        real(8), pointer :: BlendingFactor, ReverseDhFactor
-        real(8), pointer :: EnergyHeadJM, EnergyHeadAdj
-        real(8) :: deltaH, deltaE, bsign, eFlowrate, eVelocity, VelHead
-        real(8) :: deltaEjmZ, deltaEAdjZ, VelHeadJM
-        integer :: ii
-        logical :: isOutflow, isUpstream
-
-        !%------------------------------------------------------------------
-        !% Aliases
-            Npack => npack_elemP(ep_JB)
-            grav  => setting%Constant%gravity
-            BlendingFactor => setting%Junction%BlendingFactor
-            ReverseDhFactor=> setting%Junction%ReverseDhFactor
-        !%------------------------------------------------------------------
-        !% Preliminaries
-            if (Npack < 1) return   
-        !%------------------------------------------------------------------
-
-        thisP => elemP(1:Npack,ep_JB)
-
-        !% --- cycle through branches
-        do ii=1,Npack 
-            JBidx => thisP(ii)
-            if (elemSI(JBidx,esi_JB_Exists) .ne. oneI) cycle 
-
-            JMidx        => elemSI(JBidx,esi_JB_Main_Index)
-            HeadJM       => elemR (JMidx,er_Head)
-            EnergyHeadJM => elemR (JMidx,er_EnergyHead)
-            VelocityJM   => elemR (JMidx,er_Velocity)           
-            
-            ZbottomJB    => elemR (JBIdx,er_Zbottom)
-            Ke           => elemSR(JBidx,esr_JB_Kfactor)
-
-            VelHeadJM  = (VelocityJM**2) / (twoR * grav) !% always > 0
-            
-            !% --- get the up or down face for this JB
-            !%     and set whether adjacent face indicates this as outflow or inflow
-            if (elemSI(JBidx,esi_JB_IsUpstream) == oneI) then 
-                isUpstream = .true.
-                bsign = +oneR
-                !% --- upstream branch
-                fidx => elemI(JBidx,ei_Mface_uL)
-                !% --- use face adjacent velocity to determine in/outflow
-                if (faceR(fidx,fr_Velocity_Adjacent) .le. zeroR) then 
-                    isOutflow = .true. 
-                else
-                    isOutflow = .false.
-                end if
-            else
-                isUpstream = .false.
-                bsign = -oneR
-                !% --- downstream branch
-                fidx => elemI(JBidx,ei_Mface_dL)
-                !% --- use face adjacent velocity to determine in/outflow
-                if (faceR(fidx,fr_Velocity_Adjacent) .ge. zeroR) then 
-                    isOutflow = .true. 
-                else
-                    isOutflow = .false.
-                end if
-            endif
-            HeadAdj       => faceR(fidx,fr_Head_Adjacent)
-            EnergyHeadAdj => faceR(fidx,fr_EnergyHead_Adjacent)
-            VelocityAdj   => faceR(fidx,fr_Velocity_Adjacent)
-
-            deltaE     = EnergyHeadJM  - EnergyHeadAdj 
-            deltaEjmZ  = EnergyHeadJM  - ZbottomJB
-            deltaEAdjZ = EnergyHeadAdj - ZbottomJB
-
-            if (isOutflow) then 
-                if (deltaEjmZ .le. zeroR) then 
-                    !% --- JM energy head below branch bottom, no outflow possible 
-                    elemR(JBidx,er_Flowrate) = zeroR
-                    elemR(JBidx,er_Velocity) = zeroR
-                    cycle
-                else
-                    !% --- JM energy head above branch bottom allows an outflow
-                    if (HeadAdj > ZbottomJB) then 
-                        !% --- Adj Head is also above branch bottom so we have fluid connection
-                        if (deltaE > zeroR) then 
-                            !% --- simple outflow, which should be Vhead > 0
-                            VelHead = EnergyHeadJM - HeadAdj - Ke * VelHeadJM
-                            if (VelHead .le. zeroR) then 
-                                !% --- VelocityJM must be an overestimate, so use a correction 
-                                !%     Note that >0 is velocity head out
-                                VelHead = ReverseDhFactor * deltaE
-                            else
-                                !% --- retain VelHead
-                            end if
-                        else 
-                            !% --- inconsistent deltaE <= 0 implies inflow, but adjacent velocity implies outflow
-                            !%     Note that <0 implies velocity head out occurs if JM < adj
-                            VelHead = ReverseDhFactor * (EnergyHeadJM - HeadAdj)
-                        end if
-                    else
-                        !% --- Adj Head is below branch bottom
-                        !% --- Outflow from JM is a waterfall into Adj governed by deltaEjmZ
-                        !%     Here >0 implies velocity head out
-                        VelHead = deltaEjmZ - Ke * VelHeadJM
-                        if (VelHead .le. zeroR) then 
-                            !% --- VelocityJM is an overestimate, so use a correction 
-                            !%     Here >0 implies velocity head out
-                            VelHead = ReverseDhFactor * deltaEjmZ
-                        else
-                            !% --- retain VelHead
-                        end if
-                    end if
-                end if
-            else
-                !% --- inflow
-                if (deltaEAdjZ .le. zeroR) then 
-                    !% --- adjacent energy head below branch bottom, so no inflow possible
-                    elemR(JBidx,er_Flowrate) = zeroR
-                    elemR(JBidx,er_Velocity) = zeroR
-                    cycle
-                else
-                    !% --- adjacent energy head above branch bottom
-                    if (HeadJM > ZbottomJB) then
-                        !% --- JM head is above branch bottom so we have a fluid connection
-                        !%     Key difference from Outflow algorithm is the the frictional loss depends
-                        !%     on the velocity head adjacent, which we are solving for, so we have
-                        !%     the 1/(1-Ke) form. Arguably, this should use EnergyHeadJM, but since
-                        !%     the energy head in JM might be driven by another inflow, we will neglect
-                        !%     it here. Might explore using a fraction of it depending on relavitve
-                        !%     flowrate contributions to JM.
-                        !%     Here we expect <0  as inflow
-                        VelHead = -(HeadAdj - HeadJM) / (oneR - Ke)
-                        if (VelHead .ge. zeroR) then 
-                            !% --- inconsistent values
-                            VelHead = ReverseDhFactor * deltaE
-                        else
-                            !% --- retain VelHead 
-                        end if
-                    else
-                        !% --- HeadJM < Zbottom so a waterfall connection from adjacent inward
-                        !%     >0 implies inflow
-                        VelHead = -deltaEAdjZ / (oneR - Ke)
-                        !% --- no need to check if deltaEAdjZ < 0 because that has already been removed 
-                    end if
-                end if
-            end if
-
-            !% --- velocity and flowrate implied by energy arguments
-            eVelocity = - bsign * sign(oneR,VelHead) * sqrt(abs(VelHead) * twoR * grav)  
-            eFlowrate = eVelocity * elemR(JBidx,er_AreaVelocity)  
-
-            !% --- blend energy flowrate with flowrate stored in JB branch
-            elemR(JBidx,er_Flowrate) =  (oneR - BlendingFactor) * eFlowrate                &
-                                              + BlendingFactor  * elemR(JBidx,er_Flowrate)   
-
-            !% --- compute the velocity
-            if (elemR(JBidx,er_AreaVelocity) > setting%ZeroValue%Area) then
-                elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_AreaVelocity)
-            else
-                elemR(JBidx,er_Velocity) = zeroR
-            end if
-
-            !% --- apply velocity limiter (does not affect flowrate)
-            if (abs(elemR(JBidx,er_Velocity)) > setting%Limiter%Velocity%Maximum) then 
-                elemR(JBidx,er_Velocity) = sign(setting%Limiter%Velocity%Maximum * 0.99d0, &
-                                                elemR(JBidx,er_Velocity))
-            end if
-
-        end do
-
-        
-    end subroutine lljunction_branch_energy_outflow
 !%
-!%==========================================================================
-!%==========================================================================
-!%
-    subroutine lljunction_branch_energy_outflow_OLD ()
+    subroutine lljunction_branch_energy_outflow ()
         !%-----------------------------------------------------------------
         !% Description:
         !% Computes an energy-equation outflow for each outflow junction 
@@ -267,7 +83,6 @@ subroutine lljunction_branch_energy_outflow ()
         integer, pointer :: JBidx, JMidx, Npack, thisP(:)
         integer, pointer :: fidx
         real(8), pointer :: HeadJM, EnergyHeadJM, HeadAdj, EnergyHeadAdj
-        real(8), pointer :: DepthAdj
         real(8), pointer :: VelocityJM, VelocityAdj, grav, DampingFactor
         real(8) :: deltaH, deltaE, bsign, eFlowrate, VelHead
         integer :: ii
@@ -277,7 +92,7 @@ subroutine lljunction_branch_energy_outflow ()
         !% Aliases
             Npack => npack_elemP(ep_JB)
             grav  => setting%Constant%gravity
-            DampingFactor => setting%Junction%BlendingFactor
+            DampingFactor => setting%Junction%OutflowDampingFactor
         !%------------------------------------------------------------------
         !% Preliminaries
             if (Npack < 1) return   
@@ -293,7 +108,7 @@ subroutine lljunction_branch_energy_outflow ()
             JMidx        => elemSI(JBidx,esi_JB_Main_Index)
             HeadJM       => elemR (JMidx,er_Head)
             EnergyHeadJM => elemR (JMidx,er_EnergyHead)
-            VelocityJM   => elemR (JMidx,er_Velocity)            
+            VelocityJM   => elemR (JMidx,er_Velocity)
             
             !% --- get the up or down face for this JB
             if (elemSI(JBidx,esi_JB_IsUpstream) == oneI) then 
@@ -322,7 +137,6 @@ subroutine lljunction_branch_energy_outflow ()
             HeadAdj       => faceR(fidx,fr_Head_Adjacent)
             EnergyHeadAdj => faceR(fidx,fr_EnergyHead_Adjacent)
             VelocityAdj   => faceR(fidx,fr_Velocity_Adjacent)
-            DepthAdj      => faceR(fidx,fr_Depth_Adjacent)
 
             deltaH = HeadJM - HeadAdj
             deltaE = EnergyHeadJM - EnergyHeadAdj
@@ -351,8 +165,9 @@ subroutine lljunction_branch_energy_outflow ()
                         VelHead = onehalfR * deltaH  !% negative is inflow
                     else
                         !% --- inconsistent case that should not occur, deltaE < 0 and deltaH > 0
-                        !VelHead = deltaH - elemSR(JBidx,esr_JB_Kfactor) &
-                        VelHead = EnergyHeadJM - HeadAdj - elemSR(JBidx,esr_JB_Kfactor) &
+                        !%     set outflow velocity head based on deltaH and entrance losses 
+                        !%     from JM for outflow
+                        VelHead = deltaH - elemSR(JBidx,esr_JB_Kfactor) &
                                     * (VelocityJM**2) / (twoR * grav)      
                         if (VelHead .le. zeroR) then 
                             !% --- K factor head loss is too great, so ad hoc reduction of deltaH
@@ -363,14 +178,13 @@ subroutine lljunction_branch_energy_outflow ()
             else
                 !% --- nominal inflow
                 if (deltaE .le. zeroR) then 
-                    !% --- inflow with consistent energy gradient, velocity head is negative
-                    VelHead = (EnergyHeadJM - HeadAdj) / (oneR - elemSR(JBidx,esr_JB_Kfactor) )
-                    ! VelHead = -(EnergyHeadAdj - HeadJM - elemSR(JBidx,esr_JB_Kfactor) &
-                    !                                    * (VelocityAdj**2) / (twoR * grav))
-                    ! if (VelHead .ge. zeroR) then 
-                    !     !% --- K factor head loss too great, so ad hoc reduction of delta E
-                    !     VelHead = onehalfR * deltaE !% negative is inflow
-                    ! end if
+                    !% --- inflow with consistent energy gradient, inflow is negative
+                    VelHead = -(EnergyHeadAdj - HeadJM - elemSR(JBidx,esr_JB_Kfactor) &
+                                                       * (VelocityAdj**2) / (twoR * grav))
+                    if (VelHead .ge. zeroR) then 
+                        !% --- K factor head loss too great, so ad hoc reduction of delta E
+                        VelHead = onehalfR * deltaE !% negative is inflow
+                    end if
                 else
                     !% --- (deltaE > zeroR) 
                     !% --- nominal inflow (dE should be negative) with inconsistent energy gradient
@@ -409,234 +223,234 @@ subroutine lljunction_branch_energy_outflow ()
             !% FOR OUTFLOWS. FUTURE -- simplify what is done above.
             if ((isUpstream .and. (eFlowrate .le. zeroR) ) & 
                 .or. &
-                (.not. isUpstream) .and. (eFlowrate .ge. zeroR))  then         
+                (.not. isUpstream) .and. (eFlowrate .ge. zeroR))  then             
 
-                    !% --- combine the energy flow rate with the prior flowrate
-                    elemR(JBidx,er_Flowrate) =  (oneR - DampingFactor) * eFlowrate                &
-                                                    + DampingFactor  * elemR(JBidx,er_Flowrate)                
+                !% --- combine the energy flow rate with the prior flowrate
+                elemR(JBidx,er_Flowrate) =  (oneR - DampingFactor) * eFlowrate                &
+                                                   + DampingFactor  * elemR(JBidx,er_Flowrate)                
 
-                    ! if (eFlowrate .le. zeroR) then 
-                    !     elemR(JBidx,er_Flowrate) = min(elemR(JBidx,er_Flowrate),eFlowrate)
-                    ! else
-                    !     elemR(JBidx,er_Flowrate) = max(elemR(JBidx,er_Flowrate),eFlowrate)
-                    ! end if
-                    
-                    !% --- compute the velocity
-                    if (elemR(JBidx,er_Area) > setting%ZeroValue%Area) then
-                        elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_Area)
-                    else
-                        elemR(JBidx,er_Velocity) = zeroR
-                    end if
+                ! if (eFlowrate .le. zeroR) then 
+                !     elemR(JBidx,er_Flowrate) = min(elemR(JBidx,er_Flowrate),eFlowrate)
+                ! else
+                !     elemR(JBidx,er_Flowrate) = max(elemR(JBidx,er_Flowrate),eFlowrate)
+                ! end if
+                
+                !% --- compute the velocity
+                if (elemR(JBidx,er_Area) > setting%ZeroValue%Area) then
+                    elemR(JBidx,er_Velocity) = elemR(JBidx,er_Flowrate) / elemR(JBidx,er_Area)
+                else
+                    elemR(JBidx,er_Velocity) = zeroR
+                end if
 
-                    !% --- apply velocity limiter (does not affect flowrate)
-                    if (abs(elemR(JBidx,er_Velocity)) > setting%Limiter%Velocity%Maximum) then 
-                        elemR(JBidx,er_Velocity) = sign(setting%Limiter%Velocity%Maximum * 0.99d0, &
-                                                        elemR(JBidx,er_Velocity))
-                    end if
+                !% --- apply velocity limiter (does not affect flowrate)
+                if (abs(elemR(JBidx,er_Velocity)) > setting%Limiter%Velocity%Maximum) then 
+                    elemR(JBidx,er_Velocity) = sign(setting%Limiter%Velocity%Maximum * 0.99d0, &
+                                                    elemR(JBidx,er_Velocity))
+                end if
 
             end if
         
         end do
 
-    end subroutine lljunction_branch_energy_outflow_OLD
+    end subroutine lljunction_branch_energy_outflow
 !%
 !%==========================================================================
 !%==========================================================================
 !%
-    ! subroutine lljunction_branch_energy_outflow_OLD2 ()
-    !     !%-----------------------------------------------------------------
-    !     !% Description:
-    !     !% Computes an energy-equation outflow for each outflow junction 
-    !     !% branch
-    !     !%-----------------------------------------------------------------
-    !     !% Declarations:
-    !         integer, pointer :: Npack, JMar(:), thisJB(:), fidx(:)
-    !         real(8), pointer :: deltaH(:), grav, energyQ(:), Vsq2g(:)
+    subroutine lljunction_branch_energy_outflow_OLD ()
+        !%-----------------------------------------------------------------
+        !% Description:
+        !% Computes an energy-equation outflow for each outflow junction 
+        !% branch
+        !%-----------------------------------------------------------------
+        !% Declarations:
+            integer, pointer :: Npack, JMar(:), thisJB(:), fidx(:)
+            real(8), pointer :: deltaH(:), grav, energyQ(:), Vsq2g(:)
 
-    !         logical :: isUpstreamBranch 
-    !         real(8) :: bsign
-    !         integer :: frHead, frArea, frHeadAdj, ii
-    !     !%-----------------------------------------------------------------
-    !     !% Aliases
-    !         !% --- array for the JM index
-    !         JMar   => elemSI(:,esi_JB_Main_Index)    
-    !         grav   => setting%Constant%gravity
-    !         energyQ=> elemR(:,er_Temp03)
-    !         Vsq2g  => elemR(:,er_Temp04)
-    !     !%-----------------------------------------------------------------
+            logical :: isUpstreamBranch 
+            real(8) :: bsign
+            integer :: frHead, frArea, frHeadAdj, ii
+        !%-----------------------------------------------------------------
+        !% Aliases
+            !% --- array for the JM index
+            JMar   => elemSI(:,esi_JB_Main_Index)    
+            grav   => setting%Constant%gravity
+            energyQ=> elemR(:,er_Temp03)
+            Vsq2g  => elemR(:,er_Temp04)
+        !%-----------------------------------------------------------------
 
-    !     !% --- cycle through nominal upstream and downstream JB
-    !     !%     This should affect only outflow branches with consistent
-    !     !%     pressure difference with adjacent CC
-    !     do ii=1,2
-    !         !% --- get the upstream or downstream JB elements
-    !         if (ii==1) then 
-    !             !% --- upstream JB
-    !             isUpstreamBranch = .true.
-    !             bsign = oneR
-    !             Npack => npack_elemP(ep_JB_Upstream_CC_Adjacent)
-    !             if (Npack > 0) then 
-    !                 thisJB => elemP(1:Npack,ep_JB_Upstream_CC_Adjacent)
-    !             else
-    !                 cycle
-    !             end if
-    !             !% --- the JB-adjacent face is upstream
-    !             fidx => elemI(:,ei_Mface_uL)
-    !             frHead = fr_Head_u !% -- use u for jump purposes? QUESTION
-    !             frArea = fr_Area_u !% QUESTION
-    !             frHeadAdj = fr_Head_Adjacent
-    !         else
-    !             !% --- downstream JB
-    !             bsign = -oneR
-    !             isUpstreamBranch = .false.
-    !             Npack => npack_elemP(ep_JB_Downstream_CC_Adjacent)
-    !             if (Npack > 0) then 
-    !                 thisJB => elemP(1:Npack,ep_JB_Downstream_CC_Adjacent)
-    !             else 
-    !                 cycle
-    !             end if
-    !             !% --- the JB-adjacent face is downstream
-    !             fidx => elemI(:,ei_Mface_dL)
-    !             frHead = fr_Head_d !% --- use d for jump purposes? QUESTION
-    !             frArea = fr_Area_d !% QUESTION
-    !             frHeadAdj = fr_Head_Adjacent
-    !         end if
+        !% --- cycle through nominal upstream and downstream JB
+        !%     This should affect only outflow branches with consistent
+        !%     pressure difference with adjacent CC
+        do ii=1,2
+            !% --- get the upstream or downstream JB elements
+            if (ii==1) then 
+                !% --- upstream JB
+                isUpstreamBranch = .true.
+                bsign = oneR
+                Npack => npack_elemP(ep_JB_Upstream_CC_Adjacent)
+                if (Npack > 0) then 
+                    thisJB => elemP(1:Npack,ep_JB_Upstream_CC_Adjacent)
+                else
+                    cycle
+                end if
+                !% --- the JB-adjacent face is upstream
+                fidx => elemI(:,ei_Mface_uL)
+                frHead = fr_Head_u !% -- use u for jump purposes? QUESTION
+                frArea = fr_Area_u !% QUESTION
+                frHeadAdj = fr_Head_Adjacent
+            else
+                !% --- downstream JB
+                bsign = -oneR
+                isUpstreamBranch = .false.
+                Npack => npack_elemP(ep_JB_Downstream_CC_Adjacent)
+                if (Npack > 0) then 
+                    thisJB => elemP(1:Npack,ep_JB_Downstream_CC_Adjacent)
+                else 
+                    cycle
+                end if
+                !% --- the JB-adjacent face is downstream
+                fidx => elemI(:,ei_Mface_dL)
+                frHead = fr_Head_d !% --- use d for jump purposes? QUESTION
+                frArea = fr_Area_d !% QUESTION
+                frHeadAdj = fr_Head_Adjacent
+            end if
 
-    !         !% --- head difference from junction main to element
-    !         !%     note this is positive for any outflow
-    !         deltaH  => elemR(:,er_Temp01)
-    !         deltaH  = zeroR
-    !         energyQ = zeroR
-    !         Vsq2g   = zeroR
+            !% --- head difference from junction main to element
+            !%     note this is positive for any outflow
+            deltaH  => elemR(:,er_Temp01)
+            deltaH  = zeroR
+            energyQ = zeroR
+            Vsq2g   = zeroR
 
-    !         where (elemR(thisJB,er_Depth) > setting%ZeroValue%Depth)
-    !             where (faceR(fidx(thisJB),frHeadAdj) > faceR(fidx(thisJB),fr_Zbottom))
-    !                 deltaH(thisJB) =  elemR(JMar(thisJB),er_Head) - faceR(fidx(thisJB),frHeadAdj)
-    !             elsewhere
-    !                 !% --- where adjacent head is lower than face zbottom
-    !                 deltaH(thisJB) = elemR(JMar(thisJB),er_Head) - (faceR(fidx(thisJB),fr_Zbottom)+ setting%ZeroValue%Depth)
-    !             endwhere
-    !         endwhere
+            where (elemR(thisJB,er_Depth) > setting%ZeroValue%Depth)
+                where (faceR(fidx(thisJB),frHeadAdj) > faceR(fidx(thisJB),fr_Zbottom))
+                    deltaH(thisJB) =  elemR(JMar(thisJB),er_Head) - faceR(fidx(thisJB),frHeadAdj)
+                elsewhere
+                    !% --- where adjacent head is lower than face zbottom
+                    deltaH(thisJB) = elemR(JMar(thisJB),er_Head) - (faceR(fidx(thisJB),fr_Zbottom)+ setting%ZeroValue%Depth)
+                endwhere
+            endwhere
 
-    !         where (deltaH(thisJB) > zeroR)
-    !             Vsq2g(thisJB) =  deltaH(thisJB) &
-    !                         + (elemR(JMar(thisJB),er_Velocity)**2) * (oneR - elemSR(thisJB,esr_JB_Kfactor))  &
-    !                         /(twoR * grav)
-    !         elsewhere 
-    !             Vsq2g(thisJB) = deltaH(thisJB)
-    !         endwhere
+            where (deltaH(thisJB) > zeroR)
+                Vsq2g(thisJB) =  deltaH(thisJB) &
+                            + (elemR(JMar(thisJB),er_Velocity)**2) * (oneR - elemSR(thisJB,esr_JB_Kfactor))  &
+                            /(twoR * grav)
+            elsewhere 
+                Vsq2g(thisJB) = deltaH(thisJB)
+            endwhere
 
              
-    !         !print *, 'vsq2g ',170, Vsq2g(170), deltaH(170)
+            !print *, 'vsq2g ',170, Vsq2g(170), deltaH(170)
         
 
-    !         ! if (ii==2) then
-    !         !     print *, ' '
-    !         !     print *, 'in branch energy ', JMar(181)
-    !         !     print *, 'heads  ', elemR(JMar(181),er_Head), faceR(fidx(181),frHeadAdj)
-    !         !     !print *, fidx(181),frHeadAdj
-    !         !     !print *, elemI(181,ei_Mface_dL)
-    !         !     print *, 'deltaH ',deltaH(181), setting%Junction%ZeroHeadDiffValue
-    !         !     print *, 'flow   ',elemR(181,er_Flowrate)
-    !         ! end if
+            ! if (ii==2) then
+            !     print *, ' '
+            !     print *, 'in branch energy ', JMar(181)
+            !     print *, 'heads  ', elemR(JMar(181),er_Head), faceR(fidx(181),frHeadAdj)
+            !     !print *, fidx(181),frHeadAdj
+            !     !print *, elemI(181,ei_Mface_dL)
+            !     print *, 'deltaH ',deltaH(181), setting%Junction%ZeroHeadDiffValue
+            !     print *, 'flow   ',elemR(181,er_Flowrate)
+            ! end if
 
 
-    !         !% --- For dH that increases outflow
-    !         !where ((deltaH(thisJB) > setting%Junction%ZeroHeadDiffValue)                       &
-    !         ! .and.                                                                       &
-    !         !        (elemR(thisJB,er_Flowrate) * bsign < -setting%Junction%ZeroOutflowValue)    &
-    !         !        )
+            !% --- For dH that increases outflow
+            !where ((deltaH(thisJB) > setting%Junction%ZeroHeadDiffValue)                       &
+            ! .and.                                                                       &
+            !        (elemR(thisJB,er_Flowrate) * bsign < -setting%Junction%ZeroOutflowValue)    &
+            !        )
 
-    !         !% --- where energy equation gives an outflow
-    !         where (Vsq2g(thisJB) .ge. zeroR)
-    !                 !% --- outflow from JB  in upstream direction
-    !                 !% --- or outflow from JB in downstream direction 
-    !                 !%     applies junction main approach velocity brh20230829                    
-    !                 energyQ(thisJB) = - bsign * elemR(thisJB,er_Area) * sqrt(twoR * grav * Vsq2g(thisJB))                
-    !                 !% --- DAMPING: Average with existing flowrate
-    !                 elemR(thisJB,er_Flowrate)  = (oneR - setting%Junction%BlendingFactor) * energyQ(thisJB)  &
-    !                                                    + setting%Junction%BlendingFactor  * elemR(thisJB,er_Flowrate) 
+            !% --- where energy equation gives an outflow
+            where (Vsq2g(thisJB) .ge. zeroR)
+                    !% --- outflow from JB  in upstream direction
+                    !% --- or outflow from JB in downstream direction 
+                    !%     applies junction main approach velocity brh20230829                    
+                    energyQ(thisJB) = - bsign * elemR(thisJB,er_Area) * sqrt(twoR * grav * Vsq2g(thisJB))                
+                    !% --- DAMPING: Average with existing flowrate
+                    elemR(thisJB,er_Flowrate)  = (oneR - setting%Junction%OutflowDampingFactor) * energyQ(thisJB)  &
+                                                       + setting%Junction%OutflowDampingFactor  * elemR(thisJB,er_Flowrate) 
 
-    !                 !% --- handle small depths
-    !                 where (elemR(thisJB,er_AreaVelocity) > setting%ZeroValue%Area)
-    !                     elemR(thisJB,er_Velocity) = elemR(thisJB,er_Flowrate) / elemR(thisJB,er_AreaVelocity)
-    !                 elsewhere 
-    !                     elemR(thisJB,er_Velocity) = zeroR
-    !                 endwhere
+                    !% --- handle small depths
+                    where (elemR(thisJB,er_Area) > setting%ZeroValue%Area)
+                        elemR(thisJB,er_Velocity) = elemR(thisJB,er_Flowrate) / elemR(thisJB,er_Area)
+                    elsewhere 
+                        elemR(thisJB,er_Velocity) = zeroR
+                    endwhere
     
-    !                 !% --- apply strict velocity limiter (does not affect flowrate)
-    !                 where (abs(elemR(thisJB,er_Velocity)) > setting%Limiter%Velocity%Maximum)
-    !                     elemR(thisJB,er_Velocity) = sign(setting%Limiter%Velocity%Maximum * 0.99d0, elemR(thisJB,er_Velocity))
-    !                 endwhere       
-    !         endwhere 
+                    !% --- apply strict velocity limiter (does not affect flowrate)
+                    where (abs(elemR(thisJB,er_Velocity)) > setting%Limiter%Velocity%Maximum)
+                        elemR(thisJB,er_Velocity) = sign(setting%Limiter%Velocity%Maximum * 0.99d0, elemR(thisJB,er_Velocity))
+                    endwhere       
+            endwhere 
 
-    !         !% --- where energy would reverse flow
-    !         where ((Vsq2g(thisJB) < zeroR)      &
-    !                     .and.                   &
-    !                     (elemR(thisJB,er_Flowrate) * bsign < -setting%Junction%ZeroOutflowValue) )
-    !             elemR(thisJB,er_Velocity) = zeroR
-    !             elemR(thisJB,er_Flowrate) = zeroR
-    !         endwhere
+            !% --- where energy would reverse flow
+            where ((Vsq2g(thisJB) < zeroR)      &
+                        .and.                   &
+                        (elemR(thisJB,er_Flowrate) * bsign < -setting%Junction%ZeroOutflowValue) )
+                elemR(thisJB,er_Velocity) = zeroR
+                elemR(thisJB,er_Flowrate) = zeroR
+            endwhere
 
 
 
-    !         ! !% --- for dH that decreases, but does not reverse outflow
-    !         ! where ((deltaH(thisJB) < zeroR)                        &
-    !         !        .and.                                           &
-    !         !        (Vsq2g .ge. zeroR)                              &
-    !         !        .and.                                           &
-    !         !        (elemR(thisJB,er_Flowrate) * bsign < zeroR)     &
-    !         !        )
-    !         !        energyQ(thisJB) = - bsign * elemR(thisJB,er_Area) * sqrt(twoR * grav * Vsq2g)  
-    !         ! endwhere
+            ! !% --- for dH that decreases, but does not reverse outflow
+            ! where ((deltaH(thisJB) < zeroR)                        &
+            !        .and.                                           &
+            !        (Vsq2g .ge. zeroR)                              &
+            !        .and.                                           &
+            !        (elemR(thisJB,er_Flowrate) * bsign < zeroR)     &
+            !        )
+            !        energyQ(thisJB) = - bsign * elemR(thisJB,er_Area) * sqrt(twoR * grav * Vsq2g)  
+            ! endwhere
 
-    !         ! !% --- for a trivial outflow with a trivial dH, set flow to zero
-    !         ! !%     Note -- does not affect inflows or deltaH < zeroR
-    !         ! where ((deltaH(thisJB) .ge. zeroR)                                                 &
-    !         !         .and.                                                                      &
-    !         !         (deltaH(thisJB)                   .le. setting%Junction%ZeroHeadDiffValue) &
-    !         !         .and.                                                                      &
-    !         !         (elemR(thisJB,er_Flowrate) * bsign  < -setting%Junction%ZeroOutflowValue)  &
-    !         !        )
-    !         !     elemR(thisJB,er_Flowrate) = zeroR
-    !         !     elemR(thisJB,er_Velocity) = zeroR
-    !         ! end where
+            ! !% --- for a trivial outflow with a trivial dH, set flow to zero
+            ! !%     Note -- does not affect inflows or deltaH < zeroR
+            ! where ((deltaH(thisJB) .ge. zeroR)                                                 &
+            !         .and.                                                                      &
+            !         (deltaH(thisJB)                   .le. setting%Junction%ZeroHeadDiffValue) &
+            !         .and.                                                                      &
+            !         (elemR(thisJB,er_Flowrate) * bsign  < -setting%Junction%ZeroOutflowValue)  &
+            !        )
+            !     elemR(thisJB,er_Flowrate) = zeroR
+            !     elemR(thisJB,er_Velocity) = zeroR
+            ! end where
 
-    !         ! if (ii==2) then 
-    !         !     print *, ' '
-    !         !     print *, 'flowrate ',elemR(181,er_Flowrate)
-    !         !     print *, ' '
-    !         ! end if
-    !         ! !% --- for inconsistent inflow pressure gradient with outflow on adjacent element
-    !         ! where  (       (deltaH(thisJB)                     <   -setting%Junction%ZeroHeadDiffValue)  &
-    !         !          .and. (elemR(thisJB,er_Flowrate) * bsign .le. -setting%Junction%ZeroOutflowValue) )
-    !         !     !!% --- inconsistent flow direction and pressure gradient   
-    !         !     !elemR(thisJB,er_Flowrate) = zeroR
+            ! if (ii==2) then 
+            !     print *, ' '
+            !     print *, 'flowrate ',elemR(181,er_Flowrate)
+            !     print *, ' '
+            ! end if
+            ! !% --- for inconsistent inflow pressure gradient with outflow on adjacent element
+            ! where  (       (deltaH(thisJB)                     <   -setting%Junction%ZeroHeadDiffValue)  &
+            !          .and. (elemR(thisJB,er_Flowrate) * bsign .le. -setting%Junction%ZeroOutflowValue) )
+            !     !!% --- inconsistent flow direction and pressure gradient   
+            !     !elemR(thisJB,er_Flowrate) = zeroR
                 
-    !         !     !% --- use approach velocity from manhole with K factor
-    !         !     elemR(thisB,er_Velocity) = 
-    !         ! endwhere
+            !     !% --- use approach velocity from manhole with K factor
+            !     elemR(thisB,er_Velocity) = 
+            ! endwhere
 
-    !         !% --- push flowrate and velocity to faces
-    !         faceR(fidx(thisJB),fr_Flowrate)   = elemR(thisJB,er_Flowrate)
-    !         faceR(fidx(thisJB),fr_Velocity_u) = elemR(thisJB,er_Velocity)
-    !         faceR(fidx(thisJB),fr_Velocity_d) = elemR(thisJB,er_Velocity)
-    !         !% --- check if the elem data has either been pushed 
-    !         !%     to a shared face. if so then mark that face
-    !         where (faceYN(fidx(thisJB),fYN_isSharedFace))
-    !             faceYN(fidx(thisJB),fYN_isSharedFaceDiverged) = .true.
-    !         end where
-    !     end do
+            !% --- push flowrate and velocity to faces
+            faceR(fidx(thisJB),fr_Flowrate)   = elemR(thisJB,er_Flowrate)
+            faceR(fidx(thisJB),fr_Velocity_u) = elemR(thisJB,er_Velocity)
+            faceR(fidx(thisJB),fr_Velocity_d) = elemR(thisJB,er_Velocity)
+            !% --- check if the elem data has either been pushed 
+            !%     to a shared face. if so then mark that face
+            where (faceYN(fidx(thisJB),fYN_isSharedFace))
+                faceYN(fidx(thisJB),fYN_isSharedFaceDiverged) = .true.
+            end where
+        end do
 
-    !     !% --- update JB froude number and wave speed
-    !     Npack => npack_elemP(ep_JB)
-    !     if (Npack > 0) then 
-    !         thisJB => elemP(1:Npack, ep_JB)
-    !         call update_Froude_number_element (thisJB) 
-    !         call update_wavespeed_element (thisJB)
-    !     end if
+        !% --- update JB froude number and wave speed
+        Npack => npack_elemP(ep_JB)
+        if (Npack > 0) then 
+            thisJB => elemP(1:Npack, ep_JB)
+            call update_Froude_number_element (thisJB) 
+            call update_wavespeed_element (thisJB)
+        end if
         
-    ! end subroutine lljunction_branch_energy_outflow_OLD2
+    end subroutine lljunction_branch_energy_outflow_OLD
 !%
 !%==========================================================================
 !%==========================================================================
@@ -2589,7 +2403,7 @@ subroutine lljunction_branch_energy_outflow ()
     subroutine lljunction_main_slotwidth (thisColP) 
         !%-----------------------------------------------------------------
         !% Description
-        !% ensures the Preissman Slot width is set correctly for non-surcharged
+        !% ensures the Preissman Slot width is set correctly for  non-surcharged
         !% junctions. This is needed so that incipient surcharge starts with
         !% the correct values
         !%-----------------------------------------------------------------
@@ -2853,7 +2667,7 @@ subroutine lljunction_branch_energy_outflow ()
             integer :: mm, ii, kk, rr, JMidx, nInflow
 
             real(8), dimension(max_branch_per_node) :: inVelocity, inFlow
-            real(8) :: weightedVelocity, massVelocity, totalQin
+            real(8) :: weightedVelocity, massVelocity, totalQ
             real(8) :: junctionVelocity
         !%-----------------------------------------------------------------
         !% Preliminaries
@@ -2906,26 +2720,26 @@ subroutine lljunction_branch_energy_outflow ()
 
             !% --- sum the inflows
             if (nInflow > 0) then 
-                totalQin = sum(inFlow(1:nInflow))
+                totalQ = sum(inFlow(1:nInflow))
             else
-                totalQin = zeroR
+                totalQ = zeroR
             end if
 
-            ! if (JMidx == printJM) print *, 'total Q ',totalQin
+            ! if (JMidx == printJM) print *, 'total Q ',totalQ
 
             !% --- add lateral inflow
             if (elemR(JMidx,er_FlowrateLateral) > zeroR) then
-                totalQin = totalQin + elemR(JMidx,er_FlowrateLateral)
+                totalQ = totalQ + elemR(JMidx,er_FlowrateLateral)
             else 
                 !% --- nothing to add 
             end if
 
-            ! if (JMidx == printJM) print *, 'total Q ',totalQin
+            ! if (JMidx == printJM) print *, 'total Q ',totalQ
 
-            if (totalQin > zeroR) then 
+            if (totalQ > zeroR) then 
                 !% --- weightedvelocity is the flow-weighted average velocity of the inflows
                 !% --- HACK we need some branch reduction factors for more than 1 inflow branch
-                weightedVelocity = sum(inFlow(1:nInflow) * inVelocity(1:nInflow) ) / totalQin
+                weightedVelocity = sum(inFlow(1:nInflow) * inVelocity(1:nInflow) ) / totalQ
 
                 ! if (JMidx == printJM) then 
                 !     do rr = 1,nInflow
@@ -2935,8 +2749,7 @@ subroutine lljunction_branch_energy_outflow ()
                 ! if (JMidx == printJM) print *, 'weighted V ',weightedVelocity
 
                 !% --- massVelocity is the velocity for the flow given the junction geometry
-                !%     note that this is guaranteed positive
-                massVelocity = totalQin / ( sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) * elemR(JMidx,er_Depth))
+                massVelocity = totalQ / ( sqrt(elemSR(JMidx,esr_Storage_Plan_Area)) * elemR(JMidx,er_Depth))
 
                 ! if (JMidx == printJM) print *, 'massVelocity ',massVelocity
 
@@ -2944,24 +2757,32 @@ subroutine lljunction_branch_energy_outflow ()
                     junctionVelocity = massVelocity
                 elseif (weightedVelocity < zeroR) then 
                     !% -- net upstream velocity
+                    !brh20230829 junctionVelocity = max(weightedVelocity, -massVelocity)
+                    !junctionVelocity = min(weightedVelocity, -massVelocity)
                     junctionVelocity = onehalfR * (weightedVelocity - massVelocity)
+
+
                 else 
+                    !brh20230829 junctionVelocity = min(weightedVelocity,massVelocity)
+                    !junctionVelocity = max(weightedVelocity,massVelocity)
                     junctionVelocity = onehalfR * (weightedVelocity + massVelocity)
                 end if
 
-                !% --- excessive velocities are likely in error, so set to zero
+                ! if (JMidx == printJM) print *, 'junction V 1 ',junctionVelocity
+
+                !% --- excessive velocites are likely in error, so set to zero
                 if (abs(junctionVelocity) > setting%Limiter%Velocity%Maximum) then
                     junctionVelocity = zeroR
                 end if
 
                 elemR(JMidx,er_Velocity) = junctionVelocity
 
-                !% --- use the smaller magnitude of the total inflow rate or the flowrate implied by the junction velocity
+                !elemR(JMidx,er_Flowrate)     = junctionVelocity * elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area))
                 if (junctionVelocity < zeroR) then
-                    elemR(JMidx,er_Flowrate) = max(-totalQin, &
+                    elemR(JMidx,er_Flowrate) = max(-totalQ, &
                                                     junctionVelocity * elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)))
                 elseif (junctionVelocity > zeroR) then
-                    elemR(JMidx,er_Flowrate) = min(totalQin, &
+                    elemR(JMidx,er_Flowrate) = min(totalQ, &
                                                     junctionVelocity * elemR(JMidx,er_Depth) * sqrt(elemSR(JMidx,esr_Storage_Plan_Area)))
                 else 
                     elemR(JMidx,er_Flowrate) = zeroR
@@ -2970,7 +2791,6 @@ subroutine lljunction_branch_energy_outflow ()
 
             else
                 !% --- no inflows to provide momentum, 
-                !%     no changes to flowrate, velocity or froude number
             end if
 
             ! if (JMidx == printJM) print *,  'flowrate ',elemR(JMidx,er_Flowrate)

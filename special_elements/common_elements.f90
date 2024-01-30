@@ -41,13 +41,9 @@ module common_elements
             Vmax     => setting%Limiter%Velocity%Maximum
             Velocity => elemR(eIdx,er_Velocity)
             Flowrate => elemR(eIdx,er_Flowrate)
-            Area     => elemR(eIdx,er_AreaVelocity)
+            Area     => elemR(eIdx,er_Area)
         !%------------------------------------------------------------------
-        if (Area > setting%ZeroValue%Area) then
-            Velocity = Flowrate / Area
-        else
-            Velocity = zeroR 
-        end if
+        Velocity = Flowrate / Area
         
         !% Velocity limiter
         if (setting%Limiter%Velocity%UseLimitMaxYN) then

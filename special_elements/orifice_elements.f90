@@ -484,7 +484,7 @@ subroutine orifice_flapgate_adjustment (eIdx)
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%-----------------------------------------------------------------------------
         !% Aliases
-            Area               => elemR(eIdx,er_Area) !% --- orifice area, do not use AreaVelocity
+            Area               => elemR(eIdx,er_Area)
             Flowrate           => elemR(eIdx,er_Flowrate)
             Velocity           => elemR(eIdx,er_Velocity)
             hasFlapGate        => elemYN(eIdx,eYN_hasFlapGate)

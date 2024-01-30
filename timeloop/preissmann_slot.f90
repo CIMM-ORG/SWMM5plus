@@ -82,10 +82,10 @@ module preissmann_slot
         integer, intent(in) :: thisP(:)
         integer, pointer    :: SlotMethod
         real(8), pointer    :: SlotVolume(:), SlotDepth(:), dSlotDepth(:)
-        real(8), pointer    :: volume(:), SlotArea(:) !, ell(:)
+        real(8), pointer    :: volume(:), depth(:), area(:), SlotArea(:) !, ell(:)
         real(8), pointer    :: SlotDepth_N0(:), SlotWidth(:)
-        real(8), pointer    :: head(:),  fullDepth(:)
-        real(8), pointer    :: Overflow(:), zbottom(:)
+        real(8), pointer    :: head(:), fullVolume(:), fullArea(:), fullDepth(:)
+        real(8), pointer    :: Overflow(:), zbottom(:), SlotHydRad(:)!, ellMax(:)
         logical, pointer    :: isSlot(:)
 
         character(64) :: subroutine_name = 'geo_CC_slot_adjustments'
@@ -98,19 +98,19 @@ module preissmann_slot
                 write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
         !%------------------------------------------------------------------
         !% Aliases
-            !area       => elemR(:,er_Area)
-            !depth      => elemR(:,er_Depth)
+            area       => elemR(:,er_Area)
+            depth      => elemR(:,er_Depth)
             dSlotDepth => elemR(:,er_dSlotDepth)
             fullDepth  => elemR(:,er_FullDepth)
-            !fullvolume => elemR(:,er_FullVolume)
-            !fullArea   => elemR(:,er_FullArea)
+            fullvolume => elemR(:,er_FullVolume)
+            fullArea   => elemR(:,er_FullArea)
             head       => elemR(:,er_Head)
             SlotWidth  => elemR(:,er_SlotWidth)
             SlotVolume => elemR(:,er_SlotVolume)
             SlotDepth  => elemR(:,er_SlotDepth)
             SlotDepth_N0 => elemR(:,er_SlotDepth_N0)
             SlotArea   => elemR(:,er_SlotArea)
-            !SlotHydRad => elemR(:,er_SlotHydRadius)
+            SlotHydRad => elemR(:,er_SlotHydRadius)
             volume     => elemR(:,er_Volume)
             zbottom    => elemR(:,er_Zbottom)
             isSlot     => elemYN(:,eYN_isPSsurcharged)

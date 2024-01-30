@@ -472,7 +472,7 @@ module adjust
             logical, intent(in) :: isZeroFlux !% sets small depth fluxes to zero
             integer, pointer :: thisCol
             integer, pointer :: npack, thisP(:), fdn(:), fup(:)
-            real(8), pointer :: Area(:), AreaVelocity(:), CMvelocity(:), CMvelocity2(:)
+            real(8), pointer :: Area(:), CMvelocity(:), CMvelocity2(:)
             real(8), pointer :: Flowrate(:), HydRadius(:), ManningsN(:)
             real(8), pointer :: VelocityN0(:), Velocity(:), VelocityBlend(:), svRatio(:)
             real(8), pointer :: Head(:)
@@ -489,7 +489,6 @@ module adjust
         !% -----------------------------------------------------------------    
         !% Aliases    
             Area          => elemR(:,er_Area)
-            AreaVelocity  => elemR(:,er_AreaVelocity)
             CMvelocity    => elemR(:,er_SmallVolume_CMvelocity) 
             Flowrate      => elemR(:,er_Flowrate)
             Head          => elemR(:,er_Head)
@@ -558,11 +557,7 @@ module adjust
                          + svRatio(thisP) * CMvelocity(thisP) * Area(thisP)                
 
         !% --- new velocity  
-        where (AreaVelocity > setting%ZeroValue%Area)
-            elemR(thisP,er_Velocity) = Flowrate(thisP) / AreaVelocity(thisP)
-        elsewhere 
-            elemR(thisP,er_Velocity) = zeroR
-        endwhere
+        elemR(thisP,er_Velocity) = Flowrate(thisP) / Area(thisP)
 
         !% -----------------------------------------------------------------
         !% ARCHIVE OF TRIAL METHODS
@@ -1035,7 +1030,7 @@ module adjust
             faceAd   => faceR(:,fr_Area_d)  
             elemFlow => elemR(:,er_Flowrate)    
             elemVel  => elemR(:,er_Velocity)
-            elemArea => elemR(:,er_AreaVelocity)
+            elemArea => elemR(:,er_Area)
             elemDepth=> elemR(:,er_Depth)
             w_uQ     => elemR(:,er_InterpWeight_uQ)
             w_dQ     => elemR(:,er_InterpWeight_dQ)
@@ -1091,23 +1086,37 @@ module adjust
             Vcoef(thisP) = zeroR
         endwhere
 
+        !% --- blending velocity so that so that area does not matter
+        ! elemVel(thisP)  =  (oneR - Vcoef(thisP)) * elemVel(thisP) &
+        !         + Vcoef(thisP) * onehalfR * (faceR(mapDn(thisP),fr_Velocity_u) + faceR(mapUp(thisP),fr_Velocity_d))
+
+        !% ARCHIVE METHOD
         !% --- blend the element and face-average flow rates
         elemFlow(thisP)  =  (oneR - Vcoef(thisP)) * elemFlow(thisP) &
                 + Vcoef(thisP) * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
 
+        !% HACK: belnd the face areas as well
+        ! elemArea(thisP)  =  (oneR - Vcoef(thisP)) * elemArea(thisP) &
+        !         + Vcoef(thisP) * onehalfR * (faceAu(mapDn(thisP)) + faceAd(mapUp(thisP)))
         !% --- reset the velocity      
-        where (elemArea(thisP) > setting%ZeroValue%Area)
-            elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
-        elsewhere 
-            elemVel(thisP) = zeroR 
-        endwhere
-   
+        elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
+
+
+        !% ARCHIVE METHOD
+        ! where (Vvalue(thisP) > zeroR)
+        !     !% simple linear interpolation
+        !     elemFlow(thisP)  =  (oneR - coef) * elemFlow(thisP) &
+        !         + coef * onehalfR * (faceflow(mapDn(thisP)) + faceflow(mapUp(thisP)))
+        !     !% reset the velocity      
+        !     elemVel(thisP) = elemFlow(thisP) / elemArea(thisP)   
+        ! endwhere       
         !% --- reset for high velocity (typically due to small area)
         where ((abs(elemVel(thisP)) > vMax) .and. (Vcoef(thisP) > zeroR))
             elemVel(thisP)  = sign( 0.99d0 * vMax, elemVel(thisP) )
-            !elemFlow(thisP) = elemVel(thisP) * elemArea(thisP) !% do not use when AreaVelocity is used
+            elemFlow(thisP) = elemVel(thisP) * elemArea(thisP)
         endwhere 
         
+
         !%------------------------------------------------------------------
         !% Closing
             !% --- clear the temporary Vvalue array

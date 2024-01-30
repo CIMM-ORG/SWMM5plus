@@ -508,11 +508,9 @@ module define_settings
         !% NOTE ForceStorage must be true as of 20230507. Future extension may include junction solution that does
         !% not require the minimum surface area of the ImpliedStorage type
         logical :: ForceStorage = .true.        !% forces nJM junctions without explicit storage to have implied storage
-        integer :: HeadMethodJB = linear_interp !% {use_JM / linear_interp} methods for head on JB, recommend linear_interp 
         integer :: FunStorageN  = 10            !% number of curve entries for functional storage   
         real(8) :: kFactor      = 0.5d0         !% default entrance/exit losses at junction branch (use 0.5 )
-        real(8) :: BlendingFactor = 0.8d0       !% 0 to <1, with 0 being strictly energy-based branch flow, 1 being strictly extrapolated from neighbor (fails); 0.99 recommended
-        real(8) :: ReverseDhFactor = 0.00       !% 0 to 1, with 0 being no velocity generated in branch by reversed head delta
+        real(8) :: OutflowDampingFactor = 0.99d0 !% 0 to <1, with 0 being strictly energy-based outflow, 1 being strictly extrapolated from neighbor (fails); 0.99 recommended
         real(8) :: ZeroHeadDiffValue = 1.0d-8   !% Head difference (m) that results in zero outflow in a branch. !% NOT A USER SETTING
         real(8) :: ZeroOutflowValue  = 1.0d-8   !% Outflow (m^3/s) that results in zero outflow in a branch   !% NOT A USER SETTING
         real(8) :: InfiniteExtraDepthValue = 999.d0  !% Surcharge Depth if this value or higher is treated as impossible to overflow
@@ -783,7 +781,7 @@ module define_settings
 
     type settingType
         logical                  :: JSON_FoundFileYN = .false.
-        logical                  :: JSON_CheckAllInputYN = .false.
+        logical                  :: JSON_CheckAllInputYN = .true.
         type(AdjustType)         :: Adjust
         type(AirTrackingType)    :: AirTracking
         type(BCPropertiesType)   :: BC
@@ -1356,15 +1354,10 @@ contains
         if (found) setting%Junction%kFactor = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.kFactor not found'
 
-        !%                       Junction.BlendingFactor
-        call json%get('Junction.BlendingFactor', real_value, found)
-        if (found) setting%Junction%BlendingFactor = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.BlendingFactor not found'
-
-        !%                       Junction.ReverseDhFactor
-        call json%get('Junction.ReverseDhFactor', real_value, found)
-        if (found) setting%Junction%ReverseDhFactor = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'JunctionReverseDhFactor not found'
+        !%                       Junction.OutflowDampingFactor
+        call json%get('Junction.OutflowDampingFactor', real_value, found)
+        if (found) setting%Junction%OutflowDampingFactor = real_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Junction.OutflowDampingFactor not found'
 
         !%                       Junction.InfiniteExtraDepthValue
         call json%get('Junction.InfiniteExtraDepthValue', real_value, found)
