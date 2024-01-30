@@ -445,6 +445,7 @@ module define_indexes
     enum, bind(c)
         enumerator :: eYN_canSurcharge = 1              !% TRUE for element that can surcharge, FALSE where it cannot (static)
         enumerator :: eYN_hasSubcatchRunOff             !% TRUE if element connected to one or more subcatchments for Runoff
+        enumerator :: eYN_hasAirPocket
         enumerator :: eYN_hasFlapGate                   !% TRUE if 1-way flap gate is present
         enumerator :: eYN_hasLateralInflow              !% TRUE if lateral inflow exists on this element
         enumerator :: eYN_isBoundary_up                 !% TRUE if the element is connected to a shared face upstream thus a boundary element of a partition
@@ -1660,6 +1661,7 @@ module define_indexes
         enumerator :: cmi_elem_dn_face
         enumerator :: cmi_airpocket_type
         enumerator :: cmi_airpocket_idx
+        enumerator :: cmi_first_airpocket_idx
         enumerator :: cmi_lastplusone
     end enum
 
@@ -1705,7 +1707,7 @@ module define_indexes
     !%     saves the airpocket logical data 
     enum, bind(c)
         enumerator :: airYN_air_pocket_detected = 1
-        enumerator :: airYN_air_pocket_vacuumed 
+        enumerator :: airYN_air_pocket_collapsed 
         enumerator :: airYN_new_air_pocket
         enumerator :: airYN_lastplusone
     end enum

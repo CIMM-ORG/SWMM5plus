@@ -361,6 +361,7 @@ module define_settings
         real(8) :: MinimumVentArea           = 0.0d0    !% area of the venting tunnel at the end of links
         real(8) :: theta                     = 0.5d0    !% theta value for the theta numerical method
         logical :: UseAirTrackingYN          = .false.  !% setting to turn on air tracking
+        logical :: StaticAirPocket           = .true.   !% air pocket location can not move until the pocket is collapsed
     end type AirTrackingType
 
     ! setting%BC
@@ -1049,6 +1050,13 @@ contains
         call json%get('AirTracking.UseAirTrackingYN', logical_value, found)
         if (found) setting%AirTracking%UseAirTrackingYN = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.UseAirTrackingYN not found'
+
+    !% --- AirTracking.StaticAirPocket
+        !%                       StaticAirPocket
+        call json%get('AirTracking.StaticAirPocket', logical_value, found)
+        if (found) setting%AirTracking%StaticAirPocket = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.StaticAirPocket not found'
+        
 
     !% BC. =====================================================================
         !%                       BC.TimeSlotsStored

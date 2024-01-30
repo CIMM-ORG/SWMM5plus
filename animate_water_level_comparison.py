@@ -593,11 +593,11 @@ for profile_name_test in all_attribute_names:
         line2.set_ydata(element_depth[x+ii,:]+element_zbottom)  # update the data.
         line3.set_ydata(element_head_mod[x+ii,:])
 
-        time_text.set_text('Time = %.1f sec.' %(sim_time[ii]*3600))
+        time_text.set_text('Time = %.1f sec.' %(sim_time[ii]))
         return line, line2, line3
 
 
-    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=30, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=1, blit=False)
 
     #saving the animation before showing it
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY
