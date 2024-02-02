@@ -330,9 +330,8 @@ contains
         !%------------------------------------------------------------------
             integer, intent (in) :: sc_Idx, aIdx, istep
             integer, pointer     :: elemStartIdx, elemEndIdx, faceUp, faceDn
-            real(8), pointer     :: airVolume, airVolume_N0, inflow, outflow 
-            real(8), pointer     :: airMass, airMass_N0, airDensity, airDensity_N0
-            real(8), pointer     :: absHead, absHead_N0, gaugeHead, atmHead, rho_a
+            real(8), pointer     :: airVolume, inflow, outflow, airDensity
+            real(8), pointer     :: airMass, absHead, gaugeHead, atmHead, rho_a
             real(8), pointer     :: elemVol(:), fullVol(:), faceFlow(:)
             logical, pointer     :: isAirPocket, newAirPocket
 
@@ -344,15 +343,11 @@ contains
             faceUp        => airI(sc_Idx,aIdx,airI_face_up)
             faceDn        => airI(sc_Idx,aIdx,airI_face_dn)
             airVolume     => airR(sc_Idx,aIdx,airR_volume)
-            airVolume_N0  => airR(sc_Idx,aIdx,airR_volume_N0)
             airDensity    => airR(sc_Idx,aIdx,airR_density)
-            airDensity_N0 => airR(sc_Idx,aIdx,airR_density_N0)
             airMass       => airR(sc_Idx,aIdx,airR_mass)
-            airMass_N0    => airR(sc_Idx,aIdx,airR_mass_N0)
             inflow        => airR(sc_Idx,aIdx,airR_inflow)
             outflow       => airR(sc_Idx,aIdx,airR_outflow)
             absHead       => airR(sc_Idx,aIdx,airR_absolute_head)
-            absHead_N0    => airR(sc_Idx,aIdx,airR_absolute_head_N0)
             gaugeHead     => airR(sc_Idx,aIdx,airR_gauge_head)
             isAirPocket   => airYN(sc_Idx,aIdx,airYN_air_pocket_detected)
             newAirPocket  => airYN(sc_Idx,aIdx,airYN_new_air_pocket)
@@ -375,15 +370,11 @@ contains
                 newAirPocket = .false.
                 gaugeHead     = zeroR
                 airDensity    = rho_a
-                airDensity_N0 = rho_a
                 absHead       = atmHead
-                absHead_N0    = atmHead 
                 !% calculate the air pocket volume from empty space
                 airVolume  = max(sum(fullVol(pElem) - elemVol(pElem)), zeroR)
                 !% for a new pocket formulation save the older values
-                airVolume_N0 = airVolume
                 airMass      = airDensity * airVolume
-                airMass_N0   = airMass
                 !% copy over the flow data
                 inflow     = faceFlow(faceUp)
                 outflow    = faceFlow(faceDn) 
@@ -484,15 +475,15 @@ contains
 
                 case (upReleaseAirpocket)
                     
-                    ! areaOpening = min(minVentArea, max(elemR(elemStartIdx,er_FullArea) - elemR(elemStartIdx,er_Area), zeroR))
+                    areaOpening = min(minVentArea, max(elemR(elemStartIdx,er_FullArea) - elemR(elemStartIdx,er_Area), zeroR))
 
-                    areaOpening = minVentArea
+                    ! areaOpening = minVentArea
                     
                 case (dnReleaseAirpocket)
 
-                    ! areaOpening = min(minVentArea, max(elemR(elemEndIdx,er_FullArea) - elemR(elemEndIdx,er_Area), zeroR))
+                    areaOpening = min(minVentArea, max(elemR(elemEndIdx,er_FullArea) - elemR(elemEndIdx,er_Area), zeroR))
 
-                    areaOpening = minVentArea
+                    ! areaOpening = minVentArea
                     
 
                 case (noAirPocket)
@@ -579,7 +570,7 @@ contains
                 beta  = (kappa / airMass)   * dmdt
 
                 !% find the absolute head 
-                absHead = absHead * (oneR + dt * 0.5 * (oneR - theta) * (- alpha + beta)) / (oneR - dt * 0.5 * theta * (- alpha + beta))
+                absHead = absHead * (oneR + dt * onehalfR * (oneR - theta) * (- alpha + beta)) / (oneR - dt * onehalfR * theta * (- alpha + beta))
                 
                 !% find the gauge pressure head
                 gaugeHead = absHead - atmHead
@@ -588,16 +579,6 @@ contains
                 absHead   = atmHead
                 gaugeHead = absHead - atmHead  
             end if
-
-            ! if (sc_Idx == 2) then
-            !     print*
-            !     print*, reverseKey(airI(sc_Idx,aIdx,airI_type))
-            !     print*, airVolume,  'airVolume  ', dvdt, 'dvdt'
-            !     print*, airMass,    'airMass    ', dmdt, 'dmdt'
-            !     print*, absHead_N0, 'absHead_N0 ', gaugeHead, 'gaugeHead'
-                
-                
-            ! endif 
 
         end if
     
@@ -637,7 +618,7 @@ contains
         if (isAirPocket) then
 
             !% timemarch air mass through mass flowrate
-            airMass = airMass + dt * 0.5 * massOutflow
+            airMass = airMass + dt * onehalfR * massOutflow
 
             !% limit air mass
             airMass = max(airMass,zeroR)
@@ -645,19 +626,11 @@ contains
             if (airMass > zeroR) then
                 colAirpocket = .false.
                 airDensity = airMass / airVolume
-
             else 
-                ! if (airVolume > zeroR) then
-                !     airMass     = 1E-15
-                !     airDensity  = airMass / airVolume
-                !     massOutflow = massOutflow + airMass / (dt * crk(istep))
-                ! else
-                    airDensity  = zeroR
-                    !% no mass left thus the airpocket has been collasped
-                    isAirPocket = .false.
-                    colAirpocket = .true.
-                ! end if
-
+                airDensity  = zeroR
+                !% no mass left thus the airpocket has been collasped
+                isAirPocket = .false.
+                colAirpocket = .true.
             end if
 
         end if

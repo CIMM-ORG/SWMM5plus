@@ -1661,7 +1661,6 @@ module define_indexes
         enumerator :: cmi_elem_dn_face
         enumerator :: cmi_airpocket_type
         enumerator :: cmi_airpocket_idx
-        enumerator :: cmi_first_airpocket_idx
         enumerator :: cmi_lastplusone
     end enum
 

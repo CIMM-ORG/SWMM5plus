@@ -583,7 +583,7 @@ for profile_name_test in all_attribute_names:
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
     plt.ylim(min_zbottom-buffer,max_head+buffer)
-    plt.ylim(0,1.0)
+    plt.ylim(0,25.0)
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
     plt.tight_layout()
@@ -593,7 +593,7 @@ for profile_name_test in all_attribute_names:
         line2.set_ydata(element_depth[x+ii,:]+element_zbottom)  # update the data.
         line3.set_ydata(element_head_mod[x+ii,:])
 
-        time_text.set_text('Time = %.1f sec.' %(sim_time[ii]))
+        time_text.set_text('Time = %.1f sec.' %(sim_time[ii]*3600))
         return line, line2, line3
 
 
