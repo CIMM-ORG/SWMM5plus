@@ -464,6 +464,10 @@ module junction_elements
             ! print *, elemR(169,er_Head), elemR(170,er_Head)
             ! print *, ' '
 
+            if (setting%AirTracking%UseAirTrackingYN) then 
+                elemR(thisP,er_Head) = elemR(thisP,er_Head) + elemSR(thisP,esr_JM_Air_HeadGauge)
+            end if
+            
             !% --- assign JB values based on new JM head
             call geo_assign_JB_from_head (ep_JM) !% HACK  revise using ep_JB
 

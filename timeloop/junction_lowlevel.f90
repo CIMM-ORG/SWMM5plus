@@ -1760,7 +1760,9 @@ subroutine lljunction_branch_velocity ()
 
         !% --- update JM head and depth
         elemR(JMidx,er_Head)  = elemR(JMidx,er_Head)  + dH
-        elemR(JMidx,er_Depth) = min(elemR(JMidx,er_Head) - elemR(JMidx,er_Zbottom), elemR(JMidx,er_FullDepth))
+        !% 20240209brh revised for compatibility with air trapping
+        !elemR(JMidx,er_Depth) = min(elemR(JMidx,er_Head) - elemR(JMidx,er_Zbottom), elemR(JMidx,er_FullDepth))
+        elemR(JMidx,er_Depth) = min(elemR(JMidx,er_Depth) + dH , elemR(JMidx,er_FullDepth))
 
         elemR(JMidx,er_Depth) = max(elemR(JMidx,er_Depth),0.99d0*setting%ZeroValue%Depth)
         elemR(JMidx,er_EllDepth) =  elemR(JMidx,er_Depth)
@@ -2187,6 +2189,7 @@ subroutine lljunction_branch_velocity ()
             real(8), pointer    :: MinHeadForOverFlowPonding, OverflowDepth
             real(8), pointer    :: ExternalPondedArea, ExternalPondedDepth
             real(8), pointer    :: ExternalPondedHead, PondedHeadDiff
+            real(8) :: WaterHead
         !%-----------------------------------------------------------------
         !% Aliases
             MinHeadForOverflowPonding => elemSR(JMidx,esr_JM_MinHeadForOverflowPonding)
@@ -2197,11 +2200,17 @@ subroutine lljunction_branch_velocity ()
             PondedHeadDiff            => elemSR(JMidx,esr_JM_ExternalPondedHeadDiff)
         !%-----------------------------------------------------------------
 
+        if (setting%AirTracking%UseAirTrackingYN) then    
+            WaterHead = elemR(JMidx,er_Head) - elemSR(JMidx,esr_JM_Air_HeadGauge)
+        else 
+            WaterHead = elemR(JMidx,er_Head)
+        end if
+
         !% --- ponding junctions are treated differently than non-ponding
         if ( ExternalPondedArea > zeroR) then 
 
             !% --- used for conservation fix
-            OverflowDepth = max(elemR(JMidx,er_Head) - MinHeadForOverflowPonding, zeroR)    
+            OverflowDepth = max(WaterHead - MinHeadForOverflowPonding, zeroR)    
 
             !% --- ponded head is the head available in the ponded area
             ExternalPondedDepth = elemR (JMidx,er_VolumePondedTotal)   &
@@ -2213,7 +2222,7 @@ subroutine lljunction_branch_velocity ()
             !%     between the junction head and ponded head. A positive value
             !%     causes an outflow to ponding whereas a negative value
             !%     causes an inflow from ponding to the junciton
-            PondedHeadDiff     = elemR(JMidx,er_Head) - ExternalPondedHead
+            PondedHeadDiff     = WaterHead - ExternalPondedHead
 
             !% --- limit negative ponded head difference to a waterfall condition
             !%     from the ponded depth
@@ -2225,7 +2234,7 @@ subroutine lljunction_branch_velocity ()
         else 
             !% --- For non-ponding, the overflow depth is either positive or zero
             !%     This uses the present value of head
-            OverflowDepth = max(elemR(JMidx,er_Head) - MinHeadForOverflowPonding, zeroR)                   
+            OverflowDepth = max(WaterHead - MinHeadForOverflowPonding, zeroR)                   
         end if
 
         ! if ((setting%Time%Step > 54165) .and. (JMidx == 109)) then 
@@ -2252,13 +2261,20 @@ subroutine lljunction_branch_velocity ()
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) ::  JMidx
-            real(8), pointer :: SlotWidth, Length
+            real(8), pointer    :: SlotWidth, Length
+            real(8)             :: WaterHead
         !%------------------------------------------------------------------
         !% Aliases
             SlotWidth => elemR(JMidx,er_SlotWidth)
             Length    => elemR(JMidx,er_Length)
 
         !%------------------------------------------------------------------
+
+        if (setting%AirTracking%UseAirTrackingYN) then    
+            WaterHead = elemR(JMidx,er_Head) - elemSR(JMidx,esr_JM_Air_HeadGauge)
+        else 
+            WaterHead = elemR(JMidx,er_Head)
+        end if
 
         !% --- set the plan area used for storage
         if (elemYN(JMidx,eYN_canSurcharge)) then
@@ -2279,10 +2295,8 @@ subroutine lljunction_branch_velocity ()
                         lljunction_main_plan_area = elemSR(JMidx,esr_Storage_Plan_Area) 
                         return 
                     elseif ((elemR(JMidx,er_Head) .ge. elemR(JMidx,er_Zcrown)) .and. &
-                            (elemR(JMidx,er_Head)  <   elemSR(JMidx,esr_JM_MinHeadForOverflowPonding)) ) then
+                            (           WaterHead  <   elemSR(JMidx,esr_JM_MinHeadForOverflowPonding)) ) then
                         !% --- preissmann slot surcharge plan area
-                        !%     this condition should not occur, as a weir overflow should
-                        !%     NOT have a MinHeadForOverflowPonding > 0.
                         lljunction_main_plan_area = elemSR(JMidx,esr_JM_Present_PlanArea)
                         return
                     else
@@ -2297,7 +2311,7 @@ subroutine lljunction_branch_velocity ()
                         lljunction_main_plan_area = elemSR(JMidx,esr_Storage_Plan_Area) 
                         return 
                     elseif ((elemR(JMidx,er_Head) .ge. elemR(JMidx,er_Zcrown)) .and. &
-                            (elemR(JMidx,er_Head)  <   elemSR(JMidx,esr_JM_MinHeadForOverflowPonding)) ) then
+                            (           WaterHead  <   elemSR(JMidx,esr_JM_MinHeadForOverflowPonding)) ) then
                         !% --- preissmann slot surcharge plan area
                         lljunction_main_plan_area = elemSR(JMidx,esr_JM_Present_PlanArea)
                         return
@@ -2337,7 +2351,7 @@ subroutine lljunction_branch_velocity ()
             real(8), pointer       :: OverflowDepth, ExternalPondedDepth, Storage_Plan_Area
             real(8), pointer       :: VolumePondedTotal, MinHeadForOverflowPonding
             real(8), pointer       :: ExternalPondedArea, ExternalPondedHeadDiff
-            real(8)                :: tempOverflow 
+            real(8)                :: tempOverflow, WaterHead 
 
             real(8), pointer    :: dt, crk
         !%------------------------------------------------------------------  

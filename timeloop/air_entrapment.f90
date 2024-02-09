@@ -1,14 +1,14 @@
 module air_entrapment
-    !%==========================================================================
-    !% SWMM5+ release, version 1.0.0
-    !% 20230608
-    !% Hydraulics engine that links with EPA SWMM-C
-    !% June 8, 2023
-    !%
-    !% Description:
-    !% Procedures for dynamic Preissmann Slot following paper by
-    !% Sharior, Hodges, and Vasconcelos (2023)
-    !%==========================================================================
+!%==========================================================================
+!% SWMM5+ release, version 1.0.0
+!% 20230608
+!% Hydraulics engine that links with EPA SWMM-C
+!% June 8, 2023
+!%
+!% Description:
+!% Procedures for dynamic Preissmann Slot following paper by
+!% Sharior, Hodges, and Vasconcelos (2023)
+!%==========================================================================
     use define_globals
     use define_indexes
     use define_keys
@@ -24,11 +24,11 @@ module air_entrapment
     public :: air_entrapment_toplevel 
 
 contains
-    !%    
-    !%==========================================================================
-    !% PUBLIC
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!% PUBLIC
+!%==========================================================================
+!%
     subroutine air_entrapment_toplevel (istep)
         !%-----------------------------------------------------------------
         !% Description
@@ -51,15 +51,19 @@ contains
 
         !% find the pressure head due to airpocket
         call airpockets_calculation (istep)
+
+        !% --- compute the pressure head in a JM junction
+        call airpockets_junction (istep)
+        
         !% interpolate the faces again after air calculation
         !% to update the new heads to the faces (only head interp)
         call face_interpolation(fp_noBC_IorS, .false., .true., .false., .true., .true.)
 
     end subroutine air_entrapment_toplevel 
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine airpockets_calculation (istep)
         !%------------------------------------------------------------------
         !% Description:
@@ -106,7 +110,7 @@ contains
                     !% calculate the air pressure head
                     call airpocket_pressure_head (ii, jj, istep)
 
-                    !% add the heads back to the elements
+                    !% add the heads back to the CC elements
                     call add_airpocket_heads_to_elem (ii, jj)
 
                 end do
@@ -117,10 +121,113 @@ contains
         
 
     end subroutine airpockets_calculation
-        !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine airpockets_junction (istep)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% air pocket calculation for a junction
+        !% Requires the mass inflow rate from a conduit to be already 
+        !% provided
+        !%------------------------------------------------------------------
+            integer, intent(in) :: istep
+            integer, pointer    :: Npack, thisJM(:)
+            integer             :: mm, JMidx
+            real(8), pointer    :: kappa, dt, crk, theta, atmHead
+            real(8)             :: alpha, beta, dvdt, coef, volAir
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            Npack => npack_elemP(ep_JM)   
+            if (Npack < 1) return
+        !%------------------------------------------------------------------
+        !% Aliases
+            thisJM => elemP(1:Npack,ep_JM)
+            kappa  => setting%AirTracking%PolytropicExponent
+            dt           => setting%Time%Hydraulics%Dt
+            crk          => setting%Solver%crk2(istep)
+            theta        => setting%AirTracking%theta
+            atmHead      => setting%AirTracking%AtmosphericPressureHead
+        !%------------------------------------------------------------------
+        
+        !% --- cycle through the JM junctions
+        do mm = 1,Npack
+            JMidx = thisJM(mm)
+
+            !% --- cycle if no  air gage pressure and no mass inflow
+            if ((elemSR(JMidx,esr_JM_Air_HeadGauge)      == zeroR) .and. &
+                (elemSR(JMidx,esr_JM_Air_MassInflowRate) == zeroR)) cycle 
+
+            !% --- compute the air volume
+            volAir = elemR(JMidx,er_FullVolume) - elemR(JMidx,er_Volume)
+
+            if (volAir .le. zeroR) then 
+                !% --- air pocket has collapsed and JMidx is full of water (incipient surcharging)
+                !%     zero out pocket and cycle to next JMidx
+                elemR(JMidx,er_Head) = elemR(JMidx,er_FullDepth) + elemR(JMidx,er_Zbottom)
+                elemSR(JMidx,esr_JM_Air_HeadGauge) = zeroR
+                elemSR(JMidx,esr_JM_Air_Mass)      = zeroR
+                cycle
+            end if
+        
+            !% --- compute the mass outflow to atmosphere
+            !%     NOTE THIS FUNCTION IS NOT FINISHED, RETURNS ZERO!
+            elemSR(JMidx,esr_JM_Air_MassOutflowRate) = airpockets_JM_outflow(JMidx) 
+
+            !% --- compute the new air mass in the JMidx
+            !%     NOTE THAT POSITIVE VALUES OF INFLOWS ARE INFLOWS AND POSITIVE OUTFLOWS ARE OUTFLOWS
+            elemSR(JMidx,esr_JM_Air_Mass) = elemSR(JMidx,esr_JM_Air_Mass_N0) &
+                + crk * dt * ( + elemSR(JMidx,esr_JM_Air_MassInflowRate)     &
+                               - elemSR(JMidx,esr_JM_Air_MassOutflowRate))
+
+            if (elemSR(JMidx,esr_JM_Air_Mass) .le. zeroR) then 
+                !% --- no air pressurization, reset to atmospheric and cycle to next JMidx
+                elemSR(JMidx,esr_JM_Air_HeadGauge) = zeroR
+                elemR(JMidx,er_Head)  = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
+                cycle
+            end if
+
+            !% --- compute the air volume rate of change (opposite of water volume change)
+            !%     Negative is decreasing volume
+            dvdt  = (elemR(JMidx,er_Volume_N0)- elemR(JMidx,er_Volume)) / (crk * dt)
+                                               
+            !% --- compute the beta term, which should be negative for a net outflow
+            beta = ( kappa / elemSR(JMidx,esr_JM_Air_Mass) ) &
+                    * (- elemSR(JMidx,esr_JM_Air_MassOutflowRate) + elemSR(JMidx,esr_JM_Air_MassInflowRate))
+
+            !% --- compute the alpha term
+            alpha = ( kappa / volAir) * dvdt  
+
+            !% --- compute coef of theta method
+            coef = (beta - alpha) * dt * crk
+
+            !% --- Theta method to update the JM Head
+            elemR(JMidx,er_Head) = (elemR(JMidx,er_Head_N0) + atmHead)           &
+                     * ((oneR + coef * (oneR - theta))  / (oneR - coef * theta)) &
+                     - atmHead
+
+            !% --- check for head below atmospheric, which indicates the air pocket has emptied
+            if (elemR(JMidx,er_Head) .le. (elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)) ) then   
+                !% --- reset the head to water head (depth + bottom)
+                elemR(JMidx,er_Head)  = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
+                !% --- zero out the air head and mass
+                elemSR(JMidx,esr_JM_Air_HeadGauge) = zeroR
+                elemSR(JMidx,esr_JM_Air_Mass)      = zeroR
+                cycle
+            else 
+                !% --- update the air head (gauge)
+                elemSR(JMidx,esr_JM_Air_HeadGauge) = elemR(JMidx,er_Head)  &
+                                                   - (elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom))
+            end if
+
+        end do
+
+    end subroutine airpockets_junction    
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine airpockets_detection () 
         !%------------------------------------------------------------------
         !% Description:
@@ -316,10 +423,10 @@ contains
         end do
 
     end subroutine airpockets_detection
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine airpocket_initialization (sc_Idx,aIdx,istep)
         !%------------------------------------------------------------------
         !% Description:
@@ -401,10 +508,10 @@ contains
         end if
 
     end subroutine airpocket_initialization
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine airpocket_netflowrate (sc_Idx, aIdx)
         !%------------------------------------------------------------------
         !% Description:
@@ -429,10 +536,10 @@ contains
         end if
 
     end subroutine airpocket_netflowrate
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine airpocket_air_mass_outflow (sc_Idx, aIdx, istep)
         !%------------------------------------------------------------------
         !% Description:
@@ -528,10 +635,10 @@ contains
 
 
     end subroutine airpocket_air_mass_outflow
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine airpocket_pressure_head (sc_Idx, aIdx, istep)
         !%------------------------------------------------------------------
         !% Description:
@@ -583,10 +690,10 @@ contains
         end if
     
     end subroutine airpocket_pressure_head
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine airpocket_air_density_update (sc_Idx, aIdx, istep)
         !%------------------------------------------------------------------
         !% Description:
@@ -636,10 +743,10 @@ contains
         end if
 
     end subroutine airpocket_air_density_update
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine airpockets_volume_update (sc_Idx, aIdx, istep)
         !%------------------------------------------------------------------
         !% Description:
@@ -668,10 +775,10 @@ contains
         end if
 
     end subroutine airpockets_volume_update
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine add_airpocket_heads_to_elem (sc_Idx, aIdx)
         !%------------------------------------------------------------------
         !% Description:
@@ -711,10 +818,10 @@ contains
         end if
 
     end subroutine add_airpocket_heads_to_elem
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
     subroutine airpockets_detection_single () 
         !%------------------------------------------------------------------
         !% Description:
@@ -884,8 +991,27 @@ contains
         end do
 
     end subroutine airpockets_detection_single
-    !%    
-    !%==========================================================================
-    !%==========================================================================
-    !%
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function airpockets_JM_outflow (JMidx)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% computes the mass outflow rate from a JM junction
+        !% POSITIVE VALUES ARE OUTFLOWS
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: JMidx
+        !%------------------------------------------------------------------
+
+        !% ---- temporarily set to zero
+        airpockets_JM_outflow = zeroR
+
+
+    end function airpockets_JM_outflow
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
 end module air_entrapment

@@ -1201,6 +1201,9 @@ contains
             airR(:,:,airR_mass_N0)          = airR(:,:,airR_mass) 
             airR(:,:,airR_absolute_head_N0) = airR(:,:,airR_absolute_head)
             airR(:,:,airR_volume_N0)        = airR(:,:,airR_volume) 
+
+            elemSR(:,esr_JM_Air_HeadGauge_N0) = elemSR(:,esr_JM_Air_HeadGauge)
+            elemSR(:,esr_JM_Air_Mass_N0)      = elemSR(:,esr_JM_Air_Mass)
         end if
         !%------------------------------------------------------------------
             if (setting%Debug%File%timeloop) &

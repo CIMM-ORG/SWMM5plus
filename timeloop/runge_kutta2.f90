@@ -71,6 +71,8 @@ module runge_kutta2
             dt   => setting%Time%Hydraulics%Dt
         !%-----------------------------------------------------------------
 
+        !% AIR --- assume that er_Head everywhere has air head already added from last time step
+
         !% --- debug total volume conservation
         if (setting%Debug%isGlobalVolumeBalance) then
             volume1 = zeroR
@@ -198,6 +200,10 @@ module runge_kutta2
 
             !call util_utest_CLprint('PPPP before junction first step')
 
+            !% --- Filter flowrates to remove grid-scale checkerboard
+            !% 20240209brh moved before junction first step
+            call adjust_Vfilter (istep)
+
             !% --- JUNCTION -- first step compute
             if (istep == 1) then 
                 !% --- Junction first step RK estimate
@@ -208,8 +214,8 @@ module runge_kutta2
                 !call util_utest_CLprint('QQQQ after junction first step')
             end if
 
-            !% --- Filter flowrates to remove grid-scale checkerboard
-            call adjust_Vfilter (istep)
+            ! !% --- Filter flowrates to remove grid-scale checkerboard
+            ! call adjust_Vfilter (istep)
 
             !call util_utest_CLprint('RRRR after V filter')
 
