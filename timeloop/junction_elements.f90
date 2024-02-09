@@ -145,7 +145,7 @@ module junction_elements
         !%     energy equation (does not affect JB with inflows or diagnostic adjacent )
         !%     TO BE MOVED TO junction_branch_element_flowrates?
         if (N_nJM > 0) then 
-            call lljunction_branch_energy_outflow ()
+            call lljunction_branch_velocity ()
             ! call util_utest_CLprint ('------- jjj.08 after lljunction_branch_energy_outflow')
         end if
 
