@@ -289,7 +289,11 @@ contains
 
         ! if ((setting%Output%Verbose) .and. (this_image() == 1)) print *, 'begin update_aux_variables JM'
         Npack => npack_elemP(ep_JM)
-        if (Npack > 0) then
+
+        !% Saz 02022024: Inside this if condition face interpolation is called, which requires face syncs
+        !% we cann not call any syncs within any coditional because it will cause race condition
+        !% thus commenting out the if conditional for now
+        ! if (Npack > 0) then
             thisP => elemP(1:Npack,ep_JM)
             !% --- junction plan area
             call geo_plan_area_from_volume_JM (elemPGetm, npack_elemPGetm, col_elemPGetm)
@@ -301,9 +305,9 @@ contains
             elemR(thisP,er_Head) = llgeo_head_from_depth_pure(thisP,elemR(thisP,er_Depth))
             elemR(thisP,er_EllDepth) = elemR(thisP,er_Depth)
             !% --- need face interpolation of head before assigning JB head using geo_assign
-            call face_interpolation (fp_noBC_IorS,.false.,.true.,.false.,.false.,.false.)
+            call face_interpolation (fp_noBC_IorS,.false.,.true.,.false.,.false.,.false.)  
             call geo_assign_JB_from_head (ep_JM)
-        end if
+        ! end if
         
         !% --- Froude number, wavespeed, and interpwights on JB
         Npack => npack_elemP(ep_JB)
