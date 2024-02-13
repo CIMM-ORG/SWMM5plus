@@ -312,6 +312,7 @@ module define_indexes
          enumerator :: ei_Mface_dL                  !% map to downstream face local index  (static)
          enumerator :: ei_node_Gidx_SWMM            !% node index from global SWMM network  (static)
          enumerator :: ei_node_Gidx_BIPquick        !% node index from global BIPquick network  (static)
+         enumerator :: ei_adjacent_JM_idx           !% if the link elem connected to a JM, then the JM idx
          enumerator :: ei_QeqType                   !% KEY type of flow equation (static)     
          enumerator :: ei_Temp01                    !% temporary array
          enumerator :: ei_Temp02
@@ -454,6 +455,7 @@ module define_indexes
         enumerator :: eYN_isDummy
         enumerator :: eYN_is_CCadjacent_JBorDiag           !% TRUE if element is adjacent to CC and is not CC
         enumerator :: eYN_is_DiagAdjacent               !% TRUE if element is adjacent to a diagnostic element
+        enumerator :: eYN_is_JunctionAdjacent           !% TRUE if element is adjacent to a JM
         enumerator :: eYN_isElementDownstreamOfJB       !% TRUE if the element is immediate downstream of JB
         enumerator :: eYN_isElementUpstreamOfJB
         enumerator :: eYN_isForceMain                   !% TRUE if this is a force main element
@@ -709,6 +711,14 @@ module define_indexes
         enumerator ::  esr_JM_OverflowDepth
         enumerator ::  esr_JM_Present_PlanArea
         enumerator ::  esr_JM_StorageRate
+        enumerator ::  esr_JM_Absolute_Head
+        enumerator ::  esr_JM_Absolute_Head_N0
+        enumerator ::  esr_JM_Air_HeadGauge
+        enumerator ::  esr_JM_Air_HeadGauge_N0
+        enumerator ::  esr_JM_Air_MassInflowRate
+        enumerator ::  esr_JM_Air_Mass
+        enumerator ::  esr_JM_Air_Mass_N0
+        enumerator ::  esr_JM_Air_MassOutflowRate
         enumerator ::  esr_JB_Kfactor
         enumerator ::  esr_JB_fa !% constant factor in dQdH
         enumerator ::  esr_JB_fb !% linear factor in dQdH
@@ -1653,7 +1663,7 @@ module define_indexes
 !%==========================================================================
 !%  
     !% --- conduitElemMapsI(:,:,:) 3-d array
-    !%     this 3d array saves the maps of  
+    !%     this 3D array saves the maps of  
     !%     elements and faces in a conduit
     enum, bind(c)
         enumerator :: cmi_elem_idx = 1
@@ -1675,6 +1685,8 @@ module define_indexes
         enumerator :: airI_elem_end
         enumerator :: airI_face_dn
         enumerator :: airI_type
+        enumerator :: airI_Up_JM_idx
+        enumerator :: airI_Dn_JM_idx
         enumerator :: airI_lastplusone
     end enum
 
@@ -1708,6 +1720,8 @@ module define_indexes
         enumerator :: airYN_air_pocket_detected = 1
         enumerator :: airYN_air_pocket_collapsed 
         enumerator :: airYN_new_air_pocket
+        enumerator :: airYN_air_vented_through_UpJM
+        enumerator :: airYN_air_vented_through_DnJM
         enumerator :: airYN_lastplusone
     end enum
     integer, target :: Ncol_airYN = airYN_lastplusone - 1

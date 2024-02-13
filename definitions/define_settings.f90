@@ -352,7 +352,7 @@ module define_settings
 
     ! setting%AirTracking
     type AirTrackingType
-        integer :: NumberOfAirpocketsAllowed = 5        !% number of airpockets allowed for air simulation
+        integer :: NumberOfAirpocketsAllowed = 3        !% number of airpockets allowed for air simulation
         real(8) :: PolytropicExponent        = 1.2d0    !% Polytropic exponent for adiabatic air comperssion/expansion process
         real(8) :: AtmosphericPressureHead   = 10.3d0   !% atmospheric pressure head in m
         real(8) :: AirDischargeCoefficient   = 0.65     !% discharge coefficient for air-orifice flow
@@ -361,7 +361,9 @@ module define_settings
         real(8) :: MinimumVentArea           = 0.0d0    !% area of the venting tunnel at the end of links
         real(8) :: theta                     = 0.5d0    !% theta value for the theta numerical method
         logical :: UseAirTrackingYN          = .false.  !% setting to turn on air tracking
+        logical :: UseMinVentArea            = .true.   !% Use a minimum vent area for all the vlinks
         logical :: StaticAirPocket           = .true.   !% air pocket location can not move until the pocket is collapsed
+        logical :: AirVentThroughJM          = .true.   !% air pocket vent through a JM if present
     end type AirTrackingType
 
     ! setting%BC
@@ -1041,7 +1043,7 @@ contains
 
     !% --- AirTracking.theta
         !%                       theta
-        call json%get('AirTracking.MinimumVentArea', real_value, found)
+        call json%get('AirTracking.theta', real_value, found)
         if (found) setting%AirTracking%theta = real_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.theta not found'
 
@@ -1056,7 +1058,18 @@ contains
         call json%get('AirTracking.StaticAirPocket', logical_value, found)
         if (found) setting%AirTracking%StaticAirPocket = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.StaticAirPocket not found'
+    
+    !% --- AirTracking.UseMinVentArea
+        !%                       UseMinVentArea
+        call json%get('AirTracking.UseMinVentArea', logical_value, found)
+        if (found) setting%AirTracking%UseMinVentArea = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.UseMinVentArea not found'
         
+    !% --- AirTracking.AirVentThroughJM
+        !%                       AirVentThroughJM
+        call json%get('AirTracking.AirVentThroughJM', logical_value, found)
+        if (found) setting%AirTracking%AirVentThroughJM = logical_value
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'AirTracking.AirVentThroughJM not found'
 
     !% BC. =====================================================================
         !%                       BC.TimeSlotsStored
