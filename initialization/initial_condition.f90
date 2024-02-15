@@ -964,10 +964,6 @@ contains
                                                    + link%R(thisLink,lr_Kentry_MinorLoss)
         end if
 
-        !% HACK
-        elemR(firstelem,er_Kconduit_MinorLoss) = elemR(firstelem,er_Kconduit_MinorLoss) &
-                                                   + link%R(thisLink,lr_Kentry_MinorLoss)
-
         tNode => link%I(thisLink,li_Mnode_d)
         if (node%I(tNode,ni_node_type) == nJM) then 
             !% --- this is an inlet to an nJM junction, which uses the exit minor
@@ -3811,7 +3807,15 @@ contains
 
         !% --- self index
         elemSI(JMidx,esi_JB_Main_Index ) = JMidx
-   
+
+        !% --- air initialization for JM
+        elemSR(JMidx,esr_JM_Air_HeadGauge) = zeroR
+        elemSR(JMidx,esr_JM_Air_Mass)      = zeroR
+        elemSR(JMidx,esr_JM_Air_MassInflowRate)  = zeroR
+        elemSR(JMidx,esr_JM_Air_MassOutflowRate) = zeroR
+        elemSR(JMidx,esr_JM_Absolute_Head)       = setting%AirTracking%AtmosphericPressureHead
+        elemSR(JMidx,esr_JM_Absolute_Head_N0)    = setting%AirTracking%AtmosphericPressureHead
+
         !%................................................................
         !% Junction Branches
         !%................................................................
@@ -6456,7 +6460,7 @@ contains
                 print *, 'CODE ERROR in geometry processing for uniform table.'
                 print *, 'tolerance setting is ',uTol
                 print *, 'relative error is ',errorU
-                ! call util_crashpoint(698731)
+                call util_crashpoint(698731)
             end if
         end do
 
@@ -7028,7 +7032,8 @@ contains
         !% Set initial air entrapment conditions
         !%------------------------------------------------------------------
         !% Declarations:
-            integer          :: ii
+            integer          :: ii, elemStart, elemEnd, nElem, fUp, fDn, JBelem
+            integer, pointer :: cIdx(:)
         !%------------------------------------------------------------------
 
         !% initialize elemR
@@ -7052,9 +7057,47 @@ contains
                 airR(ii,:,airR_density)          = setting%AirTracking%AirDensity
                 airR(ii,:,airR_absolute_head_N0) = setting%AirTracking%AtmosphericPressureHead
                 airR(ii,:,airR_absolute_head)    = setting%AirTracking%AtmosphericPressureHead
+                airYN(ii,:,airYN_air_vented_through_UpJM) = .false.
+                airYN(ii,:,airYN_air_vented_through_DnJM) = .false.
                 !% conduitElemMapsI arrays
                 conduitElemMapsI(ii,:,cmi_airpocket_idx)  = zeroI
                 conduitElemMapsI(ii,:,cmi_airpocket_type) = noAirPocket
+
+                !% vented junction map
+                cIdx      => sc_link_Idx(ii,1:links_per_sc(ii))
+                nElem     =  sum(link%I(cIdx,li_N_element))
+                elemStart = conduitElemMapsI(ii,oneI,cmi_elem_idx)
+                elemEnd   = conduitElemMapsI(ii,nElem,cmi_elem_idx)
+
+                !% store the maps of vented junction to the elemI and elemYN array
+                if (elemYN(elemStart,eYN_isElementDownstreamOfJB)) then
+                    !% find the upstream face
+                    fUp    = elemI(elemStart,ei_Mface_uL)
+                    !% find the junction branch upstream of the face
+                    JBelem = faceI(fUp, fi_Melem_uL)
+                    !% find and store the JM index of that corresponding JB
+                    elemI(elemStart,ei_adjacent_JM_idx) = elemSI(JBelem,esi_JB_Main_Index)
+                    !% set the element as junction adjacent
+                    elemYN(elemStart,eYN_is_JunctionAdjacent) = .true.
+                    !% store in airI and airYN arrays
+                    airI(ii,:,airI_Up_JM_idx) = elemI(elemStart,ei_adjacent_JM_idx)
+                    airYN(ii,:,airYN_air_vented_through_UpJM) = .true.
+                end if
+
+                if (elemYN(elemEnd,eYN_isElementUpstreamOfJB)) then
+                    !% find the downstream face
+                    fDn    = elemI(elemEnd,ei_Mface_dL)
+                    !% find the junction branch downstream of the face
+                    JBelem = faceI(fDn, fi_Melem_dL)
+                    !% find and store the JM index of that corresponding JB
+                    elemI(elemEnd,ei_adjacent_JM_idx) = elemSI(JBelem,esi_JB_Main_Index)
+                    !% set the element as junction adjacent
+                    elemYN(elemEnd,eYN_is_JunctionAdjacent) = .true.
+                    !% store in airI and airYN arrays
+                    airI(ii,:,airI_Dn_JM_idx) = elemI(elemEnd,ei_adjacent_JM_idx)
+                    airYN(ii,:,airYN_air_vented_through_DnJM) = .true.
+                end if
+
             end do
         end if
 

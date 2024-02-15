@@ -289,7 +289,12 @@ for profile_name_test in all_attribute_names:
                 # append the nJm heads to a compined list
                 element_air.append(node_elem_air)
 
-                # this should be zero 
+
+
+                node_air_data = 'nodeFV_'+feature+'_AirPressureHead'
+                # retrieve the actual piezometric head data from hdf5
+                node_elem_air = h5_file[node_air_data][:,1]
+                # append
                 element_air_head.append(node_elem_air)
 
                 # now retrieve static dataset for geometry
@@ -583,7 +588,7 @@ for profile_name_test in all_attribute_names:
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
     plt.ylim(min_zbottom-buffer,max_head+buffer)
-    plt.ylim(0,25.0)
+    plt.ylim(0,50.0)
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
     plt.tight_layout()

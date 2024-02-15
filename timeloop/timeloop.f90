@@ -1204,6 +1204,7 @@ contains
 
             elemSR(:,esr_JM_Air_HeadGauge_N0) = elemSR(:,esr_JM_Air_HeadGauge)
             elemSR(:,esr_JM_Air_Mass_N0)      = elemSR(:,esr_JM_Air_Mass)
+            elemSR(:,esr_JM_Absolute_Head_N0) =  elemSR(:,esr_JM_Absolute_Head)
         end if
         !%------------------------------------------------------------------
             if (setting%Debug%File%timeloop) &
