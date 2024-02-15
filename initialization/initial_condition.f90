@@ -7035,6 +7035,14 @@ contains
         elemR(1:size(elemR,1)-1,er_Pressurized_Air)      = zeroR
         elemR(1:size(elemR,1)-1,er_Air_Pressure_Head)    = zeroR
 
+        elemSR(1:size(elemSR,1)-1,esr_JM_Air_HeadGauge)       = zeroR
+        elemSR(1:size(elemSR,1)-1,esr_JM_Air_HeadGauge_N0)    = zeroR
+        elemSR(1:size(elemSR,1)-1,esr_JM_Air_MassInflowRate)  = zeroR
+        elemSR(1:size(elemSR,1)-1,esr_JM_Air_MassOutflowRate) = zeroR
+        elemSR(1:size(elemSR,1)-1,esr_JM_Air_Mass)            = zeroR
+        elemSR(1:size(elemSR,1)-1,esr_JM_Air_Mass_N0)         = zeroR
+
+
         !% set the initial air entrapment values
         if (setting%AirTracking%UseAirTrackingYN) then
             !% cycle through the links to find element air volumes

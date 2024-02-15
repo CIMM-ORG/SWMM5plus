@@ -696,7 +696,13 @@ module define_indexes
    
     !% --- JUNCTION MAIN and STORAGE
     enum, bind(c)
-        enumerator ::  esr_JM_ExternalPondedArea = 1
+        enumerator ::  esr_JM_Air_HeadGauge = 1
+        enumerator ::  esr_JM_Air_HeadGauge_N0
+        enumerator ::  esr_JM_Air_MassInflowRate
+        enumerator ::  esr_JM_Air_MassOutflowRate
+        enumerator ::  esr_JM_Air_Mass
+        enumerator ::  esr_JM_Air_Mass_N0
+        enumerator ::  esr_JM_ExternalPondedArea
         enumerator ::  esr_JM_ExternalPondedDepth
         enumerator ::  esr_JM_ExternalPondedHead
         enumerator ::  esr_JM_ExternalPondedHeadDiff
