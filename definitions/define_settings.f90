@@ -131,12 +131,10 @@ module define_settings
     !% setting%BC%InflowBC
     type InflowBCType
         logical :: UseLinkDistributionTF = .false. !% false is standard node inflows, true uses distribution to links
-        integer :: LinkDistributionMethod = BC_AllUpstreamOpenChannels !% keywords  BC_AllUpstreamOpenChannels BC_AllUpstreamLinks
-        !% -- AllUpstreamOpenChannels distributes inflow to upstream open channels
-        !%    need to create other options, e.g., 
-        !%      (over all upstream links)
-        !%      (over all upstream and downstream links)
-        !%      (over upstream links only for nodes served exclusively by open channels upstream)
+        integer :: LinkDistributionMethod = BC_UpLinkFirstElements ! 
+        !%  BC_UpLinkOpenChannelElements: distributes inflow to upstream open channel elements of all upstream links
+        !%  BC_UpLinkAllElements:         distributes inflow to all elements of all upstream link
+        !%  BC_UpLinkFirstElements:       distributes inflow to the first elements of each upstream link
     end type InflowBCType
 
     !% setting%Limiter%Dt
@@ -174,7 +172,7 @@ module define_settings
     type ManningsNtype
         real(8) :: alpha = 1.0d0
         real(8) :: beta  = 1.0d0
-        real(8) :: FlowReversalFactor = 100.d0 !% multiplier for Manning's n on flow reversal or small velocity
+        real(8) :: FlowReversalFactor = 10.d0 !% multiplier for Manning's n on flow reversal or small velocity
         real(8) :: SmallVelocity      = 1.0d-3 !% small velocity below which Manning's n in increased.
     end type ManningsNtype
 
@@ -1092,14 +1090,16 @@ contains
         call json%get('BC.InflowBC.LinkDistributionMethod', c, found)
         if (found) then            
             call util_lower_case(c)
-            if (c == 'bc_allupstreamopenchannels') then
-                setting%BC%InflowBC%LinkDistributionMethod = BC_AllUpstreamOpenChannels
-            else if (c == 'bc_allupstreamlinks') then
-                setting%BC%InflowBC%LinkDistributionMethod = BC_AllUpstreamLinks
+            if (c == 'bc_uplinkopenchannelelements') then
+                setting%BC%InflowBC%LinkDistributionMethod = BC_UpLinkOpenChannelElements
+            else if (c == 'bc_uplinkallelements') then
+                setting%BC%InflowBC%LinkDistributionMethod = BC_UpLinkAllElements
+            else if (c == 'bc_uplinkfirstelements') then
+                setting%BC%InflowBC%LinkDistributionMethod = BC_UpLinkFirstElements
             else
                 write(*,"(A)") 'Error - json file - BC.InflowBC.LinkDistributionMethod  of ',trim(c)
                 write(*,"(A)") '..is not in allowed options of:'
-                write(*,"(A)") '... BC_AllUpstreamOpenChannels, BC_AllUpstreamLinks'
+                write(*,"(A)") '... BC_UpLinkOpenChannelElements, BC_UpLinkAllElements, BC_UpFirstElements'
                 stop 93773
             end if
         end if

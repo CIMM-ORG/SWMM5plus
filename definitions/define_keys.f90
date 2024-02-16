@@ -190,9 +190,9 @@
         enumerator :: BCH_tseries          !% outfall stage supplied from a time series of elevations
 
         !% --- BC node to link distribution
-        enumerator :: BC_AllUpstreamOpenChannels !% distribute node inflows to all upstream open channels
-        enumerator :: BC_AllUpstreamLinks        !% distribute node inflows to all upstream links
-        enumerator :: BC_AllLinks                !% distribute node inflows to all links (NOT IMPLEMENTED)
+        enumerator :: BC_UpLinkOpenChannelElements !% distribute node inflows to all open channel elements in connected upstream links
+        enumerator :: BC_UpLinkAllElements         !% distribute node inflows to all channel/pipe elements in connected upstream links
+        enumerator :: BC_UpLinkFirstElements       !% distribute node inflows to only first elements of upstream connected links
 
         !% --- Culvert in/out types
         enumerator :: Culvert_Inlet        !% inlet-only element of multi-element culvert
@@ -490,9 +490,9 @@
         reverseKey(BCH_fixed) = 'BCH_fixed'
         reverseKey(BCH_tidal) = 'BCH_tidal'
         reverseKey(BCH_tseries) = 'BCH_tseries'
-        reverseKey(BC_AllUpstreamOpenChannels) = 'BC_AllUpstreamOpenChannels'
-        reverseKey(BC_AllUpstreamLinks) = 'BC_AllUpstreamLinks'
-        reverseKey(BC_AllLinks) = 'BC_AllLinks'
+        reverseKey(BC_UpLinkOpenChannelElements) = 'BC_UpLinkOpenChannelElements'
+        reverseKey(BC_UpLinkAllElements) = 'BC_UpLinkAllElements'
+        reverseKey(BC_UpLinkFirstElements) = 'BC_UpLinkFirstElements'
         reverseKey(Culvert_Inlet) = 'Culvert_Inlet'
         reverseKey(Culvert_Outlet) = 'Culvert_Outlet'
         reverseKey(Culvert_InOut) = 'Culvert_InOut'
@@ -651,9 +651,9 @@
         write(*,'(A," = ",i4)') trim(reverseKey(BCH_normal)) , BCH_normal
         write(*,'(A," = ",i4)') trim(reverseKey(BCH_tidal)) , BCH_tidal
         write(*,'(A," = ",i4)') trim(reverseKey(BCH_tseries)) , BCH_tseries
-        write(*,'(A," = ",i4)') trim(reverseKey(BC_AllUpstreamOpenChannels)), BC_AllUpstreamOpenChannels
-        write(*,'(A," = ",i4)') trim(reverseKey(BC_AllUpstreamLinks)), BC_AllUpstreamLinks
-        write(*,'(A," = ",i4)') trim(reverseKey(BC_AllLinks)), BC_AllLinks
+        write(*,'(A," = ",i4)') trim(reverseKey(BC_UpLinkOpenChannelElements)), BC_UpLinkOpenChannelElements
+        write(*,'(A," = ",i4)') trim(reverseKey(BC_UpLinkAllElements)), BC_UpLinkAllElements
+        write(*,'(A," = ",i4)') trim(reverseKey(BC_UpLinkFirstElements)), BC_UpLinkFirstElements
         write(*,'(A," = ",i4)') trim(reverseKey(BCdn)) , BCdn
         write(*,'(A," = ",i4)') trim(reverseKey(BClat)) , BClat
         write(*,'(A," = ",i4)') trim(reverseKey(BCup)) , BCup
