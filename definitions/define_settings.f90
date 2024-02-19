@@ -501,8 +501,11 @@ module define_settings
 
     ! setting%Junction
     type JunctionType
-        !% 20230405 brh  Default is FALSE to force JM, and TRUE to Force Storage 
-        logical :: ForceNodesJM = .false.  !% forces CC nodes between two conduits to be nJM rather than nJ2 faces
+        !% 20240219 Force JM nodes (no nJ2) until we have fix for inflows
+        !% short term fix would be allow nJ2 wherever there are no inflows
+        !% long term fix requires fixing bug that causes spikes when an inflow is into an conduit/channel
+        !% rather than a node.  Test on calumet_20yr_120min_noOverflow_R18.inp
+        logical :: ForceNodesJM = .true.  !% forces CC nodes between two conduits to be nJM rather than nJ2 faces
         !%                                 !% note CC nodes will only be nJ2 faces if SurchargeDepth = InfinitExtraDepthValue
                                            !% ONLY SET TRUE FOR ALGORITHM TESTING
         !% NOTE ForceStorage must be true as of 20230507. Future extension may include junction solution that does
