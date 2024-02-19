@@ -602,7 +602,7 @@ for profile_name_test in all_attribute_names:
         return line, line2, line3
 
 
-    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=1, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=10, blit=False)
 
     #saving the animation before showing it
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY

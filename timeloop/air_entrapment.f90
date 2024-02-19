@@ -164,29 +164,35 @@ contains
         do mm = 1,Npack
             JMidx = thisJM(mm)
 
+            !% --- compute the air volume
+            volAir = elemR(JMidx,er_FullVolume) - elemR(JMidx,er_Volume)
+
             !% --- cycle if no  air gage pressure and no mass inflow
             if ((elemSR(JMidx,esr_JM_Air_HeadGauge)      == zeroR) .and. &
                 (elemSR(JMidx,esr_JM_Air_MassInflowRate) == zeroR)) then
                 elemR(JMidx,er_Pressurized_Air)   = zeroR
                 elemR(JMidx,er_Air_Pressure_Head) = zeroR
+                elemSR(JMidx,esr_JM_Air_Density)  = setting%AirTracking%AirDensity
+                !% initialize the air mass
+                elemSR(JMidx,esr_JM_Air_Mass)     = volAir * elemSR(JMidx,esr_JM_Air_Density)
+                elemSR(JMidx,esr_JM_Air_Mass_N0)  = elemSR(JMidx,esr_JM_Air_Mass) 
                 elemYN(JMidx,eYN_hasAirPocket)    = .false.
                 cycle 
             end if
 
-            !% --- compute the air volume
-            volAir = elemR(JMidx,er_FullVolume) - elemR(JMidx,er_Volume)
-
             if (volAir .le. zeroR) then 
                 !% --- air pocket has collapsed and JMidx is full of water (incipient surcharging)
                 !%     zero out pocket and cycle to next JMidx
-                elemR(JMidx,er_Head) = elemR(JMidx,er_FullDepth) + elemR(JMidx,er_Zbottom)
+                elemR(JMidx,er_Head) = elemR(JMidx,er_FullDepth) + elemR(JMidx,er_Zbottom) + elemR(JMidx,er_SlotDepth)
                 elemSR(JMidx,esr_JM_Air_HeadGauge) = zeroR
                 elemSR(JMidx,esr_JM_Air_Mass)      = zeroR
+                elemSR(JMidx,esr_JM_Air_Density)   = zeroR
                 cycle
             end if
         
             !% --- compute the mass outflow to atmosphere
             !%     NOTE THIS FUNCTION IS NOT FINISHED, RETURNS ZERO!
+            !% SAZ 02182024: finished the function
             elemSR(JMidx,esr_JM_Air_MassOutflowRate) = airpockets_JM_outflow(JMidx) 
 
             !% --- compute the new air mass in the JMidx
@@ -194,10 +200,14 @@ contains
             elemSR(JMidx,esr_JM_Air_Mass) = max(elemSR(JMidx,esr_JM_Air_Mass_N0) &
                 + crk * dt * ( + elemSR(JMidx,esr_JM_Air_MassInflowRate)     &
                                - elemSR(JMidx,esr_JM_Air_MassOutflowRate)), zeroR)
+            
+            !% update the air density
+            elemSR(JMidx,esr_JM_Air_Density) = elemSR(JMidx,esr_JM_Air_Mass) / volAir
 
             if (elemSR(JMidx,esr_JM_Air_Mass) .le. zeroR) then 
                 !% --- no air pressurization, reset to atmospheric and cycle to next JMidx
                 elemSR(JMidx,esr_JM_Air_HeadGauge) = zeroR
+                elemSR(JMidx,esr_JM_Air_Density)   = zeroR
                 elemR(JMidx,er_Head)  = elemR(JMidx,er_Depth) + elemR(JMidx,er_Zbottom)
                 cycle
             end if
@@ -1142,7 +1152,7 @@ contains
                 if (any(airYN(ii,:,airYN_air_pocket_detected))) then
                     !% air pocket already detected
                     conAir(cIdx) = .true.
-                    ! print*, 'HEEEEEEEEEEEEEEERRRRRRRRRRRREEEEEEEEEEEEEEE'
+
                     do kk = 1,max_airpockets
 
                         !% --- special conditions for upstream and downstream 
@@ -1420,11 +1430,52 @@ contains
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: JMidx
+            real(8), pointer    :: atmHead, ventArea, dishCoeff, rho_a, rho_w
+            real(8), pointer    :: kappa, grav
+            real(8)             :: absHead, ratio, ExpansionFactor
         !%------------------------------------------------------------------
+        !% --- pointers
+        ventArea  => setting%AirTracking%MinimumVentArea
+        atmHead   => setting%AirTracking%AtmosphericPressureHead
+        dishCoeff => setting%AirTracking%AirDischargeCoefficient
+        rho_a     => setting%AirTracking%AirDensity
+        rho_w     => setting%AirTracking%WaterDensity
+        kappa     => setting%AirTracking%PolytropicExponent
+        grav      => setting%constant%gravity
 
-        !% ---- temporarily set to zero
-        airpockets_JM_outflow = zeroR
+        !% --- calculate the absolute head
+        absHead = elemSR(JMidx,esr_JM_Air_HeadGauge) + atmHead
+        !% --- calculate the ratio to the atm head to pressure head at the junction
+        ratio = atmHead / absHead
+        ! !% ---- temporarily set to zero
+        ! airpockets_JM_outflow = zeroR
 
+        !% --- calculate he air outflow
+        if (absHead >= 1.893 * atmHead) then
+            !% chocked air expulsion form the valve
+            if (elemSR(JMidx,esr_JM_Air_Density) > zeroR) then
+                airpockets_JM_outflow =   dishCoeff * ventArea * elemSR(JMidx,esr_JM_Air_Density) &
+                                        * sqrt(grav * (rho_w / elemSR(JMidx,esr_JM_Air_Density) ) &
+                                        * absHead) * sqrt(kappa * (twoR / (kappa + oneR)) ** ((kappa + oneR) / (kappa - oneR)))
+            else
+                airpockets_JM_outflow = zeroR
+            end if
+        else if (absHead > atmHead .and. absHead < 1.893 * atmHead) then
+            !% subsonic air expulsion from the valve
+            if (elemSR(JMidx,esr_JM_Air_Density) > zeroR) then
+                !% find the expansion factor
+                ExpansionFactor = sqrt((kappa / (kappa - oneR)) * (ratio ** (twoR / kappa)) &
+                                    * ((oneR - ratio ** ((kappa - oneR) / kappa)) / (oneR - ratio)))
+                !% find the airflow
+                airpockets_JM_outflow =   dishCoeff * ventArea * ExpansionFactor * elemSR(JMidx,esr_JM_Air_Density) &
+                                      * sqrt(twoR * grav * (rho_w / elemSR(JMidx,esr_JM_Air_Density) ) * abs(absHead - atmHead))
+            else
+                airpockets_JM_outflow = zeroR
+            end if 
+    
+        else
+            airpockets_JM_outflow = zeroR
+        end if
 
     end function airpockets_JM_outflow
 !%    

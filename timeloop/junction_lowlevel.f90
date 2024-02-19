@@ -1550,7 +1550,7 @@ subroutine lljunction_branch_velocity ()
             print *, ' '
             print *, 'Q JB, face up ',elemR(11,er_Flowrate), faceR(elemI(11,ei_Mface_uL),fr_Flowrate)
             print *, 'Q JB, face dn ',elemR(12,er_Flowrate), faceR(elemI(12,ei_Mface_dL),fr_Flowrate)
-            call util_crashpoint(6098723)
+            ! call util_crashpoint(6098723)
         end if
         
         !% --- the proportional fix required

@@ -3813,8 +3813,9 @@ contains
         elemSR(JMidx,esr_JM_Air_Mass)      = zeroR
         elemSR(JMidx,esr_JM_Air_MassInflowRate)  = zeroR
         elemSR(JMidx,esr_JM_Air_MassOutflowRate) = zeroR
-        elemSR(JMidx,esr_JM_Absolute_Head)       = setting%AirTracking%AtmosphericPressureHead
-        elemSR(JMidx,esr_JM_Absolute_Head_N0)    = setting%AirTracking%AtmosphericPressureHead
+        elemSR(JMidx,esr_JM_Air_Density)         = setting%AirTracking%AirDensity
+        elemSR(JMidx,esr_JM_Air_Absolute_Head)       = setting%AirTracking%AtmosphericPressureHead
+        elemSR(JMidx,esr_JM_Air_Absolute_Head_N0)    = setting%AirTracking%AtmosphericPressureHead
 
         !%................................................................
         !% Junction Branches

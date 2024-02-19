@@ -711,10 +711,11 @@ module define_indexes
         enumerator ::  esr_JM_OverflowDepth
         enumerator ::  esr_JM_Present_PlanArea
         enumerator ::  esr_JM_StorageRate
-        enumerator ::  esr_JM_Absolute_Head
-        enumerator ::  esr_JM_Absolute_Head_N0
+        enumerator ::  esr_JM_Air_Absolute_Head
+        enumerator ::  esr_JM_Air_Absolute_Head_N0
         enumerator ::  esr_JM_Air_HeadGauge
         enumerator ::  esr_JM_Air_HeadGauge_N0
+        enumerator ::  esr_JM_Air_Density
         enumerator ::  esr_JM_Air_MassInflowRate
         enumerator ::  esr_JM_Air_Mass
         enumerator ::  esr_JM_Air_Mass_N0

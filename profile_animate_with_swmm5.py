@@ -521,8 +521,8 @@ for profile_name_test in all_attribute_names:
     plt.xlabel('Length along the profile '+Yunit)
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
-    # plt.ylim(min_zbottom-buffer,max_head+buffer)
-    plt.ylim(-65,15)
+    plt.ylim(min_zbottom-buffer,max_head+buffer)
+    # plt.ylim(-65,15)
     plt.legend(loc='lower left')
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
