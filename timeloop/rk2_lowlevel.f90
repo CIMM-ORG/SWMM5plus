@@ -313,15 +313,17 @@ module rk2_lowlevel
 
         !%---------------------------------------------------------------------
             
-        where ((velocity(thisP) > SmallVelocity) .and. (velocityOld(thisP) > SmallVelocity))
+        where (       (abs(velocity   (thisP)) > SmallVelocity) &
+               .and.  (abs(velocityOld(thisP)) > SmallVelocity) &
+               .and.  (velocityOld(thisP) * velocity(thisP) > zeroR))
             !% ---- standard Manning's n approach 
-            !%      for consistent downstream flow
+            !%      for sufficiently large velocities and no reversal
             elemR(thisP,outCol) =                                       &
                     grav * (mn(thisP)**twoR) * abs(velocity(thisP))     &
                     /                                                   &
                     ( rh(thisP)**fourthirdsR )    
         elsewhere
-            !% --- HACK - increasing Manning's n on backflow or reversal
+            !% --- HACK - increasing Manning's n on small velocities or reversal
             !%     using average of last and this velocity along with an
             !%     increased Manning's n factor so that zero
             !%     velocity at one time step will still have a drag component.

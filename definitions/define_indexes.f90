@@ -206,7 +206,7 @@ module define_indexes
         enumerator :: nr_head
         enumerator :: nr_Volume
         enumerator :: nr_Flooding
-        enumerator :: nr_UpLinksFullVolume
+        ! enumerator :: nr_UpLinksFullVolume
         enumerator :: nr_JB_Kfactor
         enumerator :: nr_lastplusone !% must be last enum item
     end enum
@@ -698,7 +698,13 @@ module define_indexes
    
     !% --- JUNCTION MAIN and STORAGE
     enum, bind(c)
-        enumerator ::  esr_JM_ExternalPondedArea = 1
+        enumerator ::  esr_JM_Air_HeadGauge = 1
+        enumerator ::  esr_JM_Air_HeadGauge_N0
+        enumerator ::  esr_JM_Air_MassInflowRate
+        enumerator ::  esr_JM_Air_MassOutflowRate
+        enumerator ::  esr_JM_Air_Mass
+        enumerator ::  esr_JM_Air_Mass_N0
+        enumerator ::  esr_JM_ExternalPondedArea
         enumerator ::  esr_JM_ExternalPondedDepth
         enumerator ::  esr_JM_ExternalPondedHead
         enumerator ::  esr_JM_ExternalPondedHeadDiff
@@ -1228,8 +1234,8 @@ module define_indexes
         enumerator :: fr_Flowrate_Conservative  !% the effective flow rate over the time step N to N+1
         enumerator :: fr_FlowrateMaxDownstream            !% maximum flowrate based on upstream volume/timestep
         enumerator :: fr_FlowrateMaxUpstream            !% minimum flowrate (negative maximum) based on downstream volume/timestep
-        enumerator :: fr_FroudeNumber_d            !% EXPERIMENTAL 20230428
-        enumerator :: fr_FroudeNumber_u            !% EXPERIMENTAL 20230428
+        enumerator :: fr_FroudeNumber_d            !% EXPERIMENTAL 20230428 NOT USED
+        enumerator :: fr_FroudeNumber_u            !% EXPERIMENTAL 20230428 NOT USED
         enumerator :: fr_GammaM                 !% gamma momentum source term
         enumerator :: fr_Head_u                 !% piezometric head on upstream side of face
         enumerator :: fr_Head_d                 !% piezometric head on downstream side of face

@@ -132,8 +132,14 @@ contains
          !integer, dimension(7) :: iet = (/ 9, 10,   12, 11, 13,  22, 23/)
          !integer, dimension(4) :: ift =    (/ 10, 11,          12,  21 /)
 
-         integer, dimension(7) :: iet = (/ 16, 17,   19, 18, 20,  29, 30/)
-         integer, dimension(4) :: ift =    (/ 15, 16,          17,  26 /)
+         !integer, dimension(7) :: iet = (/ 16, 17,   19, 18, 20,  29, 30/)
+         !integer, dimension(4) :: ift =    (/ 15, 16,          17,  26 /)
+
+         ! integer, dimension(5) :: iet = (/ 30,    32, 31, 33,    69 /) !% R17aM
+         ! integer, dimension(5) :: iet2= (/ 60,    34, 31, 33,    69 /) !% R17aM
+
+         integer, dimension(5) :: iet = (/176, 177, 178, 179, 180/) !% 
+         integer, dimension(4) :: ift =    (/ 170, 171, 172,  173 /)
       !%------------------------------------------------------------------
       !% Preliminaries:
       !%------------------------------------------------------------------
@@ -151,7 +157,7 @@ contains
 
      ! return
 
-       if (setting%Time%Step < 123000) return
+      !  if (setting%Time%Step < 123000) return
 
       !   if (setting%Time%Step == 152020) then
       !    stop 880984
@@ -174,6 +180,14 @@ contains
          !    return
          ! end if
 
+         !    print *, 'NODES'
+         ! do ii=1,N_node
+         !    print *, ii, node%I(ii,ni_elem_idx),trim(node%Names(ii)%str), ' ', trim(reverseKey(node%I(ii,ni_node_type))) 
+         ! end do
+
+
+            ! print *, ' '
+
          ! do ii=1,N_elem(1)  
          !    if (elemI(ii,ei_link_Gidx_SWMM) .ne. nullvalueI) then
          !      print *, ii, elemI(ii,ei_link_Gidx_SWMM), 'link ', trim(link%Names(elemI(ii,ei_link_Gidx_SWMM))%str)
@@ -183,6 +197,21 @@ contains
          !    end if
          ! end do
          !    stop 609873
+
+        
+         ! do ii =1,5
+         !    write(*,"(i8.0,A,12i8.0)"), iet(ii), ' : ', elemI(iet(ii),ei_Mface_uL),  iet(ii),  elemI(iet(ii),ei_Mface_dL)
+         !    if (elemI(iet(ii),ei_Mface_uL) .ne. 998877) then
+         !       write(*,"(12i8.0)"), ii, faceI(elemI(iet(ii),ei_Mface_uL),fi_Melem_dL), 998877
+         !    end if
+         !    if (elemI(iet(ii),ei_Mface_dL) .ne. 998877) then
+         !       write(*,"(12i8.0)"), ii, 998877, faceI(elemI(iet(ii),ei_Mface_dL),fi_Melem_uL)
+         !    end if
+         !    print *, ' '
+         ! end do
+      
+         ! stop 5098723
+
 
          ! do ii =1,7
          !    write(*,"(i8.0,A,12i8.0)"), iet(ii), ' : ', elemI(iet(ii),ei_Mface_uL),  iet(ii),  elemI(iet(ii),ei_Mface_dL)
@@ -313,6 +342,53 @@ contains
 
          ! stop 7709874
 
+         write(*,"(A,15f12.3)") 'Head', &
+            elemR(iet(1),er_Head) +95.d0, &
+               faceR(ift(1),fr_Head_d)+95.d0, &
+            elemR(iet(2),er_Head)+95.d0, &
+               faceR(ift(2),fr_Head_d)+95.d0, &
+            elemR(iet(3),er_Head)+95.d0, &
+               faceR(ift(3),fr_Head_d)+95.d0, & 
+            elemR(iet(4),er_Head)+95.d0, &
+               faceR(ift(4),fr_Head_d)+95.d0, &
+            elemR(iet(5),er_Head)+95.d0
+
+         write(*,"(A,15e12.3)") 'Flow', &
+            elemR(iet(1),er_Flowrate), &
+               faceR(ift(1),fr_Flowrate), &
+            elemR(iet(2),er_Flowrate), &
+               faceR(ift(2),fr_Flowrate), &
+            elemR(iet(3),er_Flowrate), &
+               faceR(ift(3),fr_Flowrate), &
+            elemR(iet(4),er_Flowrate), &
+               faceR(ift(4),fr_Flowrate), &
+            elemR(iet(5),er_Flowrate)
+
+         write(*,"(A,15e12.3)") 'Qlat', &
+            elemR(iet(1),er_FlowrateLateral), &
+               0.d0, &
+            elemR(iet(2),er_FlowrateLateral), &
+               0.d0, &
+            elemR(iet(3),er_FlowrateLateral), &
+               0.d0, &
+            elemR(iet(4),er_FlowrateLateral), &
+               0.d0, &
+            elemR(iet(5),er_FlowrateLateral)
+
+         write(*,"(A,15e12.3)") 'Fr  ', &
+            elemR(iet(1),er_FroudeNumber), &
+               0.d0, &
+            elemR(iet(2),er_FroudeNumber), &
+               0.d0, &
+            elemR(iet(3),er_FroudeNumber), &
+               0.d0, &
+            elemR(iet(4),er_FroudeNumber), &
+               0.d0, &
+            elemR(iet(5),er_FroudeNumber) 
+         return
+
+        
+
          !% starting with 5 elem upstream of a junction
 
          ! tempAvg = (elemR(iet(1),er_Head) + elemR(iet(2),er_Head)+ elemR(iet(3),er_Head) &
@@ -320,6 +396,7 @@ contains
          ! print *, 'Average ', tempAvg
 
          ! write(*,"(15A)") '       ', '    elem    ', '    face    ','    elem    ','    face    ','    elem    ','    face    ','    elem    ','    face    ','    elem    ','    face     ', '    JB      ', '    JM     '
+
 
 
          ! write(*,"(A,15f12.3)") 'H-hA', &

@@ -1509,68 +1509,54 @@ subroutine lljunction_branch_velocity ()
             Vzero => setting%ZeroValue%Volume
         !%------------------------------------------------------------------
         !% Preliminaries
+            !% --- Compute change in volume minus a small amount
             !% --- note that this should only be called when Vdelta < Vzero
             !%     Qnet < 0 for net outflow and we will correct to 10*Vzero
+            !%     Here -Vdelta is the volume increase required to maintain a
+            !%     positive small volume when Volume is going negative
             Vdelta = elemR(JMidx,er_Volume_N0) + Qnet*dt - tenR*Vzero
-
-            ! print *, 'Vdelta ',Vdelta 
-
-            if (Vdelta .ge. Vzero) return
+            if (Vdelta .ge. Vzero) return  !% No adjustment required as Volume is increasing
         !%------------------------------------------------------------------   
 
         !% --- get the flowrates of all branch outflows (returns Qout < 0)   
         Qout = lljunction_main_sumBranches_InOrOutFlow &
                 (JMidx,er_Flowrate,elemR,.false.,.true.)
 
-        ! print *, ' '
-        ! print *, 'JMidx looking at drying fix ',JMidx
-        ! print *, 'QJB up ', elemR(11,er_Flowrate)
-        ! print *, 'QJB dn ', elemR(12,er_Flowrate)
-        ! print *, 'lat    ', elemR(10,er_FlowrateLateral)
-        ! print *, 'Qnet   ',Qnet, elemR(11,er_Flowrate) - elemR(12,er_Flowrate)+elemR(10,er_FlowrateLateral)
-        ! print *, 'Volume N0    ', elemR(10,er_Volume_N0)
-        ! print *, 'V + Qnet*dt  ',elemR(10,er_Volume_N0) + Qnet * dt
-        ! print *, ' '
-
-
-        ! print *, 'Qout here1 ',Qout
-
-        !% --- add Qlateral outflow
+        !% --- add Qlateral outflow to the net outflow
         if (elemR(Jmidx,er_FlowrateLateral) < zeroR) then  
             isLateraOutflow = .true.
             Qout = Qout + elemR(Jmidx,er_FlowrateLateral)
         end if     
 
-        ! print *, 'Qout here2 ',Qout
-
-        !% --- error checking
         if (-Qout * dt < -Vdelta) then 
-            print *, 'CODE ERROR: unexpected result in lljunction_main_drying_fix'
-            print *, 'Qout * dt, Vdelt ', Qout * dt , Vdelta
-            print *, ' '
-            print *, 'Q JB, face up ',elemR(11,er_Flowrate), faceR(elemI(11,ei_Mface_uL),fr_Flowrate)
-            print *, 'Q JB, face dn ',elemR(12,er_Flowrate), faceR(elemI(12,ei_Mface_dL),fr_Flowrate)
-            ! call util_crashpoint(6098723)
+            !% --- If the magnitude of the outflow volume is smaller
+            !%     than the volume change (-Vdelta) needed to bring
+            !%     the volume back to a small positive value, then
+            !%     reducing the outflow magnitude cannot bring the
+            !%     volume back to positive, so we simply
+            !%     eliminate all the outflows. The remaining negative
+            !%     volume will need to be handled elsewhere      
+            Qproportion = zeroR
+            if (elemR(Jmidx,er_FlowrateLateral) < zeroR) then
+                elemR(Jmidx,er_FlowrateLateral) = zeroR  
+            end if
+        else 
+            !% --- the proportional fix required
+            !%     Note: is > 0 as Vdelta < 0 and Qout < 0
+            !%     expect abs(Vdelta) < abs(Qout * dt)
+            !%     that is, the allowable volume change is less than out flow
+            Qproportion = Vdelta / (Qout * dt)  
         end if
-        
-        !% --- the proportional fix required
-        !%     Note: is > 0 as Vdelta < 0 and Qout < 0
-        Qproportion = Vdelta / (Qout * dt)    
-        
-        ! print *, 'Qproportion ',Qproportion
         
         do kk=1,max_branch_per_node
             !% --- ignore dummy branches
             if (elemSI(JMidx+kk,esi_JB_Exists) .ne. oneI) cycle
             !% --- ignore inflows
             if (branchsign(kk) * elemR(JMidx+kk,er_Flowrate) .ge. zeroR) cycle
-            
-            !% --- remove old flow from Qnet
+            !% --- remove old outflow from Qnet
             Qnet = Qnet - elemR(JMidx+kk,er_Flowrate)
-            ! print *, 'flowrate before ', elemR(JMidx+kk,er_Flowrate)
             !% --- reduce outflows
             elemR(JMidx+kk,er_Flowrate) =  elemR(JMidx+kk,er_Flowrate) * Qproportion
-            ! print *, 'flowrate after  ', elemR(JMidx+kk,er_Flowrate)
             !% --- add new flow to Qnet
             Qnet = Qnet + elemR(JMidx+kk,er_Flowrate)
         end do
@@ -2981,6 +2967,7 @@ subroutine lljunction_branch_velocity ()
                     elemR(JMidx,er_Flowrate) = zeroR
                 end if
                 elemR(JMidx,er_FroudeNumber) = junctionVelocity / sqrt(setting%Constant%gravity * elemR(JMidx,er_Depth))
+
 
             else
                 !% --- no inflows to provide momentum, 

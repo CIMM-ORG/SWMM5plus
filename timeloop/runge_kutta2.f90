@@ -87,7 +87,7 @@ module runge_kutta2
         !%     for preliminaries
         istep = zeroI
 
-             !call util_utest_CLprint('AAAA start RK2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+            ! call util_utest_CLprint('AAAA start RK2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
 
         !% --- Preliminary values for JM/JB elements
         !%     Note, this must be called even if no JM/JB on this image because 

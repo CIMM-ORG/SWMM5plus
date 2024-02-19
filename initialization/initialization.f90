@@ -950,19 +950,43 @@ contains
                 end select
             end if 
             
-            !% --- nJ2 strictly has one upstream and one downstream link and
-            !%     cannot be a subcatchment outlet  
-            !%     Other cases where an nJ2 has only (i) two upstream and no downstream links,
-            !%     or (ii) two downstream and no upstream links, will be set to nJm
-            if ( (node%I(ii,ni_node_type)  ==  nJ2)             &
-                .and.                                           &
-                    ((node%I(ii,ni_N_link_u)   >   oneI)  .or.  &
-                     (node%I(ii,ni_N_link_d)   >   oneI)  .or.  &
+            !% --- nJ2 strictly:
+            !%     a) has one upstream and one downstream link and
+            !%     b) cannot be a subcatchment outlet  
+            !%     c) cannot have two upstream and no downstream links or vice versa
+            !%     d) cannot required a node inflow and have an upstream conduit
+            if (node%I(ii,ni_node_type)  ==  nJ2) then
+                if ((node%I(ii,ni_N_link_u)   >   oneI)         &
+                     .or.                                       &
+                     (node%I(ii,ni_N_link_d)   >   oneI)        &
+                     .or.                                       &
                      (node%I(ii,ni_routeFrom) .ne. nullvalueI)  &
-                    )                                           &
-                ) then
+                    )  then
                     !% ... switching to a 2 link nJm junction type'
                     node%I(ii, ni_node_type) = nJm
+                else
+                    !% --- no action
+                end if
+
+                !% --- case where upstream pipe has nodal flows must be nJM
+                linkUp => node%I(ii,ni_Mlink_u1)
+                if (linkUp .ne. nullvalueI) then
+                    if ( (link%I(linkUp,li_geometry) == lPipe)      &
+                        .and.                                       &
+                            (node%YN(ii,nYN_has_extInflow)          &
+                            .or.                                    &
+                             node%YN(ii,nYN_has_dwfInflow)          &
+                            )                                       &
+                        ) then 
+                        node%I(ii, ni_node_type) = nJm
+                    else 
+                        !% --- no action
+                    end if
+                else 
+                    !% --- no action
+                end if
+            else 
+                !% --- no action 
             end if
 
             !% ==========================================================================
@@ -1191,6 +1215,7 @@ contains
                         node%I(ii,ni_node_type) = nJm
                     end if
                 end if
+
             end if
 
             !% --- end nJ2, nJm processing
@@ -1207,55 +1232,56 @@ contains
             !% --- calculate the total full volumes of the links upstream of a node
             !%     computed this ONLY where the inflow will be distributed across a link
             !%     this volume will be used later the distribute lateral inflows across links
-            node%R(ii,nr_UpLinksFullVolume) = zeroR
+            !% ARCHIVE 20240216 -- we are distributing only over a single link at this time (BRH)
+            ! node%R(ii,nr_UpLinksFullVolume) = zeroR
 
-            if (node%YN(ii,nYN_has_inflow)) then
-                select case (node%I(ii,ni_node_type))
-                    case (nJ2)
-                        !% --- nJ2 can have only one link
-                        !%     which is added to the volume regardless of whether conduit or channel
-                        link_idx = node%I(ii,ni_Mlink_u1)
-                        node%R(ii,nr_UpLinksFullVolume) = link%R(link_idx,lr_FullArea) * link%R(link_idx,lr_Length) 
-                    case (nJm)
-                        !% --- nJm only gets link info if the UseLinkDistributionTF is true
-                        if (setting%BC%InflowBC%UseLinkDistributionTF) then
-                            !% --- cycle through the upstream links of the node
-                            do jj = 1,node%I(ii,ni_N_link_u)
-                                !% --- identify the link
-                                link_idx = node%I(ii,ni_idx_base1 + jj) 
-                                !% --- nJm can have inflow distributed along multiple links, so we add volumes
-                                select case (setting%BC%InflowBC%LinkDistributionMethod)
-                                    case (BC_AllUpstreamOpenChannels)
-                                        !% --- only calculate the volumes of open channels upstream
-                                        if (link%I(link_idx,li_link_type) == lchannel) then
-                                            !% --- add the the volume of the open channel upstream links
-                                            node%R(ii,nr_UpLinksFullVolume) = node%R(ii,nr_UpLinksFullVolume) &
-                                                + link%R(link_idx,lr_FullArea) * link%R(link_idx,lr_Length)  
-                                        end if
-                                    case (BC_AllUpstreamLinks)
-                                        !%---  add the the volume of all the upstream links
-                                        node%R(ii,nr_UpLinksFullVolume) = node%R(ii,nr_UpLinksFullVolume) &
-                                            + link%R(link_idx,lr_FullArea) * link%R(link_idx,lr_Length)   
-                                    case (BC_AllLinks)
-                                        !% --- not implemented
-                                        print *, 'CODE ERROR: case BC_AllLinks not implemented'
-                                        call util_crashpoint(799872)
-                                    case default
-                                        print *, 'CODE ERROR: unknown case default'
-                                        call util_crashpoint(799873)
-                                end select
-                            end do
-                        else 
-                            !% the uplinks full volume remains zero if UseLinkDistributionTF is false
-                        end if
-                    case (nBCup, nBCdn)
-                        !% --- inflow on face, not through link
-                    case default
-                        print *, 'CODE ERROR: unexpected case default'
-                        call util_crashpoint(4929827)
-                end select
+            ! if (node%YN(ii,nYN_has_inflow)) then
+            !     select case (node%I(ii,ni_node_type))
+            !         case (nJ2)
+            !             !% --- nJ2 can have only one link
+            !             !%     which is added to the volume regardless of whether conduit or channel
+            !             link_idx = node%I(ii,ni_Mlink_u1)
+            !             node%R(ii,nr_UpLinksFullVolume) = link%R(link_idx,lr_FullArea) * link%R(link_idx,lr_Length) 
+            !         case (nJm)
+            !             !% --- nJm only gets link info if the UseLinkDistributionTF is true
+            !             if (setting%BC%InflowBC%UseLinkDistributionTF) then
+            !                 !% --- cycle through the upstream links of the node
+            !                 do jj = 1,node%I(ii,ni_N_link_u)
+            !                     !% --- identify the link
+            !                     link_idx = node%I(ii,ni_idx_base1 + jj) 
+            !                     !% --- nJm can have inflow distributed along multiple links, so we add volumes
+            !                     select case (setting%BC%InflowBC%LinkDistributionMethod)
+            !                         case (BC_AllUpstreamOpenChannels)
+            !                             !% --- only calculate the volumes of only open channels upstream
+            !                             if (link%I(link_idx,li_link_type) == lchannel) then
+            !                                 !% --- add the the volume of the open channel upstream links
+            !                                 node%R(ii,nr_UpLinksFullVolume) = node%R(ii,nr_UpLinksFullVolume) &
+            !                                     + link%R(link_idx,lr_FullArea) * link%R(link_idx,lr_Length)  
+            !                             end if
+            !                         case (BC_AllUpstreamElements)
+            !                             !%---  compute the volume ofthe upstream links
+            !                             node%R(ii,nr_UpLinksFullVolume) = node%R(ii,nr_UpLinksFullVolume) &
+            !                                 + link%R(link_idx,lr_FullArea) * link%R(link_idx,lr_Length)   
+            !                         case (BC_AllLinks)
+            !                             !% --- not implemented
+            !                             print *, 'CODE ERROR: case BC_AllLinks not implemented'
+            !                             call util_crashpoint(799872)
+            !                         case default
+            !                             print *, 'CODE ERROR: unknown case default'
+            !                             call util_crashpoint(799873)
+            !                     end select
+            !                 end do
+            !             else 
+            !                 !% the uplinks full volume remains zero if UseLinkDistributionTF is false
+            !             end if
+            !         case (nBCup, nBCdn)
+            !             !% --- inflow on face, not through link
+            !         case default
+            !             print *, 'CODE ERROR: unexpected case default'
+            !             call util_crashpoint(4929827)
+            !     end select
                 
-            end if
+            ! end if
 
             !% --- note pattern initialization MUST be called after inflows are set
             node%I(ii,ni_pattern_resolution) = interface_get_BC_resolution(ii)
@@ -1265,7 +1291,7 @@ contains
                 link%YN(node%I(ii,ni_Mlink_u1), lYN_is_nj2_connection) = .true.
                 link%YN(node%I(ii,ni_Mlink_d1), lYN_is_nj2_connection) = .true.
             end if
-            
+
         end do
 
         !% MOVED TO init_link_inflow_volumefraction
@@ -3598,8 +3624,8 @@ contains
             linkVolumeTotal = zeroR
 
             select case (setting%BC%InflowBC%LinkDistributionMethod)    
-                case (BC_AllUpstreamOpenChannels)
-                    !% --- sum volumes of the upstream open channels
+                case (BC_UpLinkOpenChannelElements)
+                    !% --- sum volumes of the upstream open channels connected to the node
                     do kk=1,max_up_branch_per_node
                         linkUp(kk) = node%I(ii,ni_idx_base1+kk) !% ADDBRANCH
                         if ((linkUp(kk) .le. 0) .or. (linkUp(kk) .eq. nullvalueI)) cycle
@@ -3612,6 +3638,8 @@ contains
                     end do
 
                     !% -- get the inflow volume fractions
+                    !%     Note this is recomputed in ic_phantom_link_distributed_inflow
+                    !%     when a phantom link is involved
                     if (linkVolumeTotal > zeroR) then
                         do kk=1,max_up_branch_per_node
                             if ((linkUp(kk) .le. 0) .or. (linkUp(kk) .eq. nullvalueI)) cycle
@@ -3628,7 +3656,7 @@ contains
                         call util_crashpoint(7109873) 
                     end if
 
-                case (BC_AllUpstreamLinks)
+                case (BC_UpLinkAllElements, BC_UpLinkFirstElements)
 
                     !% --- sum volumes of the upstream open channels and conduits
                     do kk=1,max_up_branch_per_node
@@ -3646,6 +3674,8 @@ contains
                     end do
                     
                     !% --- get the inflow volume fractions
+                    !%     Note this is recomputed in ic_phantom_link_distributed_inflow
+                    !%     when a phantom link is involved
                     if (linkVolumeTotal > zeroR) then
                         do kk=1,max_up_branch_per_node    
                             if ((linkUp(kk) .le. 0) .or. (linkUp(kk) .eq. nullvalueI)) cycle

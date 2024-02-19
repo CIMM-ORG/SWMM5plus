@@ -5465,79 +5465,112 @@ contains
             integer          :: nidx, kk 
             integer, pointer :: ntype, linkIdx, linkUp, nodeUp
             real(8)          :: Vol1, Vol2
+            logical          :: foundLink
         !%------------------------------------------------------------------
 
         !NOTE node%YN(:,nYN_isLinkFlow) is already set in init_linkInflows
 
         do nidx = 1,N_node
+            foundLink = .false.
             if (node%YN(nidx,nYN_has_extInflow) .or. node%YN(nidx,nYN_has_dwfInflow)) then 
                 ntype => node%I(nidx, ni_node_type)
 
                 !% --- handle different types of nodes
+                !%     This allows lateral inflows to be set either to the nodes or to all the upstream links
+                !%     connecting to a node.
+                !%     NOTE this does NOT handle the subdivision of lateral inflows to elements
                 select case (ntype)
                     case (nJm)
-                        if (.not. setting%BC%InflowBC%UseLinkDistributionTF) exit !% exit the select
+                        !% --- use standard node inflow unless the UseLinkDistributionTF is true
+                        if (.not. setting%BC%InflowBC%UseLinkDistributionTF) exit 
 
                         !% --- handle different approaches to link flows
                         select case (setting%BC%InflowBC%LinkDistributionMethod)
-                            case (BC_AllUpstreamOpenChannels,BC_AllUpstreamLinks)
-                                !% --- note this works over both BC types because
-                                !%     the LinkVolumeFraction is set depending on 
-                                !%     the LinkDistributionMethod
-                                !% --- cycle over the upstream links of the present node
-                                !%     to find links included in lateral inflow
+                            case (BC_UpLinkAllElements, &
+                                  BC_UpLinkFirstElements  )
+                                do kk=1,node%I(nidx,ni_N_link_u)
+                                    linkIdx => node%I(nidx,ni_idx_base1 + kk)
+                                    if ((link%I(linkIdx,li_geometry) == lPipe) .or. &
+                                        (link%I(linkIdx,li_geometry) == lChannel)       ) then 
+                                       !% --- continue 
+                                    else 
+                                        link%YN(linkIdx,lYN_hasLateralInflow) = .false.
+                                        cycle
+                                    end if 
+                                    if (link%R(linkIdx,lr_InflowVolumeFraction) .le. zeroR) then
+                                        link%YN(linkIdx,lYN_hasLateralInflow) = .false.
+                                        cycle
+                                    else
+                                        foundLink = .true.
+                                        node%YN  (nidx   ,nYN_isLinkFlow)        = .true.
+                                        link%YN  (linkIdx,lYN_hasLateralInflow)  = .true.  
+                                        link%I   (linkIdx,li_lateralInflowNode)  = nidx    !% connected inflow node
+                                    end if
+                                    if ((setting%BC%InflowBC%LinkDistributionMethod == BC_UpLinkAllElements) &
+                                        .and.&
+                                        (link%YN(linkIdx,lYN_isPhantomLink)) ) then 
+                                            call ic_phantom_link_distributed_inflow (linkIdx,nidx)
+                                    else
+                                        !% no action
+                                    end if
+                                end do
+                                if (.not. foundLink) then 
+                                    !% --- if no link has been found then use node inflow
+                                    node%YN(nidx,nYN_isLinkFlow) = .false.
+                                    print *, 'CODE ERROR: attempt to distribute node inflows to links using'
+                                    print *, 'the setting.BC.InflowBC.UseLinkDistributionTF as failed because'
+                                    print *, 'a suitable upstream link could not be found.'
+                                    print *, 'Code needs to be modified to handle this condition.'
+                                    print *, 'Changes need to make sure this node gets added back into the'
+                                    print *, 'list of node inflows'
+                                    print *, 'Node index ', nidx 
+                                    print *, 'Node name  ', trim(node%Names(nidx)%str)
+                                    call util_crashpoint(7908734)
+                                end if
+
+                            case (BC_UpLinkOpenChannelElements)
                                 do kk=1,node%I(nidx,ni_N_link_u)
                                     linkIdx => node%I(nidx,ni_idx_base1 + kk)
                                     !% --- identify upstream nodes with valid volume fraction
-                                    if (link%R(linkIdx,lr_InflowVolumeFraction) > zeroR) then 
-                                        !% --- true for node if any valid link found
+                                    if ((link%I(linkIdx,li_geometry) == lChannel)) then 
+                                        !% --- continue
+                                    else 
+                                        link%YN(linkIdx,lYN_hasLateralInflow) = .false.
+                                        cycle
+                                    end if 
+                                    if (link%R(linkIdx,lr_InflowVolumeFraction) .le. zeroR) then 
+                                        !% --- only set this link to false 
+                                        !%     (other link trues may affect node and BC)
+                                        link%YN(linkIdx,lYN_hasLateralInflow) = .false.     
+                                        cycle
+                                    else 
+                                       !% --- true for node if any valid link found
+                                        foundLink = .true.
                                         node%YN  (nidx   ,nYN_isLinkFlow)        = .true.
                                         link%YN  (linkIdx,lYN_hasLateralInflow)  = .true.  
                                         link%I   (linkIdx,li_lateralInflowNode)  = nidx    !% connected inflow node
                                         !% --- check whether this is a phantom link
-                                        !%     if so, then the node inflow is also distributed over the
-                                        !%     next upstream link.  
-                                        !%     Note that volume fractions for phantom and spanning links are taken
-                                        !%     care of in phantom_node_generator of BIPquick
                                         if (link%YN(linkIdx,lYN_isPhantomLink)) then 
-                                            !% --- inflow is distributed also to upstream link
-                                            !%     get the upstream node
-                                            nodeUp => link%I(linkIdx,li_Mnode_u)
-                                            !% --- Node must be nJ2 or there is a logic problem
-                                            if (node%I(nodeUp,ni_node_type) .ne. nJ2) then 
-                                                print *, 'CODE ERROR: node upstream of phantom link has wrong type '
-                                                call util_crashpoint(6109873)
-                                            end if
-                                            !% --- upstream link of the phantom node
-                                            linkUp => node%I(nodeUp ,ni_Mlink_u1)
-                                            !% --- upstream link should have link volume fraction, or there is a logic problem
-                                            if (link%R(linkUp,lr_InflowVolumeFraction) .eq. zeroR) then 
-                                                print *, 'CODE ERROR: spanning link should have volume fraction for node flow distribution'
-                                                call util_crashpoint(70109873)
-                                            end if
-                                            !% --- assign this upstream link as lateral inflow
-                                            link%YN(linkUp,lYN_hasLateralInflow) = .true.
-                                            !% --- assign the further downstream node as the connected inflow
-                                            !%     This is NOT the nodeUp, which is a phantom nJ2 node and is
-                                            !%     not in the flowBCnode set
-                                            link%I(linkUp,li_lateralInflowNode)  = nidx
+                                            call ic_phantom_link_distributed_inflow(linkIdx,nidx)
                                         else 
                                             !% --- if not phantom, no other action
                                         end if
-                                    else 
-                                        !% --- only set this link to false 
-                                        !%     (other link trues may affect node and BC)
-                                        link%YN(linkIdx,lYN_hasLateralInflow) = .false.
                                     end if
                                 end do
-
-                            case (BC_AllLinks)
-                                !% --- FUTURE: this could use the base code above, but
-                                !%     also needs to handle downstream, so probably need
-                                !%     to create a function call that works for both upstream
-                                !%     and downstream
-                                print *, 'CODE ERROR: BC_AllLinks not implemented'
-                                call util_crashpoint(1018763)
+                                if (.not. foundLink) then 
+                                    !% --- if no link has been found then use node inflow
+                                    node%YN(nidx,nYN_isLinkFlow) = .false.
+                                    node%YN(nidx,nYN_isLinkFlow) = .false.
+                                    print *, 'CODE ERROR: attempt to distribute node inflows to links using'
+                                    print *, 'the setting.BC.InflowBC.UseLinkDistributionTF as failed because'
+                                    print *, 'a suitable upstream link could not be found.'
+                                    print *, 'Code needs to be modified to handle this condition.'
+                                    print *, 'Changes need to make sure this node gets added back into the'
+                                    print *, 'list of node inflows'
+                                    print *, 'Node index ', nidx 
+                                    print *, 'Node name  ', trim(node%Names(nidx)%str)
+                                    call util_crashpoint(9098474)
+                                end if
                             case default 
                                 print *, 'CODE ERROR: unexpected case default'
                                 call util_crashpoint(7019873)
@@ -5581,28 +5614,17 @@ contains
                                 call util_crashpoint(2309874)
                             end if
                         else 
-                            !% --- handle phantom link upstream of nJ2
-                            !%     get the next upstream (phantom) node
-                            nodeUp => link%I(linkIdx,li_Mnode_u)
-                            if (node%I(nodeUp,ni_node_type) .ne. nJ2) then 
-                                print *, 'CODE ERROR: node upstream of phantom link has wrong type '
-                                call util_crashpoint(6109898)
-                            end if
-                            !% --- upstream link of the phantom node
-                            linkUp => node%I(nodeUp ,ni_Mlink_u1)
-                            !% --- upstream link should have link volume fraction, or there is a logic problem
-                            if (link%R(linkUp,lr_InflowVolumeFraction) .eq. zeroR) then 
-                                print *, 'CODE ERROR: spanning link should have volume fraction for node flow distribution'
-                                call util_crashpoint(7098817)
-                            end if
-                            !% --- set consistent volume fractions over the two links
-                            Vol1 = link%R(linkIdx,lr_FullArea) * link%R(linkIdx,lr_Length)
-                            Vol2 = link%R(linkUp ,lr_FullArea) * link%R(linkUp ,lr_Length)
-                            link%R(linkIdx,lr_InflowVolumeFraction) = Vol1 / (Vol1 + Vol2)
-                            link%R(linkUp ,lr_InflowVolumeFraction) = Vol2 / (Vol1 + Vol2)
-                            !% --- set the spanning link to lateral inflow
-                            link%YN  (linkUp,lYN_hasLateralInflow) = .true.
-                            link%I   (linkUp,li_lateralInflowNode) = nidx
+                            !% --- handle phantom nodes
+                            select case (setting%BC%InflowBC%LinkDistributionMethod)
+                            case (BC_UpLinkAllElements, &
+                                  BC_UpLinkOpenChannelElements )
+                                call ic_phantom_link_distributed_inflow(linkIdx,nidx)
+                            case (BC_UpLinkFirstElements )
+                                !%  --- no action
+                            case default
+                                print *, 'CODE ERROR: unexpected case default'
+                                call util_crashpoint(2610975)
+                            end select
                         end if
 
                     case (nBCdn)
@@ -5645,12 +5667,28 @@ contains
                 L2 => link%I(lidx,li_last_elem_idx)
                 !% --- check if link is a lateral inflow
                 if (link%YN(lidx,lYN_hasLateralInflow)) then 
-                    elemYN(L1:L2,eYN_hasLateralInflow)  = .true.
-                    elemI (L1:L2,ei_lateralInflowNode)  = link%I(lidx,li_lateralInflowNode)
-                    !% --- set the inflow fraction in each element upstream
-                    elemR (L1:L2,er_InflowVolumeFraction)                          &
-                        = link%R(lidx,lr_InflowVolumeFraction)                     &
-                          * (elemR(L1:L2,er_Length)) / sum(elemR(L1:L2,er_Length))     
+                    !% --- distribute lateralinflow depending on case
+                    !%     either all elements or only open channel elements
+                    select case (setting%BC%InflowBC%LinkDistributionMethod)
+                        case (BC_UpLinkAllElements,BC_UpLinkOpenChannelElements) 
+                            !% --- all the link elements have the inflow
+                            elemYN(L1:L2,eYN_hasLateralInflow)  = .true.
+                            elemI (L1:L2,ei_lateralInflowNode)  = link%I(lidx,li_lateralInflowNode)     
+                            !% --- set the inflow fraction in each element upstream
+                            elemR (L1:L2,er_InflowVolumeFraction)                          &
+                                = link%R(lidx,lr_InflowVolumeFraction)                     &
+                                * (elemR(L1:L2,er_Length)) / sum(elemR(L1:L2,er_Length)) 
+                        case (BC_UpLinkFirstElements)    
+                            !% --- only the first upstream element has the inflow
+                            elemYN(L2,     eYN_hasLateralInflow) = .true.
+                            elemYN(L1:L2-1,eYN_hasLateralInflow) = .false.
+                            elemI (L2,ei_lateralInflowNode)  = link%I(lidx,li_lateralInflowNode)     
+                            !% --- set the inflow fraction in each element upstream
+                            elemR (L1:L2,er_InflowVolumeFraction)  = oneR
+                        case default
+                            print *, 'CODE ERROR: Unexpected case default'
+                            call util_crashpoint(709873)
+                    end select
                 else
                     elemYN(L1:L2,eYN_hasLateralInflow) = .false.
                 end if
@@ -5658,6 +5696,8 @@ contains
         end if
 
         !% --- find all elements that are nJm nodes with lateral inflow
+        !%     Note that if setting%BC%InflowBC%UseLinkDistributionTF=true then
+        !%     inflows are assigned to links
         if (N_flowBCnode > 0) then 
             do ii = 1,N_flowBCnode
                 nidx => node%P%have_flowBC(ii)
@@ -5746,7 +5786,9 @@ contains
                                 !% --- handle nodes inflows that are pushed to links
                                 select case (setting%BC%InflowBC%LinkDistributionMethod)
 
-                                    case (BC_AllUpstreamOpenChannels,BC_AllUpstreamLinks)
+                                    case (BC_UpLinkOpenChannelElements, &
+                                          BC_UpLinkAllElements, &
+                                          BC_UpLinkFirstElements )
                                         !% --- cycle over the upstream nodes the present node
                                         !%     to assign the BC(bidx) associated with the link
                                         !%     and BC(:,bYN_isLinkFlow) if lateral flow occurs
@@ -5788,13 +5830,6 @@ contains
                                             end if
                                         end do
 
-                                    case (BC_AllLinks)
-                                        !% --- FUTURE: this could use the base code above, but
-                                        !%     also needs to handle downstream, so probably need
-                                        !%     to create a function call that works for both upstream
-                                        !%     and downstream
-                                        print *, 'CODE ERROR: BC_AllLinks not implemented'
-                                        call util_crashpoint(1018763)
                                     case default 
                                         print *, 'CODE ERROR: unexpected case default'
                                         call util_crashpoint(7019873)
@@ -7041,6 +7076,14 @@ contains
         elemR(1:size(elemR,1)-1,er_Pressurized_Air)      = zeroR
         elemR(1:size(elemR,1)-1,er_Air_Pressure_Head)    = zeroR
 
+        elemSR(1:size(elemSR,1)-1,esr_JM_Air_HeadGauge)       = zeroR
+        elemSR(1:size(elemSR,1)-1,esr_JM_Air_HeadGauge_N0)    = zeroR
+        elemSR(1:size(elemSR,1)-1,esr_JM_Air_MassInflowRate)  = zeroR
+        elemSR(1:size(elemSR,1)-1,esr_JM_Air_MassOutflowRate) = zeroR
+        elemSR(1:size(elemSR,1)-1,esr_JM_Air_Mass)            = zeroR
+        elemSR(1:size(elemSR,1)-1,esr_JM_Air_Mass_N0)         = zeroR
+
+
         !% set the initial air entrapment values
         if (setting%AirTracking%UseAirTrackingYN) then
             !% cycle through the links to find element air volumes
@@ -7095,6 +7138,49 @@ contains
         end if
 
     end subroutine init_IC_air_entrapment
+!%
+!%==========================================================================       
+!%==========================================================================
+!%   
+    subroutine ic_phantom_link_distributed_inflow (linkIdx, nidx)
+        !%------------------------------------------------------------------
+        !% Description
+        !% ensures that a distributed inflow is over the entire link
+        !% when a phantom link is involved
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, intent(in) :: linkIdx, nidx
+            integer, pointer    :: nodeUp, linkUp
+            real(8)             :: Vol1, Vol2
+        !%------------------------------------------------------------------
+                                            
+        nodeUp => link%I(linkIdx,li_Mnode_u)
+        !% --- Node must be nJ2 or there is a logic problem
+        if (node%I(nodeUp,ni_node_type) .ne. nJ2) then 
+            print *, 'CODE ERROR: node upstream of phantom link has wrong type '
+            call util_crashpoint(6109873)
+        end if
+        !% --- upstream link of the phantom node
+        linkUp => node%I(nodeUp ,ni_Mlink_u1)
+        !% --- upstream link should have link volume fraction, or there is a logic problem
+        if (link%R(linkUp,lr_InflowVolumeFraction) .eq. zeroR) then 
+            print *, 'CODE ERROR: spanning link should have volume fraction for node flow distribution'
+            call util_crashpoint(70109873)
+        end if
+        !% --- assign this upstream link as lateral inflow
+        link%YN(linkUp,lYN_hasLateralInflow) = .true.
+        !% --- assign the further downstream node as the connected inflow
+        !%     This is NOT the nodeUp, which is a phantom nJ2 node and is
+        !%     not in the flowBCnode set
+        link%I(linkUp,li_lateralInflowNode)  = nidx
+
+        !% --- set consistent volume fractions over the two links
+        Vol1 = link%R(linkIdx,lr_FullArea) * link%R(linkIdx,lr_Length)
+        Vol2 = link%R(linkUp ,lr_FullArea) * link%R(linkUp ,lr_Length)
+        link%R(linkIdx,lr_InflowVolumeFraction) = Vol1 / (Vol1 + Vol2)
+        link%R(linkUp ,lr_InflowVolumeFraction) = Vol2 / (Vol1 + Vol2)
+
+    end subroutine ic_phantom_link_distributed_inflow
 !%
 !%==========================================================================       
 !%==========================================================================
