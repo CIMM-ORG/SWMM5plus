@@ -488,8 +488,8 @@ contains
         !%------------------------------------------------------------------
             integer, intent (in) :: sc_Idx, aIdx, istep
             integer, pointer     :: elemStartIdx, elemEndIdx, faceUp, faceDn
-            real(8), pointer     :: airVolume, inflow, outflow, airDensity
-            real(8), pointer     :: airMass, absHead, gaugeHead, atmHead, rho_a
+            real(8), pointer     :: airVolume, inflow, outflow, airDensity, airMass_N0
+            real(8), pointer     :: airMass, absHead, gaugeHead, atmHead, rho_a, absHead_N0
             real(8), pointer     :: elemVol(:), fullVol(:), faceFlow(:)
             logical, pointer     :: isAirPocket, newAirPocket
 
@@ -503,9 +503,11 @@ contains
             airVolume     => airR(sc_Idx,aIdx,airR_volume)
             airDensity    => airR(sc_Idx,aIdx,airR_density)
             airMass       => airR(sc_Idx,aIdx,airR_mass)
+            airMass_N0    => airR(sc_Idx,aIdx,airR_mass_N0)
             inflow        => airR(sc_Idx,aIdx,airR_inflow)
             outflow       => airR(sc_Idx,aIdx,airR_outflow)
             absHead       => airR(sc_Idx,aIdx,airR_absolute_head)
+            absHead_N0    => airR(sc_Idx,aIdx,airR_absolute_head_N0)
             gaugeHead     => airR(sc_Idx,aIdx,airR_gauge_head)
             isAirPocket   => airYN(sc_Idx,aIdx,airYN_air_pocket_detected)
             newAirPocket  => airYN(sc_Idx,aIdx,airYN_new_air_pocket)
@@ -529,10 +531,12 @@ contains
                 gaugeHead     = zeroR
                 airDensity    = rho_a
                 absHead       = atmHead
+                absHead_N0    = atmHead
                 !% calculate the air pocket volume from empty space
                 airVolume  = max(sum(fullVol(pElem) - elemVol(pElem)), zeroR)
                 !% for a new pocket formulation save the older values
                 airMass      = airDensity * airVolume
+                airMass_N0   = airMass
                 !% copy over the flow data
                 inflow     = faceFlow(faceUp)
                 outflow    = faceFlow(faceDn) 
@@ -551,11 +555,13 @@ contains
             !% if there is not an airpocket present, zero out the values
             airVolume   = zeroR
             airMass     = zeroR
+            airMass_N0  = zeroR
             inflow      = zeroR
             outflow     = zeroR
             gaugeHead   = zeroR
             airDensity  = rho_a
             absHead     = atmHead
+            absHead_N0  = atmHead
         end if
 
     end subroutine airpocket_initialization
@@ -601,7 +607,7 @@ contains
             integer, pointer     :: pocketType, elemStartIdx, elemEndIdx
             real(8), pointer     :: massOutflow, absHead, dt, kappa, atmHead, airDensity
             real(8), pointer     :: dishCoeff, rho_w, rho_a, grav, minVentArea, airMass
-            logical, pointer     :: isAirPocket, UseMinVentArea
+            logical, pointer     :: isAirPocket, JunctionVent
         !%------------------------------------------------------------------
         !% Aliases
             pocketType   => airI(sc_Idx,aIdx,airI_type)
@@ -621,7 +627,7 @@ contains
             rho_w        => setting%AirTracking%WaterDensity
             rho_a        => setting%AirTracking%AirDensity
             minVentArea  => setting%AirTracking%MinimumVentArea
-            UseMinVentArea => setting%AirTracking%UseMinVentArea
+            JunctionVent => setting%AirTracking%AirVentThroughJM
 
         !% calculate the new air reseale rate from the opening
         !% calculate the new airpocket pressure head
@@ -634,7 +640,7 @@ contains
 
                 case (upReleaseAirpocket)
 
-                    if (UseMinVentArea) then
+                    if (.not. JunctionVent) then
                         areaOpening = minVentArea
                     else
                         areaOpening = max(elemR(elemStartIdx,er_FullArea) - elemR(elemStartIdx,er_Area), zeroR)
@@ -642,7 +648,7 @@ contains
                     
                 case (dnReleaseAirpocket)      
 
-                    if (UseMinVentArea) then
+                    if (.not. JunctionVent) then
                         areaOpening = minVentArea
                     else
                         areaOpening = max(elemR(elemEndIdx,er_FullArea) - elemR(elemEndIdx,er_Area), zeroR)
@@ -777,7 +783,9 @@ contains
                 alpha = (kappa / airVolume) * dvdt
                 beta  = (kappa / airMass)   * dmdt
 
-                !% find the absolute head 
+                !% find the absolute head  
+                ! absHead = absHead_N0 * (oneR + dt * crk * (oneR - theta) * (- alpha + beta)) / (oneR - dt * crk * theta * (- alpha + beta))
+
                 absHead = absHead * (oneR + dt * onehalfR * (oneR - theta) * (- alpha + beta)) / (oneR - dt * onehalfR * theta * (- alpha + beta))
                 
                 !% find the gauge pressure head
@@ -826,6 +834,8 @@ contains
         if (isAirPocket) then
 
             !% timemarch air mass through mass flowrate
+            ! airMass = airMass_N0 + dt * crk * massOutflow
+
             airMass = airMass + dt * onehalfR * massOutflow
 
             !% limit air mass
@@ -848,34 +858,34 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine airpockets_volume_update (sc_Idx, aIdx, istep)
-        !%------------------------------------------------------------------
-        !% Description:
-        !%   Timemarch airpocket volume
-        !%------------------------------------------------------------------
-            integer, intent (in) :: sc_Idx, aIdx, istep
-            real(8)              :: tempVol
-            real(8), pointer     :: airVolume, dvdt, airVolume_N0, dt, crk(:)
-            logical, pointer     :: isAirPocket
-        !%------------------------------------------------------------------
-        !% Aliases
-            airVolume    => airR(sc_Idx,aIdx,airR_volume)
-            dvdt         => airR(sc_Idx,aIdx,airR_dvdt)
-            airVolume_N0 => airR(sc_Idx,aIdx,airR_volume_N0)
-            isAirPocket  => airYN(sc_Idx,aIdx,airYN_air_pocket_detected)
-            dt           => setting%Time%Hydraulics%Dt
-            crk          => setting%Solver%crk2
+    ! subroutine airpockets_volume_update (sc_Idx, aIdx, istep)
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !%   Timemarch airpocket volume
+    !     !%------------------------------------------------------------------
+    !         integer, intent (in) :: sc_Idx, aIdx, istep
+    !         real(8)              :: tempVol
+    !         real(8), pointer     :: airVolume, dvdt, airVolume_N0, dt, crk(:)
+    !         logical, pointer     :: isAirPocket
+    !     !%------------------------------------------------------------------
+    !     !% Aliases
+    !         airVolume    => airR(sc_Idx,aIdx,airR_volume)
+    !         dvdt         => airR(sc_Idx,aIdx,airR_dvdt)
+    !         airVolume_N0 => airR(sc_Idx,aIdx,airR_volume_N0)
+    !         isAirPocket  => airYN(sc_Idx,aIdx,airYN_air_pocket_detected)
+    !         dt           => setting%Time%Hydraulics%Dt
+    !         crk          => setting%Solver%crk2
         
-        !% update the new volume based on inflow and outflow outflow
-        if (isAirPocket) then
+    !     !% update the new volume based on inflow and outflow outflow
+    !     if (isAirPocket) then
 
-            airVolume = airVolume_N0 + crk(istep) * dt * dvdt
-            !% limit air volume
-            airVolume = max(airVolume, zeroR)
+    !         airVolume = airVolume_N0 + crk(istep) * dt * dvdt
+    !         !% limit air volume
+    !         airVolume = max(airVolume, zeroR)
 
-        end if
+    !     end if
 
-    end subroutine airpockets_volume_update
+    ! end subroutine airpockets_volume_update
 !%    
 !%==========================================================================
 !%==========================================================================
