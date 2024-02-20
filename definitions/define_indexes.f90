@@ -313,6 +313,7 @@ module define_indexes
          enumerator :: ei_node_Gidx_SWMM            !% node index from global SWMM network  (static)
          enumerator :: ei_node_Gidx_BIPquick        !% node index from global BIPquick network  (static)
          enumerator :: ei_adjacent_JM_idx           !% if the link elem connected to a JM, then the JM idx
+         enumerator :: ei_adjacent_JB_idx           !% if the link elem connected to a JM, then the JB idx
          enumerator :: ei_QeqType                   !% KEY type of flow equation (static)     
          enumerator :: ei_Temp01                    !% temporary array
          enumerator :: ei_Temp02
@@ -619,6 +620,8 @@ module define_indexes
         enumerator ::  esi_JB_Diag_adjacent            !% assigned 1 if Diagnostic is adjacent element
         enumerator ::  esi_JB_CanModifyQ               !% assigned 1 if junction mass residual can modifyQ
         enumerator ::  esi_JB_Link_Connection          !% the link index connected to that junction branch
+        enumerator ::  esi_JB_vLink_Connection
+        enumerator ::  esi_JB_air_pocket_index 
         enumerator ::  esi_JB_Main_Index               !% elem idx of the junction main for this branch
         enumerator ::  esi_JB_IsUpstream               !% 1 if this is an upstream branch, 0 if downstream
         enumerator ::  esi_JB_lastplusone !% must be last enum item
@@ -700,13 +703,15 @@ module define_indexes
     enum, bind(c)
         enumerator ::  esr_JM_Air_HeadGauge = 1
         enumerator ::  esr_JM_Air_HeadGauge_N0
-        enumerator ::  esr_JM_Air_Absolute_Head
-        enumerator ::  esr_JM_Air_Absolute_Head_N0
+        enumerator ::  esr_JM_Air_HeadAbsolute
+        enumerator ::  esr_JM_Air_HeadAbsolute_N0
         enumerator ::  esr_JM_Air_Density
         enumerator ::  esr_JM_Air_MassInflowRate
         enumerator ::  esr_JM_Air_MassOutflowRate
         enumerator ::  esr_JM_Air_Mass
         enumerator ::  esr_JM_Air_Mass_N0
+        enumerator ::  esr_JM_Air_Volume
+        enumerator ::  esr_JM_Air_Volume_N0
         enumerator ::  esr_JM_ExternalPondedArea
         enumerator ::  esr_JM_ExternalPondedDepth
         enumerator ::  esr_JM_ExternalPondedHead
@@ -720,6 +725,7 @@ module define_indexes
         enumerator ::  esr_JM_OverflowDepth
         enumerator ::  esr_JM_Present_PlanArea
         enumerator ::  esr_JM_StorageRate
+        enumerator ::  esr_JB_Air_Volume
         enumerator ::  esr_JB_Kfactor
         enumerator ::  esr_JB_fa !% constant factor in dQdH
         enumerator ::  esr_JB_fb !% linear factor in dQdH
@@ -1269,6 +1275,7 @@ module define_indexes
         enumerator :: fYN_isnull
         enumerator :: fYN_isPSsurcharged
         enumerator :: fYN_isAirflowBlocked
+        enumerator :: fYN_isAirPressurized
         enumerator :: fYN_isDownstreamJBFace
         enumerator :: fYN_isUpstreamJBFace
         enumerator :: fYN_isFaceOut
@@ -1305,6 +1312,7 @@ module define_indexes
         enumerator :: fp_JB_bothsides_are_zero_IorS !% JB on one side and both sides are zero depth
         enumerator :: fp_JumpDn_IorS                 !% face with hydraulic jump from nominal downstream to upstream
         enumerator :: fp_JumpUp_IorS                 !% face with hydraulic jump from nominal upstream to downstream
+        enumerator :: fp_Airpockets                  !% face with elements containing pressurized air
 
         !% ==========================================
         !% --- STATIC packed maps that cannot be used with up/down element mapping and are only used with faceP array
@@ -1687,7 +1695,9 @@ module define_indexes
         enumerator :: airI_face_dn
         enumerator :: airI_type
         enumerator :: airI_Up_JM_idx
+        enumerator :: airI_Up_JB_idx
         enumerator :: airI_Dn_JM_idx
+        enumerator :: airI_Dn_JB_idx
         enumerator :: airI_lastplusone
     end enum
 
@@ -1721,6 +1731,7 @@ module define_indexes
         enumerator :: airYN_air_pocket_detected = 1
         enumerator :: airYN_air_pocket_collapsed 
         enumerator :: airYN_new_air_pocket
+        enumerator :: airYN_junction_air_pocket
         enumerator :: airYN_air_vented_through_UpJM
         enumerator :: airYN_air_vented_through_DnJM
         enumerator :: airYN_lastplusone

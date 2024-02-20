@@ -340,14 +340,13 @@ module preissmann_slot
                         !% --- classify face as slot ONLY if JM is slot
                         if (isSlot(tM)) then 
                             isfSlot(fUp(tB))    = .true.
-                            isfBlocked(fUp(tB)) = .true.
                         else 
                             isfSlot(fUp(tB))    = .false.
-                            isfBlocked(fUp(tB)) = .false.
                         end if
                         isSlot(tB)      = .true.
                         !isfSlot(fUp(tB)) = .true.
                         isSurcharge(tB) = .true.
+                        isfBlocked(fUp(tB)) = .true.
                         !PNumber(tB)    = fPNumber(fUp(tB))
                         PNumber(tB)     = max(onehalfR * (fPNumber(fUp(tB)) + PNumber(tM)), oneR)
                         PCelerity(tB)   = min(TargetPCelerity / PNumber(tB), TargetPCelerity)
@@ -397,13 +396,12 @@ module preissmann_slot
                         !% --- classify face as slot ONLY if JM is slot
                         if (isSlot(tM)) then 
                             isfSlot(fDn(tB))    = .true.
-                            isfBlocked(fDn(tB)) = .true.
                         else 
                             isfSlot(fDn(tB))    = .false.
-                            isfBlocked(fDn(tB)) = .false.
                         end if
                         isSlot(tB)     = .true.
                         isSurcharge(tB)= .true.
+                        isfBlocked(fDn(tB)) = .true.
                         !ifSlot(fDn(tB)) = .true.
                         !PNumber(tB)    = fPNumber(fDn(tB))
                         PNumber(tB) = max(onehalfR * (fPNumber(fDn(tB)) + PNumber(tM)), oneR)
