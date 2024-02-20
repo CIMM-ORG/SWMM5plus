@@ -3814,8 +3814,8 @@ contains
         elemSR(JMidx,esr_JM_Air_MassInflowRate)  = zeroR
         elemSR(JMidx,esr_JM_Air_MassOutflowRate) = zeroR
         elemSR(JMidx,esr_JM_Air_Density)         = setting%AirTracking%AirDensity
-        elemSR(JMidx,esr_JM_Air_Absolute_Head)       = setting%AirTracking%AtmosphericPressureHead
-        elemSR(JMidx,esr_JM_Air_Absolute_Head_N0)    = setting%AirTracking%AtmosphericPressureHead
+        elemSR(JMidx,esr_JM_Air_HeadAbsolute)       = setting%AirTracking%AtmosphericPressureHead
+        elemSR(JMidx,esr_JM_Air_HeadAbsolute_N0)    = setting%AirTracking%AtmosphericPressureHead
 
         !%................................................................
         !% Junction Branches
@@ -7113,10 +7113,13 @@ contains
                     JBelem = faceI(fUp, fi_Melem_uL)
                     !% find and store the JM index of that corresponding JB
                     elemI(elemStart,ei_adjacent_JM_idx) = elemSI(JBelem,esi_JB_Main_Index)
+                    !% find and store the JB index
+                    elemI(elemStart,ei_adjacent_JB_idx) = JBelem
                     !% set the element as junction adjacent
                     elemYN(elemStart,eYN_is_JunctionAdjacent) = .true.
                     !% store in airI and airYN arrays
                     airI(ii,:,airI_Up_JM_idx) = elemI(elemStart,ei_adjacent_JM_idx)
+                    airI(ii,:,airI_Up_JB_idx) = JBelem
                     airYN(ii,:,airYN_air_vented_through_UpJM) = .true.
                 end if
 
@@ -7127,10 +7130,13 @@ contains
                     JBelem = faceI(fDn, fi_Melem_dL)
                     !% find and store the JM index of that corresponding JB
                     elemI(elemEnd,ei_adjacent_JM_idx) = elemSI(JBelem,esi_JB_Main_Index)
+                    !% find and store the JB index
+                    elemI(elemEnd,ei_adjacent_JB_idx) = JBelem
                     !% set the element as junction adjacent
                     elemYN(elemEnd,eYN_is_JunctionAdjacent) = .true.
                     !% store in airI and airYN arrays
                     airI(ii,:,airI_Dn_JM_idx) = elemI(elemEnd,ei_adjacent_JM_idx)
+                    airI(ii,:,airI_Dn_JB_idx) = JBelem
                     airYN(ii,:,airYN_air_vented_through_DnJM) = .true.
                 end if
 
