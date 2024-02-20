@@ -116,7 +116,8 @@ contains
                     !% calculate air outflow rate form an airpocket if any vent is present
                     call airpocket_air_mass_outflow (ii, jj, istep)
 
-                    !% copy the mass outflow to JM
+                    !% if an airpocket is vented through JM, add that airpocket JM airpocket
+                    !% and save the  maps of the airI array to the elemSI structure
                     call airpockets_junction_air_maps (ii, jj)
 
                     !% update the air density at the air pocket
@@ -171,7 +172,7 @@ contains
         !% --- cycle through the JM junctions
         do mm = 1,Npack
             JMidx = thisJM(mm)
-
+    
             !% --- find if this junction has airpocket
             JunctionAirPocket = airpocket_detection_JM (JMidx)
             
@@ -199,7 +200,8 @@ contains
                 elemSR(JMidx,esr_JM_Air_HeadAbsolute)    = atmHead
                 elemSR(JMidx,esr_JM_Air_HeadAbsolute_N0) = atmHead
             else
-                !% --- else only calculate the air volume
+                !% --- else only calculate the air volume by adding the empty space
+                !%     above the JM crown and the volumes of the adjacent air pockets
                 elemSR(JMidx,esr_JM_Air_Volume)    = airpockets_JM_airvolume(JMidx)
             end if
 
@@ -1189,7 +1191,8 @@ contains
         !% Description:
         !%      # airpockets per link
         !%------------------------------------------------------------------
-            integer          :: ii, jj, kk, startIdx, endIdx, nElem, airPocketIdx, s1
+            integer          :: ii, jj, kk, startIdx, endIdx, nElem, airPocketIdx 
+            integer          :: s1, JBidx
             integer, pointer :: cIdx(:), eIdx(:), fUp(:), fDn(:), max_airpockets
             logical, pointer :: conAir(:), elemSur(:), fBlocked(:), StaticAirPocket
             logical          :: possibleAirPocket, contigious_pocket
@@ -1234,14 +1237,32 @@ contains
                         !%     airflow blockage
                         if (airI(ii,kk,airI_type) == upReleaseAirpocket)  then
                             !% if the airflow of upstream release is blocked 
-                            if (fBlocked(fUp(oneI))) then
-                                airI(ii,kk,airI_type)  = entrappedAirpocket
+                            !% check if the the air pocket is vented through an upstream junction
+                            if (airYN(ii,kk,airYN_air_vented_through_UpJM)) then
+                                JBidx = airI(ii,kk,airI_Up_JB_idx)
+                                if (elemR(JBidx,er_Depth)+elemR(JBidx,er_Zbottom) >= elemR(JBidx,er_Zcrown)) then
+                                    airI(ii,kk,airI_type)  = entrappedAirpocket
+                                end if
+                            !% else jsut check if the face is blocked
+                            else
+                                if (fBlocked(fUp(oneI))) then
+                                    airI(ii,kk,airI_type)  = entrappedAirpocket
+                                end if
                             end if
                             
                         else if (airI(ii,kk,airI_type) == dnReleaseAirpocket) then
                             !% if the airflow of downstream release is blocked
-                            if (fBlocked(fDn(nElem))) then
-                                airI(ii,kk,airI_type)  = entrappedAirpocket
+                            !% check if the the air pocket is vented through a downstream junction
+                            if (airYN(ii,kk,airYN_air_vented_through_DnJM)) then
+                                JBidx = airI(ii,kk,airI_Dn_JB_idx)
+                                if (elemR(JBidx,er_Depth)+elemR(JBidx,er_Zbottom) >= elemR(JBidx,er_Zcrown)) then
+                                    airI(ii,kk,airI_type)  = entrappedAirpocket
+                                end if
+                            !% else jsut check if the face is blocked
+                            else
+                                if (fBlocked(fDn(nElem))) then
+                                    airI(ii,kk,airI_type)  = entrappedAirpocket
+                                end if
                             end if
 
                         !% HACK: NOT SURE ABOUT THIS
@@ -1253,10 +1274,10 @@ contains
                             else if (.not. fBlocked(airI(ii,kk,airI_face_up))) then
                                 airI(ii,kk,airI_type)  = upReleaseAirpocket
 
-                            ! else if (.not. fBlocked(airI(ii,kk,airI_face_dn)) .and. &
-                            !          .not. fBlocked(airI(ii,kk,airI_face_up))) then
-                            !     airI(ii,kk,airI_type)  = noAirPocket  
-                            !     airYN(ii,kk,airYN_air_pocket_detected) = .false. 
+                            else if (.not. fBlocked(airI(ii,kk,airI_face_dn)) .and. &
+                                     .not. fBlocked(airI(ii,kk,airI_face_up))) then
+                                airI(ii,kk,airI_type)  = noAirPocket  
+                                airYN(ii,kk,airYN_air_pocket_detected) = .false. 
                             end if
                         end if
 
@@ -1429,23 +1450,23 @@ contains
                                 !% save the airpocket detection at the conduit
                                 conAir(cIdx) = .true.
 
-                                !% --- special conditions for upstream and downstream 
-                                !%     airflow blockage (gate or valves)
-                                if (airI(ii,airPocketIdx,airI_type) == upReleaseAirpocket)  then
+                                ! !% --- special conditions for upstream and downstream 
+                                ! !%     airflow blockage (gate or valves)
+                                ! if (airI(ii,airPocketIdx,airI_type) == upReleaseAirpocket)  then
 
-                                    !% if the airflow of upstream release is blocked 
-                                    if (fBlocked(fUp(oneI))) then
-                                        airI(ii,airPocketIdx,airI_type)  = entrappedAirpocket
-                                    end if
-                                end if
+                                !     !% if the airflow of upstream release is blocked 
+                                !     if (fBlocked(fUp(oneI))) then
+                                !         airI(ii,airPocketIdx,airI_type)  = entrappedAirpocket
+                                !     end if
+                                ! end if
                                     
-                                if (airI(ii,airPocketIdx,airI_type) == dnReleaseAirpocket) then
+                                ! if (airI(ii,airPocketIdx,airI_type) == dnReleaseAirpocket) then
 
-                                    !% if the airflow of downstream release is blocked
-                                    if (fBlocked(fDn(nElem))) then
-                                        airI(ii,airPocketIdx,airI_type)  = entrappedAirpocket
-                                    end if
-                                end if
+                                !     !% if the airflow of downstream release is blocked
+                                !     if (fBlocked(fDn(nElem))) then
+                                !         airI(ii,airPocketIdx,airI_type)  = entrappedAirpocket
+                                !     end if
+                                ! end if
                                 
                             else
                                 print*, 'THE ALGORITHM HAS FAILED!!!'
@@ -1572,11 +1593,19 @@ contains
             integer, intent(in) :: JMidx
             integer             :: ii
             real(8), pointer    :: depth(:), zbtm(:), zCrown(:)    
+            integer, pointer    :: fUp(:), fDn(:), eUp(:), eDn(:)
+            logical, pointer    :: fBlocked(:), eBlocked(:)
         !%------------------------------------------------------------------
         !% pointers
-        depth  => elemR(:,er_Depth)
-        zbtm   => elemR(:,er_Zbottom)
-        zCrown => elemR(:,er_Zcrown)
+        depth    => elemR(:,er_Depth)
+        zbtm     => elemR(:,er_Zbottom)
+        zCrown   => elemR(:,er_Zcrown)
+        fUp      => elemI(:,ei_Mface_uL)
+        fDn      => elemI(:,ei_Mface_dL)
+        eUp      => faceI(:,fi_Melem_uL)
+        eDn      => faceI(:,fi_Melem_dL)
+        eBlocked => elemYN(:,eYN_isPSsurcharged)
+        fBlocked => faceYN(:,fYN_isAirflowBlocked)
         !%------------------------------------------------------------------
         airpocket_detection_JM = .true.
 
@@ -1584,15 +1613,38 @@ contains
 
             if (elemSI(JMidx+ii,esi_JB_Exists) .ne. oneI) cycle
 
-            !% if any of the junction is not surcharged, 
-            !% or doesnot contain an airpocket, return false
             if ((depth(JMidx+ii) + zbtm(JMidx+ii) < zCrown(JMidx+ii)) .and. &
                 (.not. elemYN(JMidx+ii,eYN_hasAirPocket))) then
                 airpocket_detection_JM = .false.
                 return
             end if 
-            
+
         end do
+
+
+        !% --- find flow blockage for upstream branch
+        ! do ii=1,max_branch_per_node,2
+        !     if (elemSI(JMidx+ii,esi_JB_Exists) .ne. oneI) cycle
+
+        !     if (.not. eBlocked(eUp(fUp(JMidx+ii)))          .and. &
+        !         .not. elemYN(JMidx+ii,eYN_hasAirPocket)) then
+        !         airpocket_detection_JM = .false.
+        !         return
+        !     end if
+        ! end do
+
+        ! !% --- handle the downstream branches
+        ! do ii=2,max_branch_per_node,2
+
+        !     if (elemSI(JMidx+ii,esi_JB_Exists) .ne. oneI) cycle
+
+        !     if (.not. eBlocked(eDn(fDn(JMidx+ii)))          .and. &
+        !         .not. elemYN(JMidx+ii,eYN_hasAirPocket)) then
+        !         airpocket_detection_JM = .false.
+        !         return
+        !     end if
+        ! end do
+
 
     end function airpocket_detection_JM 
 !%    

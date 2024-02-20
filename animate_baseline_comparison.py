@@ -89,7 +89,7 @@ else:
 output_file = output_path+'/output.h5'
 
 # abdul muttalibs case
-output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/model1_output/tc50_dx10_20231213_1702/output.h5'
+output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Abdul_muttalib/Output/model1_output/tc50_dx10_20240220_0858/output.h5'
 # Ferreira case
 # output_file_baseline = '/home/ss89697/SWMM5plus/../Pipe_network_test_cases/air_pocket_cases/Output/Ferreira_2023_mod_output/tc50_dx10_20231213_1247/output.h5'
 
@@ -591,7 +591,7 @@ for profile_name_test in all_attribute_names:
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval)-50,max(xval)+50)
     plt.ylim(min_zbottom-buffer,max_head+buffer)
-    plt.ylim(0,30)
+    plt.ylim(0,50)
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
     plt.tight_layout()
@@ -601,11 +601,11 @@ for profile_name_test in all_attribute_names:
         line2.set_ydata(baseline_head[x+ii,:])  # update the data.
         line3.set_ydata(element_head_mod[x+ii,:])
 
-        time_text.set_text('Time = %.1f sec.' %(sim_time[ii]))
+        time_text.set_text('Time = %.1f sec.' %(sim_time[ii]*3600))
         return line, line2, line3
 
 
-    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=40, blit=False)
+    ani = animation.FuncAnimation(fig, animate, frames = nTimeSteps, interval=20, blit=False)
 
     #saving the animation before showing it
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY

@@ -10,8 +10,8 @@ import matplotlib.animation as animation
 import matplotlib.transforms as transforms
 import matplotlib.patches as patches
 from swmmtoolbox import swmmtoolbox
-matplotlib.use("webagg")
-matplotlib.rcParams['webagg.address'] = "0.0.0.0"
+# matplotlib.use("webagg")
+# matplotlib.rcParams['webagg.address'] = "0.0.0.0"
 
 # important functions
 def get_index_from_data_array(array,array_name,data_name):
@@ -522,7 +522,7 @@ for profile_name_test in all_attribute_names:
     plt.ylabel('Piezometric Head '+Yunit)
     plt.xlim(min(xval),max(xval))
     plt.ylim(min_zbottom-buffer,max_head+buffer)
-    # plt.ylim(-65,15)
+    # plt.ylim(-100,15)
     plt.legend(loc='lower left')
     
     #this automatically helps make sure that the labels aren't cutoff and that the layout is correctly formated 
