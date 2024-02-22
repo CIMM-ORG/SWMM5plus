@@ -37,7 +37,7 @@ contains
         !%-----------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: istep
-            integer             :: ii
+            integer             :: ii, jj
         !%------------------------------------------------------------------
 
         if (setting%AirTracking%StaticAirPocket) then
@@ -52,16 +52,49 @@ contains
             call airpockets_detection ()
         end if
 
+        !% --- check the junctions to see which are fully isolated BRH
+        call airpocket_check_junction ()
+
+        !% --- reset detection where junctions are open BRH
+        call airpocket_clear_pockets_at_open_junction ()
+
+        ! print *, 'before air pockets calculatoin'
+        ! print *, 'JB 102, 103 eYN_hasAirPocket',elemYN(102,eYN_hasAirPocket), elemYN(103,eYN_hasAirPocket)
+        ! print *, ' '
+
         !% find the pressure head due to airpocket
         call airpockets_calculation (istep)
 
         if (setting%AirTracking%AirVentThroughJM) then
+
+            ! print *, ' '
+            ! print *, 'calling junction '
+
             !% --- compute the pressure head in a JM junction
             call airpockets_junction (istep)
             !% --- add the pressure head to CC elements adjacent to junctions
             !%     and update airR arrays
-            call airpockets_update_air_pressure_from_JM (istep)
+
+            ! do ii=1,N_super_conduit
+            ! do jj=1,setting%AirTracking%NumberOfAirpocketsAllowed
+            ! if (airI(ii,jj,airI_type) .ne. entrappedAirpocket) cycle
+            ! if ((airR(ii,jj,airR_mass) - airR(ii,jj,airR_mass_N0)) .ne. zeroR) then 
+
+            !     print *, 'air mass loss after junction for entrapped air pocket'
+            !     print *, airR(ii,jj,airR_mass_N0)
+            !     print *, airR(ii,jj,airR_mass)
+            !     stop 6609873
+            ! end if
+            ! end do
+            ! end do
+
+    
+
+            call airpockets_update_air_from_JM (istep)
+
+
         end if
+
 
         !% pack the faces those are needed to be interpolated
         call airpocket_face_pack ()
@@ -82,14 +115,23 @@ contains
         !%------------------------------------------------------------------
             integer, intent(in) :: istep
             integer          :: ii, jj
-            integer, pointer :: cIdx(:), max_airpockets
+            integer, pointer :: cIdx(:) , max_airpockets
             logical, pointer :: conAir(:)
         !%------------------------------------------------------------------
+        ! Aliases
+            max_airpockets => setting%AirTracking%NumberOfAirpocketsAllowed
+        !%------------------------------------------------------------------
         !% initialize if an element has pressurized air
+
         elemR(1:size(elemR,1)-1,er_Pressurized_Air)   =  zeroR
         elemR(1:size(elemR,1)-1,er_Air_Pressure_Head) =  zeroR
-        elemYN(1:size(elemYN,1)-1,eYN_hasAirPocket)   =  .false.
+        !elemYN(1:size(elemYN,1)-1,eYN_hasAirPocket)   =  .false.
         faceYN(:,fYN_isAirPressurized)                =  .false.
+
+
+        ! print *, ' '
+        ! print *, 'DEBUG IN CALCULATION '
+        ! print *, ' '
 
         !% cycle through the continious conduits to find air Pockets,
         do ii = 1, N_super_conduit
@@ -97,43 +139,96 @@ contains
             cIdx      => sc_link_Idx(ii,1:links_per_sc(ii))
             conAir    => link%YN(:,lYN_airPocketDetected)
 
-            max_airpockets => setting%AirTracking%NumberOfAirpocketsAllowed
-
             !% only go through the conduit airpocket calculation if the
             !% conduit contains one
             if (any(conAir(cIdx))) then
  
-                ! print*, '------------------------------------------------------'
+                !  print*,'SC ',ii,'------------------------------------------------------'
 
                 do jj = 1,max_airpockets 
+
+                    ! print *, 'idx type  ',jj,trim(reverseKey(airI(ii,jj,airI_type))) 
+                    ! print *, 'collapsed ',airYN(ii,jj,airYN_air_pocket_collapsed)
+                    ! print *, 'junctionP ',airYN(ii,jj,airYN_junction_air_pocket)
     
                     !% initialize the airpocket real values
                     call airpocket_initialization (ii,jj, istep)
+
+                    ! print *, 'after initialization '
+                    ! print *, 'JB 102, 103 eYN_hasAirPocket',elemYN(102,eYN_hasAirPocket), elemYN(103,eYN_hasAirPocket)
+                    ! print *, ' '
+
+                    if (.not. airYN(ii,jj,airYN_air_pocket_detected)) cycle
       
-                    !% calculate the net flowrate though the airpockets
-                    call airpocket_netflowrate (ii,jj)
+                    !% calculate the volume change rate though the airpockets
+                    call airpocket_volume_change_rate (ii,jj)
+
+                    ! print *, 'after volume change '
+                    ! print *, 'JB 102, 103 eYN_hasAirPocket',elemYN(102,eYN_hasAirPocket), elemYN(103,eYN_hasAirPocket)
+                    ! print *, ' '
+
+                    
+                    ! print *, 'outflow, inflow, dvdt '
+                    ! print *,  airR (ii,jj,airR_outflow),airR (ii,jj,airR_inflow),airR (ii,jj,airR_dvdt)
     
                     !% calculate air outflow rate form an airpocket if any vent is present
                     call airpocket_air_mass_outflow (ii, jj, istep)
 
+                    ! print *, 'mass outflow ',airR(ii,jj,airR_mass_flowrate)
+                    ! print *, 'after mass outflow '
+                    ! print *, 'JB 102, 103 eYN_hasAirPocket',elemYN(102,eYN_hasAirPocket), elemYN(103,eYN_hasAirPocket)
+                    ! print *, ' '
+
                     !% if an airpocket is vented through JM, add that airpocket JM airpocket
                     !% and save the  maps of the airI array to the elemSI structure
-                    call airpockets_junction_air_maps (ii, jj)
+                    !% BRH Maps are now saved in init_IC_air_entrapment and initialization is
+                    !% done in airpockets detection
+                    !call airpockets_junction_air_maps (ii, jj)
 
                     !% update the air density at the air pocket
                     call airpocket_air_density_update (ii, jj, istep)  
 
+                    ! print *, 'after density update '
+                    ! print *, 'JB 102, 103 eYN_hasAirPocket',elemYN(102,eYN_hasAirPocket), elemYN(103,eYN_hasAirPocket)
+                    ! print *, ' '
+
+                    ! print *, 'mass, rho ',airR(ii,jj,airR_mass), &
+                    !           airR(ii,jj,airR_density)
+                    ! print *, 'isPocket, colPocket' ,airYN(ii,jj,airYN_air_pocket_detected) , &
+                    !           airYN(ii,jj,airYN_air_pocket_collapsed)
+                    
                     !% calculate the air pressure head
                     call airpocket_pressure_head (ii, jj, istep)
 
+                    ! print *, 'after pressure head '
+                    ! print *, 'JB 102, 103 eYN_hasAirPocket',elemYN(102,eYN_hasAirPocket), elemYN(103,eYN_hasAirPocket)
+                    ! print *, ' '
+
+                    ! print *, 'head abs, gage ',airR(ii,jj,airR_absolute_head), &
+                    !      airR(ii,jj,airR_gauge_head)
+                    ! print *, 'isPocket, colPocket' ,airYN(ii,jj,airYN_air_pocket_detected) , &
+                    !           airYN(ii,jj,airYN_air_pocket_collapsed)
+                    
+
                     !% add the heads back to the CC elements
-                    call add_airpocket_heads_to_CC_elem (ii, jj)
+                    call add_airpocket_heads_to_nonJunction_elem (ii, jj)
+
+                    ! print *, 'after add airpockets '
+                    ! print *, 'JB 102, 103 eYN_hasAirPocket',elemYN(102,eYN_hasAirPocket), elemYN(103,eYN_hasAirPocket)
+                    ! print *, ' '
+
+
+                    ! print *, ' '
 
                 end do
             
             end if
                 
         end do
+
+        ! print *, 'at end of air pockets calculatoins'
+        ! print *, 'JB 102, 103 eYN_hasAirPocket',elemYN(102,eYN_hasAirPocket), elemYN(103,eYN_hasAirPocket)
+        ! print *, ' '
         
 
     end subroutine airpockets_calculation
@@ -153,7 +248,8 @@ contains
             integer             :: mm, JMidx
             real(8), pointer    :: kappa, dt, crk, theta, atmHead, rho_a
             real(8)             :: alpha, beta, dvdt, coef
-            logical             :: JunctionAirPocket = .false.
+            !logical             :: JunctionAirPocket = .false.
+
         !%------------------------------------------------------------------
         !% Preliminaries
             Npack => npack_elemP(ep_JM)   
@@ -169,15 +265,21 @@ contains
             rho_a   => setting%AirTracking%AirDensity
         !%------------------------------------------------------------------
         
+        ! print *, ' '
+        ! print *, 'DEBUG PRINT IN AIRPOCKETS_JUNCTION'
+        ! print *, 'JB 102, 103 eYN_hasAirPocket',elemYN(102,eYN_hasAirPocket), elemYN(103,eYN_hasAirPocket)
+
         !% --- cycle through the JM junctions
         do mm = 1,Npack
             JMidx = thisJM(mm)
-    
+
             !% --- find if this junction has airpocket
-            JunctionAirPocket = airpocket_detection_JM (JMidx)
+            !JunctionAirPocket = airpocket_detection_JM (JMidx)
+
+            ! print *, 'JMidx, AirPocketExist', JMidx, elemSI(JMidx,esi_JM_AirPocket_Exists)
             
-            !% if the junction doesnot contain air pocket, cycle
-            if (.not. JunctionAirPocket) then
+            !% if the junction does not contain air pocket, cycle
+            if (elemSI(JMidx,esi_JM_AirPocket_Exists) .ne. oneI) then
                 elemR(JMidx,er_Pressurized_Air)          = zeroR
                 elemR(JMidx,er_Air_Pressure_Head)        = zeroR
                 elemSR(JMidx,esr_JM_Air_Volume)          = zeroR
@@ -189,27 +291,43 @@ contains
                 cycle
             end if
 
+            ! print *, 'JM mass before  ', elemSR(JMidx,esr_JM_Air_Mass)
+            ! print *, 'JB 102, 103 eYN_hasAirPocket',elemYN(102,eYN_hasAirPocket), elemYN(103,eYN_hasAirPocket)
+
             !% --- determine if the airpocket is new to initialize the airpocket
             if (elemSR(JMidx,esr_JM_Air_Volume) == zeroR) then
-                !% --- compute the air volume 
+                !% --- compute the air volume and mass that are initially trapped
                 elemSR(JMidx,esr_JM_Air_Volume)    = airpockets_JM_airvolume(JMidx)
+                elemSR(JMidx,esr_JM_Air_Mass)      = airpockets_JM_airMass(JMidx) ! rho_a * elemSR(JMidx,esr_JM_Air_Volume)
                 elemSR(JMidx,esr_JM_Air_Volume_N0) = elemSR(JMidx,esr_JM_Air_Volume)
-                elemSR(JMidx,esr_JM_Air_Mass)      = rho_a * elemSR(JMidx,esr_JM_Air_Volume)
                 elemSR(JMidx,esr_JM_Air_Mass_N0)   = elemSR(JMidx,esr_JM_Air_Mass)
                 elemSR(JMidx,esr_JM_Air_Density)   = rho_a
-                elemSR(JMidx,esr_JM_Air_HeadAbsolute)    = atmHead
-                elemSR(JMidx,esr_JM_Air_HeadAbsolute_N0) = atmHead
+                elemSR(JMidx,esr_JM_Air_HeadAbsolute)     = atmHead
+                elemSR(JMidx,esr_JM_Air_HeadAbsolute_N0)  = atmHead
+
+                ! print *, 'INITIAL MASS ',elemSR(JMidx,esr_JM_Air_Mass)
+                !stop 5509873
             else
                 !% --- else only calculate the air volume by adding the empty space
                 !%     above the JM crown and the volumes of the adjacent air pockets
                 elemSR(JMidx,esr_JM_Air_Volume)    = airpockets_JM_airvolume(JMidx)
             end if
 
-            
+            ! print *, 'JM mass after ', elemSR(JMidx,esr_JM_Air_Mass)
+
             if (elemSR(JMidx,esr_JM_Air_Volume) .le. zeroR) then 
                 !% --- air pocket has collapsed and JMidx is full of water (incipient surcharging)
                 !%     zero out pocket and cycle to next JMidx
-                elemSR(JMidx,esr_JM_Air_Volume)    = zeroR
+                elemSR(JMidx,esr_JM_Air_Volume)       = zeroR
+                elemSR(JMidx,esr_JM_Air_Mass)         = zeroR
+                elemSR(JMidx,esr_JM_Air_Density)      = zeroR
+                elemSR(JMidx,esr_JM_Air_HeadAbsolute) = atmHead
+                elemSR(JMidx,esr_JM_Air_HeadGauge)    = zeroR
+                elemSR(JMidx,esr_JM_Air_HeadGauge)    = zeroR
+                elemR (JMidx,er_Pressurized_Air)      = zeroR
+                elemR (JMidx,er_Air_Pressure_Head)    = zeroR
+                elemYN(JMidx,eYN_hasAirPocket)        = .false.
+                cycle
             end if
 
             !% --- compute the mass outflow to atmosphere
@@ -217,17 +335,38 @@ contains
 
             !% --- compute the new air mass in the JMidx
             !%     NOTE THAT POSITIVE VALUES OF INFLOWS ARE INFLOWS AND POSITIVE OUTFLOWS ARE OUTFLOWS
-            elemSR(JMidx,esr_JM_Air_Mass) = max(elemSR(JMidx,esr_JM_Air_Mass_N0) &
-                + crk * dt * ( - elemSR(JMidx,esr_JM_Air_MassOutflowRate)), zeroR)
+            elemSR(JMidx,esr_JM_Air_Mass) &
+                = max( &
+                      elemSR(JMidx,esr_JM_Air_Mass_N0) + crk * dt * ( - elemSR(JMidx,esr_JM_Air_MassOutflowRate)) &
+                      , zeroR)
 
-            !% update the air density
-            elemSR(JMidx,esr_JM_Air_Density) = elemSR(JMidx,esr_JM_Air_Mass) / elemSR(JMidx,esr_JM_Air_Volume)
+                ! print *, 'In JMair', JMidx
+                ! print *, 'JM Idx 1Dn, 2up ', airI(1,1,airI_Dn_JM_idx),airI(2,1,airI_Up_JM_idx)
+                ! print *, 'JB Idx 1Dn, 2up ', airI(1,1,airI_Dn_JB_idx),airI(2,1,airI_Up_JB_idx)
+                ! print *, 'next pocket'
+                ! print *, 'JM Idx 1Dn, 2up ', airI(1,2,airI_Dn_JM_idx),airI(2,2,airI_Up_JM_idx)
+                ! print *, 'JB Idx 1Dn, 2up ', airI(1,2,airI_Dn_JB_idx),airI(2,2,airI_Up_JB_idx)
+                ! print *, 'next pocket'
+                ! print *, 'JM Idx 1Dn, 2up ', airI(1,3,airI_Dn_JM_idx),airI(2,3,airI_Up_JM_idx)
+                ! print *, 'JB Idx 1Dn, 2up ', airI(1,3,airI_Dn_JB_idx),airI(2,3,airI_Up_JB_idx)
 
             if (elemSR(JMidx,esr_JM_Air_Mass) .le. zeroR) then 
                 !% --- no air pressurization
-                elemSR(JMidx,esr_JM_Air_Density)  = zeroR
-                elemSR(JMidx,esr_JM_Air_Mass)     = zeroR
+                elemSR(JMidx,esr_JM_Air_HeadGauge)    = zeroR
+                elemSR(JMidx,esr_JM_Air_Volume)       = zeroR
+                elemSR(JMidx,esr_JM_Air_Mass)         = zeroR
+                elemSR(JMidx,esr_JM_Air_Density)      = zeroR
+                elemSR(JMidx,esr_JM_Air_HeadAbsolute) = atmHead
+                elemSR(JMidx,esr_JM_Air_HeadGauge)    = zeroR
+                elemSR(JMidx,esr_JM_Air_HeadGauge)    = zeroR
+                elemR (JMidx,er_Pressurized_Air)      = zeroR
+                elemR (JMidx,er_Air_Pressure_Head)    = zeroR
+                elemYN(JMidx,eYN_hasAirPocket)        = .false.
+                cycle
             end if
+
+            !% update the air density
+            elemSR(JMidx,esr_JM_Air_Density) = elemSR(JMidx,esr_JM_Air_Mass) / elemSR(JMidx,esr_JM_Air_Volume)
 
             !% --- compute the air volume rate of change (opposite of water volume change)
             !%     Negative is decreasing volume
@@ -259,25 +398,46 @@ contains
                 !% --- find the gauge head
                 elemSR(JMidx,esr_JM_Air_HeadGauge)     =  elemSR(JMidx,esr_JM_Air_HeadAbsolute) - atmHead
             else
-                elemSR(JMidx,esr_JM_Air_HeadAbsolute)  = atmHead
-                elemSR(JMidx,esr_JM_Air_HeadGauge)     = zeroR
+                elemSR(JMidx,esr_JM_Air_HeadGauge)    = zeroR
+                elemSR(JMidx,esr_JM_Air_Volume)       = zeroR
+                elemSR(JMidx,esr_JM_Air_Mass)         = zeroR
+                elemSR(JMidx,esr_JM_Air_Density)      = zeroR
+                elemSR(JMidx,esr_JM_Air_HeadAbsolute) = atmHead
+                elemSR(JMidx,esr_JM_Air_HeadGauge)    = zeroR
+                elemSR(JMidx,esr_JM_Air_HeadGauge)    = zeroR
+                elemR (JMidx,er_Pressurized_Air)      = zeroR
+                elemR (JMidx,er_Air_Pressure_Head)    = zeroR
+                elemYN(JMidx,eYN_hasAirPocket)        = .false.
+                cycle
             end if
 
-            !% --- check for head below atmospheric, which indicates the air pocket has emptied
-            if (elemSR(JMidx,esr_JM_Air_HeadGauge) .le. zeroR) then   
-                !% --- zero out the air head and mass
-                elemSR(JMidx,esr_JM_Air_HeadGauge) = zeroR
-                elemR(JMidx,er_Pressurized_Air)    = zeroR
-                elemR(JMidx,er_Air_Pressure_Head)  = zeroR
-                elemYN(JMidx,eYN_hasAirPocket)     = .false.
-            else 
-                !% --- update the air head (gauge)
-                elemR(JMidx,er_Head) = elemR(JMidx,er_Head) + elemSR(JMidx,esr_JM_Air_HeadGauge)
-                elemR(JMidx,er_Pressurized_Air)   = oneR
-                elemR(JMidx,er_Air_Pressure_Head) = elemSR(JMidx,esr_JM_Air_HeadGauge) 
-                elemYN(JMidx,eYN_hasAirPocket)    = .true.
+            !% --- check for head below atmospheric when outflow is allowed,
+            !%     which indicates the air pocket has emptied
+            if (elemSR(JMidx,esr_JM_Air_MassOutflowRate) > zeroR) then
+                if (elemSR(JMidx,esr_JM_Air_HeadGauge) .le. zeroR) then   
+                    !% --- zero out the air head and mass
+                    elemSR(JMidx,esr_JM_Air_HeadGauge)    = zeroR
+                    elemSR(JMidx,esr_JM_Air_Volume)       = zeroR
+                    elemSR(JMidx,esr_JM_Air_Mass)         = zeroR
+                    elemSR(JMidx,esr_JM_Air_Density)      = zeroR
+                    elemSR(JMidx,esr_JM_Air_HeadAbsolute) = atmHead
+                    elemSR(JMidx,esr_JM_Air_HeadGauge)    = zeroR
+                    elemSR(JMidx,esr_JM_Air_HeadGauge)    = zeroR
+                    elemR (JMidx,er_Pressurized_Air)      = zeroR
+                    elemR (JMidx,er_Air_Pressure_Head)    = zeroR
+                    elemYN(JMidx,eYN_hasAirPocket)        = .false.
+                else 
+                    !% --- update the air head (gauge)
+                    elemR(JMidx,er_Head) = elemR(JMidx,er_Head) + elemSR(JMidx,esr_JM_Air_HeadGauge)
+                    elemR(JMidx,er_Pressurized_Air)   = oneR
+                    elemR(JMidx,er_Air_Pressure_Head) = elemSR(JMidx,esr_JM_Air_HeadGauge) 
+                    elemYN(JMidx,eYN_hasAirPocket)    = .true.
+                end if
             end if
         end do
+
+        ! print *, '============leaving airpockets junction'
+        ! print *, ' '
 
     end subroutine airpockets_junction    
 !%    
@@ -290,12 +450,23 @@ contains
         !% Find air Pockets in an link
         !%------------------------------------------------------------------
             integer          :: ii, jj, kk, startIdx, endIdx, airPocketIdx, nElem
-            integer, pointer :: cIdx(:), eIdx(:), fUp(:), fDn(:), max_airpockets
+            integer, pointer :: cIdx(:), eIdx(:), fUp(:), fDn(:) , max_airpockets
+            integer, pointer :: JBupIdx, JBdnIdx
             logical, pointer :: conAir(:), elemSur(:), fBlocked(:)
             logical          :: possibleAirPocket
         !%------------------------------------------------------------------
+        ! Aliases
+            max_airpockets => setting%AirTracking%NumberOfAirpocketsAllowed
+        !%------------------------------------------------------------------   
+            
+            ! print *, ' '
+            ! print *, 'DEBUG PRINT AT Start OF DETECTION'    
+            ! print *, ' '
         !% cycle through the conduits to find air Pockets,
         do ii = 1,N_super_conduit
+
+            ! print *, 'SC = ',ii
+
             !% pointers
             cIdx      => sc_link_Idx(ii,1:links_per_sc(ii))
             nElem     =  sum(link%I(cIdx,li_N_element))
@@ -306,7 +477,23 @@ contains
             elemSur   => elemYN(:,eYN_isPSsurcharged)
             fBlocked  => faceYN(:,fYN_isAirflowBlocked)
 
-            max_airpockets  => setting%AirTracking%NumberOfAirpocketsAllowed
+            !% --- pointers to the upstream and downstream branch locations
+            JBupIdx => airI(ii,1,airI_Up_JB_idx)
+            JBdnIdx => airI(ii,1,airI_Dn_JB_idx)
+
+            !% --- ensure JB are initialized to zero (detection below)
+            if (JBupIdx .ne. nullvalueI) then
+                elemSI(JBupIdx,esi_JB_AirPocket_Exists) = zeroI
+                elemYN(JBupIdx,eYN_hasAirPocket) = .false.
+                elemSI(JBupIdx,esi_JB_air_pocket_index) = nullvalueI
+            end if
+            if (JBdnIdx .ne. nullvalueI) then
+                elemSI(JBdnIdx,esi_JB_AirPocket_Exists) = zeroI
+                elemYN(JBdnIdx,eYN_hasAirPocket) = .false.
+                elemSI(JBdnIdx,esi_JB_air_pocket_index) = nullvalueI
+            end if
+
+            !max_airpockets  => setting%AirTracking%NumberOfAirpocketsAllowed
 
             !% reset the possible air pocket detection logical
             possibleAirPocket = .false.
@@ -388,12 +575,30 @@ contains
                             !%     there will be an upstream release
                             if (startIdx == oneI) then
                                 airI(ii,airPocketIdx,airI_type) = upReleaseAirpocket
+                                !% --- set the Upp JB as connecting to an air pocket  
+                                if (JBupIdx .ne. nullvalueI) then 
+                                    elemSI(JBupIdx,esi_JB_AirPocket_Exists) = oneI
+                                    elemSI(JBupIdx,esi_JB_air_pocket_index) = airPocketIdx
+                                    elemYN(JBupIdx,eYN_hasAirPocket) = .true.
+
+                                    ! print *, 'JBupIDx, has airpocket ',JBupIdx, elemYN(JBupIdx,eYN_hasAirPocket) 
+
+                                end if
                             
                             !% else if the ending element is the last element in the conduit
                             !% there will be a downstream release
                             else if (endIdx == nElem) then
                                 airI(ii,airPocketIdx,airI_type) = dnReleaseAirpocket
-                            
+                                !% --- set the Dn JB as connecting to an air pocket  
+                                if (JBdnIdx .ne. nullvalueI) then 
+                                    elemSI(JBdnIdx,esi_JB_AirPocket_Exists) = oneI
+                                    elemSI(JBdnIdx,esi_JB_air_pocket_index) = airPocketIdx
+                                    elemYN(JBdnIdx,eYN_hasAirPocket) = .true.
+
+                                    ! print *, 'JBdnIDx, has airpocket ',JBdnIdx, elemYN(JBdnIdx,eYN_hasAirPocket) 
+
+                                end if
+
                             !% else the pocket is entrapped
                             else
                                 airI(ii,airPocketIdx,airI_type) = entrappedAirpocket
@@ -431,6 +636,7 @@ contains
                             print*, "The conduit", ii," has, ", airPocketIdx, " airpockets "
                             print*, "which is more than maximum permissible of, ", max_airpockets
                             print*
+                            stop 66098723
                         end if
 
                     !% progress the counter for surcharge elements
@@ -470,21 +676,164 @@ contains
                 conduitElemMapsI(ii,:,cmi_airpocket_type) = noAirPocket
             end if
 
-            !% debug printing
+
+            ! !% debug printing
             ! if (any(airYN(ii,:,airYN_air_pocket_detected))) then
+                
             !     print*, 'air at conduit indexes ',cIdx, ' ', link%names(cIdx(1))%str
             !     print*, 'airPocketIdx', airPocketIdx
             !     print*, 'idx 1     = ', airI(ii,1,airI_idx),         'idx 2     = ', airI(ii,2,airI_idx),        'idx 3     = ',airI(ii,3,airI_idx) 
-            !     print*, 'type 1    = ', airI(ii,1,airI_type),        'type 2    = ', airI(ii,2,airI_type),       'type 3    = ', airI(ii,3,airI_type)
+            !     print*, 'type 1    = ', trim(reverseKey(airI(ii,1,airI_type))),'; type 2    = ', trim(reverseKey(airI(ii,2,airI_type))), ';  type 3    = ', trim(reverseKey(airI(ii,3,airI_type)))
             !     print*, 'elem up 1 = ', airI(ii,1,airI_elem_start),  'elem up 2 = ', airI(ii,5,airI_elem_start), 'elem up 3 = ',airI(ii,3,airI_elem_start) 
             !     print*, 'elem dn 1 = ', airI(ii,1,airI_elem_end),    'elem dn 2 = ', airI(ii,2,airI_elem_end),   'elem dn 3 = ',airI(ii,3,airI_elem_end) 
             !     print*, 'Head 1= ', airR(ii,1,airR_absolute_head), 'Head 2= ', airR(ii,2,airR_absolute_head), 'Head 3= ', airR(ii,3,airR_absolute_head)
             !     print* 
+            !     !stop 6609874
             ! end if
 
         end do
 
     end subroutine airpockets_detection
+!%    
+!%==========================================================================
+!%==========================================================================
+!%   
+    subroutine airpocket_check_junction ()
+        !%------------------------------------------------------------------
+        !% Description:
+        !% Checks all the super-link branches around a JM to see if the
+        !% JM is entirely blocked. Sets the elemSI(:,esi_JM_AirPocket_Exits)
+        !% If at least one branch is open the JM cannot trap air
+        !%------------------------------------------------------------------
+        !% Declarations:
+            integer, pointer :: Npack, thisP(:), JMidx, scIdx, aIdx
+            integer          :: mm, ii
+            logical          :: foundOpen
+        !%------------------------------------------------------------------
+        !% Preliminaries
+            Npack => npack_elemP(ep_JM)
+            if (Npack < 1) return
+            thisP => elemP(1:Npack,ep_JM)
+        !%------------------------------------------------------------------
+
+        ! print *, 'DEBUG in airpocket_check_junction'
+
+        do mm=1,Npack 
+            JMidx => thisP(mm)
+            foundOpen = .false.
+            do ii=1,max_branch_per_node
+                if (elemSI(JMidx+ii,esi_JB_Exists) .ne. oneI) cycle !% skip dead branches
+                !% --- get super-link and pocket indexes
+                scIdx => elemSI(JMidx+ii,esi_JB_vLink_Connection)
+                aIdx  => elemSI(JMidx+ii,esi_JB_air_pocket_index)
+                if (aIdx == nullvalueI) then 
+                    foundOpen = .true. 
+                    exit !% ii loop
+                end if
+                if (airI(scIdx,aIdx,airI_Type) .eq. noAirPocket) then
+                    foundOpen = .true.
+                    exit !% ii loop
+                end if
+            end do
+            
+            ! print *, 'JMidx foundOpen',JMidx,foundOpen
+
+            if  (foundOpen) then 
+                !% --- reset all the JM air values to zero
+                elemR (JMidx,er_Pressurized_Air) = zeroR
+                elemR (JMidx,er_Air_Pressure_Head) = zeroR
+                elemSI(JMidx,esi_JM_AirPocket_Exists) = zeroI
+                elemSR(JMidx,esr_JM_Air_HeadGauge) = zeroR
+                elemSR(JMidx,esr_JM_Air_HeadGauge_N0) = zeroR
+                elemSR(JMidx,esr_JM_Air_HeadAbsolute) = zeroR
+                elemSR(JMidx,esr_JM_Air_Density) = zeroR
+                elemsR(JMidx,esr_JM_Air_MassInflowRate) = zeroR
+                elemSR(JMidx,esr_JM_Air_MassOutflowRate) = zeroR
+                elemSR(JMidx,esr_JM_Air_Mass) = zeroR
+                elemSR(JMidx,esr_JM_Air_Mass_N0) = zeroR
+                elemSR(JMidx,esr_JM_Air_Volume) = zeroR
+                elemSR(JMidx,esr_JM_Air_Volume_N0) = zeroR                
+            else
+                elemSI(JMidx,esi_JM_AirPocket_Exists) = oneI
+            endif
+        end do
+
+        
+
+    end subroutine airpocket_check_junction
+!%    
+!%=========================================================================
+!%==========================================================================
+!%
+    subroutine airpocket_clear_pockets_at_open_junction ()
+        !%------------------------------------------------------------------
+        !% Description 
+        !% sets all air pockets connected to an open junction to noAirPocket
+        !%------------------------------------------------------------------
+            integer :: ii, jj
+            integer, pointer :: JMup, JMdn, max_airpockets
+        !%------------------------------------------------------------------
+        ! Aliases
+            max_airpockets => setting%AirTracking%NumberOfAirpocketsAllowed
+        !%------------------------------------------------------------------
+        !% --- cycle through the super conduits
+
+            ! print *, ' '
+            ! print *, 'DEBUG airpocket_clear_pockets'
+
+        do ii = 1, N_super_conduit
+            JMup => airI(ii,1,airI_Up_JM_idx)
+            JMdn => airI(ii,1,airI_Dn_JM_idx)
+
+            ! print *, 'SC JMup, JMdn ',ii, JMup, JMdn
+
+            !% --- cycle through all the air pockets
+            do jj=1,max_airpockets
+
+                ! print *, 'ipocket ',ii, trim(reverseKey(airI(ii,jj,airI_Type)))
+
+                !% --- reset the air pocket types associated with open junctions
+                select case (airI(ii,jj,airI_Type))
+                    case (upReleaseAirpocket)
+                        if (JMup .ne. nullvalueI) then
+                            if (elemSI(JMup,esi_JM_AirPocket_Exists) .ne. oneI) then
+                                !% --- if the JM air pocket does not exist, then
+                                !%     this pocket is emptied
+                                airI(ii,jj,airI_Type) = noAirPocket
+                                airYN(ii,jj,airYN_air_pocket_detected) = .false.
+                                !%
+                            else
+                                airYN(ii,jj,airYN_junction_air_pocket) = .true.
+                            end if
+                        end if
+                    case (dnReleaseAirpocket)
+                        if (JMdn .ne. nullvalueI) then
+                            if (elemSI(JMdn,esi_JM_AirPocket_Exists) .ne. oneI) then
+                                !% --- if the JM air pocket does not exist, then
+                                !%     this pocket is emptied
+                                airI(ii,jj,airI_Type) = noAirPocket
+                                airYN(ii,jj,airYN_air_pocket_detected) = .false.
+                            else
+                                airYN(ii,jj,airYN_junction_air_pocket) = .true.
+                            end if
+                        end if
+                    case (noAirPocket,entrappedAirpocket)
+                        !% no action
+                    case default
+                        print *, 'unexpected case default'
+                        call util_crashpoint(609873)
+                end select
+
+                ! print *, 'Is junction ',airYN(ii,jj,airYN_junction_air_pocket) 
+
+            end do
+        end do
+
+        
+        ! print *, 'Out of arirpocket-clear...'
+        ! print *, ' '
+        
+    end subroutine airpocket_clear_pockets_at_open_junction 
 !%    
 !%==========================================================================
 !%==========================================================================
@@ -501,7 +850,7 @@ contains
             integer, pointer     :: elemStartIdx, elemEndIdx, faceUp, faceDn
             real(8), pointer     :: airVolume, inflow, outflow, airDensity, airMass_N0
             real(8), pointer     :: airMass, absHead, gaugeHead, atmHead, rho_a, absHead_N0
-            real(8), pointer     :: elemVol(:), fullVol(:), faceFlow(:)
+            real(8), pointer     :: elemVol(:), fullVol(:), faceFlow(:), airVolume_N0
             logical, pointer     :: isAirPocket, newAirPocket
 
             integer, allocatable :: pElem(:)
@@ -512,6 +861,7 @@ contains
             faceUp        => airI(sc_Idx,aIdx,airI_face_up)
             faceDn        => airI(sc_Idx,aIdx,airI_face_dn)
             airVolume     => airR(sc_Idx,aIdx,airR_volume)
+            airVolume_N0  => airR(sc_Idx,aIdx,airR_volume)
             airDensity    => airR(sc_Idx,aIdx,airR_density)
             airMass       => airR(sc_Idx,aIdx,airR_mass)
             airMass_N0    => airR(sc_Idx,aIdx,airR_mass_N0)
@@ -543,7 +893,7 @@ contains
             !% pack the elemnts in this air pocket
             pElem = pack(conduitElemMapsI(sc_Idx,:,cmi_elem_idx), conduitElemMapsI(sc_Idx,:,cmi_airpocket_idx)  == aIdx)
 
-            !% in this algorithm, aiVolume = 0 means the air pocket is newly detected
+            !% in this algorithm, airVolume = 0 means the air pocket is newly detected
             if (newAirPocket) then
                 newAirPocket = .false.
                 gaugeHead     = zeroR
@@ -552,6 +902,7 @@ contains
                 absHead_N0    = atmHead
                 !% calculate the air pocket volume from empty space
                 airVolume  = max(sum(fullVol(pElem) - elemVol(pElem)), zeroR)
+                airVolume_N0 = airVolume
                 !% for a new pocket formulation save the older values
                 airMass      = airDensity * airVolume
                 airMass_N0   = airMass
@@ -571,7 +922,9 @@ contains
             
         else
             !% if there is not an airpocket present, zero out the values
+            !call airpocket_zero (sc_Idx, aIdx)
             airVolume   = zeroR
+            !airVolume_N0= zeroR
             airMass     = zeroR
             airMass_N0  = zeroR
             inflow      = zeroR
@@ -587,30 +940,30 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine airpocket_netflowrate (sc_Idx, aIdx)
+    subroutine airpocket_volume_change_rate (sc_Idx, aIdx)
         !%------------------------------------------------------------------
         !% Description:
-        !%   calculate the net flowrate through an airpocket 
+        !%  calculate the volume change rate of a pocket
         !%------------------------------------------------------------------
             integer, intent (in) :: sc_Idx, aIdx
-            real(8), pointer     :: dvdt, inflow, outflow, faceFlow(:)
+            real(8), pointer     :: dvdt, inflow, outflow !, faceFlow(:)
             logical, pointer     :: isAirPocket
         !%------------------------------------------------------------------
         !% Aliases
-            dvdt        => airR(sc_Idx,aIdx,airR_dvdt)
-            inflow      => airR(sc_Idx,aIdx,airR_inflow)
-            outflow     => airR(sc_Idx,aIdx,airR_outflow)
-            isAirPocket => airYN(sc_Idx,aIdx,airYN_air_pocket_detected)
-            faceFlow    => faceR(:,fr_Flowrate)
+            dvdt            => airR (sc_Idx,aIdx,airR_dvdt)
+            inflow          => airR (sc_Idx,aIdx,airR_inflow)
+            outflow         => airR (sc_Idx,aIdx,airR_outflow)
+            isAirPocket     => airYN(sc_Idx,aIdx,airYN_air_pocket_detected)
+            !faceFlow        => faceR(:,fr_Flowrate)
         
-        !% if a airpocket is detected, calculate the net flowrate
-        if (isAirPocket) then
+        !% if a airpocket is detected, calculate the net volume change rate
+        if (isAirPocket) then 
             dvdt = outflow - inflow
         else
             dvdt = zeroR
         end if
 
-    end subroutine airpocket_netflowrate
+    end subroutine airpocket_volume_change_rate
 !%    
 !%==========================================================================
 !%==========================================================================
@@ -734,58 +1087,63 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine airpockets_junction_air_maps (sc_Idx, aIdx)
-        !%------------------------------------------------------------------
-        !% Description:
-        !%   calculates the air exchange rate between vlink and JM
-        !%------------------------------------------------------------------
-            integer, intent (in) :: sc_Idx, aIdx
-            integer, pointer     :: pocketType, upJMidx, dnJMidx, upJBidx, dnJBidx
-            logical, pointer     :: ventedUpJM, ventedDnJM, isAirPocket, JunctionAirPocket
-            real(8), pointer     :: massOutflow
-        !%------------------------------------------------------------------
-        !% Aliases
-            pocketType   => airI(sc_Idx,aIdx,airI_type)
-            upJMidx      => airI(sc_Idx,aIdx,airI_Up_JM_idx)
-            upJBidx      => airI(sc_Idx,aIdx,airI_Up_JB_idx)
-            dnJMidx      => airI(sc_Idx,aIdx,airI_Dn_JM_idx)
-            dnJBidx      => airI(sc_Idx,aIdx,airI_Dn_JB_idx)
-            ventedUpJM   => airYN(sc_Idx,aIdx,airYN_air_vented_through_UpJM)
-            ventedDnJM   => airYN(sc_Idx,aIdx,airYN_air_vented_through_DnJM)
-            massOutflow  => airR(sc_Idx,aIdx,airR_mass_flowrate)
-            isAirPocket  => airYN(sc_Idx,aIdx,airYN_air_pocket_detected)
-            JunctionAirPocket => airYN(sc_Idx,aIdx,airYN_junction_air_pocket)
+!   !  subroutine airpockets_junction_air_maps (sc_Idx, aIdx)
 
-            if (isAirPocket) then
-                select case (pocketType)
+    !         !% OBSOLETE BRH
 
-                    case (noAirPocket)
-                        !% do nothing
-                    case (entrappedAirpocket)
-                        !% do nothing
-                    case (upReleaseAirpocket)
-                        if (ventedUpJM .and. JunctionAirPocket) then
-                            ! elemSR(upJMidx,esr_JM_Air_MassInflowRate) = - massOutflow + elemSR(upJMidx,esr_JM_Air_MassInflowRate)
-                            elemSI(upJBidx,esi_JB_vLink_Connection) = sc_Idx
-                            elemSI(upJBidx,esi_JB_air_pocket_index) = aIdx
-                            elemYN(upJBidx,eYN_hasAirPocket) = .true.
-                        end if
-                    case (dnReleaseAirpocket)
-                        if (ventedDnJM .and. JunctionAirPocket) then
-                            ! elemSR(dnJMidx,esr_JM_Air_MassInflowRate) = - massOutflow + elemSR(upJMidx,esr_JM_Air_MassInflowRate)
-                            elemSI(dnJBidx,esi_JB_vLink_Connection) = sc_Idx
-                            elemSI(dnJBidx,esi_JB_air_pocket_index) = aIdx
-                            elemYN(dnJBidx,eYN_hasAirPocket) = .true.
-                        end if
+    !         !%------------------------------------------------------------------
+    !         !% Description:
+    !         !%   calculates the air exchange rate between vlink and JM
+    !         !%------------------------------------------------------------------
+    !             integer, intent (in) :: sc_Idx, aIdx
+    !             integer, pointer     :: pocketType, upJMidx, dnJMidx, upJBidx, dnJBidx
+    !             logical, pointer     :: ventedUpJM, ventedDnJM, isAirPocket, JunctionAirPocket
+    !             real(8), pointer     :: massOutflow
+    !         !%------------------------------------------------------------------
+    !         !% Aliases
+    !             pocketType   => airI(sc_Idx,aIdx,airI_type)
+    !             upJMidx      => airI(sc_Idx,aIdx,airI_Up_JM_idx)
+    !             upJBidx      => airI(sc_Idx,aIdx,airI_Up_JB_idx)
+    !             dnJMidx      => airI(sc_Idx,aIdx,airI_Dn_JM_idx)
+    !             dnJBidx      => airI(sc_Idx,aIdx,airI_Dn_JB_idx)
+    !             ventedUpJM   => airYN(sc_Idx,aIdx,airYN_air_vented_through_UpJM)
+    !             ventedDnJM   => airYN(sc_Idx,aIdx,airYN_air_vented_through_DnJM)
+    !             massOutflow  => airR(sc_Idx,aIdx,airR_mass_flowrate)
+    !             isAirPocket  => airYN(sc_Idx,aIdx,airYN_air_pocket_detected)
+    !             JunctionAirPocket => airYN(sc_Idx,aIdx,airYN_junction_air_pocket)
 
-                    case default
-                        print*, 'ERROR: this must not reach'
-                        stop 8413354
-                end select
+    !             if (isAirPocket) then
+    !                 select case (pocketType)
 
-            end if
+    !                     case (noAirPocket)
+    !                         !% do nothing
+    !                     case (entrappedAirpocket)
+    !                         !% do nothing
+    !                     case (upReleaseAirpocket)
+    !                         if (ventedUpJM .and. JunctionAirPocket) then
+    !                             ! elemSR(upJMidx,esr_JM_Air_MassInflowRate) = - massOutflow + elemSR(upJMidx,esr_JM_Air_MassInflowRate)
+    !                             !elemSI(upJBidx,esi_JB_vLink_Connection) = sc_Idx BRH Set in init_IC_air_entrapment
+    !                             !elemSI(upJBidx,esi_JB_air_pocket_index) = aIdx !BRH set in airpockets_detection
+    !                             !elemYN(upJBidx,eYN_hasAirPocket) = .true.  !BRH set in airpockets_detection
+    !                             !elemYN(dnJBidx,eYN_hasAirPocket) = .true.
+    !                         end if
+    !                     case (dnReleaseAirpocket)
+    !                         if (ventedDnJM .and. JunctionAirPocket) then
+    !                             ! elemSR(dnJMidx,esr_JM_Air_MassInflowRate) = - massOutflow + elemSR(upJMidx,esr_JM_Air_MassInflowRate)
+    !                             !elemSI(dnJBidx,esi_JB_vLink_Connection) = sc_Idx BRH Set in init_IC_air_entrapment
+    !                             !elemSI(dnJBidx,esi_JB_air_pocket_index) = aIdx  !BRH set in airpockets_detection
+    !                             !elemYN(dnJBidx,eYN_hasAirPocket) = .true.  !BRH set in airpockets_detection
+    !                             !elemYN(dnJBidx,eYN_hasAirPocket) = .true.
+    !                         end if
 
-    end subroutine airpockets_junction_air_maps
+    !                     case default
+    !                         print*, 'ERROR: this must not reach'
+    !                         stop 8413354
+    !                 end select
+
+    !             end if
+
+!     end subroutine airpockets_junction_air_maps
 !%    
 !%==========================================================================
 !%==========================================================================
@@ -857,7 +1215,7 @@ contains
             integer, pointer     :: pocketType
             real(8), pointer     :: airVolume, massOutflow, airMass, airMass_N0
             real(8), pointer     :: airDensity_N0, dvdt, airDensity, dt, rho_a, crk
-            logical, pointer     :: isAirPocket, colAirpocket, JunctionAirPocket
+            logical, pointer     :: isAirPocket, collapsed, JunctionAirPocket
             real                 :: dRho
         !%------------------------------------------------------------------
         !% Aliases
@@ -871,7 +1229,7 @@ contains
             massOutflow   => airR(sc_Idx,aIdx,airR_mass_flowrate)
             isAirPocket   => airYN(sc_Idx,aIdx,airYN_air_pocket_detected)
             JunctionAirPocket => airYN(sc_Idx,aIdx,airYN_junction_air_pocket)
-            colAirpocket  => airYN(sc_Idx,aIdx,airYN_air_pocket_collapsed)
+            collapsed     => airYN(sc_Idx,aIdx,airYN_air_pocket_collapsed)
             dt            => setting%Time%Hydraulics%Dt
             crk           => setting%Solver%crk2(istep)
             rho_a         => setting%AirTracking%AirDensity
@@ -888,13 +1246,12 @@ contains
             airMass = max(airMass,zeroR)
             
             if (airMass > zeroR) then
-                colAirpocket = .false.
                 airDensity = airMass / airVolume
             else 
                 airDensity  = zeroR
                 !% no mass left thus the airpocket has been collasped
                 isAirPocket = .false.
-                colAirpocket = .true.
+                collapsed   = .true.
             end if
 
         end if
@@ -936,7 +1293,7 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine add_airpocket_heads_to_CC_elem (sc_Idx, aIdx)
+    subroutine add_airpocket_heads_to_nonJunction_elem (sc_Idx, aIdx)
         !%------------------------------------------------------------------
         !% Description:
         !%  add the airpocket heads to corresponding elements
@@ -978,7 +1335,7 @@ contains
             deallocate(pElem)
         end if
 
-    end subroutine add_airpocket_heads_to_CC_elem
+    end subroutine add_airpocket_heads_to_nonJunction_elem
 !%    
 !%==========================================================================
 !%==========================================================================
@@ -1016,6 +1373,9 @@ contains
             integer, pointer :: cIdx(:), eIdx(:), fUp(:), fDn(:), max_airpockets
             logical, pointer :: conAir(:), elemSur(:), fBlocked(:), StaticAirPocket
             logical          :: possibleAirPocket
+        !%------------------------------------------------------------------
+        ! Aliases
+            max_airpockets => setting%AirTracking%NumberOfAirpocketsAllowed
         !%------------------------------------------------------------------
         !% cycle through the conduits to find air Pockets,
         do ii = 1,N_super_conduit
@@ -1154,6 +1514,7 @@ contains
                                 print*, "The conduit has, ", airPocketIdx, " airpockets "
                                 print*, "which is more than maximum permissible of 1 air pockets for the static method"
                                 print*
+                                stop 5609874
                             end if
                         !% progress the counter for surcharge elements
                         else
@@ -1197,6 +1558,9 @@ contains
             logical, pointer :: conAir(:), elemSur(:), fBlocked(:), StaticAirPocket
             logical          :: possibleAirPocket, contigious_pocket
         !%------------------------------------------------------------------
+        ! Aliases
+            max_airpockets => setting%AirTracking%NumberOfAirpocketsAllowed
+        !%------------------------------------------------------------------
         !% cycle through the conduits to find air Pockets,
         do ii = 1,N_super_conduit
             !% pointers
@@ -1209,7 +1573,7 @@ contains
             elemSur   => elemYN(:,eYN_isPSsurcharged)
             fBlocked  => faceYN(:,fYN_isAirflowBlocked)
 
-            max_airpockets  => setting%AirTracking%NumberOfAirpocketsAllowed
+            !max_airpockets  => setting%AirTracking%NumberOfAirpocketsAllowed
 
             !% reset the possible air pocket detection logical
             possibleAirPocket = .false.
@@ -1585,6 +1949,9 @@ contains
 !%==========================================================================
 !%
     logical function airpocket_detection_JM (JMidx)
+
+    !% OBSOLETE BRH 
+
         !%------------------------------------------------------------------
         !% Description:
         !% Detects if an air pocket is present from the junction branches
@@ -1654,7 +2021,7 @@ contains
     real(8) function airpockets_JM_airvolume (JMidx)
         !%------------------------------------------------------------------
         !% Description:
-        !% calculate volume in junction
+        !% calculate trapped air volume in junction from junction plus branches
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in) :: JMidx
@@ -1671,12 +2038,53 @@ contains
             if (elemYN(JMidx+ii,eYN_hasAirPocket)) then
                 sc_idx = elemSI(JMidx+ii,esi_JB_vLink_Connection)
                 aIdx   = elemSI(JMidx+ii,esi_JB_air_pocket_index)
-                airpockets_JM_airvolume = airpockets_JM_airvolume + airR(sc_Idx,aIdx,airR_volume)  
-
+                airpockets_JM_airvolume = airpockets_JM_airvolume  &
+                    + airR(sc_Idx,aIdx,airR_volume)  
             end if 
         end do
 
     end function airpockets_JM_airvolume
+
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
+    real(8) function airpockets_JM_airMass (JMidx)
+        !%------------------------------------------------------------------
+        !% Description:
+        !% calculate trapped air mass in junction from junction plus branches
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: JMidx
+            integer             :: ii, sc_idx, aIdx
+            real(8), pointer    :: rho_a
+        !%------------------------------------------------------------------
+        !% Aliases
+            rho_a   => setting%AirTracking%AirDensity
+        !%------------------------------------------------------------------
+            
+        !% calculate the initial air mass in the junction
+        airpockets_JM_airMass = rho_a * elemSR(JMidx,esr_JM_Air_Volume)
+
+        ! print *, 'JM air mass', airpockets_JM_airMass
+    
+        !% add the air mass from JM adjacent air pockets
+        do ii=1,max_branch_per_node
+            if (elemSI(JMidx+ii,esi_JB_Exists) .ne. oneI) cycle
+
+            ! print *, 'ii, air pocket ',JMidx+ii,elemYN(JMidx+ii,eYN_hasAirPocket)
+
+            !% add the volume form adjacent air pockets
+            if (elemYN(JMidx+ii,eYN_hasAirPocket)) then
+                sc_idx = elemSI(JMidx+ii,esi_JB_vLink_Connection)
+                aIdx   = elemSI(JMidx+ii,esi_JB_air_pocket_index)
+                airpockets_JM_airMass = airpockets_JM_airMass  &
+                    + airR(sc_Idx,aIdx,airR_Mass)  
+            end if 
+
+        end do
+
+    end function airpockets_JM_airMass
 !%    
 !%==========================================================================
 !%==========================================================================
@@ -1728,14 +2136,14 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine airpockets_update_air_pressure_from_JM (istep)
+    subroutine airpockets_update_air_from_JM (istep)
         !%------------------------------------------------------------------
         !% Description:
-        !% add the air pressures from JM to airR
+        !% add the air data from JM to airR and CC
         !%------------------------------------------------------------------
         !% Declarations
             integer, intent(in)  :: istep
-            integer              :: mm, JMidx,ii, sc_idx, aIdx
+            integer              :: mm, JMidx,ii, JBidx, sc_idx, aIdx
             integer, pointer     :: Npack, thisJM(:)
             real(8), pointer     :: elemHead(:), hasAirPocket(:), AirHead(:)
             integer, pointer     :: fUp(:), fDn(:)
@@ -1755,29 +2163,48 @@ contains
         !% --- cycle through the JM junctions
         do mm = 1,Npack
             JMidx = thisJM(mm)
+            if (.not. elemSI(JMidx,esi_JM_AirPocket_Exists)) cycle
+
             !% add the air volumes from JM adjacent air pockets
             do ii=1,max_branch_per_node
-                if (elemSI(JMidx+ii,esi_JB_Exists) .ne. oneI) cycle
+                JBidx = JMidx + ii
+                if (elemSI(JBidx,esi_JB_Exists) .ne. oneI) cycle
 
-                !% add the volume form adjacent air pockets
-                if (elemYN(JMidx+ii,eYN_hasAirPocket)) then
-                    !% airpocket maps
+                !% add the volume from adjacent air pockets
+                if (elemYN(JBidx,eYN_hasAirPocket)) then
+                    
+                    !% --- HANDLE JB ELEMENTS
+                    !% --- add JM air head to piezometric head of the JB element
+                    elemHead(JBidx)     = max(elemHead(JBidx) + elemSR(JMidx,esr_JM_Air_HeadGauge), elemHead(JBidx) )
+                    airHead(JBidx)      = elemSR(JMidx,esr_JM_Air_HeadGauge)
+                    hasAirPocket(JBidx) = oneR
+                    elemYN(JBidx,eYN_hasAirPocket) = .true.
+
+                    if (mod(ii,2) .ne. zeroI) then !% odd are upstream branches
+                        faceYN(fUp(JBidx),fYN_isAirPressurized) = .true.
+                    else !% downstream branches 
+                        faceYN(fDn(JBidx),fYN_isAirPressurized) = .true.
+                    end if
+
+                    !% --- HANDLE AIR POCKETS STORAGE
+                    !% --- airpocket maps
                     sc_idx = elemSI(JMidx+ii,esi_JB_vLink_Connection)
                     aIdx   = elemSI(JMidx+ii,esi_JB_air_pocket_index)
 
                     airR(sc_Idx,aIdx,airR_gauge_head)    = elemSR(JMidx,esr_JM_Air_HeadGauge)
                     airR(sc_Idx,aIdx,airR_absolute_head) = elemSR(JMidx,esr_JM_Air_HeadAbsolute) 
-                    airR(sc_Idx,aIdx,airR_mass)          = elemSR(JMidx,esr_JM_Air_Mass)
+                    airR(sc_Idx,aIdx,airR_mass)          = elemSR(JMidx,esr_JM_Air_Mass) !% note -- all pockets sotre the JM value!
                     airR(sc_Idx,aIdx,airR_density)       = elemSR(JMidx,esr_JM_Air_Density) 
 
-
-                    !% pack the elements that contain air pocket
+                    !% --- pack the elements that contain air pocket
                     pElem = pack(conduitElemMapsI(sc_Idx,:,cmi_elem_idx), conduitElemMapsI(sc_Idx,:,cmi_airpocket_idx)  == aIdx)
-                    !% add the air head to piezometric head
+
+                    !% --- add the JM air head to piezometric head of the CC elements
                     elemHead(pElem)     = max(elemHead(pElem) + airR(sc_Idx,aIdx,airR_gauge_head), elemHead(pElem))
                     AirHead(pElem)      = airR(sc_Idx,aIdx,airR_gauge_head)
                     hasAirPocket(pElem) = oneR
                     elemYN(pElem,eYN_hasAirPocket) = .true.
+
                     !% faceYN for air pressurization
                     faceYN(fUp(pElem),fYN_isAirPressurized) = .true.
                     faceYN(fDn(pElem),fYN_isAirPressurized) = .true.
@@ -1792,7 +2219,42 @@ contains
             end do
         end do
 
-    end subroutine airpockets_update_air_pressure_from_JM
+    end subroutine airpockets_update_air_from_JM
+!%    
+!%==========================================================================
+!%==========================================================================
+!%
+    subroutine airpocket_zero (scIdx, apIdx)
+        !%------------------------------------------------------------------
+        !% Description
+        !% sets airpocket values to zero (or standard) when airpocket is
+        !% not found or collapses
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in) :: scIdx, apIdx
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        airR (scIdx,apIdx,airR_volume)               = zeroR
+        airR (scIdx,apIdx,airR_volume)               = zeroR
+        airR (scIdx,apIdx,airR_inflow)               = zeroR
+        airR (scIdx,apIdx,airR_outflow)              = zeroR
+        airR (scIdx,apIdx,airR_mass_flowrate)        = zeroR 
+        airR (scIdx,apIdx,airR_dvdt)                 = zeroR 
+        airR (scIdx,apIdx,airR_density)              = setting%AirTracking%AirDensity
+        airR (scIdx,apIdx,airR_density_N0)           = setting%AirTracking%AirDensity
+        airR (scIdx,apIdx,airR_mass)                 = zeroR
+        airR (scIdx,apIdx,airR_mass_N0)              = zeroR
+        airR (scIdx,apIdx,airR_absolute_head)        = setting%AirTracking%AtmosphericPressureHead
+        airR (scIdx,apIdx,airR_absolute_head_N0)     = setting%AirTracking%AtmosphericPressureHead
+        airR (scIdx,apIdx,airR_gauge_head)           = zeroR
+
+        airYN(scIdx,apIdx,airYN_air_pocket_detected) = .false.
+        airYN(scIdx,apIdx,airYN_new_air_pocket)      = .false.
+        
+        airI (scIdx,apIdx,airI_type) = noAirPocket
+
+    end subroutine airpocket_zero
 !%    
 !%==========================================================================
 !%==========================================================================

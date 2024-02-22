@@ -141,9 +141,20 @@ contains
          !integer, dimension(5) :: iet = (/176, 177, 178, 179, 180/) !% 
          !integer, dimension(4) :: ift =    (/ 170, 171, 172,  173 /)
 
+         !J04
+         ! integer, dimension(8) :: iet = (/ 210,  211,    213, 212, 214,   223,  224, 225  /) !% 
+         ! integer, dimension(5) :: ift =    (/  209,  210,              211,  220, 221 /)
+         !J03
+         ! integer, dimension(8) :: iet = (/ 99,  100,    102, 101, 103,   112,  113, 114  /) !% 
+         ! integer, dimension(5) :: ift =    (/  100,  101,              102,  111, 112 /)
 
-         integer, dimension(8) :: iet = (/ 210,  211,    213, 212, 214,   223,  224, 225  /) !% 
-         integer, dimension(5) :: ift =    (/  209,  210,              211,  220, 221 /)
+
+         !integer, dimension(8) :: iet = (/ 208, 209, 210,  211,    213, 212, 214,   223 /) !% 
+         integer, dimension(9) :: iet = (/  97,  98, 99,  100,     102, 101, 103,   112,  113/) !% 
+         
+         integer, dimension(5) :: ift =    (/        209,  210,              211,  220, 221 /) !% WRONG
+     
+
       !%------------------------------------------------------------------
       !% Preliminaries:
       !%------------------------------------------------------------------
@@ -161,9 +172,9 @@ contains
 
      ! return
 
-      if (setting%Time%Step < 1) return
+       if (setting%Time%Step < 55852) return
 
-        if (setting%Time%Step == 3) then
+        if (setting%Time%Step == 55860) then
          stop 880984
         end if
 
@@ -346,6 +357,139 @@ contains
 
          ! stop 7709874
 
+         ! write(*,"(A,15f12.3)") 'Head ', &
+         !    elemR(iet(1),er_Head), &
+         !    elemR(iet(2),er_Head), &
+         !    elemR(iet(3),er_Head), &
+         !    elemR(iet(4),er_Head), &
+         !    elemR(iet(5),er_Head), &
+         !    elemR(iet(6),er_Head), &
+         !    elemR(iet(7),er_Head), &
+         !    elemR(iet(8),er_Head)
+
+         !    write(*,"(A,15f12.3)") 'H-Z ', &
+         !    elemR(iet(1),er_Head) - elemR(iet(1),er_Zcrown), &
+         !    elemR(iet(2),er_Head) - elemR(iet(2),er_Zcrown), &
+         !    elemR(iet(3),er_Head) - elemR(iet(3),er_Zcrown), &
+         !    elemR(iet(4),er_Head) - elemR(iet(4),er_Zcrown), &
+         !    elemR(iet(5),er_Head) - elemR(iet(5),er_Zcrown), &
+         !    elemR(iet(6),er_Head) - elemR(iet(6),er_Zcrown), &
+         !    elemR(iet(7),er_Head) - elemR(iet(7),er_Zcrown)   , &         
+         !    elemR(iet(8),er_Head) - elemR(iet(8),er_Zcrown)  
+
+            write(*,"(A,15(i6,'      '))"), 'idx  ', iet(:)
+
+            write(*,"(A,15f12.3)") 'Head', &
+            elemR(iet(1),er_Head), &
+            elemR(iet(2),er_Head), &
+            elemR(iet(3),er_Head), &
+            elemR(iet(4),er_Head), &
+            elemR(iet(5),er_Head), &
+            elemR(iet(6),er_Head), &
+            elemR(iet(7),er_Head), &
+            elemR(iet(8),er_Head), &
+            elemR(iet(9),er_Head)
+
+            write(*,"(A,15f12.3)") 'H-Z ', &
+            elemR(iet(1),er_Head) - elemR(iet(1),er_Zcrown), &
+            elemR(iet(2),er_Head) - elemR(iet(2),er_Zcrown), &
+            elemR(iet(3),er_Head) - elemR(iet(3),er_Zcrown), &
+            elemR(iet(4),er_Head) - elemR(iet(4),er_Zcrown), &
+            elemR(iet(5),er_Head) - elemR(iet(5),er_Zcrown), &
+            elemR(iet(6),er_Head) - elemR(iet(6),er_Zcrown), &
+            elemR(iet(7),er_Head) - elemR(iet(7),er_Zcrown)   , &    
+            elemR(iet(8),er_Head) - elemR(iet(7),er_Zcrown)   , &       
+            elemR(iet(9),er_Head) - elemR(iet(8),er_Zcrown)    
+
+
+
+
+            write(*,"(A,15(A6,'      '))") 'airH   ', &
+            trim(reverseKey(elemI(iet(1),ei_elementType))), &
+            trim(reverseKey(elemI(iet(2),ei_elementType))), &
+            trim(reverseKey(elemI(iet(3),ei_elementType))), &
+            trim(reverseKey(elemI(iet(4),ei_elementType))), &
+            trim(reverseKey(elemI(iet(5),ei_elementType))), &
+            trim(reverseKey(elemI(iet(6),ei_elementType))), &
+            trim(reverseKey(elemI(iet(7),ei_elementType))), &
+            trim(reverseKey(elemI(iet(8),ei_elementType))), &
+            trim(reverseKey(elemI(iet(9),ei_elementType)))   
+
+            write(*,"(A,15('      ',L2,'    '))") 'airYN', &
+            elemYN(iet(1),eYN_hasAirPocket), &
+            elemYN(iet(2),eYN_hasAirPocket), &
+            elemYN(iet(3),eYN_hasAirPocket), &
+            elemYN(iet(4),eYN_hasAirPocket), &
+            elemYN(iet(5),eYN_hasAirPocket), &
+            elemYN(iet(6),eYN_hasAirPocket), &
+            elemYN(iet(7),eYN_hasAirPocket), &
+            elemYN(iet(8),eYN_hasAirPocket), &
+            elemYN(iet(9),eYN_hasAirPocket) 
+
+            write(*,"(A,15e12.3)") 'airH ', &
+            elemR(iet(1),er_Air_Pressure_Head), &
+            elemR(iet(2),er_Air_Pressure_Head), &
+            elemR(iet(3),er_Air_Pressure_Head), &
+            elemR(iet(4),er_Air_Pressure_Head), &
+            elemR(iet(5),er_Air_Pressure_Head), &
+            elemR(iet(6),er_Air_Pressure_Head), &
+            elemR(iet(7),er_Air_Pressure_Head), &
+            elemR(iet(8),er_Air_Pressure_Head), &
+            elemR(iet(9),er_Air_Pressure_Head)   
+
+            ! write(*,"(A,15f12.3)") 'air1 ', &
+            ! elemR(iet(1),er_Pressurized_Air), &
+            ! elemR(iet(2),er_Pressurized_Air), &
+            ! elemR(iet(3),er_Pressurized_Air), &
+            ! elemR(iet(4),er_Pressurized_Air), &
+            ! elemR(iet(5),er_Pressurized_Air), &
+            ! elemR(iet(6),er_Pressurized_Air), &
+            ! elemR(iet(7),er_Pressurized_Air), &
+            ! elemR(iet(8),er_Pressurized_Air), &
+            ! elemR(iet(9),er_Pressurized_Air) 
+
+            print *, ' '
+            write(*,"(A,15i12)")   'Air Pocket Exists ', &
+               elemSI(iet(6),esi_JM_AirPocket_Exists)
+            write(*,"(A,15f12.3)") 'air mass          ', &
+               elemSR(iet(6),esr_JM_Air_Mass)
+            write(*,"(A,15f12.3)") 'air volume        ' ,& 
+               elemSR(iet(6),esr_JM_Air_Volume)
+            write(*,"(A,15f12.3)") 'air head gauge    ' ,& 
+               elemSR(iet(6),esr_JM_Air_HeadGauge)   
+            write(*,"(A,15f12.3)") 'air head abs    ' ,&  
+               elemSR(iet(6),esr_JM_Air_HeadGauge)  + setting%AirTracking%AtmosphericPressureHead
+            write(*,"(A,15f12.3)") 'air pressure abs ' , & 
+               (elemSR(iet(6),esr_JM_Air_HeadGauge) + setting%AirTracking%AtmosphericPressureHead) &
+                  * setting%Constant%gravity * setting%AirTracking%WaterDensity
+            
+            if (elemR(iet(6),esr_JM_Air_Volume) > zeroR) then
+               write(*,"(A,15e16.8)") 'RT              ' ,                                         & 
+               (elemSR(iet(6),esr_JM_Air_HeadGauge)  + setting%AirTracking%AtmosphericPressureHead) &
+                  * setting%Constant%gravity * setting%AirTracking%WaterDensity                     &
+                  / (elemSR(iet(6),esr_JM_Air_Mass) / elemR(iet(6),esr_JM_Air_Volume))
+            end if
+            print *, ' '
+
+
+     
+            ! print *, 'SC       Head         Mass        Dmass'
+            ! do ii=1,N_super_conduit    
+            !       write(*,"(3(' ',A4,' ',3(e12.3,' ')))") &
+            !       trim(reverseKey(airI(ii,1,airI_type))), airR(ii,1,airR_gauge_head), airR(ii,1,airR_mass), airR(ii,1,airR_mass) - airR(ii,1,airR_mass_N0) , &
+            !       trim(reverseKey(airI(ii,2,airI_type))), airR(ii,2,airR_gauge_head), airR(ii,2,airR_mass), airR(ii,1,airR_mass) - airR(ii,2,airR_mass_N0) , & 
+            !       trim(reverseKey(airI(ii,3,airI_type))), airR(ii,3,airR_gauge_head), airR(ii,3,airR_mass), airR(ii,1,airR_mass) - airR(ii,3,airR_mass_N0) 
+            ! end do
+            ! print *, 'SC       Volume       Volume0     Dvolume'
+            ! do ii=1,N_super_conduit    
+            !       write(*,"(3(' ',A4,' ',3(e12.3,' ')))") &
+            !       trim(reverseKey(airI(ii,1,airI_type))), airR(ii,1,airR_Volume), airR(ii,1,airR_Volume_N0) , airR(ii,1,airR_Volume) - airR(ii,1,airR_Volume_N0), &
+            !       trim(reverseKey(airI(ii,2,airI_type))), airR(ii,2,airR_Volume), airR(ii,2,airR_Volume_N0) , airR(ii,2,airR_Volume) - airR(ii,2,airR_Volume_N0), & 
+            !       trim(reverseKey(airI(ii,3,airI_type))), airR(ii,3,airR_Volume), airR(ii,3,airR_Volume_N0) , airR(ii,3,airR_Volume) - airR(ii,3,airR_Volume_N0)
+            ! end do
+
+         return    
+
          write(*,"(A,15f12.3)") 'Head', &
             elemR(iet(1),er_Head), &
                faceR(ift(1),fr_Head_d), &
@@ -376,6 +520,36 @@ contains
                faceR(ift(5),fr_Head_d) - faceR(ift(5),fr_Zcrown_d), &
             elemR(iet(8),er_Head) - elemR(iet(8),er_Zcrown)    
          
+            write(*,"(A,15e12.3)") 'airH', &
+            elemR(iet(1),er_Air_Pressure_Head), &
+               0.d0, &
+            elemR(iet(2),er_Air_Pressure_Head), &
+               0.d0, &
+            elemR(iet(3),er_Air_Pressure_Head), &
+            elemR(iet(4),er_Air_Pressure_Head), &
+            elemR(iet(5),er_Air_Pressure_Head), &
+               0.d0, &
+            elemR(iet(6),er_Air_Pressure_Head), &
+               0.d0, &
+            elemR(iet(7),er_Air_Pressure_Head), &
+               0.d0, &
+            elemR(iet(8),er_Air_Pressure_Head)   
+
+            write(*,"(A,15f12.3)") 'air1', &
+            elemR(iet(1),er_Pressurized_Air), &
+               0.d0, &
+            elemR(iet(2),er_Pressurized_Air), &
+               0.d0, &
+            elemR(iet(3),er_Pressurized_Air), &
+            elemR(iet(4),er_Pressurized_Air), &
+            elemR(iet(5),er_Pressurized_Air), &
+               0.d0, &
+            elemR(iet(6),er_Pressurized_Air), &
+               0.d0, &
+            elemR(iet(7),er_Pressurized_Air), &
+               0.d0, &
+            elemR(iet(8),er_Pressurized_Air) 
+
          ! write(*,"(A,15f12.3)") 'ZcrD', &
          !    elemR(iet(1),er_Zcrown), &
          !       faceR(ift(1),fr_Zcrown_d), &

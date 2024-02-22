@@ -229,10 +229,14 @@ module runge_kutta2
                 !%  --- no action 
             end if
 
+            !call util_utest_CLprint('XXXX before air entrapment')
+
             !% Air entrapment modeling
             if (setting%AirTracking%UseAirTrackingYN) then
                 call air_entrapment_toplevel (istep)
             end if 
+
+            !call util_utest_CLprint('YYYY after air entrapment')
 
         end do
 

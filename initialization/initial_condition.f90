@@ -7105,6 +7105,9 @@ contains
                 elemStart = conduitElemMapsI(ii,oneI,cmi_elem_idx)
                 elemEnd   = conduitElemMapsI(ii,nElem,cmi_elem_idx)
 
+                !% store the superconduit index
+                elemI(elemStart:elemEnd,ei_SuperConduit_idx) = ii
+
                 !% store the maps of vented junction to the elemI and elemYN array
                 if (elemYN(elemStart,eYN_isElementDownstreamOfJB)) then
                     !% find the upstream face
@@ -7121,6 +7124,9 @@ contains
                     airI(ii,:,airI_Up_JM_idx) = elemI(elemStart,ei_adjacent_JM_idx)
                     airI(ii,:,airI_Up_JB_idx) = JBelem
                     airYN(ii,:,airYN_air_vented_through_UpJM) = .true.
+
+                     !% --- store the super link connection for the JB
+                    elemSI(JBelem,esi_JB_vLink_Connection) = ii
                 end if
 
                 if (elemYN(elemEnd,eYN_isElementUpstreamOfJB)) then
@@ -7138,6 +7144,9 @@ contains
                     airI(ii,:,airI_Dn_JM_idx) = elemI(elemEnd,ei_adjacent_JM_idx)
                     airI(ii,:,airI_Dn_JB_idx) = JBelem
                     airYN(ii,:,airYN_air_vented_through_DnJM) = .true.
+
+                    !% --- store the super link connection for the JB
+                    elemSI(JBelem,esi_JB_vLink_Connection) = ii
                 end if
 
             end do

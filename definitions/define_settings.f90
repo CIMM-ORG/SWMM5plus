@@ -352,15 +352,15 @@ module define_settings
     type AirTrackingType
         integer :: NumberOfAirpocketsAllowed = 3        !% number of airpockets allowed for air simulation
         real(8) :: PolytropicExponent        = 1.2d0    !% Polytropic exponent for adiabatic air comperssion/expansion process
-        real(8) :: AtmosphericPressureHead   = 10.3d0   !% atmospheric pressure head in m
+        real(8) :: AtmosphericPressureHead   = 10.33d0   !% atmospheric pressure head in m
         real(8) :: AirDischargeCoefficient   = 0.65     !% discharge coefficient for air-orifice flow
         real(8) :: AirDensity                = 1.225d0  !% density of air kg/m^3
         real(8) :: WaterDensity              = 1000.0d0 !% density of water kg/m^3
         real(8) :: MinimumVentArea           = 0.0d0    !% area of the venting tunnel at the end of links
         real(8) :: theta                     = 0.5d0    !% theta value for the theta numerical method
         logical :: UseAirTrackingYN          = .false.  !% setting to turn on air tracking
-        logical :: UseMinVentArea            = .true.   !% Use a minimum vent area for all the vlinks
-        logical :: StaticAirPocket           = .true.   !% air pocket location can not move until the pocket is collapsed
+        logical :: UseMinVentArea            = .false.   !% Use a minimum vent area for all the vlinks
+        logical :: StaticAirPocket           = .false.   !% air pocket location can not move until the pocket is collapsed
         logical :: AirVentThroughJM          = .true.   !% air pocket vent through a JM if present
     end type AirTrackingType
 

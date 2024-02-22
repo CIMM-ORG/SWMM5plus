@@ -315,6 +315,7 @@ module define_indexes
          enumerator :: ei_adjacent_JM_idx           !% if the link elem connected to a JM, then the JM idx
          enumerator :: ei_adjacent_JB_idx           !% if the link elem connected to a JM, then the JB idx
          enumerator :: ei_QeqType                   !% KEY type of flow equation (static)     
+         enumerator :: ei_SuperConduit_idx          !% index of the superconduit for air entrapment
          enumerator :: ei_Temp01                    !% temporary array
          enumerator :: ei_Temp02
          enumerator :: ei_Temp03
@@ -611,11 +612,13 @@ module define_indexes
         !%     Note that esi_JunctionMain, esi_JunctionBranch, and (if needed) esi_Storage will
         !%     share the same column sets.
         enumerator ::  esi_JM_Type       = 1             !% KEY junction main type
+        enumerator ::  esi_JM_AirPocket_Exists           !% assign 1 if JM has all branches with air pockets
         enumerator ::  esi_JM_Curve_ID                   !% id of the junction storage cure if exists
         enumerator ::  esi_JM_Total_Branches             !% total number of branches connected to the junction main
         enumerator ::  esi_JM_OverflowType               !% NoOverflow, Ponding, OverflowWeir
         enumerator ::  esi_JM_HeadLimit                  !% assigned 1 if upper limit on head, -1 if lower limit, 0 if none
         enumerator ::  esi_JB_Exists                   !% assigned 1 if branch exists
+        enumerator ::  esi_JB_AirPocket_Exists         !% assign 1 if connected to CC with air pocket
         enumerator ::  esi_JB_CC_adjacent              !% assigned 1 if CC is adjacent element
         enumerator ::  esi_JB_Diag_adjacent            !% assigned 1 if Diagnostic is adjacent element
         enumerator ::  esi_JB_CanModifyQ               !% assigned 1 if junction mass residual can modifyQ
@@ -1710,7 +1713,7 @@ module define_indexes
         enumerator :: airR_volume_N0
         enumerator :: airR_inflow
         enumerator :: airR_outflow
-        enumerator :: airR_flowrate
+        !enumerator :: airR_flowrate
         enumerator :: airR_mass_flowrate
         enumerator :: airR_dvdt
         enumerator :: airR_density
