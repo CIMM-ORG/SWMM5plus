@@ -606,11 +606,11 @@ for profile_name_test in all_attribute_names:
 
     #saving the animation before showing it
     #MIGHT NEED TO BE CHANGED TO THE OUTPUT FOLDER RATHER THAN DUMBING TO CURRENT DIRECTORY
-    # if save_animation:
-    # animation file name
-    animation_name = output_path+""+test_case+"_"+ profile_name_test+'.gif' 
-    writergif = animation.PillowWriter(fps=30)
-    ani.save(animation_name,writer=writergif)
+    if save_animation:
+        # animation file name
+        animation_name = output_path+""+test_case+"_"+ profile_name_test+'.gif' 
+        writergif = animation.PillowWriter(fps=30)
+        ani.save(animation_name,writer=writergif)
 
 
     # show the animation plot

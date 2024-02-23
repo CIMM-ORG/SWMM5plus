@@ -52,11 +52,13 @@ contains
             call airpockets_detection ()
         end if
 
-        !% --- check the junctions to see which are fully isolated BRH
-        call airpocket_check_junction ()
+        if (setting%AirTracking%AirVentThroughJM) then
+            !% --- check the junctions to see which are fully isolated BRH
+            call airpocket_check_junction ()
 
-        !% --- reset detection where junctions are open BRH
-        call airpocket_clear_pockets_at_open_junction ()
+            !% --- reset detection where junctions are open BRH
+            call airpocket_clear_pockets_at_open_junction ()
+        end if
 
         ! print *, 'before air pockets calculatoin'
         ! print *, 'JB 102, 103 eYN_hasAirPocket',elemYN(102,eYN_hasAirPocket), elemYN(103,eYN_hasAirPocket)
@@ -708,6 +710,7 @@ contains
         !% Declarations:
             integer, pointer :: Npack, thisP(:), JMidx, scIdx, aIdx
             integer          :: mm, ii
+            real(8), pointer :: depth, zbtm, zcrown
             logical          :: foundOpen
         !%------------------------------------------------------------------
         !% Preliminaries
@@ -726,17 +729,23 @@ contains
                 !% --- get super-link and pocket indexes
                 scIdx => elemSI(JMidx+ii,esi_JB_vLink_Connection)
                 aIdx  => elemSI(JMidx+ii,esi_JB_air_pocket_index)
-                if (aIdx == nullvalueI) then 
-                    foundOpen = .true. 
-                    exit !% ii loop
-                end if
-                if (airI(scIdx,aIdx,airI_Type) .eq. noAirPocket) then
-                    foundOpen = .true.
-                    exit !% ii loop
+
+                depth  => elemR(JMidx+ii,er_Depth)
+                zbtm   => elemR(JMidx+ii,er_Zbottom)
+                zcrown => elemR(JMidx+ii,er_Zcrown)
+
+                if (depth + zbtm < zcrown) then
+
+                    if (aIdx == nullvalueI) then 
+                        foundOpen = .true. 
+                        exit !% ii loop
+                    end if
+                    if (airI(scIdx,aIdx,airI_Type) .eq. noAirPocket) then
+                        foundOpen = .true.
+                        exit !% ii loop
+                    end if
                 end if
             end do
-            
-            ! print *, 'JMidx foundOpen',JMidx,foundOpen
 
             if  (foundOpen) then 
                 !% --- reset all the JM air values to zero
@@ -1364,185 +1373,185 @@ contains
 !%==========================================================================
 !%==========================================================================
 !%
-    subroutine airpockets_detection_single () 
-        !%------------------------------------------------------------------
-        !% Description:
-        !% Only one air pocket permitted per link
-        !%------------------------------------------------------------------
-            integer          :: ii, jj, kk, startIdx, endIdx, airPocketIdx, nElem
-            integer, pointer :: cIdx(:), eIdx(:), fUp(:), fDn(:), max_airpockets
-            logical, pointer :: conAir(:), elemSur(:), fBlocked(:), StaticAirPocket
-            logical          :: possibleAirPocket
-        !%------------------------------------------------------------------
-        ! Aliases
-            max_airpockets => setting%AirTracking%NumberOfAirpocketsAllowed
-        !%------------------------------------------------------------------
-        !% cycle through the conduits to find air Pockets,
-        do ii = 1,N_super_conduit
-            !% pointers
-            cIdx      => sc_link_Idx(ii,1:links_per_sc(ii))
-            nElem     =  sum(link%I(cIdx,li_N_element))
-            conAir    => link%YN(:,lYN_airPocketDetected)
-            eIdx      => conduitElemMapsI(ii,1:nElem,cmi_elem_idx)
-            fUp       => conduitElemMapsI(ii,1:nElem,cmi_elem_up_face)
-            fDn       => conduitElemMapsI(ii,1:nElem,cmi_elem_dn_face)
-            elemSur   => elemYN(:,eYN_isPSsurcharged)
-            fBlocked  => faceYN(:,fYN_isAirflowBlocked)
+    ! subroutine airpockets_detection_single () 
+    !     !%------------------------------------------------------------------
+    !     !% Description:
+    !     !% Only one air pocket permitted per link
+    !     !%------------------------------------------------------------------
+    !         integer          :: ii, jj, kk, startIdx, endIdx, airPocketIdx, nElem
+    !         integer, pointer :: cIdx(:), eIdx(:), fUp(:), fDn(:), max_airpockets
+    !         logical, pointer :: conAir(:), elemSur(:), fBlocked(:), StaticAirPocket
+    !         logical          :: possibleAirPocket
+    !     !%------------------------------------------------------------------
+    !     ! Aliases
+    !         max_airpockets => setting%AirTracking%NumberOfAirpocketsAllowed
+    !     !%------------------------------------------------------------------
+    !     !% cycle through the conduits to find air Pockets,
+    !     do ii = 1,N_super_conduit
+    !         !% pointers
+    !         cIdx      => sc_link_Idx(ii,1:links_per_sc(ii))
+    !         nElem     =  sum(link%I(cIdx,li_N_element))
+    !         conAir    => link%YN(:,lYN_airPocketDetected)
+    !         eIdx      => conduitElemMapsI(ii,1:nElem,cmi_elem_idx)
+    !         fUp       => conduitElemMapsI(ii,1:nElem,cmi_elem_up_face)
+    !         fDn       => conduitElemMapsI(ii,1:nElem,cmi_elem_dn_face)
+    !         elemSur   => elemYN(:,eYN_isPSsurcharged)
+    !         fBlocked  => faceYN(:,fYN_isAirflowBlocked)
 
-            !% reset the possible air pocket detection logical
-            possibleAirPocket = .false.
-            !% reset the conduit air pocket detection logical
-            conAir(cIdx) = .false.
+    !         !% reset the possible air pocket detection logical
+    !         possibleAirPocket = .false.
+    !         !% reset the conduit air pocket detection logical
+    !         conAir(cIdx) = .false.
 
-            !% ------------------------------------------------------------------
-            !% initial air pockets screening
-            !% search for if any faces conduit elements that has blocked airflow
-            if (any(elemSur(eIdx))) then
-                possibleAirPocket = .true.
-            end if
+    !         !% ------------------------------------------------------------------
+    !         !% initial air pockets screening
+    !         !% search for if any faces conduit elements that has blocked airflow
+    !         if (any(elemSur(eIdx))) then
+    !             possibleAirPocket = .true.
+    !         end if
 
-            !% if initially any airPocket is detected, map the location of that air Pocket
-            if (possibleAirPocket) then
+    !         !% if initially any airPocket is detected, map the location of that air Pocket
+    !         if (possibleAirPocket) then
 
-                if (airYN(ii,oneI,airYN_air_pocket_detected)) then
-                    !% air pocket already detected
-                    conAir(cIdx) = .true.
-                    !% --- special conditions for upstream and downstream 
-                    !%     airflow blockage
-                    if (airI(ii,oneI,airI_type) == upReleaseAirpocket)  then
-                        !% if the airflow of upstream release is blocked 
-                        if (fBlocked(fUp(oneI))) then
-                            airI(ii,oneI,airI_type)  = entrappedAirpocket
-                        end if
+    !             if (airYN(ii,oneI,airYN_air_pocket_detected)) then
+    !                 !% air pocket already detected
+    !                 conAir(cIdx) = .true.
+    !                 !% --- special conditions for upstream and downstream 
+    !                 !%     airflow blockage
+    !                 if (airI(ii,oneI,airI_type) == upReleaseAirpocket)  then
+    !                     !% if the airflow of upstream release is blocked 
+    !                     if (fBlocked(fUp(oneI))) then
+    !                         airI(ii,oneI,airI_type)  = entrappedAirpocket
+    !                     end if
                         
-                    else if (airI(ii,oneI,airI_type) == dnReleaseAirpocket) then
-                        !% if the airflow of downstream release is blocked
-                        if (fBlocked(fDn(nElem))) then
-                            airI(ii,oneI,airI_type)  = entrappedAirpocket
-                        end if
+    !                 else if (airI(ii,oneI,airI_type) == dnReleaseAirpocket) then
+    !                     !% if the airflow of downstream release is blocked
+    !                     if (fBlocked(fDn(nElem))) then
+    !                         airI(ii,oneI,airI_type)  = entrappedAirpocket
+    !                     end if
 
-                    else if (airI(ii,oneI,airI_type) == entrappedAirpocket) then
-                        !% if the airflow of downstream release is blocked
-                        if (.not. fBlocked(fDn(nElem))) then
-                            airI(ii,oneI,airI_type)  = dnReleaseAirpocket
-                        else if (fBlocked(fUp(oneI))) then
-                            airI(ii,oneI,airI_type)  = upReleaseAirpocket
-                        end if
-                    end if
+    !                 else if (airI(ii,oneI,airI_type) == entrappedAirpocket) then
+    !                     !% if the airflow of downstream release is blocked
+    !                     if (.not. fBlocked(fDn(nElem))) then
+    !                         airI(ii,oneI,airI_type)  = dnReleaseAirpocket
+    !                     else if (fBlocked(fUp(oneI))) then
+    !                         airI(ii,oneI,airI_type)  = upReleaseAirpocket
+    !                     end if
+    !                 end if
 
-                else
-                    !% reset the counter for number of Pockets
-                    airPocketIdx = zeroI
-                    !% reset the indexes
-                    startIdx    = zeroI
-                    endIdx      = zeroI
-                    !% initialize the conduitElemMapsI at each detection for moving air pocket
-                    conduitElemMapsI(ii,:,cmi_airpocket_idx)  = nullvalueI
-                    conduitElemMapsI(ii,:,cmi_airpocket_type) = noAirPocket
-                    !% initialize the index for the second do loop
-                    jj = oneI
-                    !% --- cycle through the conduit elements to 
-                    !%     find entrapped air pockets
-                    do while (jj <= nElem)
-                        !% --- Find the airpocket based on mixed condition first
-                        !%     the element is not surcharged and start counting 
-                        !%     the non-surcharged elements
-                        if (.not. elemSur(eIdx(jj))) then
+    !             else
+    !                 !% reset the counter for number of Pockets
+    !                 airPocketIdx = zeroI
+    !                 !% reset the indexes
+    !                 startIdx    = zeroI
+    !                 endIdx      = zeroI
+    !                 !% initialize the conduitElemMapsI at each detection for moving air pocket
+    !                 conduitElemMapsI(ii,:,cmi_airpocket_idx)  = nullvalueI
+    !                 conduitElemMapsI(ii,:,cmi_airpocket_type) = noAirPocket
+    !                 !% initialize the index for the second do loop
+    !                 jj = oneI
+    !                 !% --- cycle through the conduit elements to 
+    !                 !%     find entrapped air pockets
+    !                 do while (jj <= nElem)
+    !                     !% --- Find the airpocket based on mixed condition first
+    !                     !%     the element is not surcharged and start counting 
+    !                     !%     the non-surcharged elements
+    !                     if (.not. elemSur(eIdx(jj))) then
 
-                            !% set the starting index 
-                            startIdx = jj
+    !                         !% set the starting index 
+    !                         startIdx = jj
 
-                            !% cycle through the next elements until a surcharge
-                            !% element is encountered
-                            do while (jj <= nElem .and. (.not. elemSur(eIdx(jj))))
-                                jj = jj + oneI
-                            end do
+    !                         !% cycle through the next elements until a surcharge
+    !                         !% element is encountered
+    !                         do while (jj <= nElem .and. (.not. elemSur(eIdx(jj))))
+    !                             jj = jj + oneI
+    !                         end do
 
-                            !% set the ending index
-                            endIdx = jj - oneI
-                            !% count the number of airpockets
-                            airPocketIdx = airPocketIdx + oneI
+    !                         !% set the ending index
+    !                         endIdx = jj - oneI
+    !                         !% count the number of airpockets
+    !                         airPocketIdx = airPocketIdx + oneI
 
-                            !% --- HACK: 
-                            !%     while surcharging, v-shape patterns can develop
-                            !%     thus remove the saved entrapped airpockets that
-                            !%     consnsts of only one element 
-                            if ((endIdx - startIdx <= zeroI))    then
-                                airPocketIdx = airPocketIdx - oneI
-                                cycle
-                            end if
+    !                         !% --- HACK: 
+    !                         !%     while surcharging, v-shape patterns can develop
+    !                         !%     thus remove the saved entrapped airpockets that
+    !                         !%     consnsts of only one element 
+    !                         if ((endIdx - startIdx <= zeroI))    then
+    !                             airPocketIdx = airPocketIdx - oneI
+    !                             cycle
+    !                         end if
 
-                            !% --- air pocket limit
-                            !%     if the airpocket limit doesnot exceed the permissible
-                            !%     number of airpockets per conduit, store the data
-                            if ((airPocketIdx > zeroI) .and. (airPocketIdx <= oneI)) then
-                                !% new airpocket
-                                airYN(ii,oneI,airYN_new_air_pocket) =  .true.
-                                !% save the airpocket detection logical
-                                airYN(ii,oneI,airYN_air_pocket_detected) = .true.
-                                !% arrayI_pos selects the right column positions of airpockets
-                                !% save the integer air pocket data
-                                airI(ii,oneI,airI_idx)        = oneI
-                                airI(ii,oneI,airI_elem_start) = eIdx(startIdx)
-                                airI(ii,oneI,airI_face_up)    = fUp(startIdx)
-                                airI(ii,oneI,airI_elem_end)   = eIdx(endIdx)
-                                airI(ii,oneI,airI_face_dn)    = fDn(endIdx)
+    !                         !% --- air pocket limit
+    !                         !%     if the airpocket limit doesnot exceed the permissible
+    !                         !%     number of airpockets per conduit, store the data
+    !                         if ((airPocketIdx > zeroI) .and. (airPocketIdx <= oneI)) then
+    !                             !% new airpocket
+    !                             airYN(ii,oneI,airYN_new_air_pocket) =  .true.
+    !                             !% save the airpocket detection logical
+    !                             airYN(ii,oneI,airYN_air_pocket_detected) = .true.
+    !                             !% arrayI_pos selects the right column positions of airpockets
+    !                             !% save the integer air pocket data
+    !                             airI(ii,oneI,airI_idx)        = oneI
+    !                             airI(ii,oneI,airI_elem_start) = eIdx(startIdx)
+    !                             airI(ii,oneI,airI_face_up)    = fUp(startIdx)
+    !                             airI(ii,oneI,airI_elem_end)   = eIdx(endIdx)
+    !                             airI(ii,oneI,airI_face_dn)    = fDn(endIdx)
 
-                                !% --- set the type of the airpocket
-                                !%     if the starting element is the first element in the conduit
-                                !%     there will be an upstream release
-                                if (startIdx == oneI) then
-                                    airI(ii,oneI,airI_type) = upReleaseAirpocket
+    !                             !% --- set the type of the airpocket
+    !                             !%     if the starting element is the first element in the conduit
+    !                             !%     there will be an upstream release
+    !                             if (startIdx == oneI) then
+    !                                 airI(ii,oneI,airI_type) = upReleaseAirpocket
                                 
-                                !% else if the ending element is the last element in the conduit
-                                !% there will be a downstream release
-                                else if (endIdx == nElem) then
-                                    airI(ii,oneI,airI_type) = dnReleaseAirpocket
-                                !% else the pocket is entrapped
-                                else
-                                    airI(ii,oneI,airI_type) = entrappedAirpocket
-                                end if
+    !                             !% else if the ending element is the last element in the conduit
+    !                             !% there will be a downstream release
+    !                             else if (endIdx == nElem) then
+    !                                 airI(ii,oneI,airI_type) = dnReleaseAirpocket
+    !                             !% else the pocket is entrapped
+    !                             else
+    !                                 airI(ii,oneI,airI_type) = entrappedAirpocket
+    !                             end if
 
-                                !% save airpocket detection data in the conduitElemMapsI array
-                                conduitElemMapsI(ii,startIdx:endIdx,cmi_airpocket_idx)  = oneI
-                                conduitElemMapsI(ii,startIdx:endIdx,cmi_airpocket_type) = airI(ii,oneI,airI_type)
+    !                             !% save airpocket detection data in the conduitElemMapsI array
+    !                             conduitElemMapsI(ii,startIdx:endIdx,cmi_airpocket_idx)  = oneI
+    !                             conduitElemMapsI(ii,startIdx:endIdx,cmi_airpocket_type) = airI(ii,oneI,airI_type)
 
-                                !% save the airpocket detection at the conduit
-                                conAir(cIdx) = .true.
-                            !% else if there is too many air pockets than permissible  
-                            else if (airPocketIdx > oneI) then
-                                print*, "The conduit has, ", airPocketIdx, " airpockets "
-                                print*, "which is more than maximum permissible of 1 air pockets for the static method"
-                                print*
-                                stop 5609874
-                            end if
-                        !% progress the counter for surcharge elements
-                        else
-                            jj = jj + oneI
-                        end if
-                    end do
-                end if
-            !% if there is not any possible air pockets, reset the values of the air arrays of that correspondig conduit
-            else
-                conAir(cIdx)  = .false.
-                airYN(ii,:,airYN_air_pocket_detected)  = .false.
-                airYN(ii,:,airYN_air_pocket_collapsed) = .true.
-                airYN(ii,:,airYN_new_air_pocket)       = .false.
-                airI(ii,:,airI_idx)                    = nullvalueI
-                airI(ii,:,airI_elem_start)             = nullvalueI
-                airI(ii,:,airI_face_up)                = nullvalueI
-                airI(ii,:,airI_face_dn)                = nullvalueI
-                !% reset the air entrapment type
-                airI(ii,:,airI_type) = noAirPocket
-                airR(ii,:,:)  = zeroR
-                airR(ii,:,airR_absolute_head) = setting%AirTracking%AtmosphericPressureHead
-                airR(ii,:,airR_density)       = setting%AirTracking%AirDensity
-                conduitElemMapsI(ii,:,cmi_airpocket_idx)  = nullvalueI
-                conduitElemMapsI(ii,:,cmi_airpocket_type) = noAirPocket
-            end if
-        end do
+    !                             !% save the airpocket detection at the conduit
+    !                             conAir(cIdx) = .true.
+    !                         !% else if there is too many air pockets than permissible  
+    !                         else if (airPocketIdx > oneI) then
+    !                             print*, "The conduit has, ", airPocketIdx, " airpockets "
+    !                             print*, "which is more than maximum permissible of 1 air pockets for the static method"
+    !                             print*
+    !                             stop 5609874
+    !                         end if
+    !                     !% progress the counter for surcharge elements
+    !                     else
+    !                         jj = jj + oneI
+    !                     end if
+    !                 end do
+    !             end if
+    !         !% if there is not any possible air pockets, reset the values of the air arrays of that correspondig conduit
+    !         else
+    !             conAir(cIdx)  = .false.
+    !             airYN(ii,:,airYN_air_pocket_detected)  = .false.
+    !             airYN(ii,:,airYN_air_pocket_collapsed) = .true.
+    !             airYN(ii,:,airYN_new_air_pocket)       = .false.
+    !             airI(ii,:,airI_idx)                    = nullvalueI
+    !             airI(ii,:,airI_elem_start)             = nullvalueI
+    !             airI(ii,:,airI_face_up)                = nullvalueI
+    !             airI(ii,:,airI_face_dn)                = nullvalueI
+    !             !% reset the air entrapment type
+    !             airI(ii,:,airI_type) = noAirPocket
+    !             airR(ii,:,:)  = zeroR
+    !             airR(ii,:,airR_absolute_head) = setting%AirTracking%AtmosphericPressureHead
+    !             airR(ii,:,airR_density)       = setting%AirTracking%AirDensity
+    !             conduitElemMapsI(ii,:,cmi_airpocket_idx)  = nullvalueI
+    !             conduitElemMapsI(ii,:,cmi_airpocket_type) = noAirPocket
+    !         end if
+    !     end do
 
-    end subroutine airpockets_detection_single
+    ! end subroutine airpockets_detection_single
 !%    
 !%==========================================================================
 !%==========================================================================
@@ -1554,6 +1563,7 @@ contains
         !%------------------------------------------------------------------
             integer          :: ii, jj, kk, startIdx, endIdx, nElem, airPocketIdx 
             integer          :: s1, JBidx
+            integer, pointer :: JBupIdx, JBdnIdx
             integer, pointer :: cIdx(:), eIdx(:), fUp(:), fDn(:), max_airpockets
             logical, pointer :: conAir(:), elemSur(:), fBlocked(:), StaticAirPocket
             logical          :: possibleAirPocket, contigious_pocket
@@ -1572,6 +1582,22 @@ contains
             fDn       => conduitElemMapsI(ii,1:nElem,cmi_elem_dn_face)
             elemSur   => elemYN(:,eYN_isPSsurcharged)
             fBlocked  => faceYN(:,fYN_isAirflowBlocked)
+
+            !% --- pointers to the upstream and downstream branch locations
+            JBupIdx => airI(ii,1,airI_Up_JB_idx)
+            JBdnIdx => airI(ii,1,airI_Dn_JB_idx)
+
+            !% --- ensure JB are initialized to zero (detection below)
+            if (JBupIdx .ne. nullvalueI) then
+                elemSI(JBupIdx,esi_JB_AirPocket_Exists) = zeroI
+                elemYN(JBupIdx,eYN_hasAirPocket) = .false.
+                elemSI(JBupIdx,esi_JB_air_pocket_index) = nullvalueI
+            end if
+            if (JBdnIdx .ne. nullvalueI) then
+                elemSI(JBdnIdx,esi_JB_AirPocket_Exists) = zeroI
+                elemYN(JBdnIdx,eYN_hasAirPocket) = .false.
+                elemSI(JBdnIdx,esi_JB_air_pocket_index) = nullvalueI
+            end if
 
             !max_airpockets  => setting%AirTracking%NumberOfAirpocketsAllowed
 
@@ -1606,6 +1632,11 @@ contains
                                 JBidx = airI(ii,kk,airI_Up_JB_idx)
                                 if (elemR(JBidx,er_Depth)+elemR(JBidx,er_Zbottom) >= elemR(JBidx,er_Zcrown)) then
                                     airI(ii,kk,airI_type)  = entrappedAirpocket
+                                else
+                                    !% --- set the Upp JB as connecting to an air pocket  
+                                    elemSI(JBidx,esi_JB_AirPocket_Exists) = oneI
+                                    elemSI(JBidx,esi_JB_air_pocket_index) = kk
+                                    elemYN(JBidx,eYN_hasAirPocket) = .true.
                                 end if
                             !% else jsut check if the face is blocked
                             else
@@ -1618,9 +1649,15 @@ contains
                             !% if the airflow of downstream release is blocked
                             !% check if the the air pocket is vented through a downstream junction
                             if (airYN(ii,kk,airYN_air_vented_through_DnJM)) then
+                                
                                 JBidx = airI(ii,kk,airI_Dn_JB_idx)
                                 if (elemR(JBidx,er_Depth)+elemR(JBidx,er_Zbottom) >= elemR(JBidx,er_Zcrown)) then
                                     airI(ii,kk,airI_type)  = entrappedAirpocket
+                                else
+                                    !% --- set the Upp JB as connecting to an air pocket  
+                                    elemSI(JBidx,esi_JB_AirPocket_Exists) = oneI
+                                    elemSI(JBidx,esi_JB_air_pocket_index) = kk
+                                    elemYN(JBidx,eYN_hasAirPocket) = .true. 
                                 end if
                             !% else jsut check if the face is blocked
                             else
@@ -1631,18 +1668,35 @@ contains
 
                         !% HACK: NOT SURE ABOUT THIS
                         else if (airI(ii,kk,airI_type) == entrappedAirpocket) then
+
                             !% if the airflow of downstream release is not blocked
                             if (.not. fBlocked(airI(ii,kk,airI_face_dn))) then
                                 airI(ii,kk,airI_type)  = dnReleaseAirpocket
+
+                                if (airYN(ii,kk,airYN_air_vented_through_DnJM)) then
+                                    JBidx = airI(ii,kk,airI_Dn_JB_idx)
+                                    !% --- set the Upp JB as connecting to an air pocket  
+                                    elemSI(JBidx,esi_JB_AirPocket_Exists) = oneI
+                                    elemSI(JBidx,esi_JB_air_pocket_index) = kk
+                                    elemYN(JBidx,eYN_hasAirPocket) = .true. 
+
+                                end if
+                            
                             !% if the airflow of upstream release is not blocked
                             else if (.not. fBlocked(airI(ii,kk,airI_face_up))) then
                                 airI(ii,kk,airI_type)  = upReleaseAirpocket
 
-                            else if (.not. fBlocked(airI(ii,kk,airI_face_dn)) .and. &
-                                     .not. fBlocked(airI(ii,kk,airI_face_up))) then
-                                airI(ii,kk,airI_type)  = noAirPocket  
-                                airYN(ii,kk,airYN_air_pocket_detected) = .false. 
+                                if (airYN(ii,kk,airYN_air_vented_through_UpJM)) then
+                                    JBidx = airI(ii,kk,airI_Up_JB_idx)
+                                    !% --- set the Upp JB as connecting to an air pocket  
+                                    elemSI(JBidx,esi_JB_AirPocket_Exists) = oneI
+                                    elemSI(JBidx,esi_JB_air_pocket_index) = kk
+                                    elemYN(JBidx,eYN_hasAirPocket) = .true. 
+
+                                end if
+                                
                             end if
+
                         end if
 
                     end do
@@ -1725,6 +1779,14 @@ contains
                                 airI(ii,airPocketIdx,airI_elem_end)   = eIdx(endIdx) 
                                 airI(ii,airPocketIdx,airI_face_dn)    = fDn(endIdx)
 
+                                if (airYN(ii,airPocketIdx,airYN_air_vented_through_UpJM)) then
+                                    JBidx = airI(ii,airPocketIdx,airI_Up_JB_idx)
+                                    !% --- set the Upp JB as connecting to an air pocket  
+                                    elemSI(JBidx,esi_JB_AirPocket_Exists) = oneI
+                                    elemSI(JBidx,esi_JB_air_pocket_index) = kk
+                                    elemYN(JBidx,eYN_hasAirPocket) = .true.
+                                end if
+
                                 !% save airpocket detection data in the conduitElemMapsI array
                                 conduitElemMapsI(ii,startIdx:endIdx,cmi_airpocket_idx)  = airPocketIdx
                                 conduitElemMapsI(ii,startIdx:endIdx,cmi_airpocket_type) = airI(ii,airPocketIdx,airI_type)
@@ -1756,6 +1818,14 @@ contains
                                 airI(ii,airPocketIdx,airI_face_up)    = fUp(startIdx) 
                                 airI(ii,airPocketIdx,airI_elem_end)   = eIdx(nElem) 
                                 airI(ii,airPocketIdx,airI_face_dn)    = fDn(nElem)
+
+                                if (airYN(ii,airPocketIdx,airYN_air_vented_through_DnJM)) then
+                                    JBidx = airI(ii,airPocketIdx,airI_Dn_JB_idx)
+                                    !% --- set the Upp JB as connecting to an air pocket  
+                                    elemSI(JBidx,esi_JB_AirPocket_Exists) = oneI
+                                    elemSI(JBidx,esi_JB_air_pocket_index) = kk
+                                    elemYN(JBidx,eYN_hasAirPocket) = .true.
+                                end if
 
                                 !% save airpocket detection data in the conduitElemMapsI array
                                 conduitElemMapsI(ii,startIdx:endIdx,cmi_airpocket_idx)  = airPocketIdx
@@ -1800,7 +1870,6 @@ contains
                                     !% save airpocket detection data in the conduitElemMapsI array
                                     conduitElemMapsI(ii,s1:endIdx,cmi_airpocket_idx)  = airPocketIdx
                                     conduitElemMapsI(ii,s1:endIdx,cmi_airpocket_type) = airI(ii,airPocketIdx,airI_type)
-
                                 end if
 
                             end if
@@ -1813,24 +1882,6 @@ contains
                                 
                                 !% save the airpocket detection at the conduit
                                 conAir(cIdx) = .true.
-
-                                ! !% --- special conditions for upstream and downstream 
-                                ! !%     airflow blockage (gate or valves)
-                                ! if (airI(ii,airPocketIdx,airI_type) == upReleaseAirpocket)  then
-
-                                !     !% if the airflow of upstream release is blocked 
-                                !     if (fBlocked(fUp(oneI))) then
-                                !         airI(ii,airPocketIdx,airI_type)  = entrappedAirpocket
-                                !     end if
-                                ! end if
-                                    
-                                ! if (airI(ii,airPocketIdx,airI_type) == dnReleaseAirpocket) then
-
-                                !     !% if the airflow of downstream release is blocked
-                                !     if (fBlocked(fDn(nElem))) then
-                                !         airI(ii,airPocketIdx,airI_type)  = entrappedAirpocket
-                                !     end if
-                                ! end if
                                 
                             else
                                 print*, 'THE ALGORITHM HAS FAILED!!!'
@@ -1871,14 +1922,16 @@ contains
 
             !% debug printing
             ! if (any(airYN(ii,:,airYN_air_pocket_detected))) then
-            !     print*, 'air at conduit indexes ',cIdx, ' '!, link%names(cIdx(ii))%str
+                
+            !     print*, 'air at conduit indexes ',cIdx, ' ', link%names(cIdx(1))%str
             !     print*, 'airPocketIdx', airPocketIdx
             !     print*, 'idx 1     = ', airI(ii,1,airI_idx),         'idx 2     = ', airI(ii,2,airI_idx),        'idx 3     = ',airI(ii,3,airI_idx) 
-            !     print*, 'type 1    = ', airI(ii,1,airI_type),        'type 2    = ', airI(ii,2,airI_type),       'type 3    = ', airI(ii,3,airI_type)
-            !     print*, 'elem up 1 = ', airI(ii,1,airI_elem_start),  'elem up 2 = ', airI(ii,2,airI_elem_start), 'elem up 3 = ',airI(ii,3,airI_elem_start) 
+            !     print*, 'type 1    = ', trim(reverseKey(airI(ii,1,airI_type))),'; type 2    = ', trim(reverseKey(airI(ii,2,airI_type))), ';  type 3    = ', trim(reverseKey(airI(ii,3,airI_type)))
+            !     print*, 'elem up 1 = ', airI(ii,1,airI_elem_start),  'elem up 2 = ', airI(ii,5,airI_elem_start), 'elem up 3 = ',airI(ii,3,airI_elem_start) 
             !     print*, 'elem dn 1 = ', airI(ii,1,airI_elem_end),    'elem dn 2 = ', airI(ii,2,airI_elem_end),   'elem dn 3 = ',airI(ii,3,airI_elem_end) 
-            !     ! print*, 'Head 1= ', airR(2,1,airR_absolute_head), 'Head 2= ', airR(2,2,airR_absolute_head), 'Head 3= ', airR(2,3,airR_absolute_head)
+            !     print*, 'Head 1= ', airR(ii,1,airR_absolute_head), 'Head 2= ', airR(ii,2,airR_absolute_head), 'Head 3= ', airR(ii,3,airR_absolute_head)
             !     print* 
+            !     !stop 6609874
             ! end if
 
         end do
