@@ -7068,20 +7068,31 @@ contains
         !% Set initial air entrapment conditions
         !%------------------------------------------------------------------
         !% Declarations:
-            integer          :: ii, elemStart, elemEnd, nElem, fUp, fDn, JBelem
-            integer, pointer :: cIdx(:)
+            integer          :: ii, mm, elemStart, elemEnd, nElem, fUp, fDn
+            integer          :: JMidx, JBelem
+            integer, pointer :: cIdx(:), Npack, thisJM(:)
         !%------------------------------------------------------------------
 
         !% initialize elemR
         elemR(1:size(elemR,1)-1,er_Pressurized_Air)      = zeroR
         elemR(1:size(elemR,1)-1,er_Air_Pressure_Head)    = zeroR
 
-        elemSR(1:size(elemSR,1)-1,esr_JM_Air_HeadGauge)       = zeroR
-        elemSR(1:size(elemSR,1)-1,esr_JM_Air_HeadGauge_N0)    = zeroR
-        elemSR(1:size(elemSR,1)-1,esr_JM_Air_MassInflowRate)  = zeroR
-        elemSR(1:size(elemSR,1)-1,esr_JM_Air_MassOutflowRate) = zeroR
-        elemSR(1:size(elemSR,1)-1,esr_JM_Air_Mass)            = zeroR
-        elemSR(1:size(elemSR,1)-1,esr_JM_Air_Mass_N0)         = zeroR
+        !%------------------------------------------------------------------
+        !% Preliminaries for junction airpocke init
+        Npack => npack_elemP(ep_JM)  
+        !%------------------------------------------------------------------
+        !% Aliases
+        thisJM  => elemP(1:Npack,ep_JM)
+
+        do mm = 1,Npack
+            JMidx = thisJM(mm)
+            elemSR(JMidx,esr_JM_Air_HeadGauge)       = zeroR
+            elemSR(JMidx,esr_JM_Air_HeadGauge_N0)    = zeroR
+            elemSR(JMidx,esr_JM_Air_MassInflowRate)  = zeroR
+            elemSR(JMidx,esr_JM_Air_MassOutflowRate) = zeroR
+            elemSR(JMidx,esr_JM_Air_Mass)            = zeroR
+            elemSR(JMidx,esr_JM_Air_Mass_N0)         = zeroR
+        end do
 
 
         !% set the initial air entrapment values
@@ -7089,6 +7100,7 @@ contains
             !% cycle through the links to find element air volumes
             do ii = 1,N_super_conduit
                 !% set all the values to zero
+                airI(ii,:,airI_type)             = noAirPocket
                 airR(ii,:,:)                     = zeroR 
                 airR(ii,:,airR_density)          = setting%AirTracking%AirDensity
                 airR(ii,:,airR_absolute_head_N0) = setting%AirTracking%AtmosphericPressureHead
