@@ -66,7 +66,7 @@ DRY_ONLY         NO
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
 ;;-------------- ---------- ---------- ---------------- -------- ----------------
-10208            89.9       FREE                        YES                       
+10208            89.9       FREE                        YES                      
 
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
@@ -130,8 +130,6 @@ DRY_ONLY         NO
 
 [REPORT]
 ;;Reporting Options
-INPUT      NO
-CONTROLS   NO
 SUBCATCHMENTS ALL
 NODES ALL
 LINKS ALL
@@ -139,7 +137,7 @@ LINKS ALL
 [TAGS]
 
 [MAP]
-DIMENSIONS 0.000 0.000 10000.000 10000.000
+DIMENSIONS -1113.687 0.000 10650.527 10000.000
 Units      None
 
 [COORDINATES]
@@ -160,6 +158,7 @@ Units      None
 ;;Link           X-Coord            Y-Coord           
 ;;-------------- ------------------ ------------------
 
+[Polygons]
 [LABELS]
 ;;X-Coord          Y-Coord            Label           
 2431.580           1052.630           "EXAMPLE 3 OF EXTRAN MANUAL" "" "Arial" 12 1 1
@@ -167,3 +166,8 @@ Units      None
 4645.090           8183.720           "Inflow" "" "Arial" 10 0 0
 9694.740           2084.210           "Inflow" "" "Arial" 10 0 0
 
+
+[PROFILES]
+;;Name           Links     
+;;-------------- ----------
+"p1              " 90010
