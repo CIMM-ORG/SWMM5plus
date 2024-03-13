@@ -11,5 +11,19 @@
     "Junction" : {
         "ForceNodesJM" : false,
         "ForceStorage" : true
-    } 
+    },
+    "Solver" : {
+        "PreissmannSlot" : {
+            "Method"         : "DynamicSlot",
+            "TargetCelerity" : 100.0,
+            "Alpha"          : 2.0,
+            "DecayRate"      : 1.0
+        }
+    },
+    "Adjust" : {
+        "Head" : {
+            "ApplyYN"  : true,
+            "Approach" : "vshape_surcharge"
+        }
+    }
 }
