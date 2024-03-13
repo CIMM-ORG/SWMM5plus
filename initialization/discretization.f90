@@ -14,6 +14,7 @@ module discretization
     use define_indexes
     use define_keys
     use define_settings, only: setting
+    use utility_crash, only: util_crashpoint
 
     implicit none
 
@@ -45,89 +46,150 @@ contains
             write(*,"(A,i5,A)") '*** enter ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
     !%----------------------------------------------------------------------
     !% Aliases
-        use_nominal_length  => setting%Discretization%UseNominalElemLength
+        !use_nominal_length  => setting%Discretization%UseNominalElemLength
         elem_nominal_length => setting%Discretization%NominalElemLength
         min_elem_per_link   => setting%Discretization%MinElementPerLink
     !%----------------------------------------------------------------------
 
-        if (use_nominal_length) then
-            !% --- Adjusts the number of elements in a link based on the length
-            remainder = mod(link%R(link_idx,lr_Length), elem_nominal_length)
+        !% --- treatment of for special links
+        !%     note that equivalent orifices have type lOrifice
+        if ((link%I(link_idx,li_link_type) == lWeir)    .or. &
+            (link%I(link_idx,li_link_type) == lOrifice) .or. &
+            (link%I(link_idx,li_link_type) == lOutlet)  .or. &
+            (link%I(link_idx,li_link_type) == lPump)           ) then
+            link%I(link_idx, li_N_element) = oneI
+            link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
+            return
+        end if 
 
-            !% --- If the elements fit evenly into the length of link
-            if ( remainder == zeroR ) then
-                link%I(link_idx, li_N_element) = int(link%R(link_idx, lr_Length) / elem_nominal_length)
-                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
-
-            !% --- If the remainder is greater than half an element length
-            elseif ( remainder .ge. onehalfR * elem_nominal_length ) then
-                link%I(link_idx, li_N_element) = ceiling(link%R(link_idx,lr_Length) / elem_nominal_length)
-                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
-
-            !% --- If the remainder is less than half an element length
-            else
-                link%I(link_idx, li_N_element) = max(floor(link%R(link_idx,lr_Length) / elem_nominal_length), oneI)
-                link%R(link_idx, lr_ELementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
-            end if
-
-            !% --- Additional check to ensure that every link has at least one element
-            if ( link%R(link_idx, lr_Length) .le. elem_nominal_length ) then
-                link%I(link_idx, li_N_element) = oneI
-                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
-            end if
-
-            !% --- only force a minimum number of elements per link if the minimum
-            !%     number of elements per link settings is set to greater than one
-            if (min_elem_per_link > oneI) then
-                !% check for links that has less elements than 
-                !% the specified minimum number of elements
-                if (link%I(link_idx, li_N_element) < min_elem_per_link) then
-                    link%I(link_idx, li_N_element) = min_elem_per_link
-                    link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
-                end if 
-            end if
-
-            !% --- treatment of for special links
-            if ((link%I(link_idx,li_link_type) == lWeir)    .or. &
-                (link%I(link_idx,li_link_type) == lOrifice) .or. &
-                (link%I(link_idx,li_link_type) == lOutlet)  .or. &
-                (link%I(link_idx,li_link_type) == lPump) ) then
-
-                link%I(link_idx, li_N_element) = oneI
-                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
-
-            end if 
+        !% --- for channel and pipe only
+        if  ((link%I(link_idx,li_link_type) == lChannel)  .or. &
+             (link%I(link_idx,li_link_type) == lPipe)           ) then
         
-        else
-            !% HACK --- experimental code:
-            !% use the minimum number of elements to discretize the system
-            link%I(link_idx, li_N_element)     = min_elem_per_link
-            link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)/link%I(link_idx, li_N_element)
+            select case (setting%Discretization%Method)
 
-            !% HACK -- using the nominal element lengths to resize smaller
-            !% elements to nominal element lengths for bigger timesteps
-            ! if (link%R(link_idx, lr_ElementLength) < elem_nominal_length) link%R(link_idx, lr_ElementLength) = elem_nominal_length
+                case (EqualElements)
+                    !% --- Adjusts the number of elements in a link based on the length so
+                    !%     that element lengths are close to the nominal length
 
-            !% --- treatment of for special links
-            if ((link%I(link_idx,li_link_type) == lWeir)    .or. &
-                (link%I(link_idx,li_link_type) == lOrifice) .or. &
-                (link%I(link_idx,li_link_type) == lOutlet)  .or. &
-                (link%I(link_idx,li_link_type) == lPump) ) then
+                    !% --- find remainder after division
+                    remainder = mod(link%R(link_idx,lr_Length), elem_nominal_length)
+                    
+                    if ( remainder == zeroR ) then
+                        !% --- the elements fit evenly into the length of link
+                        link%I(link_idx, li_N_element)     = int(link%R(link_idx, lr_Length) / elem_nominal_length)
+                        link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
 
-                link%I(link_idx, li_N_element) = oneI
-                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
+                    elseif ( remainder .ge. onehalfR * elem_nominal_length ) then
+                        !% --- the remainder is greater than half of an element length so the ceiling value is used
+                        !%     and the elements will be slightly shorter than the nominal length
+                        link%I(link_idx, li_N_element)     = ceiling(link%R(link_idx,lr_Length) / elem_nominal_length)
+                        link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
 
-            end if
+                    else
+                        !% --- the remainder is less than half of an element length so floor value is used and
+                        !%     the elements will be slightly longer than the nominal length
+                        link%I(link_idx, li_N_element)     = max(floor(link%R(link_idx,lr_Length) / elem_nominal_length), oneI)
+                        link%R(link_idx, lr_ELementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
 
+                    end if
+
+                    !% --- Additional check to ensure that every link has at least one element
+                    if ( link%R(link_idx, lr_Length) .le. elem_nominal_length ) then
+                        link%I(link_idx, li_N_element) = oneI
+                        link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length)
+                    end if
+
+                    if ((link%I(link_idx, li_N_element)     < min_elem_per_link)                .or. &
+                        (link%R(link_idx, lr_ElementLength) < (onehalfR * elem_nominal_length))        ) then
+
+                        select case (setting%Discretization%SmallElementHandling)
+
+                            case (EquivalentOrifice,LengthenLink,FailLimiter) 
+                                !% --- this should not be rearched as initialization should fix the problem
+                                write(*,*) 'CODE ERROR: in Small Element Handling'
+                                write(*,*) 'Link with insufficient length found in discretization'
+                                write(*,*) 'but this should have been fixed in link initialization'
+                                write(*,*) 'Link # is ',link_idx 
+                                write(*,*) 'Link Name is ',trim(link%Names(link_idx)%str)
+                                write(*,*) 'Link length    ',link%R(link_idx, lr_Length)
+                                write(*,*) 'Element length ',link%R(link_idx, lr_ElementLength)
+                                write(*,*) 'nominal length ',elem_nominal_length
+                                write(*,*) 
+                                call util_crashpoint(72120987)
+
+                            case (AllowSmallLinks)
+                                !% --- subdivide link into smaller elements to meet minimum
+                                link%I(link_idx, li_N_element) = min_elem_per_link
+                                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / real(min_elem_per_link,real(8))
+
+                            case default 
+                                write(*,*) 'CODE ERROR: unexpected case default'
+                                call util_crashpoint(2209874)
+
+                        end select
+                    else 
+                        !% --- continue, sufficient elements per link
+                    end if
+
+                    ! !% --- only force a minimum number of elements per link if the minimum
+                    ! !%     number of elements per link settings is set to greater than one
+                    ! if (min_elem_per_link > oneI) then
+                    !     !% check for links that has less elements than 
+                    !     !% the specified minimum number of elements
+                    !     if (link%I(link_idx, li_N_element) < min_elem_per_link) then
+                    !         link%I(link_idx, li_N_element) = min_elem_per_link
+                    !         link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / link%I(link_idx, li_N_element)
+                    !     end if 
+                    ! end if
+
+                case (UnequalElements)
+                    !% --- use the minimum number of elements per link in each link
+                    !%     This results in different element sizes throughout system.
+                    link%I(link_idx, li_N_element)     = min_elem_per_link
+                    link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / real(min_elem_per_link,real(8))
+
+                    if (link%R(link_idx, lr_ElementLength) < (onehalfR * elem_nominal_length)) then
+
+                        select case (setting%Discretization%SmallElementHandling)
+                            case (EquivalentOrifice,LengthenLink,FailLimiter) 
+                                !% --- this should not be reached as initialization should fix the problem
+                                write(*,*) 'CODE ERROR: in Small Element Handling'
+                                write(*,*) 'Link with insufficient length found in discretization'
+                                write(*,*) 'but this should have been fixed in link initialization'
+                                write(*,*) 'Link # is ',link_idx 
+                                write(*,*) 'Link Name is ',trim(link%Names(link_idx)%str)
+                                write(*,*) 'Link length    ',link%R(link_idx, lr_Length)
+                                write(*,*) 'Element length ',link%R(link_idx, lr_ElementLength)
+                                write(*,*) 'nominal length ',elem_nominal_length
+                                write(*,*) 
+                                call util_crashpoint(829887)
+
+                            case (AllowSmallLinks)
+                                !% --- subdivide link into smaller elements to meet minimum
+                                link%I(link_idx, li_N_element) = min_elem_per_link
+                                link%R(link_idx, lr_ElementLength) = link%R(link_idx, lr_Length) / real(min_elem_per_link,real(8))
+
+                            case default 
+                                write(*,*) 'CODE ERROR: unexpected case default'
+                                call util_crashpoint(2209874)
+                        end select
+                    else
+                        !% --- continue, small element length not found
+                    end if
+
+                case default
+                    write(*,*) 'CODE ERROR: unexpected case default'
+                    write(*,*) 'missing handling of a link type with key #',link%I(link_idx,li_link_type)
+                    write(*,*) trim(reverseKey(link%I(link_idx,li_link_type)))
+                    call util_crashpoint(81109872)
+            end select
+
+        else 
+            write(*,*) 'CODE ERROR -- unexpected else reached'
         end if
 
-        !%----------------------------------------------------------------------
-        !% Closing
-        if (setting%Debug%File%discretization)  &
-            write(*,"(A,i5,A)") '*** leave ' // trim(subroutine_name) // " [Processor ", this_image(), "]"
-
     end subroutine init_discretization_nominal
-
 !%
 !%==========================================================================
 !%==========================================================================

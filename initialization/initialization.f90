@@ -61,6 +61,7 @@ contains
         !%-------------------------------------------------------------------
         !% Declarations
             real(8)              :: arbitraryreal = 0.d0
+            integer              :: ii
             character(64)        :: subroutine_name = 'initialize_toplevel'
         !%-------------------------------------------------------------------
         !% Preliminaries
@@ -112,6 +113,10 @@ contains
 
         !% --- create duplicate input files
         !%     this is required because each image needs its own copy of the input files
+        !%     HACK -- for large files we will need a better approach, but this is 
+        !%     difficult given the input file is a formatted text file. Arguably, the
+        !%     best approach will be to translate the input file to HDF5 so that 
+        !%     parallel access can be used.
         call util_file_duplicate_input ()
         call util_crashstop(2983)
         sync all
@@ -528,7 +533,8 @@ contains
         !% Declarations   
             integer          :: ii, jj, total_n_links, link_idx
             integer, pointer :: linkUp, linkDn,  nodeDn
-            logical          :: noerrorfound
+            real(8)          :: smallestLinkLength, deltaL
+            logical          :: noerrorfound, linkErrorFound
             character(64)    :: subroutine_name = 'init_linknode_arrays'
         !%--------------------------------------------------------------------
         !% Preliminaries
@@ -539,6 +545,8 @@ contains
                 print *, "CODE ERROR API is not initialized"
                 call util_crashpoint(39873)
             end if
+
+            smallestLinkLength = abs(nullvalueR)
         !%-----------------------------------------------------------------------------
         !% --- Allocate storage for link & node tables
         call util_allocate_linknode()
@@ -564,11 +572,15 @@ contains
         !%     default is changed when link/node data is read in (further below)
         node%R(:,nr_OverflowHeightAboveCrown) = setting%Junction%InfiniteExtraDepthValue 
 
+        !% --- Store the Link/Node names (moved here 20240307)
+        call interface_update_linknode_names()
+
         !% -----------------------
         !% --- LINK DATA
         !% -----------------------
         !% --- cycle through links using do loop as the API between EPA SWMM and SWMM5+ 
         !%     is designed for individual links, not for array processing.
+        linkErrorFound = .false.
         do ii = 1, setting%SWMMinput%N_link
 
             !% --- store the basic link data
@@ -608,8 +620,13 @@ contains
                 link%R(ii,lr_OutletOffset)       = interface_get_linkf_attribute(ii, api_linkf_offset1, .false.)
 
             else
-                write(*,*) 'Fatal error: link direction should be 1 or -1'
-                call util_crashpoint(7298734)
+                linkErrorFound = .true.
+                if (this_image() == 1) then
+                    write(*,*)         'USER CONFIGURATION ERROR: link direction should be 1 or -1'
+                    write(*,"(A,i4)")  'Link # ',ii
+                    write(*,"(A,i4)")  'Link Direction  ', link%I(ii,li_link_direction)
+                    write(*,*)         'Link name       ', trim(link%Names(ii)%str)
+                end if
             end if 
 
             !% --- the "parent" link is the input EPA-SWMM link, 
@@ -645,7 +662,7 @@ contains
             link%R(ii,lr_FullArea)           = interface_get_linkf_attribute(ii, api_linkf_xsect_aFull,      .false.)
             link%R(ii,lr_FullHydRadius)      = interface_get_linkf_attribute(ii, api_linkf_xsect_rFull,      .false.)
             link%R(ii,lr_BottomDepth)        = interface_get_linkf_attribute(ii, api_linkf_xsect_yBot,       .false.)
-            link%R(ii,lr_BottomRadius)       = interface_get_linkf_attribute(ii, api_linkf_xsect_rBot,      .false.)
+            link%R(ii,lr_BottomRadius)       = interface_get_linkf_attribute(ii, api_linkf_xsect_rBot,       .false.)
             link%R(ii,lr_FlowrateInitial)    = interface_get_linkf_attribute(ii, api_linkf_q0,               .false.)
             link%R(ii,lr_FlowrateLimit)      = interface_get_linkf_attribute(ii, api_linkf_qlimit,           .false.)
             link%R(ii,lr_Kconduit_MinorLoss) = interface_get_linkf_attribute(ii, api_linkf_cLossAvg,         .false.)
@@ -661,7 +678,6 @@ contains
 
             !% --- Note, link depths are NOT initialized here because these are determined by node attributes
             
-    
             !% --- special element attributes
             link%I(ii,li_weir_EndContractions) = interface_get_linkf_attribute(ii, api_linkf_weir_end_contractions,.true.)
             link%I(ii,li_RoadSurface)          = interface_get_linkf_attribute(ii, api_linkf_weir_road_surface,    .true.)
@@ -682,7 +698,7 @@ contains
 
             !% --- EPA SWMM5 does not distinguish between open channels and closed conduits
             !%     however SWMM5+ needs that distinction to set up the initial conditions
-            !%     So we look for EPA SWMMM conduits (given lPipe, above) and convert to lChannel
+            !%     So we look for EPA SWMM conduits (given lPipe, above) and convert to lChannel
             if ( (link%I(ii,li_link_type) == lPipe)          .and. &
                  ( &
                     (link%I(ii,li_geometry) == lRectangular)    .or. &
@@ -712,12 +728,12 @@ contains
                 else
                     if (this_image() == 1) then
                         write(*,*) 'USER CONFIGURATION ERROR for roadway weir'
-                        write(*,"(A,i4,A)") 'A roadway weir does not have an allowed road surface type'
+                        write(*,"(A)") 'A roadway weir does not have an allowed road surface type'
                         write(*,"(A)")      'Allowed types are NOSURFACE, PAVED, GRAVEL'
                         write(*,"(A,i4)")   'Failure at link ',link%I(ii,li_idx)
                         write(*,"(A)")      'link name '//trim(link%Names(ii)%str)
                     end if
-                    call util_crashpoint(548976)
+                    linkErrorFound = .true.
                 end if
             else
                 link%I(ii,li_RoadSurface) = nullValueI
@@ -739,41 +755,111 @@ contains
             !% --- set output links
             link%YN(ii,lYN_isOutput) = (interface_get_linkf_attribute(ii,api_linkf_rptFlag,.true.) == 1)
 
-            !% HACK: experimental code
-            !% --- replace smaller links using an equivalent orifice
-            if (setting%Discretization%UseEquivalentOrifice) then
+            !% --- Small link handling in pipes and channels
+            if ((link%I(ii,li_link_type) == lpipe) .or. (link%I(ii,li_link_type) == lchannel)) then
 
-                if ( (link%R(ii,lr_Length) < setting%Discretization%MinLinkLength)                   .and. &
-                     ((link%I(ii,li_link_type) == lpipe) .or. (link%I(ii,li_link_type) == lchannel)) .and. &
-                     (.not. link%YN(ii,lYN_isPhantomLink))                                            ) then
-                    
-                    if (this_image() == 1) then
-                        print*, 'WARNING: Converting link to equivalent orifice'
-                        print*, 'Link index is ',ii,' link name is ',  trim(link%Names(ii)%str)
-                        print*, 'has lenght of ', link%R(ii,lr_Length) 
-                        print*, 'Which is smaller than user defined minimum link lenght of ', setting%Discretization%MinLinkLength
-                        print*
-                    end if
-                    
-                    !% set the link type type as Orifice
-                    link%I(ii,li_link_type) = lOrifice
-                    !% set the sub orifice type as side orifice
-                    link%I(ii,li_link_sub_type) = lSideOrifice 
-                    !% set a default discharge coefficient from settings
-                    link%R(ii,lr_DischargeCoeff1) = setting%Discretization%EquivalentOrificeDischargeCoeff
-                    !% set orifice time to operate to zero
-                    link%R(ii,lr_DischargeCoeff2) = zeroR
-                    !% set the default geometry of the equivalent orifice as circular
-                    link%I(ii,li_geometry) = lCircular
-                    !% reset the orifice opening from the original link full area
-                    link%R(ii,lr_FullDepth) = sqrt(fourR * link%R(ii,lr_FullArea) / setting%Constant%pi)
-                    !% reset the length of the element as minimum link lenght (will be reset later)
-                    link%R(ii,lr_Length) = setting%Discretization%MinLinkLength
+                if (link%R(ii,lr_Length) < setting%Discretization%MinLinkLength) then
+                    !% --- small link found
+
+                    select case (setting%Discretization%SmallElementHandling)
+
+                        case(EquivalentOrifice)
+                            !% --- make link an equivalent orifice
+                            !%     This is done before partitioning, so phantom links do not matter                          
+                            if (this_image() == 1) then
+                                write(*,*) 'WARNING: Converting link to equivalent orifice'
+                                write(*,*) 'Link index is ',ii,' link name is ',  trim(link%Names(ii)%str)
+                                write(*,*) 'Link has length of ', link%R(ii,lr_Length) 
+                                write(*,*) 'which is smaller than minimum link length of ', setting%Discretization%MinLinkLength
+                                write(*,*) ' '
+                            end if                          
+                            !% --- set the sub orifice type as equivalent orifice
+                            if (link%I(ii,li_link_type) == lchannel) then 
+                                link%I(ii,li_link_sub_type) = lEquivalentOrificeChannel
+                            elseif  (link%I(ii,li_link_type) == lpipe) then 
+                                link%I(ii,li_link_sub_type) = lequivalentOrificePipe
+                            end if
+                            !% --- now reset the link type type as Orifice
+                            link%I(ii,li_link_type) = lOrifice
+   
+                            !% set a default discharge coefficient from settings
+                            link%R(ii,lr_DischargeCoeff1) = zeroR !setting%Discretization%EquivalentOrificeDischargeCoeff
+                            !% set orifice time to operate to zero
+                            link%R(ii,lr_DischargeCoeff2) = zeroR
+
+                            !% --- retain all the channel/conduit geometry that was loaded above
+
+                            !% set the default geometry of the equivalent orifice as circular
+                            !link%I(ii,li_geometry) = lCircular
+                            !% reset the orifice opening from the original link full area
+                            !! link%R(ii,lr_FullDepth) = sqrt(fourR * link%R(ii,lr_FullArea) / setting%Constant%pi)
+                            !% reset the length of the element as minimum link length (will be reset later)
+                            !link%R(ii,lr_Length) = setting%Discretization%MinLinkLength
+
+                        case (LengthenLink)
+                            !% --- lengthen small links and reduce roughness
+                            if (this_image() == 1) then
+                                write(*,*) 'WARNING: lengthening short link and reducing roughness'
+                                write(*,*) 'Link index is ',ii,' link name is ',  trim(link%Names(ii)%str)
+                                write(*,*) 'Link has length of ', link%R(ii,lr_Length) 
+                                write(*,*) 'which is smaller than minimum link length of ', setting%Discretization%MinLinkLength
+                                write(*,*) ' '
+                            end if 
+                            deltaL = setting%Discretization%MinLinkLength - link%R(ii,lr_Length)
+                            !% --- roughess reduction based on preserving Q in chezy-manning equation for original
+                            !%     link and L+deltaL link length
+                            link%R(ii,lr_Roughness) = link%R(ii,lr_Roughness) &
+                                * sqrt( link%R(ii,lr_Length) / (link%R(ii,lr_Length)+deltaL) )
+                            link%R(ii,lr_Length) = setting%Discretization%MinLinkLength
+
+                        case (FailLimiter)
+                            !% --- run fails if small link found
+                            if (this_image() == 1) then
+                                write(*,*) 'USER CONFIGURATION ERROR: Link is smaller than allowed'
+                                write(*,*) 'Link index is ',ii,' link name is ',  trim(link%Names(ii)%str)
+                                write(*,*) 'Link has length of ', link%R(ii,lr_Length) 
+                                write(*,*) 'which is smaller than minimum link length of ', setting%Discretization%MinLinkLength
+                                write(*,*) 'User can set Discretization%SmallElementHandling as follows:'
+                                write(*,*) ' = AllowSmallLinks to accept small links (with small time step),'
+                                write(*,*) ' = EquivalentOrifice to replace small links with an equivalent orifice,'
+                                write(*,*) ' = LengthenLink to replace small links with longer link at reduced roughness'
+                                write(*,*) ' '
+                                linkErrorFound = .true.
+                            end if
+
+                        case (AllowSmallLinks)
+                            !% --- continue, small links are allowed
+                            if (this_image() == 1) then
+                                write(*,*) 'WARNING: small link has been found, but is allowed because'
+                                write(*,*) 'Discretization%SmallElementHandling = AllowSmallLinks'
+                                write(*,*) 'Link index is ',ii,' link name is ',  trim(link%Names(ii)%str)
+                                write(*,*) 'Link has length of ', link%R(ii,lr_Length) 
+                                write(*,*) 'which is smaller than desired minimum link length of ', setting%Discretization%MinLinkLength
+                                write(*,*) ' '
+                            end if 
+
+                    end select
+                else 
+                    !% --- continue, link is not small
                 end if
-
+                !% --- store the smallest link for debugging output
+                smallestLinkLength = min(smallestLinkLength,link%R(ii,lr_Length))
+            else 
+                !% --- link length irrelevant for special elements
             end if
-
+            
         end do
+
+        write(*,*) ' '
+        write(*,*) 'Smallest link found is ', smallestLinkLength
+        write(*,*) 'Recommended minimum is ', setting%Discretization%MinLinkLength
+        write(*,*) ' '
+
+        if (linkErrorFound) then
+            write(*,*)
+            write(*,*) 'One or more link errors found, see notes above'
+            call util_crashpoint(7298734)
+        end if
 
         !% --- count the number of conduits in the network
         N_conduit = count(link%I(:,li_link_type) == lPipe)
@@ -804,7 +890,7 @@ contains
         end do
 
         !% --- Store the Link/Node names (moved here 20221216)
-        call interface_update_linknode_names()
+        ! MOVED 20240307 brh call interface_update_linknode_names()
 
         !% -----------------------
         !% --- SUBCATCHMENT -- see also init_subcatchment
@@ -1371,10 +1457,10 @@ contains
         end do
 
         !% Check for small links while using nominal element length discretization 
-        if (setting%Discretization%UseNominalElemLength) then
+        if (setting%Discretization%Method .ne. AllowSmallLinks) then
             do ii = 1, N_link
                 if ( (link%I(ii,li_link_type) == lChannel) .or. (link%I(ii,li_link_type) == lPipe) ) then
-                    if (link%R(ii,lr_Length) < (real(setting%Discretization%MinElementPerLink,8) * setting%Discretization%NominalElemLength)) then
+                    if (link%R(ii,lr_Length) < ( (real(setting%Discretization%MinElementPerLink,8) - onehalfR) * setting%Discretization%NominalElemLength)) then
                         print *, 'SWMM input file links too small for selected NominalElemLength and MinElementPerLink'
                         print *, 'Found link length of ',link%R(ii,lr_Length)
                         print *, 'Link index is ',ii,' link name is ',  trim(link%Names(ii)%str)

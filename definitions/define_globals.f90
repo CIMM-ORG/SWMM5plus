@@ -320,6 +320,10 @@ module define_globals
     integer               :: dummyIdx
     integer, dimension(1) :: dummyUnitArray
 
+    !% ---- dummy targets
+    integer, target :: dummyTargetI(1) 
+    real(8), target :: dummyTargetR(1)
+
 !% ===================================================================================
 !% CONSTANTS
 !% ===================================================================================

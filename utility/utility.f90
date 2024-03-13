@@ -108,12 +108,16 @@ module utility
             call util_crashpoint(559872)
         end if
 
-        ! if (setting%Junction%StorageOverflowDepth < zeroR) then 
-        !     print *, 'USER CONFIGURATION ERROR'
-        !     print *, 'setting%Junction%StorageOverflowDepth < 0.0 is not allowed'
-        !     call util_crashpoint(5598721)
-        ! end if
-
+        !% --- set the minimum link length allowed for normal discretization
+        !% --- the minimum link length is the larger of the value
+        !%     in settings or the product of the element length and mininum elements per link
+        !%     Note that if the SmallLinkHandling = AllowSmallLinks then the min value is ignored
+        setting%Discretization%MinLinkLength &
+            = max(                                                 &
+                setting%Discretization%NominalElemLength        &
+                    * setting%Discretization%MinElementPerLink, &
+                setting%Discretization%MinLinkLength            &
+                )
 
     end subroutine util_setting_constraints
 !%

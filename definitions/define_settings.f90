@@ -441,13 +441,16 @@ module define_settings
         !real(8) :: JunctionBranchLengthFactor  = 1.d0    !% MUST USE 1.0   !% fraction of NominalElemLength used for JB
         ! real(8) :: MinElemLengthFactor = 0.5d0           !% define the minimum allowable fraction of an element size to help with the cfl
         !integer :: MinElemLengthMethod = ElemLengthAdjust
-        logical :: UseNominalElemLength = .true.
+        !logical :: UseNominalElemLength = .true.
+        integer :: Method               = EqualElements      !% EqualElements, UnequalElements
+        integer :: SmallElementHandling = EquivalentOrifice  !% EquivalentOrifice, LengthenLink, FailLimiter, AllowSmallLinks
+       ! logical :: LimitByMinLinkLengthTF = .true.       ! NOT A USER SETTING
         !% replaced 20231025brh logical :: DistributeOpenChannelInflowsTF = .false.
         real(8) :: NominalElemLength   = 10.0d0
         integer :: MinElementPerLink   = 3               !% force a minimum number of elements per link
-        logical :: UseEquivalentOrifice = .false.        !% replace small conduits with equivalent orifice
-        real(8) :: EquivalentOrificeDischargeCoeff = 0.6 !% discharge coefficient of the equivalent orifice
-        real(8) :: MinLinkLength        = 10.0d0         !% below the min link length, replace with equivalent orifice
+        !logical :: UseEquivalentOrifice = .false.        !% replace small conduits with equivalent orifice
+        !real(8) :: EquivalentOrificeDischargeCoeff = 0.6 !% discharge coefficient of the equivalent orifice
+        real(8) :: MinLinkLength      = 10.0d0            !% elements below the larger of min link length or nominalElementPerLink * MinElementPerLink cause error or are replaced with equivalent orifice
         real(8) :: FullConduitTopwidthDepthFraction = 0.95d0  !% fraction of full depth used for full topwidth
     end type DiscretizationType
 
@@ -1250,15 +1253,53 @@ contains
         if (found) setting%Discretization%AllowChannelOverflowTF = logical_value
         if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization.AllowChannelOverflowTF not found'
       
-        !%                       Discretization.UseNominalElemLength
-        call json%get('Discretization.UseNominalElemLength', logical_value, found)
-        if (found) setting%Discretization%UseNominalElemLength = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.UseNominalElemLength not found'
+        !%                       Discretization.Method
+        call json%get('Discretization.Method', c, found)
+        if (found) then            
+            call util_lower_case(c)
+            if (c == 'equalelements') then
+                setting%Discretization%Method = EqualElements
+            else if (c == 'unequalelements') then
+                setting%Discretization%Method = UnequalElements
+            else
+                write(*,"(A)") 'Error - json file - Discretization%Method  of ',trim(c)
+                write(*,"(A)") '..is not in allowed options of:'
+                write(*,"(A)") '... EqualElements, UnequalElements'
+                stop 93773
+            end if
+        end if
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization%Method not found'
 
-        !%                       Discretization.UseEquivalentOrifice
-        call json%get('Discretization.UseEquivalentOrifice', logical_value, found)
-        if (found) setting%Discretization%UseEquivalentOrifice = logical_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.UseEquivalentOrifice not found'
+        !%                       Discretization.SmallElementHandling
+        call json%get('Discretization.SmallElementHandling', c, found)
+        if (found) then            
+            call util_lower_case(c)
+            if (c == 'equivalentorifice') then
+                setting%Discretization%SmallElementHandling = EquivalentOrifice
+            else if (c == 'lengthenlink') then
+                setting%Discretization%SmallElementHandling = LengthenLink
+            else if (c == 'faillimiter') then
+                setting%Discretization%SmallElementHandling = FailLimiter      
+            else if (c == 'allowsmalllinks') then
+                setting%Discretization%SmallElementHandling = AllowSmallLinks                       
+            else
+                write(*,"(A)") 'Error - json file - Discretization%SmallElementHandling  of ',trim(c)
+                write(*,"(A)") '..is not in allowed options of:'
+                write(*,"(A)") '... EquivalentOrifice, LengthenLink, FailLImiter,AllowSmallLinks'
+                stop 93773
+            end if
+        end if
+        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " // 'Discretization%SmallElementHandling not found'
+
+        ! !%                       Discretization.LimitByMinLinkLengthTF
+        ! call json%get('Discretization.LimitByMinLinkLengthTF', logical_value, found)
+        ! if (found) setting%Discretization%LimitByMinLinkLengthTF = logical_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.LimitByMinLinkLengthTF not found'
+
+        ! !%                       Discretization.UseEquivalentOrifice
+        ! call json%get('Discretization.UseEquivalentOrifice', logical_value, found)
+        ! if (found) setting%Discretization%UseEquivalentOrifice = logical_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.UseEquivalentOrifice not found'
 
         ! !%                       Discretization.DistributeOpenChannelInflowsTF
         ! call json%get('Discretization.DistributeOpenChannelInflowsTF', logical_value, found)
@@ -1266,9 +1307,9 @@ contains
         ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.DistributeOpenChannelInflowsTF not found'
 
         !%                       Discretization.EquivalentOrificeDischargeCoeff
-        call json%get('Discretization.EquivalentOrificeDischargeCoeff', real_value, found)
-        if (found) setting%Discretization%EquivalentOrificeDischargeCoeff = real_value
-        if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.EquivalentOrificeDischargeCoeff not found'
+        ! call json%get('Discretization.EquivalentOrificeDischargeCoeff', real_value, found)
+        ! if (found) setting%Discretization%EquivalentOrificeDischargeCoeff = real_value
+        ! if ((.not. found) .and. (jsoncheck)) stop "Error - json file - setting " //'Discretization.EquivalentOrificeDischargeCoeff not found'
 
         !%                       Discretization.NominalElemLength
         call json%get('Discretization.NominalElemLength', real_value, found)

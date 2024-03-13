@@ -1426,6 +1426,7 @@ module geometry
                         !% --- set lookup table names
                         select case (elemI(tB,ei_geometryType))
                             !% --- for tables using HydRadius
+                            !% HACK -- replace this with call to llgeo_lookup_table_selection
                             case (arch)
                                 Atable => AArch
                                 Rtable => RArch

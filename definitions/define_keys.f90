@@ -54,6 +54,8 @@
         enumerator :: lOrifice              !% orifice link
         enumerator :: lBottomOrifice        !% bottom orifice link
         enumerator :: lSideOrifice          !% side orifice link
+        enumerator :: lEquivalentOrificeChannel    !% link converted to equivalent orifice
+        enumerator :: lEquivalentOrificePipe
         enumerator :: lPump                 !% pump link
         enumerator :: lType1Pump            !% type 1 pump link
         enumerator :: lType2Pump            !% type 2 pump link
@@ -158,6 +160,8 @@
         enumerator :: trapezoidal_weir      !% trapezoidal weir type
         enumerator :: bottom_orifice        !% bottom orifice type
         enumerator :: side_orifice          !% side orifice type
+        enumerator :: equivalent_orifice_channel    !% channel converted to orifice
+        enumerator :: equivalent_orifice_pipe       !% channel converted to orifice
         enumerator :: type1_Pump            !% type 1 pump type
         enumerator :: type2_Pump            !% type 2 pump type
         enumerator :: type3_Pump            !% type 3 pump type
@@ -275,8 +279,14 @@
         enumerator :: Pump3Curve               !% flow v. head for pump (continuous)
         enumerator :: Pump4Curve               !% flow v. depth for pump (continuous)
 
-        !% keys for minimum element size adjustment
-        enumerator :: RawElemLength            !% keep the raw data and do not adjust
+        !% keys for discretization
+       ! enumerator :: RawElemLength           !% keep the raw data and do not adjust (OBSOLETE)
+        enumerator :: EqualElements            !% attempt to make all CC elements equal in size
+        enumerator :: UnequalElements          !% divide each link into the minimum number of elements required
+        enumerator :: EquivalentOrifice        !% use equivalent orifice for small links
+        enumerator :: LengthenLink             !% lengthen small links
+        enumerator :: FailLimiter              !% fail for small links
+        enumerator :: AllowSmallLinks           !% allow small links
 
         !% data types used for ZeroValues
         enumerator :: DepthValue
@@ -382,6 +392,8 @@
         reverseKey(lOrifice) = 'lOrifice'
         reverseKey(lBottomOrifice) = 'lBottomOrifice'
         reverseKey(lSideOrifice) = 'lSideOrifice'
+        reverseKey(lEquivalentOrificeChannel) = 'lEquivalentOrificeChannel'
+        reverseKey(lEquivalentOrificePipe) = 'lEquivalentOrificePipe'
         reverseKey(lPump) = 'lPump'
         reverseKey(lType1Pump) = 'lType1Pump'
         reverseKey(lType2Pump) = 'lType2Pump'
@@ -468,6 +480,8 @@
         reverseKey(trapezoidal_weir) = 'trapezoidal_weir'
         reverseKey(bottom_orifice) = 'bottom_orifice'
         reverseKey(side_orifice) = 'side_orifice'
+        reverseKey(equivalent_orifice_channel) = 'equivalent_orifice_channel'
+        reverseKey(equivalent_orifice_pipe)    = 'equivalent_orifice_pipe'
         reverseKey(type1_Pump) = 'type1_Pump'
         reverseKey(type2_Pump) = 'type2_Pump'
         reverseKey(type3_Pump) = 'type3_Pump'
@@ -549,7 +563,12 @@
         reverseKey(Pump2Curve) = 'Pump2Curve'
         reverseKey(Pump3Curve) = 'Pump3Curve'
         reverseKey(Pump4Curve) = 'Pump4Curve'
-        reverseKey(RawElemLength) = 'RawElemLength'
+        !reverseKey(RawElemLength) = 'RawElemLength'
+        reverseKey(EqualElements) = 'EqualElements'
+        reverseKey(UnequalElements) = 'UnequalElements'
+        reverseKey(EquivalentOrifice) = 'EquivalentOrifice'
+        reverseKey(LengthenLink) = 'LengthenLink'
+        reverseKey(FailLimiter) = 'FailLimiter'
         reverseKey(DepthValue)  = 'DepthValue'
         reverseKey(VolumeValue) = 'VolumeValue'
         reverseKey(AreaValue)   = 'AreaValue'
@@ -680,6 +699,8 @@
         write(*,'(A," = ",i4)') trim(reverseKey(dummy)) , dummy
         write(*,'(A," = ",i4)') trim(reverseKey(dynamic)) , dynamic
         write(*,'(A," = ",i4)') trim(reverseKey(eggshaped)) , eggshaped
+        write(*,'(A," = ",i4)') trim(reverseKey(equivalent_orifice_channel)) , equivalent_orifice_channel
+        write(*,'(A," = ",i4)') trim(reverseKey(equivalent_orifice_pipe)) , equivalent_orifice_pipe
         write(*,'(A," = ",i4)') trim(reverseKey(ETM)) , ETM
         write(*,'(A," = ",i4)') trim(reverseKey(ETM_AC)) , ETM_AC
         write(*,'(A," = ",i4)') trim(reverseKey(filled_circular)) , filled_circular
@@ -713,6 +734,8 @@
         write(*,'(A," = ",i4)') trim(reverseKey(lCircular)) , lCircular
         write(*,'(A," = ",i4)') trim(reverseKey(lChannel)) , lChannel
         write(*,'(A," = ",i4)') trim(reverseKey(lEggshaped)) , lEggshaped
+        write(*,'(A," = ",i4)') trim(reverseKey(lEquivalentOrificeChannel)) , lEquivalentOrificeChannel
+        write(*,'(A," = ",i4)') trim(reverseKey(lEquivalentOrificePipe)) , lEquivalentOrificePipe
         write(*,'(A," = ",i4)') trim(reverseKey(lFilled_circular)) , lFilled_circular
         write(*,'(A," = ",i4)') trim(reverseKey(lForce_main)) , lForce_main
         write(*,'(A," = ",i4)') trim(reverseKey(lGothic)) , lGothic
@@ -781,7 +804,12 @@
         write(*,'(A," = ",i4)') trim(reverseKey(Pump4Curve)) , Pump4Curve
         write(*,'(A," = ",i4)') trim(reverseKey(Random)) , Random
         write(*,'(A," = ",i4)') trim(reverseKey(RatingCurve)) , RatingCurve
-        write(*,'(A," = ",i4)') trim(reverseKey(RawElemLength)) , RawElemLength
+        !write(*,'(A," = ",i4)') trim(reverseKey(RawElemLength)) , RawElemLength
+        write(*,'(A," = ",i4)') trim(reverseKey(EqualElements)) , EqualElements
+        write(*,'(A," = ",i4)') trim(reverseKey(UnequalElements)) , UnequalElements
+        write(*,'(A," = ",i4)') trim(reverseKey(EquivalentOrifice)) , EquivalentOrifice
+        write(*,'(A," = ",i4)') trim(reverseKey(LengthenLink)) , LengthenLink
+        write(*,'(A," = ",i4)') trim(reverseKey(FailLimiter)) , FailLimiter
         write(*,'(A," = ",i4)') trim(reverseKey(rectangular)) , rectangular
         write(*,'(A," = ",i4)') trim(reverseKey(rectangular_closed)) , rectangular_closed
         write(*,'(A," = ",i4)') trim(reverseKey(rect_round)) , rect_round

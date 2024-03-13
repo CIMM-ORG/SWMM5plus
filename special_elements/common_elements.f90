@@ -67,6 +67,8 @@ module common_elements
         !% Description:
         !% computes and stores the maximum head, flow direction, and downstream head
         !% on element. Designed for Weirs and Orifices for a single element
+        !% Note the nominal upstream head is stored in elemR(:,er_Head) and
+        !% the nominal downstrea head is stored in elemSR(:,esr_NominalDownstreamHead)
         !%------------------------------------------------------------------
         !% Declarations:
             integer, intent(in) :: eIdx  !% must be a single element ID
@@ -97,9 +99,8 @@ module common_elements
         !% flow direction on a diagnostic element assigned based up upstream and downstream heads
         FlowDirection = int(sign(oneR, (UpstreamFaceHead - DownstreamFaceHead)))
         
-        !% nominal downstream head on a diagnostic element
+        !% nominal downstream head on a diagnostic element (i.e., the downstream based on actual flow direction)
         NominalDSHead = min(UpstreamFaceHead, DownstreamFaceHead)
-
 
         !% --- airflow venting settings
         if (CurrentSetting == zeroR) then
@@ -110,7 +111,7 @@ module common_elements
             faceYN(idnf, fYN_isAirflowBlocked) = .false.
         end if
 
-        !% --- airflow ventig reset for surcharged faces
+        !% --- airflow venting reset for surcharged faces
         if (faceYN(iupf, fYN_isPSsurcharged)) faceYN(iupf, fYN_isAirflowBlocked) = .true.
         if (faceYN(idnf, fYN_isPSsurcharged)) faceYN(idnf, fYN_isAirflowBlocked) = .true.
         

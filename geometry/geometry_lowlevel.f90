@@ -108,6 +108,8 @@ module geometry_lowlevel
     public :: llgeo_rect_round_perimeter_from_depth_singular
     public :: llgeo_rectangular_triangular_perimeter_from_depth_singular
 
+    !% --- other
+    public :: llgeo_lookup_table_selection
     
     contains
 !%    
@@ -1741,6 +1743,83 @@ module geometry_lowlevel
         endif
 
     end function llgeo_rectangular_triangular_perimeter_from_depth_singular
+!%    
+!%==========================================================================  
+!%==========================================================================   
+!%
+    subroutine llgeo_lookup_table_selection (eIdx, Atable, Rtable, Stable, Ttable)
+        !%------------------------------------------------------------------
+        !% Description
+        !% sets the lookup table for a particular type of geometry
+        !%------------------------------------------------------------------
+        !% Declarations
+            integer, intent(in)    :: eIdx
+            real(8), pointer, intent(out) :: Atable(:), Rtable(:), Stable(:), Ttable(:)
+        !%------------------------------------------------------------------
+        !%------------------------------------------------------------------
+
+        select case (elemI(eIdx,ei_geometryType))
+            !% --- for tables using HydRadius
+            case (arch)
+                Atable => AArch
+                Rtable => RArch
+                Ttable => TArch
+                Stable => dummyTargetR
+            case (basket_handle)
+                Atable => ABasketHandle
+                Rtable => RBasketHandle
+                Ttable => TBasketHandle
+                Stable => dummyTargetR
+            case (circular)
+                Atable => ACirc
+                Rtable => RCirc
+                Ttable => TCirc
+                Stable => dummyTargetR
+            case (eggshaped)
+                Atable => AEgg
+                Rtable => REgg
+                Ttable => TEgg
+                Stable => dummyTargetR
+            case (horiz_ellipse)
+                Atable => AHorizEllip
+                Rtable => RHorizEllip
+                Ttable => THorizEllip
+                Stable => dummyTargetR
+            case (horseshoe)
+                Atable => AHorseShoe
+                Rtable => RHorseShoe
+                Ttable => THorseShoe
+                Stable => dummyTargetR
+            case (vert_ellipse)
+                Atable => AHorseShoe
+                Rtable => RHorseShoe
+                Ttable => THorseShoe
+                Stable => dummyTargetR
+
+            !% --- for tables using section factor
+            case (catenary)
+                Atable => ACatenary
+                Stable => SCatenary
+                Ttable => TCatenary
+                Rtable => dummyTargetR
+            case (gothic)
+                Atable => AGothic
+                Stable => SGothic
+                Ttable => TGothic
+                Rtable => dummyTargetR
+            case (semi_circular)
+                Atable => ASemiCircular
+                Stable => SSemiCircular
+                Ttable => TSemiCircular
+                Rtable => dummyTargetR
+            case (semi_elliptical)
+                Atable => ASemiEllip
+                Stable => SSemiEllip
+                Ttable => TSemiEllip
+                Rtable => dummyTargetR
+        end select
+        
+    end subroutine llgeo_lookup_table_selection
 !%    
 !%==========================================================================
 !% END MODULE
