@@ -210,7 +210,7 @@ subroutine lljunction_branch_velocity ()
                         !%     the energy head in JM might be driven by another inflow, we will neglect
                         !%     it here. Might explore using a fraction of it depending on relavitve
                         !%     flowrate contributions to JM.
-                        !%     Here we expect <0  as inflow
+                        !%     Here we expect VelHead <0  as inflow
                         VelHead = -(HeadAdj - HeadJM) / (oneR - Ke)
                         if (VelHead .ge. zeroR) then 
                             !% --- inconsistent values
@@ -221,11 +221,15 @@ subroutine lljunction_branch_velocity ()
                     else
                         !% --- HeadJM < Zbottom so a waterfall connection from adjacent inward
                         !%     >0 implies inflow
-                        VelHead = -deltaEAdjZ / (oneR - Ke)
+                        !VelHead = -deltaEAdjZ / (oneR - Ke)
+                        !% --- 20240314brh FR=1 => u = sqrt(gh)
+                        !%     VelHead = u^2/2g = gh/2g = h/2
+                        VelHead = elemR(JBidx,er_EllDepth) / twoR
                         !% --- no need to check if deltaEAdjZ < 0 because that has already been removed 
                     end if
                 end if
             end if
+
 
             !% --- velocity and flowrate implied by energy arguments
             eVelocity = - bsign * sign(oneR,VelHead) * sqrt(abs(VelHead) * twoR * grav)  

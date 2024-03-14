@@ -577,9 +577,11 @@ module junction_elements
         call face_push_JBelem_to_face (ep_JM, fr_Head_u, er_Head, .true.) 
         call face_make_up_dn_identical(fp_JB_IorS, fr_Head_u, fr_Head_d)
 
-        call face_push_JBelem_to_face (ep_JM, fr_Area_u, er_Area, .false.)
-        call face_push_JBelem_to_face (ep_JM, fr_Area_u, er_Area, .true.) 
-        call face_make_up_dn_identical(fp_JB_IorS, fr_Area_u, fr_Area_d)
+        !% DO NOT PUSH AREA TO FACE -- causes problems when waterfall
+        !% into JM occurs
+        ! call face_push_JBelem_to_face (ep_JM, fr_Area_u, er_Area, .false.)
+        ! call face_push_JBelem_to_face (ep_JM, fr_Area_u, er_Area, .true.) 
+        ! call face_make_up_dn_identical(fp_JB_IorS, fr_Area_u, fr_Area_d)
 
         !% --- auxiliary variables update
         !% --- wave speed, Froude number on JM

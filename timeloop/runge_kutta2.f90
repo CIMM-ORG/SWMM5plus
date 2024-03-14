@@ -214,10 +214,7 @@ module runge_kutta2
                 !call util_utest_CLprint('QQQQ after junction first step')
             end if
 
-            ! !% --- Filter flowrates to remove grid-scale checkerboard
-            ! call adjust_Vfilter (istep)
-
-            !call util_utest_CLprint('RRRR after V filter')
+            ! call util_utest_CLprint('RRRR after V filter')
 
             if (istep == 1) then 
                 !% -- fluxes at end of first RK2 step are the conservative fluxes enforced
